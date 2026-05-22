@@ -1,0 +1,4 @@
+@import "@kern-ux/native/dist/fonts/fira-sans.css";
+@import "@kern-ux/native/dist/kern.css";
+@import "@digitalservicebund/kern-ux-tailwind-theme/theme.css";
+@import "tailwindcss";
