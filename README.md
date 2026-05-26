@@ -17,12 +17,19 @@ Login requires no password — select a role from the dropdown.
 
 ## Project Structure
 
-- `src/domain/`: entities, domain rules, and the `SchedulingService`
-- `src/application/`: read-side queries (`SchedulingQuery`)
-- `src/infrastructure/`: in-memory store, auth service, session handling
-- `src/bootstrap.ts`: composition root
-- `app/routes/`: React Router route modules (UI adapters)
-- `app/components/`: shared UI components
+```
+app/
+  core/
+    domain/       entities and business types
+    ports/        repository and service interfaces
+    services/     SchedulingService, SchedulingQuery
+  adapters/
+    inMemory/     in-memory store and auth service
+    session/      React Router cookie session
+  routes/         UI adapters (React Router route modules)
+  components/     shared UI components
+  bootstrap.ts    composition root
+```
 
 ## Run
 

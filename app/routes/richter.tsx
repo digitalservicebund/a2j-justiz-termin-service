@@ -6,8 +6,8 @@ import {
   schedulingQuery,
   schedulingService,
 } from "@/bootstrap";
-import type { OverviewDto } from "@/application/schedulingQuery";
-import { requireRole } from "@/infrastructure/session/session";
+import type { OverviewDto } from "@/core/services/schedulingQuery";
+import { requireRole } from "@/adapters/session/session";
 import type { SlotDraft } from "~/components/richterHelpers";
 import { createEmptyDraft, toIsoSlotRanges } from "~/components/richterHelpers";
 import {

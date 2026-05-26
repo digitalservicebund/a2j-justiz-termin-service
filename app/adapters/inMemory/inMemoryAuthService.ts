@@ -1,4 +1,4 @@
-import type { AuthService, AuthUser, UserRole } from "@/domain/user";
+import type { AuthService, AuthUser, UserRole } from "@/core/domain/user";
 
 export class InMemoryAuthService implements AuthService {
   private readonly users: AuthUser[] = [

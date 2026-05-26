@@ -1,7 +1,7 @@
 import type { ComponentProps, Dispatch, SetStateAction } from "react";
 import { Form } from "react-router";
-import type { OverviewDto } from "@/application/schedulingQuery";
-import type { PartyRole } from "@/domain/verfahren";
+import type { OverviewDto } from "@/core/services/schedulingQuery";
+import type { PartyRole } from "@/core/domain/verfahren";
 import { formatSlotRange, InlineError } from "~/components/shared/schedulingShared";
 import {
   decisionToLabel,

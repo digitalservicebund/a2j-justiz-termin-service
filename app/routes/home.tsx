@@ -1,7 +1,7 @@
 import { redirect } from "react-router";
 import { authService } from "@/bootstrap";
-import { requireUser } from "@/infrastructure/session/session";
-import type { Role } from "@/domain/verfahren";
+import { requireUser } from "@/adapters/session/session";
+import type { Role } from "@/core/domain/verfahren";
 
 const roleRedirectLinks: Record<Role, string> = {
   RICHTER: '/richter',

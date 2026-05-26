@@ -1,6 +1,6 @@
-import type { Decision, PartyRole, Verfahren, TimeSlot } from "./verfahren";
-import { PARTY_ROLES } from "./verfahren";
-import type { VerfahrenRepository } from "./verfahrenRepository";
+import type { Decision, PartyRole, Verfahren, TimeSlot } from "../domain/verfahren";
+import { PARTY_ROLES } from "../domain/verfahren";
+import type { VerfahrenRepository } from "../ports/verfahrenRepository";
 
 function validateSlots(slots: TimeSlot[]): void {
   if (slots.length === 0) throw new Error("At least one time slot is required.");
@@ -12,7 +12,7 @@ function validateSlots(slots: TimeSlot[]): void {
     const start = Date.parse(slot.startsAtIso);
     const end = Date.parse(slot.endsAtIso);
     if (Number.isNaN(start) || Number.isNaN(end)) {
-      throw new TypeError("A time slot must have valid ISO date strings.");
+      throw new Error("A time slot must have valid ISO date strings.");
     }
     if (start >= end) {
       throw new Error("A time slot must end after it starts.");

@@ -1,5 +1,5 @@
 import { createCookieSessionStorage, redirect } from "react-router";
-import type { AuthService, AuthUser, UserRole } from "@/domain/user";
+import type { AuthService, AuthUser, UserRole } from "@/core/domain/user";
 
 const { getSession, commitSession, destroySession } = createCookieSessionStorage<{
   userId: string;

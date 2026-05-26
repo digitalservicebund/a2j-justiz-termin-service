@@ -1,7 +1,7 @@
 import { Form, redirect, useActionData } from "react-router";
 import { authService } from "@/bootstrap";
-import type { UserRole } from "@/domain/user";
-import { commitSession, getSession } from "@/infrastructure/session/session";
+import type { UserRole } from "@/core/domain/user";
+import { commitSession, getSession } from "@/adapters/session/session";
 import { InlineError } from "~/components/shared/schedulingShared";
 
 const ROLES: { value: UserRole; label: string }[] = [

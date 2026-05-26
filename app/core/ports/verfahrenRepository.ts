@@ -1,4 +1,4 @@
-import type { Verfahren } from "./verfahren";
+import type { Verfahren } from "../domain/verfahren";
 
 export interface VerfahrenRepository {
   getById(id: string): Verfahren | null;

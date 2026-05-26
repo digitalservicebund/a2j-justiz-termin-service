@@ -1,5 +1,5 @@
-import type { VerfahrenRepository } from "@/domain/verfahrenRepository";
-import type { PartyRole, Verfahren, SlotDecisionStatus, TimeSlot } from "@/domain/verfahren";
+import type { VerfahrenRepository } from "../ports/verfahrenRepository";
+import type { PartyRole, Verfahren, SlotDecisionStatus, TimeSlot } from "../domain/verfahren";
 
 function buildSlotStatuses(c: Verfahren): SlotDecisionStatus[] {
   return c.slots.map((slot) => {

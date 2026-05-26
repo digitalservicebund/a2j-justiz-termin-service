@@ -1,5 +1,5 @@
-import type { Verfahren } from "@/domain/verfahren";
-import type { VerfahrenRepository } from "@/domain/verfahrenRepository";
+import type { Verfahren } from "@/core/domain/verfahren";
+import type { VerfahrenRepository } from "@/core/ports/verfahrenRepository";
 
 export class InMemoryStore implements VerfahrenRepository {
   private readonly cases = new Map<string, Verfahren>();

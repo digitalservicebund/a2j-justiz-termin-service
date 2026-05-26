@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { InMemoryStore } from "./infrastructure/db/inMemoryStore";
-import { SchedulingService } from "./domain/schedulingService";
-import { SchedulingQuery } from "./application/schedulingQuery";
+import { InMemoryStore } from "./adapters/inMemory/inMemoryStore";
+import { SchedulingService } from "./core/services/schedulingService";
+import { SchedulingQuery } from "./core/services/schedulingQuery";
 
 function buildFixture() {
   const store = new InMemoryStore();
