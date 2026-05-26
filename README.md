@@ -2,25 +2,27 @@
 
 In-memory scheduling prototype for legal appointments with three roles:
 
-- `Richter`: creates and edits time slots, can unlock party re-submission
+- `Richter`: creates and edits time slots, confirms the final appointment, can unlock party re-submission
 - `Klaeger`: accepts/rejects each proposed slot
 - `Beklagter`: accepts/rejects each proposed slot
+
+Login requires no password — select a role from the dropdown.
 
 ## Confirmed Business Rules
 
 - The prototype stores data in memory only.
 - `Klaeger` and `Beklagter` share identical permissions.
-- Parties submit once by default.
-- After submission, a party is locked until `Richter` unlocks them.
-- The final appointment is the first slot accepted by both parties.
+- Parties submit once by default; after submission a party is locked until `Richter` unlocks them.
+- `Richter` explicitly confirms one mutually accepted slot as the final appointment.
 
-## Hexagonal Architecture
+## Project Structure
 
-- `app/core/domain`: entities and domain rules
-- `app/core/application`: use cases (`SchedulingService`)
-- `app/core/ports`: repository and id generator contracts
-- `app/adapters/in-memory`: in-memory persistence and composition root
-- `app/routes`: UI adapters (React Router route modules)
+- `src/domain/`: entities, domain rules, and the `SchedulingService`
+- `src/application/`: read-side queries (`SchedulingQuery`)
+- `src/infrastructure/`: in-memory store, auth service, session handling
+- `src/bootstrap.ts`: composition root
+- `app/routes/`: React Router route modules (UI adapters)
+- `app/components/`: shared UI components
 
 ## Run
 
