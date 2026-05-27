@@ -16,8 +16,8 @@ import {
   PartyAccessSection,
   RichterSummarySection,
   SlotsTableSection,
-} from "~/components/richterSections";
-import { formatSlotRange, RouteErrorBoundary, Shell } from "~/components/shared/schedulingShared";
+} from "~/components/RichterSections";
+import { formatSlotRange, RouteErrorBoundary, Shell } from "~/components/shared/SchedulingShared";
 
 type RichterActionIntent =
   | "setSlots"

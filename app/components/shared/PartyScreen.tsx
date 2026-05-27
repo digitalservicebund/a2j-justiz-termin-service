@@ -1,7 +1,7 @@
 import { Form, useActionData } from "react-router";
 import type { AuthUser } from "~/core/domain/user";
 import type { PartyRole } from "~/core/domain/verfahren";
-import { formatSlotRange, InlineError, loadOverview, Shell } from "~/components/shared/schedulingShared";
+import { formatSlotRange, InlineError, loadOverview, Shell } from "~/components/shared/SchedulingShared";
 
 type Overview = Awaited<ReturnType<typeof loadOverview>>;
 

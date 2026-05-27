@@ -1,7 +1,7 @@
 import type { ComponentProps, Dispatch, SetStateAction } from "react";
 import type { OverviewDto } from "~/core/services/schedulingQuery";
 import type { PartyRole } from "~/core/domain/verfahren";
-import { formatSlotRange, InlineError } from "~/components/shared/schedulingShared";
+import { formatSlotRange, InlineError } from "~/components/shared/SchedulingShared";
 import {
   decisionToLabel,
   generateRandomSlotDrafts,

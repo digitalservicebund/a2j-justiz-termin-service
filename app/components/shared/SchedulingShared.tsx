@@ -1,5 +1,5 @@
 import { isRouteErrorResponse, Link, useRouteError } from "react-router";
-import { AppNav } from "~/components/shared/appNav";
+import { AppNav } from "~/components/shared/AppNav";
 import type { AuthUser } from "~/core/domain/user";
 import { DEFAULT_CASE_ID, schedulingQuery } from "~/bootstrap";
 
