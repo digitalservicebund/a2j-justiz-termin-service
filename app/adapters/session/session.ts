@@ -30,7 +30,7 @@ export async function requireUser(
   authService: AuthService,
 ): Promise<AuthUser> {
   const user = await getSessionUser(request, authService);
-  if (!user) throw redirect("/login");
+  if (!user) throw redirect("/");
   return user;
 }
 

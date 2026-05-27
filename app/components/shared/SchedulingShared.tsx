@@ -1,4 +1,4 @@
-import { isRouteErrorResponse, Link, useRouteError } from "react-router";
+import { isRouteErrorResponse, useRouteError } from "react-router";
 import { AppNav } from "~/components/shared/AppNav";
 import type { AuthUser } from "~/core/domain/user";
 import { DEFAULT_CASE_ID, schedulingQuery } from "~/bootstrap";
@@ -58,18 +58,24 @@ export function Shell({
   children: React.ReactNode;
 }>) {
   return (
-    <main className="mx-auto max-w-4xl px-6 py-8 space-y-8">
-      <header className="space-y-3">
-        <h1 className="kern-heading-large">{title}</h1>
-        {user ? (
+    <div className="min-h-screen bg-slate-50">
+      <header className="sticky top-0 z-10 bg-[#1A3DA5] shadow-md border-b border-white/10">
+        <div className="mx-auto max-w-5xl px-6 py-4 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-white font-bold text-base leading-tight tracking-tight">
+              Gerichtsterminplanung
+            </p>
+            <p className="text-white/50 text-xs tracking-widest uppercase mt-0.5">
+              Court Appointment Scheduling
+            </p>
+          </div>
           <AppNav user={user} />
-        ) : (
-          <Link className="kern-link" to="/login">
-            Back to login
-          </Link>
-        )}
+        </div>
       </header>
-      {children}
-    </main>
+      <main className="mx-auto max-w-5xl px-6 py-10 space-y-6">
+        <h1 className="kern-heading-large">{title}</h1>
+        {children}
+      </main>
+    </div>
   );
 }
