@@ -1,5 +1,4 @@
 import type { ComponentProps, Dispatch, SetStateAction } from "react";
-import { Form } from "react-router";
 import type { OverviewDto } from "@/core/services/schedulingQuery";
 import type { PartyRole } from "@/core/domain/verfahren";
 import { formatSlotRange, InlineError } from "~/components/shared/schedulingShared";
@@ -8,6 +7,7 @@ import {
   generateRandomSlotDrafts,
   type SlotDraft,
 } from "~/components/richterHelpers";
+import { useRichterActions } from "~/hooks/useRichterActions";
 
 export function RichterSummarySection({
   caseName,
@@ -130,6 +130,7 @@ export function SlotsTableSection({
 }: {
   readonly overview: OverviewDto;
 }) {
+  const { confirmSlot, deleteSlot, deleteAllSlots, isLoading, state } = useRichterActions();
   const statusesBySlotId = new Map(
     overview.statuses.map((status) => [status.slotId, status] as const),
   );
@@ -193,41 +194,51 @@ export function SlotsTableSection({
                     </td>
                     <td className="kern-table__cell kern-table__cell--action">
                       {status?.isMutuallyAccepted && !isFinal && (
-                        <Form method="post" className="contents">
-                          <input type="hidden" name="intent" value="confirmSlot" />
-                          <input type="hidden" name="slotId" value={slot.id} />
-                          <SlotActionButton
-                            id={`btn-confirm-${slot.id}`}
-                            rowId={rowId}
-                            iconClass="kern-icon--check"
-                            srLabel="Make final"
-                            title="Make final"
-                          />
-                        </Form>
+                        <button
+                          className="kern-btn kern-btn--tertiary kern-btn--x-small"
+                          id={`btn-confirm-${slot.id}`}
+                          aria-labelledby={`btn-confirm-${slot.id} ${rowId}`}
+                          title="Make final"
+                          onClick={() => confirmSlot(slot.id)}
+                          disabled={isLoading}
+                          type="button"
+                        >
+                          <span className="kern-icon kern-icon--check" aria-hidden="true" />
+                          <span className="kern-label kern-sr-only">
+                            {state === "submitting" ? "Making final..." : "Make final"}
+                          </span>
+                        </button>
                       )}
-                      <Form method="post" className="contents">
-                        <input type="hidden" name="intent" value="deleteSlot" />
-                        <input type="hidden" name="slotId" value={slot.id} />
-                        <SlotActionButton
-                          id={`btn-delete-${slot.id}`}
-                          rowId={rowId}
-                          iconClass="kern-icon--delete"
-                          srLabel="Delete"
-                          title="Delete"
-                        />
-                      </Form>
+                      <button
+                        className="kern-btn kern-btn--tertiary kern-btn--x-small"
+                        id={`btn-delete-${slot.id}`}
+                        aria-labelledby={`btn-delete-${slot.id} ${rowId}`}
+                        title="Delete"
+                        onClick={() => deleteSlot(slot.id)}
+                        disabled={isLoading}
+                        type="button"
+                      >
+                        <span className="kern-icon kern-icon--delete" aria-hidden="true" />
+                        <span className="kern-label kern-sr-only">
+                          {state === "submitting" ? "Deleting..." : "Delete"}
+                        </span>
+                      </button>
                     </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
-          <Form method="post">
-            <input type="hidden" name="intent" value="deleteAllSlots" />
-            <button className="kern-btn kern-btn--tertiary" type="submit">
-              <span className="kern-label">Delete all slots</span>
-            </button>
-          </Form>
+          <button
+            className="kern-btn kern-btn--tertiary"
+            onClick={() => deleteAllSlots()}
+            disabled={isLoading}
+            type="button"
+          >
+            <span className="kern-label">
+              {state === "submitting" ? "Deleting..." : "Delete all slots"}
+            </span>
+          </button>
         </>
       )}
     </section>
@@ -258,32 +269,6 @@ export function PartyAccessSection({
   );
 }
 
-function SlotActionButton({
-  id,
-  rowId,
-  iconClass,
-  srLabel,
-  title,
-}: {
-  readonly id: string;
-  readonly rowId: string;
-  readonly iconClass: string;
-  readonly srLabel: string;
-  readonly title: string;
-}) {
-  return (
-    <button
-      className="kern-btn kern-btn--tertiary kern-btn--x-small"
-      id={id}
-      aria-labelledby={`${id} ${rowId}`}
-      title={title}
-    >
-      <span className={`kern-icon ${iconClass}`} aria-hidden="true" />
-      <span className="kern-label kern-sr-only">{srLabel}</span>
-    </button>
-  );
-}
-
 function PartyRow({
   hasSubmitted,
   isOpen,
@@ -295,19 +280,24 @@ function PartyRow({
   readonly label: string;
   readonly partyRole: PartyRole;
 }) {
+  const { unlock, isLoading, state } = useRichterActions();
+
   return (
     <div className="flex flex-wrap items-center justify-between gap-2">
       <p className="kern-body">
         {label}: {hasSubmitted ? "submitted" : "not submitted"} /{" "}
         {isOpen ? "unlocked" : "locked"}
       </p>
-      <Form method="post">
-        <input type="hidden" name="intent" value="unlock" />
-        <input type="hidden" name="partyRole" value={partyRole} />
-        <button className="kern-btn kern-btn--secondary" type="submit">
-          <span className="kern-label">Unlock</span>
-        </button>
-      </Form>
+      <button
+        className="kern-btn kern-btn--secondary"
+        onClick={() => unlock(partyRole)}
+        disabled={isOpen || isLoading}
+        type="button"
+      >
+        <span className="kern-label">
+          {state === "submitting" ? "Unlocking..." : "Unlock"}
+        </span>
+      </button>
     </div>
   );
 }
