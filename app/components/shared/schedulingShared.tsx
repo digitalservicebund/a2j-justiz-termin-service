@@ -1,7 +1,7 @@
 import { isRouteErrorResponse, Link, useRouteError } from "react-router";
 import { AppNav } from "~/components/shared/appNav";
-import type { AuthUser } from "@/core/domain/user";
-import { DEFAULT_CASE_ID, schedulingQuery } from "@/bootstrap";
+import type { AuthUser } from "~/core/domain/user";
+import { DEFAULT_CASE_ID, schedulingQuery } from "~/bootstrap";
 
 export async function loadOverview() {
   return schedulingQuery.getOverview(DEFAULT_CASE_ID);

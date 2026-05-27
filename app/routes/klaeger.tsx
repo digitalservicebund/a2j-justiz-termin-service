@@ -1,7 +1,7 @@
 import { useLoaderData } from "react-router";
-import { authService, DEFAULT_CASE_ID, schedulingQuery, schedulingService } from "@/bootstrap";
-import type { Decision } from "@/core/domain/verfahren";
-import { requireRole } from "@/adapters/session/session";
+import { authService, DEFAULT_CASE_ID, schedulingQuery, schedulingService } from "~/bootstrap";
+import type { Decision } from "~/core/domain/verfahren";
+import { requireRole } from "~/adapters/session/session";
 import { RouteErrorBoundary } from "~/components/shared/schedulingShared";
 import { PartyScreen } from "~/components/shared/partyScreen";
 

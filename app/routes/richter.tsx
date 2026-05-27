@@ -5,9 +5,9 @@ import {
   DEFAULT_CASE_ID,
   schedulingQuery,
   schedulingService,
-} from "@/bootstrap";
-import type { OverviewDto } from "@/core/services/schedulingQuery";
-import { requireRole } from "@/adapters/session/session";
+} from "~/bootstrap";
+import type { OverviewDto } from "~/core/services/schedulingQuery";
+import { requireRole } from "~/adapters/session/session";
 import type { SlotDraft } from "~/components/richterHelpers";
 import { createEmptyDraft, toIsoSlotRanges } from "~/components/richterHelpers";
 import {

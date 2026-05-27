@@ -1,4 +1,4 @@
-import type { Decision } from "@/core/domain/verfahren";
+import type { Decision } from "~/core/domain/verfahren";
 
 export type SlotDraft = {
   startsAtLocal: string;

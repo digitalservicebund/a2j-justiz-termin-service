@@ -1,5 +1,5 @@
 import { Form } from "react-router";
-import type { AuthUser } from "@/core/domain/user";
+import type { AuthUser } from "~/core/domain/user";
 
 export function AppNav({ user }: Readonly<{ user: AuthUser }>) {
   return (
