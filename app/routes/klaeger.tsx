@@ -1,9 +1,14 @@
 import { useLoaderData } from "react-router";
-import { authService, DEFAULT_CASE_ID, schedulingQuery, schedulingService } from "~/bootstrap";
-import type { Decision } from "~/core/domain/verfahren";
 import { requireRole } from "~/adapters/session/session";
-import { RouteErrorBoundary } from "~/components/shared/SchedulingShared";
+import {
+  authService,
+  DEFAULT_CASE_ID,
+  schedulingQuery,
+  schedulingService,
+} from "~/bootstrap";
 import { PartyScreen } from "~/components/shared/PartyScreen";
+import { RouteErrorBoundary } from "~/components/shared/SchedulingShared";
+import type { Decision } from "~/core/domain/verfahren";
 
 export async function loader({ request }: { request: Request }) {
   const user = await requireRole(request, authService, "KLAEGER");
@@ -16,16 +21,26 @@ export async function action({ request }: { request: Request }) {
   const decisionMap: Record<string, Decision> = {};
 
   for (const [key, value] of formData.entries()) {
-    if (typeof value === "string" && (value === "ACCEPT" || value === "REJECT")) {
+    if (
+      typeof value === "string" &&
+      (value === "ACCEPT" || value === "REJECT")
+    ) {
       decisionMap[key] = value;
     }
   }
 
   try {
-    schedulingService.partySubmitDecisions(DEFAULT_CASE_ID, "KLAEGER", decisionMap);
+    schedulingService.partySubmitDecisions(
+      DEFAULT_CASE_ID,
+      "KLAEGER",
+      decisionMap,
+    );
     return null;
   } catch (err) {
-    return { error: err instanceof Error ? err.message : "Unknown error during submission." };
+    return {
+      error:
+        err instanceof Error ? err.message : "Unknown error during submission.",
+    };
   }
 }
 

@@ -4,6 +4,10 @@
  */
 const config = {
   plugins: ["prettier-plugin-organize-imports", "prettier-plugin-tailwindcss"],
+  semi: true,
+  singleQuote: false,
+  trailingComma: "all",
+  bracketSameLine: false,
   endOfLine: "auto",
 };
 

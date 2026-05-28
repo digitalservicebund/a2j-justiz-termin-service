@@ -1,9 +1,9 @@
-import { InMemoryStore } from "./adapters/inMemory/inMemoryStore";
-import { SchedulingService } from "./core/services/schedulingService";
-import { SchedulingQuery } from "./core/services/schedulingQuery";
-import type { AppointmentQueries } from "./core/services/schedulingQuery";
 import { InMemoryAuthService } from "./adapters/inMemory/inMemoryAuthService";
+import { InMemoryStore } from "./adapters/inMemory/inMemoryStore";
 import type { AuthService } from "./core/domain/user";
+import type { AppointmentQueries } from "./core/services/schedulingQuery";
+import { SchedulingQuery } from "./core/services/schedulingQuery";
+import { SchedulingService } from "./core/services/schedulingService";
 
 const store = new InMemoryStore();
 const service = new SchedulingService(store);

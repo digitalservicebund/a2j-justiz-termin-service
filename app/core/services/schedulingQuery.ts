@@ -1,5 +1,10 @@
+import type {
+  PartyRole,
+  SlotDecisionStatus,
+  TimeSlot,
+  Verfahren,
+} from "../domain/verfahren";
 import type { VerfahrenRepository } from "../ports/verfahrenRepository";
-import type { PartyRole, Verfahren, SlotDecisionStatus, TimeSlot } from "../domain/verfahren";
 
 function buildSlotStatuses(c: Verfahren): SlotDecisionStatus[] {
   return c.slots.map((slot) => {
@@ -9,7 +14,8 @@ function buildSlotStatuses(c: Verfahren): SlotDecisionStatus[] {
       slotId: slot.id,
       klaegerDecision,
       beklagterDecision,
-      isMutuallyAccepted: klaegerDecision === "ACCEPT" && beklagterDecision === "ACCEPT",
+      isMutuallyAccepted:
+        klaegerDecision === "ACCEPT" && beklagterDecision === "ACCEPT",
     };
   });
 }
@@ -25,7 +31,6 @@ export interface OverviewDto {
   statuses: SlotDecisionStatus[];
   finalSlotId: string | null;
   hasSubmitted: Record<PartyRole, boolean>;
-  isSubmissionOpen: Record<PartyRole, boolean>;
 }
 
 export class SchedulingQuery implements AppointmentQueries {
@@ -41,7 +46,6 @@ export class SchedulingQuery implements AppointmentQueries {
       statuses: buildSlotStatuses(c),
       finalSlotId: c.confirmedSlotId,
       hasSubmitted: { ...c.hasSubmitted },
-      isSubmissionOpen: { ...c.isSubmissionOpen },
     };
   }
 }

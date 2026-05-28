@@ -1,6 +1,5 @@
 import eslint from "@eslint/js";
 import { defineConfig } from "eslint/config";
-import react from "eslint-plugin-react";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
@@ -25,20 +24,6 @@ export default defineConfig(
           jsx: true,
         },
       },
-    },
-  },
-  // React
-  {
-    files: ["**/*.{js,jsx,ts,tsx}"],
-    extends: [
-      react.configs.flat.recommended,
-      react.configs.flat["jsx-runtime"],
-    ],
-    plugins: {
-      react,
-    },
-    settings: {
-      react: { version: "detect" },
     },
   },
   // Typescript

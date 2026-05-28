@@ -1,7 +1,7 @@
 import { redirect } from "react-router";
+import { commitSession, getSession } from "~/adapters/session/session";
 import { authService } from "~/bootstrap";
 import type { UserRole } from "~/core/domain/user";
-import { commitSession, getSession } from "~/adapters/session/session";
 
 export async function loader() {
   return redirect("/");

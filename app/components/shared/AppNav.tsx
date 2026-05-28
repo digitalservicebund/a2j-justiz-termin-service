@@ -19,9 +19,12 @@ export function AppNav({ user }: Readonly<{ user?: AuthUser }>) {
         id="role-select"
         value={user?.role ?? ""}
         onChange={(e) =>
-          fetcher.submit({ role: e.target.value }, { method: "post", action: "/login" })
+          fetcher.submit(
+            { role: e.target.value },
+            { method: "post", action: "/login" },
+          )
         }
-        className="bg-white/10 text-white text-sm font-medium border border-white/20 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/40 transition-colors"
+        className="cursor-pointer rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/20 focus:ring-2 focus:ring-white/40 focus:outline-none"
       >
         {!user && (
           <option value="" disabled>

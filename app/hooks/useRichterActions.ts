@@ -7,10 +7,7 @@ export function useRichterActions() {
   const fetcher = useFetcher<ActionResult>();
 
   const executeAction = (intent: string, payload: Record<string, string>) => {
-    fetcher.submit(
-      { intent, ...payload },
-      { method: "post" }
-    );
+    fetcher.submit({ intent, ...payload }, { method: "post" });
   };
 
   const unlock = (partyRole: PartyRole) => {
@@ -39,4 +36,3 @@ export function useRichterActions() {
     state: fetcher.state,
   };
 }
-

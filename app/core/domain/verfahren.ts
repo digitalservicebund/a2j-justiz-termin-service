@@ -16,7 +16,6 @@ export interface Verfahren {
   name: string;
   slots: TimeSlot[];
   decisionsByParty: Record<PartyRole, Record<string, Decision>>;
-  isSubmissionOpen: Record<PartyRole, boolean>;
   hasSubmitted: Record<PartyRole, boolean>;
   confirmedSlotId: string | null;
 }

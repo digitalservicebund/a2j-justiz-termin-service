@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { InMemoryStore } from "./adapters/inMemory/inMemoryStore";
-import { SchedulingService } from "./core/services/schedulingService";
 import { SchedulingQuery } from "./core/services/schedulingQuery";
+import { SchedulingService } from "./core/services/schedulingService";
 
 function buildFixture() {
   const store = new InMemoryStore();
@@ -16,8 +16,14 @@ describe("SchedulingService", () => {
     const { service, query } = buildFixture();
 
     service.richterSetSlots("verfahren-1", [
-      { startsAtIso: "2026-05-20T08:00:00.000Z", endsAtIso: "2026-05-20T09:00:00.000Z" },
-      { startsAtIso: "2026-05-20T10:00:00.000Z", endsAtIso: "2026-05-20T11:00:00.000Z" },
+      {
+        startsAtIso: "2026-05-20T08:00:00.000Z",
+        endsAtIso: "2026-05-20T09:00:00.000Z",
+      },
+      {
+        startsAtIso: "2026-05-20T10:00:00.000Z",
+        endsAtIso: "2026-05-20T11:00:00.000Z",
+      },
     ]);
 
     const before = query.getOverview("verfahren-1");
@@ -44,33 +50,47 @@ describe("SchedulingService", () => {
     const { service, query } = buildFixture();
 
     service.richterSetSlots("verfahren-1", [
-      { startsAtIso: "2026-05-20T08:00:00.000Z", endsAtIso: "2026-05-20T09:00:00.000Z" },
+      {
+        startsAtIso: "2026-05-20T08:00:00.000Z",
+        endsAtIso: "2026-05-20T09:00:00.000Z",
+      },
     ]);
 
     const slotId = query.getOverview("verfahren-1").slots[0].id;
 
-    expect(() => service.richterConfirmSlot("verfahren-1", slotId)).toThrow(/mutually accepted/);
+    expect(() => service.richterConfirmSlot("verfahren-1", slotId)).toThrow(
+      /mutually accepted/,
+    );
   });
 
   it("locks party submissions after one submit until Richter unlocks", () => {
     const { service, query } = buildFixture();
 
     service.richterSetSlots("verfahren-1", [
-      { startsAtIso: "2026-05-20T08:00:00.000Z", endsAtIso: "2026-05-20T09:00:00.000Z" },
+      {
+        startsAtIso: "2026-05-20T08:00:00.000Z",
+        endsAtIso: "2026-05-20T09:00:00.000Z",
+      },
     ]);
 
     const slotId = query.getOverview("verfahren-1").slots[0].id;
 
-    service.partySubmitDecisions("verfahren-1", "KLAEGER", { [slotId]: "ACCEPT" });
+    service.partySubmitDecisions("verfahren-1", "KLAEGER", {
+      [slotId]: "ACCEPT",
+    });
 
     expect(() =>
-      service.partySubmitDecisions("verfahren-1", "KLAEGER", { [slotId]: "REJECT" }),
+      service.partySubmitDecisions("verfahren-1", "KLAEGER", {
+        [slotId]: "REJECT",
+      }),
     ).toThrow(/locked/);
 
     service.richterUnlockSubmission("verfahren-1", "KLAEGER");
 
     expect(() =>
-      service.partySubmitDecisions("verfahren-1", "KLAEGER", { [slotId]: "REJECT" }),
+      service.partySubmitDecisions("verfahren-1", "KLAEGER", {
+        [slotId]: "REJECT",
+      }),
     ).not.toThrow();
   });
 });

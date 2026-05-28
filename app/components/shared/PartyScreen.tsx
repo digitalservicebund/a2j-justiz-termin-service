@@ -1,8 +1,14 @@
 import { Form, useActionData } from "react-router";
+import Alert from "~/components/shared/Alert";
+import { Card } from "~/components/shared/Card";
+import {
+  formatSlotRange,
+  InlineError,
+  loadOverview,
+  Shell,
+} from "~/components/shared/SchedulingShared";
 import type { AuthUser } from "~/core/domain/user";
 import type { PartyRole } from "~/core/domain/verfahren";
-import { formatSlotRange, InlineError, loadOverview, Shell } from "~/components/shared/SchedulingShared";
-import { Card } from "~/components/shared/Card";
 
 type Overview = Awaited<ReturnType<typeof loadOverview>>;
 
@@ -19,48 +25,57 @@ export function PartyScreen({
 
   const existingDecisionMap: Record<string, string> = {};
   for (const status of overview.statuses) {
-    const decision = role === "KLAEGER" ? status.klaegerDecision : status.beklagterDecision;
+    const decision =
+      role === "KLAEGER" ? status.klaegerDecision : status.beklagterDecision;
     if (decision) existingDecisionMap[status.slotId] = decision;
   }
 
-  const isLocked = !overview.isSubmissionOpen[role];
+  const hasSubmitted = overview.hasSubmitted[role];
   const roleLabel = role === "KLAEGER" ? "Kläger" : "Beklagter";
 
   // Key changes when decisions are saved so uncontrolled inputs remount with fresh defaultChecked
   const decisionKey = overview.statuses
-    .map((s) => `${s.slotId}:${role === "KLAEGER" ? s.klaegerDecision : s.beklagterDecision}`)
+    .map(
+      (s) =>
+        `${s.slotId}:${role === "KLAEGER" ? s.klaegerDecision : s.beklagterDecision}`,
+    )
     .join(",");
 
   return (
     <Shell title={`${roleLabel} – Response`} user={user}>
       {/* Supporting: case name card */}
       <Card>
-        <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-1">Case</p>
+        <p className="mb-1 text-xs font-semibold tracking-widest text-slate-400 uppercase">
+          Case
+        </p>
         <h2 className="kern-heading-medium">{overview.name}</h2>
       </Card>
-
-      {/* Supporting: lock / open status banner */}
-      {isLocked ? (
-        <div className="flex items-center gap-3 px-5 py-4 bg-amber-50 border border-amber-200 rounded-2xl text-amber-800 text-sm font-medium">
-          <span className="material-symbols-outlined text-[20px] leading-none select-none" aria-hidden="true">
-            lock
-          </span>
-          Submission is locked. Only the Richter can unlock it.
-        </div>
-      ) : (
-        <div className="px-5 py-4 bg-green-50 border border-green-200 rounded-2xl text-green-800 text-sm font-medium">
-          Please accept or reject every time slot below, then submit.
-        </div>
+      {hasSubmitted && (
+        <Alert
+          type="success"
+          title="Submitted"
+          message="Submission is locked. Only the Richter can unlock it."
+        />
       )}
 
       {/* Supporting: form card wrapping pure kern components */}
       <Card>
         <Form key={decisionKey} method="post" className="space-y-4">
+          <div className="space-y-4 p-0">
+            <div className="rounded-2xl border border-green-200 bg-green-50 px-5 py-4 text-sm font-medium text-green-800">
+              Please accept or reject every time slot below, then submit.
+            </div>
+            <hr className="kern-divider" aria-hidden="true" />
+          </div>
           {overview.slots.length === 0 ? (
             <p className="kern-body">No time slots available yet.</p>
           ) : (
             overview.slots.map((slot) => (
-              <fieldset key={slot.id} className="kern-fieldset" disabled={isLocked}>
+              <fieldset
+                key={slot.id}
+                className="kern-fieldset"
+                disabled={hasSubmitted}
+              >
                 <legend className="kern-label kern-label--large">
                   {formatSlotRange(slot.startsAtIso, slot.endsAtIso)}
                 </legend>
@@ -100,7 +115,7 @@ export function PartyScreen({
 
           <button
             className="kern-btn kern-btn--primary"
-            disabled={isLocked || overview.slots.length === 0}
+            disabled={hasSubmitted || overview.slots.length === 0}
             type="submit"
           >
             <span className="kern-label">Submit decisions</span>

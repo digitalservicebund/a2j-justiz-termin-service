@@ -1,8 +1,8 @@
 import { redirect } from "react-router";
-import { authService } from "~/bootstrap";
 import { getSessionUser } from "~/adapters/session/session";
-import type { Role } from "~/core/domain/verfahren";
+import { authService } from "~/bootstrap";
 import { Shell } from "~/components/shared/SchedulingShared";
+import type { Role } from "~/core/domain/verfahren";
 
 const roleRedirectLinks: Record<Role, string> = {
   RICHTER: "/richter",

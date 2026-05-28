@@ -1,13 +1,12 @@
 import { type ComponentProps, useState } from "react";
 import { useFetcher, useLoaderData } from "react-router";
+import { requireRole } from "~/adapters/session/session";
 import {
   authService,
   DEFAULT_CASE_ID,
   schedulingQuery,
   schedulingService,
 } from "~/bootstrap";
-import type { OverviewDto } from "~/core/services/schedulingQuery";
-import { requireRole } from "~/adapters/session/session";
 import type { SlotDraft } from "~/components/richterHelpers";
 import { createEmptyDraft, toIsoSlotRanges } from "~/components/richterHelpers";
 import {
@@ -17,7 +16,12 @@ import {
   RichterSummarySection,
   SlotsTableSection,
 } from "~/components/RichterSections";
-import { formatSlotRange, RouteErrorBoundary, Shell } from "~/components/shared/SchedulingShared";
+import {
+  formatSlotRange,
+  RouteErrorBoundary,
+  Shell,
+} from "~/components/shared/SchedulingShared";
+import type { OverviewDto } from "~/core/services/schedulingQuery";
 
 type RichterActionIntent =
   | "setSlots"
@@ -44,7 +48,10 @@ export async function action({ request }: { request: Request }) {
   try {
     return executeActionIntent(intent, formData);
   } catch (error) {
-    return { error: error instanceof Error ? error.message : "Unexpected action error." };
+    return {
+      error:
+        error instanceof Error ? error.message : "Unexpected action error.",
+    };
   }
 }
 
@@ -57,7 +64,9 @@ export default function RichterRoute() {
   const slotFetcher = useFetcher<typeof action>();
 
   const fetcherError =
-    slotFetcher.data && "error" in slotFetcher.data ? slotFetcher.data.error : null;
+    slotFetcher.data && "error" in slotFetcher.data
+      ? slotFetcher.data.error
+      : null;
 
   const [draft, setDraft] = useState<SlotDraft>(createEmptyDraft);
   const [slotDrafts, setSlotDrafts] = useState<SlotDraft[]>([]);
@@ -71,30 +80,42 @@ export default function RichterRoute() {
   };
 
   function removeDraftSlot(index: number) {
-    setSlotDrafts((current) => current.filter((_, currentIndex) => currentIndex !== index));
+    setSlotDrafts((current) =>
+      current.filter((_, currentIndex) => currentIndex !== index),
+    );
   }
 
   function saveSlots() {
     const slots = toIsoSlotRanges(slotDrafts);
     setSlotDrafts([]);
-    slotFetcher.submit({ intent: "setSlots", slots: JSON.stringify(slots) }, { method: "post" });
+    slotFetcher.submit(
+      { intent: "setSlots", slots: JSON.stringify(slots) },
+      { method: "post" },
+    );
   }
 
   return (
     <Shell title="Richter - Management" user={user}>
-      <RichterSummarySection caseName={overview.name} finalSlotText={finalSlotLabel} />
-      <DraftSlotsSection
-        draft={draft}
-        error={fetcherError}
-        onAddDraft={addDraftSlot}
-        onRemoveDraft={removeDraftSlot}
-        onSaveDrafts={saveSlots}
-        onSuggestRandom={() => setSlotDrafts((current) => appendRandomSlots(current))}
-        setDraft={setDraft}
-        slotDrafts={slotDrafts}
+      <RichterSummarySection
+        caseName={overview.name}
+        finalSlotText={finalSlotLabel}
       />
+      <div className="grid grid-cols-2">
+        <DraftSlotsSection
+          draft={draft}
+          error={fetcherError}
+          onAddDraft={addDraftSlot}
+          onRemoveDraft={removeDraftSlot}
+          onSaveDrafts={saveSlots}
+          onSuggestRandom={() =>
+            setSlotDrafts((current) => appendRandomSlots(current))
+          }
+          setDraft={setDraft}
+          slotDrafts={slotDrafts}
+        />
+        <PartyAccessSection overview={overview} />
+      </div>
       <SlotsTableSection overview={overview} />
-      <PartyAccessSection overview={overview} />
     </Shell>
   );
 }
@@ -103,7 +124,9 @@ export function ErrorBoundary() {
   return <RouteErrorBoundary title="Richter - Management" />;
 }
 
-function parseRichterActionIntent(value: FormDataEntryValue | null): RichterActionIntent | null {
+function parseRichterActionIntent(
+  value: FormDataEntryValue | null,
+): RichterActionIntent | null {
   if (value === "setSlots") {
     return "setSlots";
   }
@@ -122,7 +145,10 @@ function parseRichterActionIntent(value: FormDataEntryValue | null): RichterActi
   return null;
 }
 
-function executeActionIntent(intent: RichterActionIntent, formData: FormData): ActionResult {
+function executeActionIntent(
+  intent: RichterActionIntent,
+  formData: FormData,
+): ActionResult {
   if (intent === "setSlots") return handleSetSlots(formData);
   if (intent === "deleteSlot") return handleDeleteSlot(formData);
   if (intent === "deleteAllSlots") return handleDeleteAllSlots();
@@ -139,7 +165,10 @@ function handleSetSlots(formData: FormData): ActionResult {
   const slotsJson = slotsEntry ?? "[]";
   let slotRanges: Array<{ startsAtIso: string; endsAtIso: string }>;
   try {
-    slotRanges = JSON.parse(slotsJson) as Array<{ startsAtIso: string; endsAtIso: string }>;
+    slotRanges = JSON.parse(slotsJson) as Array<{
+      startsAtIso: string;
+      endsAtIso: string;
+    }>;
   } catch {
     return { error: "Invalid slot data." };
   }
@@ -180,7 +209,9 @@ function handleUnlock(formData: FormData): ActionResult {
 }
 
 function getFinalSlotLabel(overview: OverviewDto): string {
-  const finalSlot = overview.slots.find((slot) => slot.id === overview.finalSlotId);
+  const finalSlot = overview.slots.find(
+    (slot) => slot.id === overview.finalSlotId,
+  );
   if (!finalSlot) {
     return "None yet";
   }
