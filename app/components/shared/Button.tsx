@@ -7,17 +7,13 @@ export type ButtonProps = Omit<
   "style"
 > & {
   style?: ButtonStyle;
-  iconLeft?: ReactNode;
-  iconRight?: ReactNode;
-  label?: ReactNode;
+  children?: ReactNode;
 };
 
 export function Button({
   style = "primary",
   className,
-  iconLeft,
-  iconRight,
-  label = "",
+  children,
   ...buttonProps
 }: Readonly<ButtonProps>) {
   const styleClassMap: Record<ButtonStyle, string> = {
@@ -32,9 +28,7 @@ export function Button({
 
   return (
     <button className={classes} {...buttonProps}>
-      {iconLeft || null}
-      {label && <span className="kern-label">{label}</span>}
-      {iconRight || null}
+      {children}
     </button>
   );
 }

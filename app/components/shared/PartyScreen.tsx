@@ -92,15 +92,14 @@ export function PartyScreen({
           style="primary"
           disabled={hasSubmitted || overview.slots.length === 0}
           type="submit"
-          label="Submit"
           aria-label="submit time slots"
-          iconLeft={
-            <span
-              className="kern-icon kern-icon--check kern-icon--default"
-              aria-hidden="true"
-            ></span>
-          }
-        />
+        >
+          <span
+            className="kern-icon kern-icon--check kern-icon--default"
+            aria-hidden="true"
+          ></span>
+          <span className="kern-label">Submit</span>
+        </Button>
       </Form>
     </Shell>
   );

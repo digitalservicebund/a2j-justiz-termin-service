@@ -77,16 +77,13 @@ export function DraftSlotsSection({
             }
           />
         </div>
-        <Button
-          type="submit"
-          style="secondary"
-          iconLeft={
-            <span
-              className="kern-icon kern-icon--add kern-icon--default"
-              aria-hidden="true"
-            ></span>
-          }
-        />
+        <Button type="submit" style="secondary">
+          <span
+            className="kern-icon kern-icon--add kern-icon--default"
+            aria-hidden="true"
+          ></span>
+          <span className="kern-label">Add slot</span>
+        </Button>
       </form>
       {slotDrafts.length > 0 && (
         <ul className="divide-y divide-slate-100 overflow-hidden rounded-2xl bg-slate-50">
@@ -99,17 +96,10 @@ export function DraftSlotsSection({
                 {new Date(slot.startsAtLocal).toLocaleString("de-DE")} –{" "}
                 {new Date(slot.endsAtLocal).toLocaleString("de-DE")}
               </span>
-              <Button
-                onClick={() => onRemoveDraft(index)}
-                type="button"
-                style="tertiary"
-                iconLeft={
-                  <span
-                    className="kern-icon kern-icon--delete"
-                    aria-hidden="true"
-                  />
-                }
-              />
+              <Button onClick={() => onRemoveDraft(index)} type="button" style="tertiary">
+                <span className="kern-icon kern-icon--delete" aria-hidden="true" />
+                <span className="kern-label">Remove</span>
+              </Button>
             </li>
           ))}
         </ul>
@@ -120,27 +110,25 @@ export function DraftSlotsSection({
           style="secondary"
           onClick={onSuggestRandom}
           type="button"
-          label="Random slots"
-          iconLeft={
-            <span
-              className="kern-icon kern-icon--autorenew kern-icon--default"
-              aria-hidden="true"
-            ></span>
-          }
-        />
+        >
+          <span
+            className="kern-icon kern-icon--autorenew kern-icon--default"
+            aria-hidden="true"
+          ></span>
+          <span className="kern-label">Random slots</span>
+        </Button>
         <Button
           style="primary"
           disabled={slotDrafts.length === 0}
           onClick={onSaveDrafts}
           type="button"
-          label="Save time slots"
-          iconLeft={
-            <span
-              className="kern-icon kern-icon--check kern-icon--default"
-              aria-hidden="true"
-            ></span>
-          }
-        />
+        >
+          <span
+            className="kern-icon kern-icon--check kern-icon--default"
+            aria-hidden="true"
+          ></span>
+          <span className="kern-label">Save time slots</span>
+        </Button>
       </div>
 
       {error && <InlineError message={error} />}
@@ -175,8 +163,7 @@ export function SlotsTableSection({
       {hasMultipleMutualsWithoutFinal && (
         <Alert
           type="warning"
-          title=" Multiple slots were mutually accepted. Please confirm one as the
-            final appointment."
+          title="Multiple slots were mutually accepted. Please confirm one as the final appointment."
         />
       )}
 
@@ -299,14 +286,15 @@ export function SlotsTableSection({
               onClick={() => deleteAllSlots()}
               disabled={isLoading}
               type="button"
-              label={state === "submitting" ? "Deleting…" : "Delete all slots"}
-              iconLeft={
-                <span
-                  className="kern-icon kern-icon--delete kern-icon--default"
-                  aria-hidden="true"
-                ></span>
-              }
-            />
+            >
+              <span
+                className="kern-icon kern-icon--delete kern-icon--default"
+                aria-hidden="true"
+              ></span>
+              <span className="kern-label">
+                {state === "submitting" ? "Deleting…" : "Delete all slots"}
+              </span>
+            </Button>
           </div>
         </>
       )}
@@ -365,15 +353,14 @@ function PartyRow({
         title={hasSubmitted ? "Unlock submission" : "Submission open"}
         aria-label={hasSubmitted ? "Unlock submission" : "Submission open"}
         style="tertiary"
-        iconLeft={
-          <span
-            className="material-symbols-outlined text-[18px] leading-none select-none"
-            aria-hidden="true"
-          >
-            {hasSubmitted ? "lock" : "lock_open"}
-          </span>
-        }
-      />
+      >
+        <span
+          className="material-symbols-outlined text-[18px] leading-none select-none"
+          aria-hidden="true"
+        >
+          {hasSubmitted ? "lock" : "lock_open"}
+        </span>
+      </Button>
     </Card>
   );
 }
