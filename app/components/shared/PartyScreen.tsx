@@ -1,6 +1,7 @@
 import { Form, useActionData } from "react-router";
 import Alert from "~/components/shared/Alert";
 import { Card } from "~/components/shared/Card";
+import InputRadios from "~/components/shared/InputRadios";
 import {
   formatSlotRange,
   InlineError,
@@ -50,78 +51,51 @@ export function PartyScreen({
         </p>
         <h2 className="kern-heading-medium">{overview.name}</h2>
       </Card>
-      {hasSubmitted && (
+      {hasSubmitted ? (
         <Alert
           type="success"
           title="Submitted"
           message="Submission is locked. Only the Richter can unlock it."
         />
+      ) : (
+        <Alert
+          type="info"
+          title="Please accept or reject every time slot below, then submit."
+        />
       )}
 
       {/* Supporting: form card wrapping pure kern components */}
-      <Card>
-        <Form key={decisionKey} method="post" className="space-y-4">
-          <div className="space-y-4 p-0">
-            <div className="rounded-2xl border border-green-200 bg-green-50 px-5 py-4 text-sm font-medium text-green-800">
-              Please accept or reject every time slot below, then submit.
-            </div>
-            <hr className="kern-divider" aria-hidden="true" />
-          </div>
-          {overview.slots.length === 0 ? (
-            <p className="kern-body">No time slots available yet.</p>
-          ) : (
-            overview.slots.map((slot) => (
-              <fieldset
-                key={slot.id}
-                className="kern-fieldset"
+      <Form key={decisionKey} method="post" className="space-y-6">
+        {overview.slots.length === 0 ? (
+          <Alert type="warning" title="No time slots available yet" />
+        ) : (
+          overview.slots.map((slot) => (
+            <Card key={slot.id}>
+              <InputRadios
+                legend={formatSlotRange(slot.startsAtIso, slot.endsAtIso)}
+                name={slot.id}
+                legendLarge
                 disabled={hasSubmitted}
-              >
-                <legend className="kern-label kern-label--large">
-                  {formatSlotRange(slot.startsAtIso, slot.endsAtIso)}
-                </legend>
-                <div className="kern-fieldset__body">
-                  <div className="kern-form-check">
-                    <input
-                      type="radio"
-                      className="kern-form-check__radio"
-                      id={`${slot.id}-accept`}
-                      name={slot.id}
-                      value="ACCEPT"
-                      defaultChecked={existingDecisionMap[slot.id] === "ACCEPT"}
-                    />
-                    <label className="kern-label" htmlFor={`${slot.id}-accept`}>
-                      Accept
-                    </label>
-                  </div>
-                  <div className="kern-form-check">
-                    <input
-                      type="radio"
-                      className="kern-form-check__radio"
-                      id={`${slot.id}-reject`}
-                      name={slot.id}
-                      value="REJECT"
-                      defaultChecked={existingDecisionMap[slot.id] === "REJECT"}
-                    />
-                    <label className="kern-label" htmlFor={`${slot.id}-reject`}>
-                      Reject
-                    </label>
-                  </div>
-                </div>
-              </fieldset>
-            ))
-          )}
+                defaultValue={existingDecisionMap[slot.id]}
+                options={[
+                  { value: "ACCEPT", label: "Accept" },
+                  { value: "REJECT", label: "Reject" },
+                ]}
+              />
+            </Card>
+          ))
+        )}
 
-          {actionData?.error && <InlineError message={actionData.error} />}
+        {actionData?.error && <InlineError message={actionData.error} />}
 
-          <button
-            className="kern-btn kern-btn--primary"
-            disabled={hasSubmitted || overview.slots.length === 0}
-            type="submit"
-          >
-            <span className="kern-label">Submit decisions</span>
-          </button>
-        </Form>
-      </Card>
+        <button
+          className="kern-btn kern-btn--primary"
+          disabled={hasSubmitted || overview.slots.length === 0}
+          type="submit"
+        >
+          <span className="kern-label">Submit decisions</span>
+        </button>
+      </Form>
     </Shell>
   );
 }
