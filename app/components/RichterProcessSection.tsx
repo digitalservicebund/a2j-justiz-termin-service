@@ -1,7 +1,7 @@
+import { Badge, type BadgeType } from "~/components/shared/Badge";
 import { Card } from "~/components/shared/Card";
 import { formatSlotRange } from "~/components/shared/SchedulingShared";
 import type { OverviewDto } from "~/core/services/schedulingQuery";
-import { Badge, type BadgeType } from "~/components/shared/Badge";
 
 type Stage1Status = "not-started" | "complete";
 type Stage2Status = "not-started" | "in-progress" | "no-agreement" | "complete";
@@ -59,51 +59,51 @@ export function RichterProcessSection({
       <p className="mb-1 text-xs font-semibold tracking-widest text-slate-400 uppercase">
         Case
       </p>
-      <h2 className="kern-heading-medium mb-kern-space-default">
-        {overview.name}
-      </h2>
       <div className="kern-task-list">
-        <div className="kern-task-list-group">
-          <ul className="kern-task-list__list">
-            <li className="kern-task-list__item">
-              <span className="kern-number">1</span>
-              <div className="kern-task-list__title">
-                <p className="kern-body">Create time slots</p>
-              </div>
-              <div className="kern-task-list__status">
+        <div className="kern-task-list__header">
+          <h2 className="kern-heading-medium"> {overview.name}</h2>
+        </div>
+        <ul className="kern-task-list__list">
+          <li className="kern-task-list__item">
+            <span className="kern-number">1</span>
+            <div className="kern-task-list__title" id="task1-title">
+              <p className="kern-body">Create time slots</p>
+              <div className="kern-task-list__status" id="task1-status">
+                {" "}
                 <TaskBadge {...stage1Config[stage1Status]} />
               </div>
-            </li>
-            <li className="kern-task-list__item">
-              <span className="kern-number">2</span>
-              <div className="kern-task-list__title">
-                <p className="kern-body">Collect responses</p>
-              </div>
-              <div className="kern-task-list__status">
+            </div>
+          </li>
+          <li className="kern-task-list__item">
+            <span className="kern-number">2</span>
+            <div className="kern-task-list__title" id="task2-title">
+              <p className="kern-body">Collect responses</p>
+              <div className="kern-task-list__status" id="task2-status">
+                {" "}
                 <TaskBadge {...stage2Config[stage2Status]} />
               </div>
-            </li>
-            <li className="kern-task-list__item">
-              <span className="kern-number">3</span>
-              <div className="kern-task-list__title">
-                <div className="flex flex-col">
-                  <p className="kern-body">Confirm appointment</p>
-                  {finalSlot && (
-                    <p className="kern-hint">
-                      {formatSlotRange(
-                        finalSlot.startsAtIso,
-                        finalSlot.endsAtIso,
-                      )}
-                    </p>
-                  )}
-                </div>
+            </div>
+          </li>
+          <li className="kern-task-list__item">
+            <span className="kern-number">3</span>
+            <div className="kern-task-list__title">
+              <div className="flex flex-col">
+                <p className="kern-body">Confirm appointment</p>
+                {finalSlot && (
+                  <p className="kern-hint">
+                    {formatSlotRange(
+                      finalSlot.startsAtIso,
+                      finalSlot.endsAtIso,
+                    )}
+                  </p>
+                )}
               </div>
-              <div className="kern-task-list__status">
-                <TaskBadge {...stage3Config[stage3Status]} />
-              </div>
-            </li>
-          </ul>
-        </div>
+            </div>
+            <div className="kern-task-list__status">
+              <TaskBadge {...stage3Config[stage3Status]} />
+            </div>
+          </li>
+        </ul>
       </div>
     </Card>
   );

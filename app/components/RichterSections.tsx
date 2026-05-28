@@ -1,42 +1,11 @@
 import type { ComponentProps, Dispatch, SetStateAction } from "react";
-import {
-  generateRandomSlotDrafts,
-  type SlotDraft,
-} from "~/components/richterHelpers";
+import { generateRandomSlotDrafts, type SlotDraft, } from "~/components/richterHelpers";
 import { Badge } from "~/components/shared/Badge";
 import { Card } from "~/components/shared/Card";
-import {
-  formatSlotRange,
-  InlineError,
-} from "~/components/shared/SchedulingShared";
+import { formatSlotRange, InlineError, } from "~/components/shared/SchedulingShared";
 import type { Decision, PartyRole } from "~/core/domain/verfahren";
 import type { OverviewDto } from "~/core/services/schedulingQuery";
 import { useRichterActions } from "~/hooks/useRichterActions";
-
-export function RichterSummarySection({
-  caseName,
-  finalSlotText,
-}: {
-  readonly caseName: string;
-  readonly finalSlotText: string;
-}) {
-  return (
-    <Card className="flex items-start justify-between">
-      <div>
-        <p className="mb-1 text-xs font-semibold tracking-widest text-slate-400 uppercase">
-          Case
-        </p>
-        <h2 className="kern-heading-medium">{caseName}</h2>
-      </div>
-      <div className="shrink-0 text-right">
-        <p className="mb-1 text-xs font-semibold tracking-widest text-slate-400 uppercase">
-          Final appointment
-        </p>
-        <p className="text-sm font-medium text-slate-700">{finalSlotText}</p>
-      </div>
-    </Card>
-  );
-}
 
 export function DraftSlotsSection({
   draft,
@@ -165,7 +134,6 @@ export function DraftSlotsSection({
   );
 }
 
-// Supporting: decision badge (not a kern component)
 function DecisionBadge({ decision }: { readonly decision?: Decision | null }) {
   if (!decision) return <span className="text-sm text-slate-400">—</span>;
   if (decision === "ACCEPT") {
