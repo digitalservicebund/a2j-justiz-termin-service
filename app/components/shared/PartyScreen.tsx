@@ -2,6 +2,7 @@ import { Form, useActionData } from "react-router";
 import type { AuthUser } from "~/core/domain/user";
 import type { PartyRole } from "~/core/domain/verfahren";
 import { formatSlotRange, InlineError, loadOverview, Shell } from "~/components/shared/SchedulingShared";
+import { Card } from "~/components/shared/Card";
 
 type Overview = Awaited<ReturnType<typeof loadOverview>>;
 
@@ -33,10 +34,10 @@ export function PartyScreen({
   return (
     <Shell title={`${roleLabel} – Response`} user={user}>
       {/* Supporting: case name card */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+      <Card>
         <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-1">Case</p>
         <h2 className="kern-heading-medium">{overview.name}</h2>
-      </div>
+      </Card>
 
       {/* Supporting: lock / open status banner */}
       {isLocked ? (
@@ -53,7 +54,7 @@ export function PartyScreen({
       )}
 
       {/* Supporting: form card wrapping pure kern components */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+      <Card>
         <Form key={decisionKey} method="post" className="space-y-4">
           {overview.slots.length === 0 ? (
             <p className="kern-body">No time slots available yet.</p>
@@ -105,7 +106,7 @@ export function PartyScreen({
             <span className="kern-label">Submit decisions</span>
           </button>
         </Form>
-      </div>
+      </Card>
     </Shell>
   );
 }

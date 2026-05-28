@@ -7,6 +7,7 @@ import {
   type SlotDraft,
 } from "~/components/richterHelpers";
 import { useRichterActions } from "~/hooks/useRichterActions";
+import { Card } from "~/components/shared/Card";
 
 export function RichterSummarySection({
   caseName,
@@ -16,8 +17,7 @@ export function RichterSummarySection({
   readonly finalSlotText: string;
 }) {
   return (
-    // Supporting: card layout
-    <section className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 flex items-start justify-between gap-6">
+    <Card className='flex items-start justify-between'>
       <div>
         <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-1">Case</p>
         <h2 className="kern-heading-medium">{caseName}</h2>
@@ -28,7 +28,7 @@ export function RichterSummarySection({
         </p>
         <p className="text-sm font-medium text-slate-700">{finalSlotText}</p>
       </div>
-    </section>
+    </Card>
   );
 }
 
@@ -52,10 +52,8 @@ export function DraftSlotsSection({
   readonly error: string | null;
 }) {
   return (
-    // Supporting: card container
-    <section className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-5">
+   <Card className='space-y-kern-space-large'>
       <h3 className="kern-heading-small">Prepare new time slots</h3>
-
       <form className="flex flex-wrap gap-4 items-end" onSubmit={onAddDraft}>
         <div className="kern-form-input">
           <label className="kern-label" htmlFor="starts-at">
@@ -132,7 +130,8 @@ export function DraftSlotsSection({
       </div>
 
       {error && <InlineError message={error} />}
-    </section>
+   </Card>
+
   );
 }
 
@@ -167,9 +166,7 @@ export function SlotsTableSection({
     !overview.finalSlotId;
 
   return (
-    // Supporting: card container, table flushes to edges
-    <section className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-      {/* Supporting: section header */}
+    <Card className='space-y-kern-space-large'>
       <div className="px-6 py-4 border-b border-slate-100">
         <h3 className="kern-heading-small">Time slots</h3>
       </div>
@@ -302,7 +299,7 @@ export function SlotsTableSection({
           </div>
         </>
       )}
-    </section>
+    </Card>
   );
 }
 
@@ -312,8 +309,7 @@ export function PartyAccessSection({
   readonly overview: OverviewDto;
 }) {
   return (
-    // Supporting: card container
-    <section className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
+    <Card className='space-y-kern-space-small'>
       <h3 className="kern-heading-small">Party submission access</h3>
       <div className="space-y-3">
         <PartyRow
@@ -329,7 +325,7 @@ export function PartyAccessSection({
           partyRole="BEKLAGTER"
         />
       </div>
-    </section>
+    </Card>
   );
 }
 
