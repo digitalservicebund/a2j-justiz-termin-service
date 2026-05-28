@@ -9,13 +9,13 @@ import {
 } from "~/bootstrap";
 import type { SlotDraft } from "~/components/richterHelpers";
 import { createEmptyDraft, toIsoSlotRanges } from "~/components/richterHelpers";
+import { RichterProcessSection } from "~/components/RichterProcessSection";
 import {
   appendRandomSlots,
   DraftSlotsSection,
   PartyAccessSection,
   SlotsTableSection,
 } from "~/components/RichterSections";
-import { RichterProcessSection } from "~/components/RichterProcessSection";
 import {
   RouteErrorBoundary,
   Shell,

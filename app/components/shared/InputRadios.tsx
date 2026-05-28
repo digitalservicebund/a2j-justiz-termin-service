@@ -32,11 +32,9 @@ export default function InputRadios({
 
   return (
     <fieldset className="kern-fieldset" disabled={disabled}>
-      <legend className={`kern-label${legendLarge ? " kern-label--large" : ""}`}>
+      <legend className={`kern-label${legendLarge ? "kern-label--large" : ""}`}>
         {legend}
-        {optional && (
-          <span className="kern-label__optional"> - Optional</span>
-        )}
+        {optional && <span className="kern-label__optional"> - Optional</span>}
       </legend>
       <div className="kern-fieldset__body">
         {options.map((option) => {

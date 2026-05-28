@@ -3,6 +3,7 @@ import {
   generateRandomSlotDrafts,
   type SlotDraft,
 } from "~/components/richterHelpers";
+import Alert from "~/components/shared/Alert";
 import { Badge } from "~/components/shared/Badge";
 import { Button } from "~/components/shared/Button";
 import { Card } from "~/components/shared/Card";
@@ -13,7 +14,6 @@ import {
 import type { Decision, PartyRole } from "~/core/domain/verfahren";
 import type { OverviewDto } from "~/core/services/schedulingQuery";
 import { useRichterActions } from "~/hooks/useRichterActions";
-import Alert from "~/components/shared/Alert";
 
 export function DraftSlotsSection({
   draft,
@@ -96,8 +96,15 @@ export function DraftSlotsSection({
                 {new Date(slot.startsAtLocal).toLocaleString("de-DE")} –{" "}
                 {new Date(slot.endsAtLocal).toLocaleString("de-DE")}
               </span>
-              <Button onClick={() => onRemoveDraft(index)} type="button" style="tertiary">
-                <span className="kern-icon kern-icon--delete" aria-hidden="true" />
+              <Button
+                onClick={() => onRemoveDraft(index)}
+                type="button"
+                style="tertiary"
+              >
+                <span
+                  className="kern-icon kern-icon--delete"
+                  aria-hidden="true"
+                />
                 <span className="kern-label">Remove</span>
               </Button>
             </li>
@@ -106,11 +113,7 @@ export function DraftSlotsSection({
       )}
 
       <div className="gap-kern-space-small flex flex-wrap">
-        <Button
-          style="secondary"
-          onClick={onSuggestRandom}
-          type="button"
-        >
+        <Button style="secondary" onClick={onSuggestRandom} type="button">
           <span
             className="kern-icon kern-icon--autorenew kern-icon--default"
             aria-hidden="true"
