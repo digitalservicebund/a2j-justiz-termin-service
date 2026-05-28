@@ -13,6 +13,7 @@ import {
 import type { Decision, PartyRole } from "~/core/domain/verfahren";
 import type { OverviewDto } from "~/core/services/schedulingQuery";
 import { useRichterActions } from "~/hooks/useRichterActions";
+import Alert from "~/components/shared/Alert";
 
 export function DraftSlotsSection({
   draft,
@@ -171,14 +172,12 @@ export function SlotsTableSection({
 
   return (
     <Card className="space-y-kern-space-large">
-      {/* Supporting: mutual-slots warning banner */}
       {hasMultipleMutualsWithoutFinal && (
-        <div className="px-6 pt-4">
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Multiple slots were mutually accepted. Please confirm one as the
-            final appointment.
-          </div>
-        </div>
+        <Alert
+          type="warning"
+          title=" Multiple slots were mutually accepted. Please confirm one as the
+            final appointment."
+        />
       )}
 
       {overview.slots.length === 0 ? (
