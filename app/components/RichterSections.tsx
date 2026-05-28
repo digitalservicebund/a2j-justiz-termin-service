@@ -1,8 +1,14 @@
 import type { ComponentProps, Dispatch, SetStateAction } from "react";
-import { generateRandomSlotDrafts, type SlotDraft, } from "~/components/richterHelpers";
+import {
+  generateRandomSlotDrafts,
+  type SlotDraft,
+} from "~/components/richterHelpers";
 import { Badge } from "~/components/shared/Badge";
 import { Card } from "~/components/shared/Card";
-import { formatSlotRange, InlineError, } from "~/components/shared/SchedulingShared";
+import {
+  formatSlotRange,
+  InlineError,
+} from "~/components/shared/SchedulingShared";
 import type { Decision, PartyRole } from "~/core/domain/verfahren";
 import type { OverviewDto } from "~/core/services/schedulingQuery";
 import { useRichterActions } from "~/hooks/useRichterActions";
@@ -30,7 +36,7 @@ export function DraftSlotsSection({
     <Card className="space-y-kern-space-large">
       <h3 className="kern-heading-small">Prepare new time slots</h3>
       <form
-        className="space-y-kern-space-small space-x-kern-space-small flex flex-wrap items-end"
+        className="space-y-kern-space-small space-x-kern-space-small"
         onSubmit={onAddDraft}
       >
         <div className="kern-form-input">
@@ -103,7 +109,7 @@ export function DraftSlotsSection({
         </ul>
       )}
 
-      <div className="flex flex-wrap gap-3">
+      <div className="gap-kern-space-small flex flex-wrap">
         <button
           className="kern-btn kern-btn--secondary"
           onClick={onSuggestRandom}
@@ -340,7 +346,7 @@ function PartyRow({
 
   return (
     <Card className="space-y-kern-space-small flex items-center justify-between">
-      <div className="space-x-kern-space-small flex items-center">
+      <div className="gap-kern-space-small flex items-center">
         <span className="kern-title kern-title--small">{label}</span>
         <Badge
           type={hasSubmitted ? "success" : "warning"}
