@@ -10,6 +10,7 @@ import {
   ScrollRestoration,
 } from "react-router";
 
+import type { ReactNode } from "react";
 import type { Route } from "./+types/root";
 import "./app.css";
 
@@ -38,7 +39,7 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
-export function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
+export function Layout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en">
       <head>
@@ -46,6 +47,7 @@ export function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
+        <title>Justitz Termin Service</title>
       </head>
       <body>
         {children}

@@ -1,4 +1,4 @@
-import { type ComponentProps, useState } from "react";
+import { type SyntheticEvent, useState } from "react";
 import { useFetcher, useLoaderData } from "react-router";
 import { requireRole } from "~/adapters/session/session";
 import {
@@ -69,7 +69,7 @@ export default function RichterRoute() {
   const [draft, setDraft] = useState<SlotDraft>(createEmptyDraft);
   const [slotDrafts, setSlotDrafts] = useState<SlotDraft[]>([]);
 
-  const addDraftSlot: ComponentProps<"form">["onSubmit"] = (event) => {
+  const addDraftSlot = (event: SyntheticEvent) => {
     event.preventDefault();
     setSlotDrafts((current) => [...current, draft]);
     setDraft(createEmptyDraft());
@@ -200,4 +200,3 @@ function handleUnlock(formData: FormData): ActionResult {
   schedulingService.richterUnlockSubmission(DEFAULT_CASE_ID, partyRoleEntry);
   return null;
 }
-
