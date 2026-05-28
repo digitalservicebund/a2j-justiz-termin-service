@@ -373,7 +373,7 @@ function PartyRow({
   return (
     <Card className="space-y-kern-space-small flex items-center justify-between">
       <div className="space-x-kern-space-small flex items-center">
-        <span className="text-sm font-semibold text-slate-700">{label}</span>
+        <span className="kern-title kern-title--small">{label}</span>
         <Badge
           type={hasSubmitted ? "success" : "warning"}
           label={hasSubmitted ? "Submitted" : "Pending"}

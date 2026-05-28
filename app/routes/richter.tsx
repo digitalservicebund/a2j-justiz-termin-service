@@ -13,15 +13,13 @@ import {
   appendRandomSlots,
   DraftSlotsSection,
   PartyAccessSection,
-  RichterSummarySection,
   SlotsTableSection,
 } from "~/components/RichterSections";
+import { RichterProcessSection } from "~/components/RichterProcessSection";
 import {
-  formatSlotRange,
   RouteErrorBoundary,
   Shell,
 } from "~/components/shared/SchedulingShared";
-import type { OverviewDto } from "~/core/services/schedulingQuery";
 
 type RichterActionIntent =
   | "setSlots"
@@ -71,8 +69,6 @@ export default function RichterRoute() {
   const [draft, setDraft] = useState<SlotDraft>(createEmptyDraft);
   const [slotDrafts, setSlotDrafts] = useState<SlotDraft[]>([]);
 
-  const finalSlotLabel = getFinalSlotLabel(overview);
-
   const addDraftSlot: ComponentProps<"form">["onSubmit"] = (event) => {
     event.preventDefault();
     setSlotDrafts((current) => [...current, draft]);
@@ -96,10 +92,7 @@ export default function RichterRoute() {
 
   return (
     <Shell title="Richter - Management" user={user}>
-      <RichterSummarySection
-        caseName={overview.name}
-        finalSlotText={finalSlotLabel}
-      />
+      <RichterProcessSection overview={overview} />
       <div className="grid grid-cols-2">
         <DraftSlotsSection
           draft={draft}
@@ -208,13 +201,3 @@ function handleUnlock(formData: FormData): ActionResult {
   return null;
 }
 
-function getFinalSlotLabel(overview: OverviewDto): string {
-  const finalSlot = overview.slots.find(
-    (slot) => slot.id === overview.finalSlotId,
-  );
-  if (!finalSlot) {
-    return "None yet";
-  }
-
-  return formatSlotRange(finalSlot.startsAtIso, finalSlot.endsAtIso);
-}
