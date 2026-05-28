@@ -4,6 +4,7 @@ import {
   type SlotDraft,
 } from "~/components/richterHelpers";
 import { Badge } from "~/components/shared/Badge";
+import { Button } from "~/components/shared/Button";
 import { Card } from "~/components/shared/Card";
 import {
   formatSlotRange,
@@ -75,12 +76,16 @@ export function DraftSlotsSection({
             }
           />
         </div>
-        <button className="kern-btn kern-btn--secondary" type="submit">
-          <span
-            className="kern-icon kern-icon--add kern-icon--default"
-            aria-hidden="true"
-          ></span>
-        </button>
+        <Button
+          type="submit"
+          style="secondary"
+          iconLeft={
+            <span
+              className="kern-icon kern-icon--add kern-icon--default"
+              aria-hidden="true"
+            ></span>
+          }
+        />
       </form>
       {slotDrafts.length > 0 && (
         <ul className="divide-y divide-slate-100 overflow-hidden rounded-2xl bg-slate-50">
@@ -93,46 +98,48 @@ export function DraftSlotsSection({
                 {new Date(slot.startsAtLocal).toLocaleString("de-DE")} –{" "}
                 {new Date(slot.endsAtLocal).toLocaleString("de-DE")}
               </span>
-              <button
-                className="kern-btn kern-btn--tertiary kern-btn--x-small"
+              <Button
                 onClick={() => onRemoveDraft(index)}
                 type="button"
-              >
-                <span
-                  className="kern-icon kern-icon--delete"
-                  aria-hidden="true"
-                />
-                <span className="kern-label kern-sr-only">Remove</span>
-              </button>
+                style="tertiary"
+                iconLeft={
+                  <span
+                    className="kern-icon kern-icon--delete"
+                    aria-hidden="true"
+                  />
+                }
+              />
             </li>
           ))}
         </ul>
       )}
 
       <div className="gap-kern-space-small flex flex-wrap">
-        <button
-          className="kern-btn kern-btn--secondary"
+        <Button
+          style="secondary"
           onClick={onSuggestRandom}
           type="button"
-        >
-          <span className="kern-label">Random slots</span>
-          <span
-            className="kern-icon kern-icon--autorenew kern-icon--default"
-            aria-hidden="true"
-          ></span>
-        </button>
-        <button
-          className="kern-btn kern-btn--primary"
+          label="Random slots"
+          iconLeft={
+            <span
+              className="kern-icon kern-icon--autorenew kern-icon--default"
+              aria-hidden="true"
+            ></span>
+          }
+        />
+        <Button
+          style="primary"
           disabled={slotDrafts.length === 0}
           onClick={onSaveDrafts}
           type="button"
-        >
-          <span className="kern-label">Save time slots</span>
-          <span
-            className="kern-icon kern-icon--check kern-icon--default"
-            aria-hidden="true"
-          ></span>
-        </button>
+          label="Save time slots"
+          iconLeft={
+            <span
+              className="kern-icon kern-icon--check kern-icon--default"
+              aria-hidden="true"
+            ></span>
+          }
+        />
       </div>
 
       {error && <InlineError message={error} />}
@@ -288,20 +295,19 @@ export function SlotsTableSection({
             </table>
           </div>
           <div className="px-6 py-4">
-            <button
-              className="kern-btn kern-btn--secondary"
+            <Button
+              style="secondary"
               onClick={() => deleteAllSlots()}
               disabled={isLoading}
               type="button"
-            >
-              <span className="kern-label">
-                {state === "submitting" ? "Deleting…" : "Delete all slots"}
-              </span>
-              <span
-                className="kern-icon kern-icon--delete kern-icon--default"
-                aria-hidden="true"
-              ></span>
-            </button>
+              label={state === "submitting" ? "Deleting…" : "Delete all slots"}
+              iconLeft={
+                <span
+                  className="kern-icon kern-icon--delete kern-icon--default"
+                  aria-hidden="true"
+                ></span>
+              }
+            />
           </div>
         </>
       )}
@@ -353,21 +359,22 @@ function PartyRow({
           label={hasSubmitted ? "Submitted" : "Pending"}
         />
       </div>
-      <button
-        className="kern-btn kern-btn--tertiary kern-btn--x-small"
+      <Button
         onClick={() => unlock(partyRole)}
         disabled={!hasSubmitted || isLoading}
         type="button"
         title={hasSubmitted ? "Unlock submission" : "Submission open"}
         aria-label={hasSubmitted ? "Unlock submission" : "Submission open"}
-      >
-        <span
-          className="material-symbols-outlined text-[18px] leading-none select-none"
-          aria-hidden="true"
-        >
-          {hasSubmitted ? "lock" : "lock_open"}
-        </span>
-      </button>
+        style="tertiary"
+        iconLeft={
+          <span
+            className="material-symbols-outlined text-[18px] leading-none select-none"
+            aria-hidden="true"
+          >
+            {hasSubmitted ? "lock" : "lock_open"}
+          </span>
+        }
+      />
     </Card>
   );
 }

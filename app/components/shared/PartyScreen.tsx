@@ -1,5 +1,6 @@
 import { Form, useActionData } from "react-router";
 import Alert from "~/components/shared/Alert";
+import { Button } from "~/components/shared/Button";
 import { Card } from "~/components/shared/Card";
 import InputRadios from "~/components/shared/InputRadios";
 import {
@@ -87,14 +88,19 @@ export function PartyScreen({
         )}
 
         {actionData?.error && <InlineError message={actionData.error} />}
-
-        <button
-          className="kern-btn kern-btn--primary"
+        <Button
+          style="primary"
           disabled={hasSubmitted || overview.slots.length === 0}
           type="submit"
-        >
-          <span className="kern-label">Submit decisions</span>
-        </button>
+          label="Submit"
+          aria-label="submit time slots"
+          iconLeft={
+            <span
+              className="kern-icon kern-icon--check kern-icon--default"
+              aria-hidden="true"
+            ></span>
+          }
+        />
       </Form>
     </Shell>
   );
