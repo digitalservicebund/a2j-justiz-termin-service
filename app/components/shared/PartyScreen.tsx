@@ -47,9 +47,7 @@ export function PartyScreen({
   return (
     <Shell title={`${roleLabel} – Response`} user={user}>
       <Card>
-        <p className="mb-1 text-xs font-semibold tracking-widest text-slate-400 uppercase dark:text-slate-500">
-          Case
-        </p>
+        <p className="kern-body kern-body--muted">Case</p>
         <h2 className="kern-heading-medium">{overview.name}</h2>
       </Card>
       {hasSubmitted ? (
