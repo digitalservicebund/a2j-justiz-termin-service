@@ -23,13 +23,14 @@ import {
   RouteErrorBoundary,
   Shell,
 } from "~/components/shared/SchedulingShared";
-
-type RichterActionIntent =
-  | "setSlots"
-  | "deleteSlot"
-  | "deleteAllSlots"
-  | "confirmSlot"
-  | "unlock";
+import {
+  ConfirmSlotPayloadSchema,
+  DeleteSlotPayloadSchema,
+  RichterActionIntentSchema,
+  SetSlotsPayloadSchema,
+  UnlockPayloadSchema,
+  type RichterActionIntent,
+} from "~/routes/richter.schema";
 
 type ActionResult = { error: string } | null;
 
@@ -40,14 +41,12 @@ export async function loader({ request }: { request: Request }) {
 }
 
 export async function action({ request }: { request: Request }) {
-  const formData = await request.formData();
-  const intent = parseRichterActionIntent(formData.get("intent"));
-  if (!intent) {
-    return null;
-  }
+  const raw = Object.fromEntries(await request.formData());
+  const intentResult = RichterActionIntentSchema.safeParse(raw.intent);
+  if (!intentResult.success) return null;
 
   try {
-    return executeActionIntent(intent, formData);
+    return executeActionIntent(intentResult.data, raw);
   } catch (error) {
     return {
       error:
@@ -120,64 +119,31 @@ export function ErrorBoundary() {
   return <RouteErrorBoundary title="Richter - Management" />;
 }
 
-function parseRichterActionIntent(
-  value: FormDataEntryValue | null,
-): RichterActionIntent | null {
-  if (value === "setSlots") {
-    return "setSlots";
-  }
-  if (value === "deleteSlot") {
-    return "deleteSlot";
-  }
-  if (value === "deleteAllSlots") {
-    return "deleteAllSlots";
-  }
-  if (value === "confirmSlot") {
-    return "confirmSlot";
-  }
-  if (value === "unlock") {
-    return "unlock";
-  }
-  return null;
-}
-
 function executeActionIntent(
   intent: RichterActionIntent,
-  formData: FormData,
+  raw: Record<string, FormDataEntryValue>,
 ): ActionResult {
-  if (intent === "setSlots") return handleSetSlots(formData);
-  if (intent === "deleteSlot") return handleDeleteSlot(formData);
+  if (intent === "setSlots") return handleSetSlots(raw);
+  if (intent === "deleteSlot") return handleDeleteSlot(raw);
   if (intent === "deleteAllSlots") return handleDeleteAllSlots();
-  if (intent === "confirmSlot") return handleConfirmSlot(formData);
-  if (intent === "unlock") return handleUnlock(formData);
+  if (intent === "confirmSlot") return handleConfirmSlot(raw);
+  if (intent === "unlock") return handleUnlock(raw);
   return null;
 }
 
-function handleSetSlots(formData: FormData): ActionResult {
-  const slotsEntry = formData.get("slots");
-  if (slotsEntry !== null && typeof slotsEntry !== "string") {
-    return { error: "Invalid slot data." };
-  }
-  const slotsJson = slotsEntry ?? "[]";
-  let slotRanges: Array<{ startsAtIso: string; endsAtIso: string }>;
-  try {
-    slotRanges = JSON.parse(slotsJson) as Array<{
-      startsAtIso: string;
-      endsAtIso: string;
-    }>;
-  } catch {
-    return { error: "Invalid slot data." };
-  }
-  schedulingService.richterSetSlots(DEFAULT_CASE_ID, slotRanges);
+function handleSetSlots(raw: Record<string, FormDataEntryValue>): ActionResult {
+  const result = SetSlotsPayloadSchema.safeParse(raw);
+  if (!result.success) return { error: "Invalid slot data." };
+  schedulingService.richterSetSlots(DEFAULT_CASE_ID, result.data.slots);
   return null;
 }
 
-function handleDeleteSlot(formData: FormData): ActionResult {
-  const slotIdEntry = formData.get("slotId");
-  if (slotIdEntry !== null && typeof slotIdEntry !== "string") {
-    return { error: "Invalid slot id." };
-  }
-  schedulingService.richterDeleteSlot(DEFAULT_CASE_ID, slotIdEntry ?? "");
+function handleDeleteSlot(
+  raw: Record<string, FormDataEntryValue>,
+): ActionResult {
+  const result = DeleteSlotPayloadSchema.safeParse(raw);
+  if (!result.success) return { error: "Invalid slot id." };
+  schedulingService.richterDeleteSlot(DEFAULT_CASE_ID, result.data.slotId);
   return null;
 }
 
@@ -186,20 +152,18 @@ function handleDeleteAllSlots(): ActionResult {
   return null;
 }
 
-function handleConfirmSlot(formData: FormData): ActionResult {
-  const slotIdEntry = formData.get("slotId");
-  if (slotIdEntry !== null && typeof slotIdEntry !== "string") {
-    return { error: "Invalid slot id." };
-  }
-  schedulingService.richterConfirmSlot(DEFAULT_CASE_ID, slotIdEntry ?? "");
+function handleConfirmSlot(
+  raw: Record<string, FormDataEntryValue>,
+): ActionResult {
+  const result = ConfirmSlotPayloadSchema.safeParse(raw);
+  if (!result.success) return { error: "Invalid slot id." };
+  schedulingService.richterConfirmSlot(DEFAULT_CASE_ID, result.data.slotId);
   return null;
 }
 
-function handleUnlock(formData: FormData): ActionResult {
-  const partyRoleEntry = formData.get("partyRole");
-  if (partyRoleEntry !== "KLAEGER" && partyRoleEntry !== "BEKLAGTER") {
-    return { error: "Invalid party role." };
-  }
-  schedulingService.richterUnlockSubmission(DEFAULT_CASE_ID, partyRoleEntry);
+function handleUnlock(raw: Record<string, FormDataEntryValue>): ActionResult {
+  const result = UnlockPayloadSchema.safeParse(raw);
+  if (!result.success) return { error: "Invalid party role." };
+  schedulingService.richterUnlockSubmission(DEFAULT_CASE_ID, result.data.partyRole);
   return null;
 }

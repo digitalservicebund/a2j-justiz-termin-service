@@ -1,10 +1,14 @@
-export type UserRole = "RICHTER" | "KLAEGER" | "BEKLAGTER";
+import { z } from "zod";
 
-export interface AuthUser {
-  id: string;
-  name: string;
-  role: UserRole;
-}
+export const UserRoleSchema = z.enum(["RICHTER", "KLAEGER", "BEKLAGTER"]);
+export type UserRole = z.infer<typeof UserRoleSchema>;
+
+export const AuthUserSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  role: UserRoleSchema,
+});
+export type AuthUser = z.infer<typeof AuthUserSchema>;
 
 export interface AuthService {
   getUserByRole(role: UserRole): AuthUser | null;

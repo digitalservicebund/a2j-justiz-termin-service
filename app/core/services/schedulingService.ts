@@ -1,47 +1,7 @@
-import type {
-  Decision,
-  PartyRole,
-  TimeSlot,
-  Verfahren,
-} from "../domain/verfahren";
-import { PARTY_ROLES } from "../domain/verfahren";
+import { z } from "zod";
+import type { Decision, PartyRole, Verfahren } from "../domain/verfahren";
+import { DecisionSchema, PARTY_ROLES, TimeSlotsSchema } from "../domain/verfahren";
 import type { VerfahrenRepository } from "../ports/verfahrenRepository";
-
-function validateSlots(slots: TimeSlot[]): void {
-  if (slots.length === 0)
-    throw new TypeError("At least one time slot is required.");
-
-  const ids = new Set<string>();
-  for (const slot of slots) {
-    if (ids.has(slot.id))
-      throw new TypeError("Each time slot must have a unique id.");
-    ids.add(slot.id);
-    const start = Date.parse(slot.startsAtIso);
-    const end = Date.parse(slot.endsAtIso);
-    if (Number.isNaN(start) || Number.isNaN(end)) {
-      throw new TypeError("A time slot must have valid ISO date strings.");
-    }
-    if (start >= end) {
-      throw new TypeError("A time slot must end after it starts.");
-    }
-  }
-}
-
-function validateDecisionMap(
-  schedulingCase: Verfahren,
-  decisionMap: Record<string, Decision>,
-): void {
-  const slotIds = new Set(schedulingCase.slots.map((s) => s.id));
-  if (Object.keys(decisionMap).length !== schedulingCase.slots.length) {
-    throw new TypeError("Please accept or reject every time slot.");
-  }
-  for (const [slotId, decision] of Object.entries(decisionMap)) {
-    if (!slotIds.has(slotId))
-      throw new TypeError("Unknown time slot in the submission.");
-    if (decision !== "ACCEPT" && decision !== "REJECT")
-      throw new TypeError("Invalid decision.");
-  }
-}
 
 function createEmptyDecisionMap(): Record<PartyRole, Record<string, Decision>> {
   return { KLAEGER: {}, BEKLAGTER: {} };
@@ -76,7 +36,8 @@ export class SchedulingService {
       startsAtIso: range.startsAtIso,
       endsAtIso: range.endsAtIso,
     }));
-    validateSlots(slots);
+    const slotsResult = TimeSlotsSchema.safeParse(slots);
+    if (!slotsResult.success) throw new TypeError(slotsResult.error.issues[0].message);
     c.slots = slots;
     c.decisionsByParty = createEmptyDecisionMap();
     c.hasSubmitted = createHasSubmittedMap();
@@ -140,7 +101,15 @@ export class SchedulingService {
       );
     }
     if (c.slots.length === 0) throw new Error("There are no time slots yet.");
-    validateDecisionMap(c, decisionMap);
+    const slotIds = new Set(c.slots.map((s) => s.id));
+    const DecisionMapSchema = z.record(z.string(), DecisionSchema).refine(
+      (map) =>
+        Object.keys(map).length === c.slots.length &&
+        Object.keys(map).every((id) => slotIds.has(id)),
+      { message: "Please accept or reject every time slot." },
+    );
+    const mapResult = DecisionMapSchema.safeParse(decisionMap);
+    if (!mapResult.success) throw new TypeError(mapResult.error.issues[0].message);
     c.decisionsByParty[partyRole] = { ...decisionMap };
     c.hasSubmitted[partyRole] = true;
     this.store.save(c);

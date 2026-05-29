@@ -9,6 +9,7 @@ import {
 import { PartyScreen } from "~/components/shared/PartyScreen";
 import { RouteErrorBoundary } from "~/components/shared/SchedulingShared";
 import type { Decision } from "~/core/domain/verfahren";
+import { DecisionSchema } from "~/core/domain/verfahren";
 
 export async function loader({ request }: { request: Request }) {
   const user = await requireRole(request, authService, "BEKLAGTER");
@@ -21,12 +22,8 @@ export async function action({ request }: { request: Request }) {
   const decisionMap: Record<string, Decision> = {};
 
   for (const [key, value] of formData.entries()) {
-    if (
-      typeof value === "string" &&
-      (value === "ACCEPT" || value === "REJECT")
-    ) {
-      decisionMap[key] = value;
-    }
+    const result = DecisionSchema.safeParse(value);
+    if (result.success) decisionMap[key] = result.data;
   }
 
   try {

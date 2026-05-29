@@ -29,6 +29,9 @@ importers:
       react-router:
         specifier: 7.15.1
         version: 7.15.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
     devDependencies:
       '@digitalservicebund/kern-ux-tailwind-theme':
         specifier: ^2.0.0
