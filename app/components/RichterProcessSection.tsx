@@ -2,6 +2,8 @@ import { Badge, type BadgeType } from "~/components/shared/Badge";
 import { Card } from "~/components/shared/Card";
 import { formatSlotRange } from "~/components/shared/SchedulingShared";
 import type { OverviewDto } from "~/core/services/schedulingQuery";
+import { Icon } from "~/components/shared/Icon";
+import { TextLabel } from "~/components/shared/TextLabel";
 
 type Stage1Status = "not-started" | "complete";
 type Stage2Status = "not-started" | "in-progress" | "no-agreement" | "complete";
@@ -39,7 +41,12 @@ function getStage2Status(overview: OverviewDto): Stage2Status {
 }
 
 function TaskBadge(props: Readonly<BadgeConfig>) {
-  return <Badge {...props} />;
+  return (
+    <Badge type={props.type}>
+      <Icon name={props.icon} />
+      <TextLabel label={props.label} />
+    </Badge>
+  );
 }
 
 export function RichterProcessSection({

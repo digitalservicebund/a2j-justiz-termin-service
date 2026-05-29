@@ -10,6 +10,8 @@ import {
 } from "~/components/shared/SchedulingShared";
 import type { AuthUser } from "~/core/domain/user";
 import type { PartyRole } from "~/core/domain/verfahren";
+import { Icon } from "~/components/shared/Icon";
+import { TextLabel } from "~/components/shared/TextLabel";
 
 type Overview = Awaited<ReturnType<typeof loadOverview>>;
 
@@ -44,7 +46,6 @@ export function PartyScreen({
 
   return (
     <Shell title={`${roleLabel} – Response`} user={user}>
-      {/* Supporting: case name card */}
       <Card>
         <p className="mb-1 text-xs font-semibold tracking-widest text-slate-400 uppercase dark:text-slate-500">
           Case
@@ -95,11 +96,8 @@ export function PartyScreen({
           type="submit"
           aria-label="submit time slots"
         >
-          <span
-            className="kern-icon kern-icon--check kern-icon--default"
-            aria-hidden="true"
-          ></span>
-          <span className="kern-label">Submit</span>
+          <Icon name="check" />
+          <TextLabel label="Submit" />
         </Button>
       </Form>
     </Shell>

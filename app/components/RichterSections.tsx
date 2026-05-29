@@ -1,10 +1,15 @@
 import type { ComponentProps, Dispatch, SetStateAction } from "react";
-import { generateRandomSlotDrafts, type SlotDraft, } from "~/components/richterHelpers";
+import {
+  generateRandomSlotDrafts,
+  type SlotDraft,
+} from "~/components/richterHelpers";
 import Alert from "~/components/shared/Alert";
 import { Badge } from "~/components/shared/Badge";
 import { Button } from "~/components/shared/Button";
 import { Card } from "~/components/shared/Card";
+import { Icon } from "~/components/shared/Icon";
 import { formatSlotRange } from "~/components/shared/SchedulingShared";
+import { TextLabel } from "~/components/shared/TextLabel";
 import type { Decision, PartyRole } from "~/core/domain/verfahren";
 import type { OverviewDto } from "~/core/services/schedulingQuery";
 import { useRichterActions } from "~/hooks/useRichterActions";
@@ -72,11 +77,8 @@ export function DraftSlotsSection({
           />
         </div>
         <Button type="submit" style="secondary">
-          <span
-            className="kern-icon kern-icon--add kern-icon--default"
-            aria-hidden="true"
-          ></span>
-          <span className="kern-label">Add slot</span>
+          <Icon name="add" />
+          <TextLabel label="Add slot" />
         </Button>
       </form>
       {slotDrafts.length > 0 && (
@@ -107,11 +109,8 @@ export function DraftSlotsSection({
 
       <div className="gap-kern-space-small flex flex-wrap">
         <Button style="secondary" onClick={onSuggestRandom} type="button">
-          <span
-            className="kern-icon kern-icon--autorenew kern-icon--default"
-            aria-hidden="true"
-          ></span>
-          <span className="kern-label">Random slots</span>
+          <Icon name="autorenew" />
+          <TextLabel label="Random slots" />
         </Button>
         <Button
           style="primary"
@@ -119,11 +118,8 @@ export function DraftSlotsSection({
           onClick={onSaveDrafts}
           type="button"
         >
-          <span
-            className="kern-icon kern-icon--check kern-icon--default"
-            aria-hidden="true"
-          ></span>
-          <span className="kern-label">Save time slots</span>
+          <Icon name="check" />
+          <TextLabel label="Save time slots" />
         </Button>
       </div>
 
@@ -138,9 +134,17 @@ function DecisionBadge({ decision }: { readonly decision?: Decision | null }) {
       <span className="text-sm text-slate-400 dark:text-slate-500">—</span>
     );
   if (decision === "ACCEPT") {
-    return <Badge type="success" label="Accepted" />;
+    return (
+      <Badge type="success">
+        <TextLabel label="Accepted" />
+      </Badge>
+    );
   }
-  return <Badge type="danger" label="Rejected" />;
+  return (
+    <Badge type="danger">
+      <TextLabel label="Rejected" />
+    </Badge>
+  );
 }
 
 export function SlotsTableSection({
@@ -212,7 +216,11 @@ export function SlotsTableSection({
                     <tr key={slot.id} className="kern-table__row">
                       <th scope="row" className="kern-table__header" id={rowId}>
                         <div className="gap-kern-space-small flex items-center">
-                          {isFinal && <Badge type="info" label="Final" />}
+                          {isFinal && (
+                            <Badge type="info">
+                              <TextLabel label="Final" />
+                            </Badge>
+                          )}
 
                           {formatSlotRange(slot.startsAtIso, slot.endsAtIso)}
                         </div>
@@ -229,7 +237,9 @@ export function SlotsTableSection({
                       </td>
                       <td className="kern-table__cell">
                         {status?.isMutuallyAccepted ? (
-                          <Badge type="info" label="Yes" />
+                          <Badge type="info">
+                            <TextLabel label="Yes" />
+                          </Badge>
                         ) : (
                           <span className="text-sm text-slate-400 dark:text-slate-500">
                             No
@@ -247,10 +257,7 @@ export function SlotsTableSection({
                             disabled={isLoading}
                             type="button"
                           >
-                            <span
-                              className="kern-icon kern-icon--check"
-                              aria-hidden="true"
-                            />
+                            <Icon name="check" />
                             <span className="kern-label kern-sr-only">
                               {state === "submitting"
                                 ? "Making final…"
@@ -289,13 +296,12 @@ export function SlotsTableSection({
               disabled={isLoading}
               type="button"
             >
-              <span
-                className="kern-icon kern-icon--delete kern-icon--default"
-                aria-hidden="true"
-              ></span>
-              <span className="kern-label">
-                {state === "submitting" ? "Deleting…" : "Delete all slots"}
-              </span>
+              <Icon name="delete" />
+              <TextLabel
+                label={
+                  state === "submitting" ? "Deleting…" : "Delete all slots"
+                }
+              />
             </Button>
           </div>
         </>
@@ -343,10 +349,9 @@ function PartyRow({
     <Card className="space-y-kern-space-small flex items-center justify-between">
       <div className="gap-kern-space-small flex items-center">
         <span className="kern-title kern-title--small">{label}</span>
-        <Badge
-          type={hasSubmitted ? "success" : "warning"}
-          label={hasSubmitted ? "Submitted" : "Pending"}
-        />
+        <Badge type={hasSubmitted ? "success" : "warning"}>
+          <TextLabel label={hasSubmitted ? "Submitted" : "Pending"} />
+        </Badge>
       </div>
       <Button
         onClick={() => unlock(partyRole)}
