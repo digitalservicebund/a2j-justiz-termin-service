@@ -7,15 +7,18 @@ import {
   schedulingQuery,
   schedulingService,
 } from "~/bootstrap";
-import type { SlotDraft } from "~/components/richterHelpers";
-import { createEmptyDraft, toIsoSlotRanges } from "~/components/richterHelpers";
-import { RichterProcessSection } from "~/components/RichterProcessSection";
+import type { SlotDraft } from "~/components/richter/richterHelpers";
+import {
+  createEmptyDraft,
+  toIsoSlotRanges,
+} from "~/components/richter/richterHelpers";
+import { RichterProcessSection } from "~/components/richter/RichterProcessSection";
 import {
   appendRandomSlots,
   DraftSlotsSection,
   PartyAccessSection,
   SlotsTableSection,
-} from "~/components/RichterSections";
+} from "~/components/richter/RichterSections";
 import {
   RouteErrorBoundary,
   Shell,

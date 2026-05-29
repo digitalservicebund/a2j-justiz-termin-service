@@ -2,7 +2,7 @@ import type { ComponentProps, Dispatch, SetStateAction } from "react";
 import {
   generateRandomSlotDrafts,
   type SlotDraft,
-} from "~/components/richterHelpers";
+} from "~/components/richter/richterHelpers";
 import Alert from "~/components/shared/Alert";
 import { Badge } from "~/components/shared/Badge";
 import { Button } from "~/components/shared/Button";
@@ -97,10 +97,7 @@ export function DraftSlotsSection({
                 type="button"
                 style="tertiary"
               >
-                <span
-                  className="kern-icon kern-icon--delete"
-                  aria-hidden="true"
-                />
+                <Icon name="delete" />
               </Button>
             </li>
           ))}
@@ -129,10 +126,7 @@ export function DraftSlotsSection({
 }
 
 function DecisionBadge({ decision }: { readonly decision?: Decision | null }) {
-  if (!decision)
-    return (
-      <span className="text-sm text-slate-400 dark:text-slate-500">—</span>
-    );
+  if (!decision) return <p className="kern-body kern-body--muted">-</p>;
   if (decision === "ACCEPT") {
     return (
       <Badge type="success">
@@ -241,9 +235,7 @@ export function SlotsTableSection({
                             <TextLabel label="Yes" />
                           </Badge>
                         ) : (
-                          <span className="text-sm text-slate-400 dark:text-slate-500">
-                            No
-                          </span>
+                          <p className="kern-body kern-body--muted">-</p>
                         )}
                       </td>
                       <td className="kern-table__cell kern-table__cell--action">
