@@ -5,7 +5,6 @@ import { Card } from "~/components/shared/Card";
 import InputRadios from "~/components/shared/InputRadios";
 import {
   formatSlotRange,
-  InlineError,
   loadOverview,
   Shell,
 } from "~/components/shared/SchedulingShared";
@@ -65,7 +64,10 @@ export function PartyScreen({
         />
       )}
 
-      {/* Supporting: form card wrapping pure kern components */}
+      {actionData?.error && (
+        <Alert type="error" title="Error" message={actionData.error} />
+      )}
+
       <Form key={decisionKey} method="post" className="space-y-6">
         {overview.slots.length === 0 ? (
           <Alert type="warning" title="No time slots available yet" />
@@ -87,7 +89,6 @@ export function PartyScreen({
           ))
         )}
 
-        {actionData?.error && <InlineError message={actionData.error} />}
         <Button
           style="primary"
           disabled={hasSubmitted || overview.slots.length === 0}

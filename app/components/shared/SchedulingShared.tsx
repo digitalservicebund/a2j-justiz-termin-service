@@ -2,6 +2,7 @@ import { isRouteErrorResponse, useRouteError } from "react-router";
 import { DEFAULT_CASE_ID, schedulingQuery } from "~/bootstrap";
 import { AppNav } from "~/components/shared/AppNav";
 import type { AuthUser } from "~/core/domain/user";
+import Alert from "~/components/shared/Alert";
 
 export async function loadOverview() {
   return schedulingQuery.getOverview(DEFAULT_CASE_ID);
@@ -26,20 +27,6 @@ export function formatSlotRange(
   })}`;
 }
 
-export function InlineError({ message }: Readonly<{ message: string }>) {
-  return (
-    <div className="kern-alert kern-alert--danger" role="alert">
-      <div className="kern-alert__header">
-        <span className="kern-icon kern-icon--danger" aria-hidden="true" />
-        <span className="kern-title">Error</span>
-      </div>
-      <div className="kern-alert__body">
-        <p className="kern-body">{message}</p>
-      </div>
-    </div>
-  );
-}
-
 export function RouteErrorBoundary({ title }: Readonly<{ title: string }>) {
   const error = useRouteError();
   let message = "An unexpected error occurred.";
@@ -52,7 +39,7 @@ export function RouteErrorBoundary({ title }: Readonly<{ title: string }>) {
 
   return (
     <Shell title={title}>
-      <InlineError message={message} />
+      <Alert type="error" title="Error" message={message} />
     </Shell>
   );
 }

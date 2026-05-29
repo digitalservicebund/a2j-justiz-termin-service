@@ -7,10 +7,7 @@ import Alert from "~/components/shared/Alert";
 import { Badge } from "~/components/shared/Badge";
 import { Button } from "~/components/shared/Button";
 import { Card } from "~/components/shared/Card";
-import {
-  formatSlotRange,
-  InlineError,
-} from "~/components/shared/SchedulingShared";
+import { formatSlotRange } from "~/components/shared/SchedulingShared";
 import type { Decision, PartyRole } from "~/core/domain/verfahren";
 import type { OverviewDto } from "~/core/services/schedulingQuery";
 import { useRichterActions } from "~/hooks/useRichterActions";
@@ -133,7 +130,7 @@ export function DraftSlotsSection({
         </Button>
       </div>
 
-      {error && <InlineError message={error} />}
+      {error && <Alert type="error" title="Error" message={error} />}
     </Card>
   );
 }
