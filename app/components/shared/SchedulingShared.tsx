@@ -14,7 +14,13 @@ export function formatSlotRange(
   const start = new Date(startsAtIso);
   const end = new Date(endsAtIso);
 
-  return `${start.toLocaleString("de-DE")} - ${end.toLocaleTimeString("de-DE", {
+  return `${start.toLocaleTimeString("de-DE", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  })} - ${end.toLocaleTimeString("de-DE", {
     hour: "2-digit",
     minute: "2-digit",
   })}`;
@@ -62,11 +68,13 @@ export function Shell({
 }>) {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <header className="sticky top-0 z-10 bg-kern-orange-050 p-kern-space-default shadow-md dark:bg-slate-900">
+      <header className="bg-kern-orange-050 p-kern-space-default sticky top-0 z-10 shadow-md dark:bg-slate-900">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-4">
           <div>
             <h1 className="kern-heading-large">Justitz Termin Service</h1>
-            <p className="kern-heading-small dark:text-slate-300">Court Appointment service</p>
+            <p className="kern-heading-small dark:text-slate-300">
+              Court Appointment service
+            </p>
           </div>
           <AppNav user={user} />
         </div>

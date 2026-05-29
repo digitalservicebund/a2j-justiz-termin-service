@@ -214,14 +214,12 @@ export function SlotsTableSection({
                   return (
                     <tr key={slot.id} className="kern-table__row">
                       <th scope="row" className="kern-table__header" id={rowId}>
-                        {/* Supporting: final indicator badge */}
                         <div className="gap-kern-space-small flex items-center">
                           {isFinal && <Badge type="info" label="Final" />}
                           {formatSlotRange(slot.startsAtIso, slot.endsAtIso)}
                         </div>
                       </th>
                       <td className="kern-table__cell">
-                        {/* Supporting: decision badge */}
                         <DecisionBadge
                           decision={status?.klaegerDecision ?? undefined}
                         />
@@ -232,7 +230,6 @@ export function SlotsTableSection({
                         />
                       </td>
                       <td className="kern-table__cell">
-                        {/* Supporting: mutual badge */}
                         {status?.isMutuallyAccepted ? (
                           <Badge type="info" label="Yes" />
                         ) : (
