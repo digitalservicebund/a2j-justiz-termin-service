@@ -37,15 +37,15 @@ export class SchedulingQuery implements AppointmentQueries {
   constructor(private readonly store: VerfahrenRepository) {}
 
   getOverview(verfahrenId: string): OverviewDto {
-    const c = this.store.getById(verfahrenId);
-    if (!c) throw new Error("Case not found.");
+    const verfahren = this.store.getById(verfahrenId);
+    if (!verfahren) throw new Error("Case not found.");
     return {
-      id: c.id,
-      name: c.name,
-      slots: c.slots,
-      statuses: buildSlotStatuses(c),
-      finalSlotId: c.confirmedSlotId,
-      hasSubmitted: { ...c.hasSubmitted },
+      id: verfahren.id,
+      name: verfahren.name,
+      slots: verfahren.slots,
+      statuses: buildSlotStatuses(verfahren),
+      finalSlotId: verfahren.confirmedSlotId,
+      hasSubmitted: { ...verfahren.hasSubmitted },
     };
   }
 }
