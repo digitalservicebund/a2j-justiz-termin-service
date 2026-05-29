@@ -47,7 +47,7 @@ export function PartyScreen({
     <Shell title={`${roleLabel} – Response`} user={user}>
       {/* Supporting: case name card */}
       <Card>
-        <p className="mb-1 text-xs font-semibold tracking-widest text-slate-400 uppercase">
+        <p className="mb-1 text-xs font-semibold tracking-widest text-slate-400 uppercase dark:text-slate-500">
           Case
         </p>
         <h2 className="kern-heading-medium">{overview.name}</h2>

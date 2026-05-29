@@ -20,7 +20,7 @@ export function Welcome() {
           </div>
         </header>
         <div className="w-full max-w-[300px] space-y-6 px-4">
-          <nav className="space-y-4 rounded-3xl border border-gray-200 p-6 dark:border-gray-700">
+          <nav className="rounded-kern-default space-y-4 border border-gray-200 p-6 dark:border-gray-700">
             <p className="text-center leading-6 text-gray-700 dark:text-gray-200">
               What&apos;s next?
             </p>

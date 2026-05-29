@@ -61,17 +61,17 @@ export function Shell({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="p-kern-space-default bg-kern-orange-050 sticky top-0 z-10 shadow-md">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      <header className="sticky top-0 z-10 bg-kern-orange-050 p-kern-space-default shadow-md dark:bg-slate-900">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-4">
           <div>
             <h1 className="kern-heading-large">Justitz Termin Service</h1>
-            <p className="kern-heading-small">Court Appointment service</p>
+            <p className="kern-heading-small dark:text-slate-300">Court Appointment service</p>
           </div>
           <AppNav user={user} />
         </div>
       </header>
-      <main className="mx-auto max-w-5xl space-y-6 px-6 py-10">
+      <main className="mx-auto max-w-5xl space-y-6 px-6 py-10 dark:text-slate-100">
         <h1 className="kern-heading-medium">{title}</h1>
         {children}
       </main>

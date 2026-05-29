@@ -56,7 +56,7 @@ export function RichterProcessSection({
 
   return (
     <Card>
-      <p className="mb-1 text-xs font-semibold tracking-widest text-slate-400 uppercase">
+      <p className="mb-1 text-xs font-semibold tracking-widest text-slate-400 uppercase dark:text-slate-500">
         Case
       </p>
       <div className="kern-task-list">

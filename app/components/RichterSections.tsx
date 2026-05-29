@@ -86,13 +86,13 @@ export function DraftSlotsSection({
         </Button>
       </form>
       {slotDrafts.length > 0 && (
-        <ul className="divide-y divide-slate-100 overflow-hidden rounded-2xl bg-slate-50">
+        <ul className="rounded-kern-default divide-y divide-slate-100 overflow-hidden bg-slate-50 dark:divide-slate-700 dark:bg-slate-800">
           {slotDrafts.map((slot, index) => (
             <li
               key={`${slot.startsAtLocal}-${slot.endsAtLocal}-${index}`}
               className="flex items-center justify-between gap-4 px-4 py-3"
             >
-              <span className="text-sm text-slate-700">
+              <span className="text-sm text-slate-700 dark:text-slate-200">
                 {new Date(slot.startsAtLocal).toLocaleString("de-DE")} –{" "}
                 {new Date(slot.endsAtLocal).toLocaleString("de-DE")}
               </span>
@@ -105,7 +105,6 @@ export function DraftSlotsSection({
                   className="kern-icon kern-icon--delete"
                   aria-hidden="true"
                 />
-                <span className="kern-label">Remove</span>
               </Button>
             </li>
           ))}
@@ -140,7 +139,10 @@ export function DraftSlotsSection({
 }
 
 function DecisionBadge({ decision }: { readonly decision?: Decision | null }) {
-  if (!decision) return <span className="text-sm text-slate-400">—</span>;
+  if (!decision)
+    return (
+      <span className="text-sm text-slate-400 dark:text-slate-500">—</span>
+    );
   if (decision === "ACCEPT") {
     return <Badge type="success" label="Accepted" />;
   }
@@ -234,7 +236,9 @@ export function SlotsTableSection({
                         {status?.isMutuallyAccepted ? (
                           <Badge type="info" label="Yes" />
                         ) : (
-                          <span className="text-sm text-slate-400">No</span>
+                          <span className="text-sm text-slate-400 dark:text-slate-500">
+                            No
+                          </span>
                         )}
                       </td>
                       <td className="kern-table__cell kern-table__cell--action">

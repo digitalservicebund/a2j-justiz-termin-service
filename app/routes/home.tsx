@@ -19,7 +19,7 @@ export async function loader({ request }: { request: Request }) {
 export default function Home() {
   return (
     <Shell title="Court Appointment Scheduling">
-      <p className="kern-body text-slate-500">
+      <p className="kern-body text-slate-500 dark:text-slate-300">
         Select a role from the dropdown above to continue.
       </p>
     </Shell>
