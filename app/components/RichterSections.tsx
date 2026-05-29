@@ -1,8 +1,5 @@
 import type { ComponentProps, Dispatch, SetStateAction } from "react";
-import {
-  generateRandomSlotDrafts,
-  type SlotDraft,
-} from "~/components/richterHelpers";
+import { generateRandomSlotDrafts, type SlotDraft, } from "~/components/richterHelpers";
 import Alert from "~/components/shared/Alert";
 import { Badge } from "~/components/shared/Badge";
 import { Button } from "~/components/shared/Button";
@@ -176,7 +173,10 @@ export function SlotsTableSection({
       ) : (
         <>
           <div className="overflow-x-auto">
-            <table className="kern-table" aria-labelledby="slots-table-title">
+            <table
+              className="kern-table kern-table--striped"
+              aria-labelledby="slots-table-title"
+            >
               <caption className="kern-title" id="slots-table-title">
                 Time slots
               </caption>
@@ -213,6 +213,7 @@ export function SlotsTableSection({
                       <th scope="row" className="kern-table__header" id={rowId}>
                         <div className="gap-kern-space-small flex items-center">
                           {isFinal && <Badge type="info" label="Final" />}
+
                           {formatSlotRange(slot.startsAtIso, slot.endsAtIso)}
                         </div>
                       </th>
