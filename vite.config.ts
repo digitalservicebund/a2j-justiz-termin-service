@@ -10,7 +10,7 @@ export default defineConfig({
     pool: "threads",
     setupFiles: ["vitest.setup.ts"],
     coverage: {
-      provider: "v8",
+      provider: "istanbul",
       reporter: ["text", "html", "json-summary"],
       include: ["app/**/*.{ts,tsx}"],
       exclude: [
