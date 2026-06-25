@@ -5,7 +5,7 @@ import { Card } from "~/components/shared/Card";
 
 import {
   formatSlotRange,
-  loadOverview,
+  type loadOverview,
   Shell,
 } from "~/components/shared/SchedulingShared";
 import type { AuthUser } from "~/core/domain/user";
@@ -15,12 +15,12 @@ import { TextLabel } from "~/components/shared/TextLabel";
 
 type Overview = Awaited<ReturnType<typeof loadOverview>>;
 
-interface RadioOption {
+type RadioOption = {
   value: string;
   label: string;
 }
 
-interface InputRadiosProps {
+type InputRadiosProps = {
   legend: string;
   name: string;
   options: RadioOption[];

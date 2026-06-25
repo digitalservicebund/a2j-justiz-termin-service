@@ -1,6 +1,6 @@
 type AlertType = "success" | "error" | "warning" | "info";
 
-interface AlertProps {
+type AlertProps = {
   type: AlertType;
   title: string;
   message?: string;

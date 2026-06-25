@@ -20,11 +20,11 @@ function buildSlotStatuses(c: Verfahren): SlotDecisionStatus[] {
   });
 }
 
-export interface AppointmentQueries {
+export type AppointmentQueries = {
   getOverview(verfahrenId: string): OverviewDto;
 }
 
-export interface OverviewDto {
+export type OverviewDto = {
   id: string;
   name: string;
   slots: TimeSlot[];

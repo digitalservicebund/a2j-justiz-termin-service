@@ -1,7 +1,7 @@
 import { useFetcher } from "react-router";
 import type { AuthUser, UserRole } from "~/core/domain/user";
 
-const ROLES: { value: UserRole; label: string }[] = [
+const ROLES: Array<{ value: UserRole; label: string }> = [
   { value: "RICHTER", label: "Richter" },
   { value: "KLAEGER", label: "Kläger" },
   { value: "BEKLAGTER", label: "Beklagter" },

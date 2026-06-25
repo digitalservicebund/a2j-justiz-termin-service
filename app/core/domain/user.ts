@@ -10,7 +10,7 @@ export const AuthUserSchema = z.object({
 });
 export type AuthUser = z.infer<typeof AuthUserSchema>;
 
-export interface AuthService {
+export type AuthService = {
   getUserByRole(role: UserRole): AuthUser | null;
   getUserById(id: string): AuthUser | null;
 }
