@@ -114,11 +114,24 @@ This project uses **Prettier** and **oxlint** with automatic fixes on save (Inte
 pnpm format && pnpm lint:fix
 ```
 
-## Docker
+## Container
 
-Build and run with Docker:
+### Docker
 
 ```bash
 docker build -t scheduling-app .
 docker run -p 3000:3000 scheduling-app
+```
+
+### Podman
+
+```bash
+podman build -t scheduling-app .
+podman run -p 3000:3000 localhost/scheduling-app
+```
+
+On macOS, start the Podman machine first if it isn't running:
+
+```bash
+podman machine start
 ```
