@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { InMemoryStore } from "~/adapters/inMemory/inMemoryStore";
-import { SchedulingService } from "~/core/services/schedulingService";
 import { SchedulingQuery } from "~/core/services/schedulingQuery";
-
+import { SchedulingService } from "~/core/services/schedulingService";
 
 function buildFixture() {
   const store = new InMemoryStore();
@@ -348,12 +347,16 @@ describe("SchedulingQuery", () => {
     service.partySubmitDecisions("verfahren-1", "KLAEGER", {
       [slotId]: "ACCEPT",
     });
-    expect(query.getOverview("verfahren-1").statuses[0].isMutuallyAccepted).toBe(false);
+    expect(
+      query.getOverview("verfahren-1").statuses[0].isMutuallyAccepted,
+    ).toBe(false);
 
     service.partySubmitDecisions("verfahren-1", "BEKLAGTER", {
       [slotId]: "ACCEPT",
     });
-    expect(query.getOverview("verfahren-1").statuses[0].isMutuallyAccepted).toBe(true);
+    expect(
+      query.getOverview("verfahren-1").statuses[0].isMutuallyAccepted,
+    ).toBe(true);
   });
 
   it("reports isMutuallyAccepted as false when one party rejects", () => {
@@ -372,7 +375,8 @@ describe("SchedulingQuery", () => {
       [slotId]: "REJECT",
     });
 
-    expect(query.getOverview("verfahren-1").statuses[0].isMutuallyAccepted).toBe(false);
+    expect(
+      query.getOverview("verfahren-1").statuses[0].isMutuallyAccepted,
+    ).toBe(false);
   });
 });
-
