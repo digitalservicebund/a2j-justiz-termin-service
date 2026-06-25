@@ -1,22 +1,37 @@
-FROM node:20-alpine AS development-dependencies-env
-COPY . /app
-WORKDIR /app
-RUN npm ci
+# Hardened Alpine base image with security upgrades
+FROM node:24.15.0-alpine3.23 AS alpine-upgraded
+RUN apk upgrade --no-cache && corepack enable
 
-FROM node:20-alpine AS production-dependencies-env
-COPY ./package.json package-lock.json /app/
-WORKDIR /app
-RUN npm ci --omit=dev
+# Download and install dependencies required to build the app
+FROM alpine-upgraded AS build-dependencies
+WORKDIR /build-deps
 
-FROM node:20-alpine AS build-env
-COPY . /app/
-COPY --from=development-dependencies-env /app/node_modules /app/node_modules
-WORKDIR /app
-RUN npm run build
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
 
-FROM node:20-alpine
-COPY ./package.json package-lock.json /app/
-COPY --from=production-dependencies-env /app/node_modules /app/node_modules
-COPY --from=build-env /app/build /app/build
+COPY app ./app
+COPY public ./public
+COPY tsconfig.json vite.config.ts react-router.config.ts ./
+RUN pnpm build
+
+# Download and install production dependencies only
+FROM alpine-upgraded AS app-dependencies
+WORKDIR /app-deps
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts
+
+# Production runtime image
+FROM alpine-upgraded AS prod
+RUN apk add --no-cache dumb-init
+
 WORKDIR /app
-CMD ["npm", "run", "start"]
+ENV NODE_ENV=production
+
+COPY --from=build-dependencies /build-deps/build ./build
+COPY --from=app-dependencies /app-deps/node_modules ./node_modules
+COPY package.json ./
+
+EXPOSE 3000
+USER 1000
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+CMD ["./node_modules/.bin/react-router-serve", "./build/server/index.js"]
