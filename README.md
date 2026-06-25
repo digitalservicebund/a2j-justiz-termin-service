@@ -15,8 +15,8 @@ Login requires no password — select a role from the dropdown.
 - **Build**: Vite + esbuild
 - **Language**: TypeScript 5.9
 - **Package Manager**: pnpm
-- **Code Quality**: ESLint + Prettier
-- **Testing**: Vitest
+- **Code Quality**: oxlint + Prettier
+- **Testing**: Vitest + Istanbul coverage
 
 ## Prerequisites
 
@@ -26,10 +26,7 @@ Login requires no password — select a role from the dropdown.
 ## Installation
 
 ```bash
-# Install dependencies
 pnpm install
-
-# Start development server with hot reload
 pnpm dev
 ```
 
@@ -41,22 +38,24 @@ pnpm dev
 pnpm dev          # Start dev server with Vite + React Router
 pnpm build        # Build for production (client + SSR)
 pnpm start        # Serve production build
-```
-
-### Code Quality
-
-```bash
-pnpm lint         # Check code with ESLint
-pnpm lint:fix     # Auto-fix ESLint issues
-pnpm format       # Format code with Prettier
-pnpm format:check # Check formatting
 pnpm typecheck    # Type-check with TypeScript
 ```
 
 ### Testing
 
 ```bash
-pnpm test         # Run tests with Vitest
+pnpm test           # Run tests once
+pnpm test:watch     # Run tests in watch mode
+pnpm test:coverage  # Run tests with Istanbul coverage report
+```
+
+### Code Quality
+
+```bash
+pnpm lint         # Check code with oxlint
+pnpm lint:fix     # Auto-fix oxlint issues
+pnpm format       # Format code with Prettier
+pnpm format:check # Check formatting without writing
 ```
 
 ## Project Structure
@@ -81,6 +80,8 @@ app/
 └── bootstrap.ts            # Dependency injection root
 ```
 
+Tests live alongside their source in `__test__` subdirectories (e.g. `components/shared/__test__/`).
+
 ## Confirmed Business Rules
 
 - Data stores in memory only (not persisted)
@@ -91,7 +92,7 @@ app/
 
 ## Code Style & Formatting
 
-This project uses **Prettier** and **ESLint** with automatic fixes on save (IntelliJ + VSCode).
+This project uses **Prettier** and **oxlint** with automatic fixes on save (IntelliJ + VSCode).
 
 ### Prettier
 
@@ -100,11 +101,12 @@ This project uses **Prettier** and **ESLint** with automatic fixes on save (Inte
 - Tailwind class sorting
 - Import organization
 
-### ESLint
+### oxlint
 
 - TypeScript strict mode
 - React/JSX best practices
 - A11y (accessibility) rules
+- Configured in `.oxlintrc.json`
 
 **Run format + lint together:**
 
@@ -120,4 +122,3 @@ Build and run with Docker:
 docker build -t scheduling-app .
 docker run -p 3000:3000 scheduling-app
 ```
-
