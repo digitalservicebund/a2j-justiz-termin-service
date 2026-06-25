@@ -20,24 +20,24 @@
     "eslint/no-underscore-dangle": "off",
     "vitest/no-conditional-expect": "off",
     "vitest/valid-title": "off",
-    // We are currently failing the following rules. Examine one-by-one and fix or move above this line
+
     "eslint/no-shadow": "off",
     "import/no-named-as-default": "off",
-    "import/no-unassigned-import": "off", // CSS and side-effect imports (e.g. vitest setup) are legitimate
+    "import/no-unassigned-import": "off",
     "jest/no-conditional-expect": "off",
     "jest/require-to-throw-message": "off",
     "jest/valid-title": "off",
     "no-await-in-loop": "off",
     "react/iframe-missing-sandbox": "off",
     "react/no-array-index-key": "off",
-    "react/style-prop-object": "off", // False positive: Button's `style` prop is not the HTML style attribute
-    "jsx-a11y/aria-role": "off", // False positive: PartyScreen's `role` prop is not the HTML role attribute
+    "react/style-prop-object": "off",
+    "jsx-a11y/aria-role": "off",
     "unicorn/no-array-reverse": "off",
     "unicorn/no-array-sort": "off",
     "unicorn/no-useless-spread": "off",
     "vitest/expect-expect": "off",
     "vitest/require-mock-type-parameters": "off",
-    "jsx-a11y/control-has-associated-label": "off" // Oxlint will fix it soon
+    "jsx-a11y/control-has-associated-label": "off"
   },
   "ignorePatterns": ["build", ".react-router", "node_modules"]
 }
