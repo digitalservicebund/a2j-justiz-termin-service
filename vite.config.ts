@@ -1,31 +1,10 @@
-import tsconfigPaths from "vite-tsconfig-paths";
-import { defineConfig } from "vitest/config";
+import { reactRouter } from "@react-router/dev/vite";
+import tailwindcss from "@tailwindcss/vite";
+import { defineConfig } from "vite";
 
 export default defineConfig({
-  plugins: [tsconfigPaths()],
-  test: {
-    environment: "jsdom",
-    globals: true,
-    include: ["./app/**/__test__/**/*.test.{ts,tsx}"],
-    pool: "threads",
-    setupFiles: ["vitest.setup.ts"],
-    coverage: {
-      provider: "istanbul",
-      reporter: ["text", "html", "json-summary"],
-      include: ["app/**/*.{ts,tsx}"],
-      exclude: [
-        "app/**/*.d.ts",
-        "app/routes.ts",
-        "app/root.tsx",
-        "app/bootstrap.ts",
-        "app/welcome/**",
-        "app/core/ports/**",
-        "app/adapters/inMemory/**",
-        "**/*.test.{ts,tsx}",
-        "**/node_modules/**",
-        "**/build/**",
-        "**/.react-router/**",
-      ],
-    },
+  resolve: {
+    tsconfigPaths: true,
   },
+  plugins: [tailwindcss(), reactRouter()],
 });
