@@ -6,7 +6,7 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
-    include: ["./app/**/*.test.{ts,tsx}"],
+    include: ["./app/**/__test__/**/*.test.{ts,tsx}"],
     pool: "threads",
     setupFiles: ["vitest.setup.ts"],
     coverage: {

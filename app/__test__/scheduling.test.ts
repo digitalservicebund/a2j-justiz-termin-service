@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { InMemoryStore } from "./adapters/inMemory/inMemoryStore";
-import { SchedulingQuery } from "./core/services/schedulingQuery";
-import { SchedulingService } from "./core/services/schedulingService";
+import { InMemoryStore } from "~/adapters/inMemory/inMemoryStore";
+import { SchedulingService } from "~/core/services/schedulingService";
+import { SchedulingQuery } from "~/core/services/schedulingQuery";
+
 
 function buildFixture() {
   const store = new InMemoryStore();
@@ -374,3 +375,4 @@ describe("SchedulingQuery", () => {
     expect(query.getOverview("verfahren-1").statuses[0].isMutuallyAccepted).toBe(false);
   });
 });
+
