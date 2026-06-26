@@ -1,6 +1,9 @@
 pre-commit:
   parallel: true
   commands:
+    secret-scan:
+      tags: security
+      run: talisman --githook pre-commit
     format-check:
       run: pnpm format:check
     lint:
