@@ -1,9 +1,9 @@
 import { Badge, type BadgeType } from "~/components/shared/Badge";
 import { Card } from "~/components/shared/Card";
-import { formatSlotRange } from "~/components/shared/SchedulingShared";
-import type { OverviewDto } from "~/core/services/schedulingQuery";
 import { Icon } from "~/components/shared/Icon";
+import { formatSlotRange } from "~/components/shared/SchedulingShared";
 import { TextLabel } from "~/components/shared/TextLabel";
+import type { OverviewDto } from "~/core/services/schedulingQuery";
 
 type Stage1Status = "not-started" | "complete";
 type Stage2Status = "not-started" | "in-progress" | "no-agreement" | "complete";

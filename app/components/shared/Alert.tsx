@@ -4,7 +4,7 @@ type AlertProps = {
   type: AlertType;
   title: string;
   message?: string;
-}
+};
 
 export default function Alert({ type, title, message }: Readonly<AlertProps>) {
   const typeClasses: Record<AlertType, string> = {

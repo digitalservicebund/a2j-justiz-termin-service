@@ -6,4 +6,4 @@ export type VerfahrenRepository = {
   deleteById(id: string): void;
   deleteAll(): void;
   nextId(prefix: string): string;
-}
+};

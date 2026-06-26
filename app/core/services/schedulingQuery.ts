@@ -22,7 +22,7 @@ function buildSlotStatuses(c: Verfahren): SlotDecisionStatus[] {
 
 export type AppointmentQueries = {
   getOverview(verfahrenId: string): OverviewDto;
-}
+};
 
 export type OverviewDto = {
   id: string;
@@ -31,7 +31,7 @@ export type OverviewDto = {
   statuses: SlotDecisionStatus[];
   finalSlotId: string | null;
   hasSubmitted: Record<PartyRole, boolean>;
-}
+};
 
 export class SchedulingQuery implements AppointmentQueries {
   constructor(private readonly store: VerfahrenRepository) {}

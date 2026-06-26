@@ -1,4 +1,4 @@
-import { type SyntheticEvent, useState } from "react";
+import { useState, type SyntheticEvent } from "react";
 import { useFetcher, useLoaderData } from "react-router";
 import { requireRole } from "~/adapters/session/session";
 import {
@@ -164,6 +164,9 @@ function handleConfirmSlot(
 function handleUnlock(raw: Record<string, FormDataEntryValue>): ActionResult {
   const result = UnlockPayloadSchema.safeParse(raw);
   if (!result.success) return { error: "Invalid party role." };
-  schedulingService.richterUnlockSubmission(DEFAULT_CASE_ID, result.data.partyRole);
+  schedulingService.richterUnlockSubmission(
+    DEFAULT_CASE_ID,
+    result.data.partyRole,
+  );
   return null;
 }

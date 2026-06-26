@@ -30,6 +30,8 @@ describe("Alert", () => {
 
   it("does not render the message body when message is omitted", () => {
     const { container } = render(<Alert type="warning" title="Warning" />);
-    expect(container.querySelector(".kern-alert__body")).not.toBeInTheDocument();
+    expect(
+      container.querySelector(".kern-alert__body"),
+    ).not.toBeInTheDocument();
   });
 });

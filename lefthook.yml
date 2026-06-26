@@ -1,0 +1,19 @@
+pre-commit:
+  parallel: true
+  commands:
+    format-check:
+      run: pnpm format:check
+    lint:
+      run: pnpm lint
+
+pre-push:
+  parallel: true
+  commands:
+    unit-tests:
+      run: pnpm test
+      only:
+        - ref: main
+    typecheck:
+      run: pnpm typecheck
+      only:
+        - ref: main

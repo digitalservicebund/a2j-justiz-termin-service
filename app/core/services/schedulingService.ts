@@ -1,6 +1,10 @@
 import { z } from "zod";
 import type { Decision, PartyRole, Verfahren } from "../domain/verfahren";
-import { DecisionSchema, PARTY_ROLES, TimeSlotsSchema } from "../domain/verfahren";
+import {
+  DecisionSchema,
+  PARTY_ROLES,
+  TimeSlotsSchema,
+} from "../domain/verfahren";
 import type { VerfahrenRepository } from "../ports/verfahrenRepository";
 
 function createEmptyDecisionMap(): Record<PartyRole, Record<string, Decision>> {
@@ -37,7 +41,8 @@ export class SchedulingService {
       endsAtIso: range.endsAtIso,
     }));
     const slotsResult = TimeSlotsSchema.safeParse(slots);
-    if (!slotsResult.success) throw new TypeError(slotsResult.error.issues[0].message);
+    if (!slotsResult.success)
+      throw new TypeError(slotsResult.error.issues[0].message);
     c.slots = slots;
     c.decisionsByParty = createEmptyDecisionMap();
     c.hasSubmitted = createHasSubmittedMap();
@@ -102,14 +107,17 @@ export class SchedulingService {
     }
     if (c.slots.length === 0) throw new Error("There are no time slots yet.");
     const slotIds = new Set(c.slots.map((s) => s.id));
-    const DecisionMapSchema = z.record(z.string(), DecisionSchema).refine(
-      (map) =>
-        Object.keys(map).length === c.slots.length &&
-        Object.keys(map).every((id) => slotIds.has(id)),
-      { message: "Please accept or reject every time slot." },
-    );
+    const DecisionMapSchema = z
+      .record(z.string(), DecisionSchema)
+      .refine(
+        (map) =>
+          Object.keys(map).length === c.slots.length &&
+          Object.keys(map).every((id) => slotIds.has(id)),
+        { message: "Please accept or reject every time slot." },
+      );
     const mapResult = DecisionMapSchema.safeParse(decisionMap);
-    if (!mapResult.success) throw new TypeError(mapResult.error.issues[0].message);
+    if (!mapResult.success)
+      throw new TypeError(mapResult.error.issues[0].message);
     c.decisionsByParty[partyRole] = { ...decisionMap };
     c.hasSubmitted[partyRole] = true;
     this.store.save(c);

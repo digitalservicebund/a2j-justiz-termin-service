@@ -3,22 +3,22 @@ import Alert from "~/components/shared/Alert";
 import { Button } from "~/components/shared/Button";
 import { Card } from "~/components/shared/Card";
 
+import { Icon } from "~/components/shared/Icon";
 import {
   formatSlotRange,
   type loadOverview,
   Shell,
 } from "~/components/shared/SchedulingShared";
+import { TextLabel } from "~/components/shared/TextLabel";
 import type { AuthUser } from "~/core/domain/user";
 import type { PartyRole } from "~/core/domain/verfahren";
-import { Icon } from "~/components/shared/Icon";
-import { TextLabel } from "~/components/shared/TextLabel";
 
 type Overview = Awaited<ReturnType<typeof loadOverview>>;
 
 type RadioOption = {
   value: string;
   label: string;
-}
+};
 
 type InputRadiosProps = {
   legend: string;
@@ -32,7 +32,7 @@ type InputRadiosProps = {
   onChange?: (value: string) => void;
   // Uncontrolled
   defaultValue?: string;
-}
+};
 
 function InputRadios({
   legend,

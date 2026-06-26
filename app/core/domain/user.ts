@@ -13,4 +13,4 @@ export type AuthUser = z.infer<typeof AuthUserSchema>;
 export type AuthService = {
   getUserByRole(role: UserRole): AuthUser | null;
   getUserById(id: string): AuthUser | null;
-}
+};

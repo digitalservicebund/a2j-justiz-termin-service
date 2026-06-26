@@ -11,8 +11,12 @@ describe("toIsoSlotRanges", () => {
       { startsAtLocal: "2026-06-01T09:00", endsAtLocal: "2026-06-01T10:00" },
     ]);
     expect(result).toHaveLength(1);
-    expect(result[0].startsAtIso).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
-    expect(result[0].endsAtIso).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+    expect(result[0].startsAtIso).toMatch(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+    );
+    expect(result[0].endsAtIso).toMatch(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+    );
   });
 
   it("returns an empty array for empty input", () => {
