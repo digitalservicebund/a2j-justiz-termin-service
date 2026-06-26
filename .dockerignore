@@ -1,4 +1,6 @@
 .git
+.gitignore
+.github
 .react-router
 build
 coverage
@@ -8,4 +10,7 @@ vitest.setup.ts
 app/**/__test__
 .oxlintrc.json
 prettier.config.*
+.prettierignore
+lefthook.yml
+.talismanrc
 *.md

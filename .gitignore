@@ -50,4 +50,3 @@ perf_hooks-*.json
 # Cache
 .turbo/
 .cache/
-.eslintcache
