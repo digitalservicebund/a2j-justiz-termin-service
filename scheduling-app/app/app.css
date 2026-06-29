@@ -1,0 +1,13 @@
+@import "@kern-ux/native/dist/fonts/fira-sans.css";
+@import "@kern-ux/native/dist/kern.css";
+@import "@digitalservicebund/kern-ux-tailwind-theme/theme.css";
+@import "tailwindcss";
+
+@layer base {
+  @media (prefers-color-scheme: dark) {
+    body {
+      background-color: rgb(2 6 23);
+      color: rgb(226 232 240);
+    }
+  }
+}

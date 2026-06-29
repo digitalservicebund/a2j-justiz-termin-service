@@ -1,0 +1,369 @@
+import type { ComponentProps, Dispatch, SetStateAction } from "react";
+import {
+  generateRandomSlotDrafts,
+  type SlotDraft,
+} from "~/components/richter/richterHelpers";
+import Alert from "~/components/shared/Alert";
+import { Badge } from "~/components/shared/Badge";
+import { Button } from "~/components/shared/Button";
+import { Card } from "~/components/shared/Card";
+import { Icon } from "~/components/shared/Icon";
+import { formatSlotRange } from "~/components/shared/SchedulingShared";
+import { TextLabel } from "~/components/shared/TextLabel";
+import type { Decision, PartyRole } from "~/core/domain/verfahren";
+import type { OverviewDto } from "~/core/services/schedulingQuery";
+import { useRichterActions } from "~/hooks/useRichterActions";
+
+export function DraftSlotsSection({
+  draft,
+  setDraft,
+  slotDrafts,
+  onAddDraft,
+  onRemoveDraft,
+  onSuggestRandom,
+  onSaveDrafts,
+  error,
+}: {
+  readonly draft: SlotDraft;
+  readonly setDraft: Dispatch<SetStateAction<SlotDraft>>;
+  readonly slotDrafts: readonly SlotDraft[];
+  readonly onAddDraft: NonNullable<ComponentProps<"form">["onSubmit"]>;
+  readonly onRemoveDraft: (index: number) => void;
+  readonly onSuggestRandom: () => void;
+  readonly onSaveDrafts: () => void;
+  readonly error: string | null;
+}) {
+  return (
+    <Card className="space-y-kern-space-large">
+      <h3 className="kern-heading-small">Prepare new time slots</h3>
+      <form
+        className="space-y-kern-space-small space-x-kern-space-small"
+        onSubmit={onAddDraft}
+      >
+        <div className="kern-form-input">
+          <label className="kern-label" htmlFor="starts-at">
+            Start time
+          </label>
+          <input
+            className="kern-form-input__input"
+            id="starts-at"
+            type="datetime-local"
+            required
+            value={draft.startsAtLocal}
+            onChange={(event) =>
+              setDraft((current) => ({
+                ...current,
+                startsAtLocal: event.target.value,
+              }))
+            }
+          />
+        </div>
+        <div className="kern-form-input">
+          <label className="kern-label" htmlFor="ends-at">
+            End time
+          </label>
+          <input
+            className="kern-form-input__input"
+            id="ends-at"
+            type="datetime-local"
+            required
+            value={draft.endsAtLocal}
+            onChange={(event) =>
+              setDraft((current) => ({
+                ...current,
+                endsAtLocal: event.target.value,
+              }))
+            }
+          />
+        </div>
+        <Button type="submit" style="secondary">
+          <Icon name="add" />
+          <TextLabel label="Add slot" />
+        </Button>
+      </form>
+      {slotDrafts.length > 0 && (
+        <ul className="rounded-kern-default divide-y divide-slate-100 overflow-hidden bg-slate-50 dark:divide-slate-700 dark:bg-slate-800">
+          {slotDrafts.map((slot, index) => (
+            <li
+              key={`${slot.startsAtLocal}-${slot.endsAtLocal}-${index}`}
+              className="flex items-center justify-between gap-4 px-4 py-3"
+            >
+              <span className="text-sm text-slate-700 dark:text-slate-200">
+                {new Date(slot.startsAtLocal).toLocaleString("de-DE")} –{" "}
+                {new Date(slot.endsAtLocal).toLocaleString("de-DE")}
+              </span>
+              <Button
+                onClick={() => onRemoveDraft(index)}
+                type="button"
+                style="tertiary"
+              >
+                <Icon name="delete" />
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="gap-kern-space-small flex flex-wrap">
+        <Button style="secondary" onClick={onSuggestRandom} type="button">
+          <Icon name="autorenew" />
+          <TextLabel label="Random slots" />
+        </Button>
+        <Button
+          style="primary"
+          disabled={slotDrafts.length === 0}
+          onClick={onSaveDrafts}
+          type="button"
+        >
+          <Icon name="check" />
+          <TextLabel label="Save time slots" />
+        </Button>
+      </div>
+
+      {error && <Alert type="error" title="Error" message={error} />}
+    </Card>
+  );
+}
+
+function DecisionBadge({ decision }: { readonly decision?: Decision | null }) {
+  if (!decision) return <p className="kern-body kern-body--muted">-</p>;
+  if (decision === "ACCEPT") {
+    return (
+      <Badge type="success">
+        <TextLabel label="Accepted" />
+      </Badge>
+    );
+  }
+  return (
+    <Badge type="danger">
+      <TextLabel label="Rejected" />
+    </Badge>
+  );
+}
+
+export function SlotsTableSection({
+  overview,
+}: {
+  readonly overview: OverviewDto;
+}) {
+  const { confirmSlot, deleteSlot, deleteAllSlots, isLoading, state } =
+    useRichterActions();
+  const statusesBySlotId = new Map(
+    overview.statuses.map((status) => [status.slotId, status] as const),
+  );
+  const hasMultipleMutualsWithoutFinal =
+    overview.statuses.filter((status) => status.isMutuallyAccepted).length >=
+      2 && !overview.finalSlotId;
+
+  return (
+    <Card className="space-y-kern-space-large">
+      {hasMultipleMutualsWithoutFinal && (
+        <Alert
+          type="warning"
+          title="Multiple slots were mutually accepted. Please confirm one as the final appointment."
+        />
+      )}
+
+      {overview.slots.length === 0 ? (
+        <div className="px-6 py-10 text-center">
+          <p className="kern-body">No time slots saved yet.</p>
+        </div>
+      ) : (
+        <>
+          <div className="overflow-x-auto">
+            <table
+              className="kern-table kern-table--striped"
+              aria-labelledby="slots-table-title"
+            >
+              <caption className="kern-title" id="slots-table-title">
+                Time slots
+              </caption>
+              <thead className="kern-table__head">
+                <tr className="kern-table__row">
+                  <th scope="col" className="kern-table__header">
+                    Time slot
+                  </th>
+                  <th scope="col" className="kern-table__header">
+                    Kläger
+                  </th>
+                  <th scope="col" className="kern-table__header">
+                    Beklagter
+                  </th>
+                  <th scope="col" className="kern-table__header">
+                    Mutual
+                  </th>
+                  <th
+                    scope="col"
+                    className="kern-table__header kern-table__header--action"
+                  >
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="kern-table__body">
+                {overview.slots.map((slot) => {
+                  const status = statusesBySlotId.get(slot.id);
+                  const isFinal = slot.id === overview.finalSlotId;
+                  const rowId = `slot-${slot.id}`;
+
+                  return (
+                    <tr key={slot.id} className="kern-table__row">
+                      <th scope="row" className="kern-table__header" id={rowId}>
+                        <div className="gap-kern-space-small flex items-center">
+                          {isFinal && (
+                            <Badge type="info">
+                              <TextLabel label="Final" />
+                            </Badge>
+                          )}
+
+                          {formatSlotRange(slot.startsAtIso, slot.endsAtIso)}
+                        </div>
+                      </th>
+                      <td className="kern-table__cell">
+                        <DecisionBadge
+                          decision={status?.klaegerDecision ?? undefined}
+                        />
+                      </td>
+                      <td className="kern-table__cell">
+                        <DecisionBadge
+                          decision={status?.beklagterDecision ?? undefined}
+                        />
+                      </td>
+                      <td className="kern-table__cell">
+                        {status?.isMutuallyAccepted ? (
+                          <Badge type="info">
+                            <TextLabel label="Yes" />
+                          </Badge>
+                        ) : (
+                          <p className="kern-body kern-body--muted">-</p>
+                        )}
+                      </td>
+                      <td className="kern-table__cell kern-table__cell--action">
+                        {status?.isMutuallyAccepted && !isFinal && (
+                          <button
+                            className="kern-btn kern-btn--tertiary kern-btn--x-small"
+                            id={`btn-confirm-${slot.id}`}
+                            aria-labelledby={`btn-confirm-${slot.id} ${rowId}`}
+                            title="Make final"
+                            onClick={() => confirmSlot(slot.id)}
+                            disabled={isLoading}
+                            type="button"
+                          >
+                            <Icon name="check" />
+                            <span className="kern-label kern-sr-only">
+                              {state === "submitting"
+                                ? "Making final…"
+                                : "Make final"}
+                            </span>
+                          </button>
+                        )}
+                        <button
+                          className="kern-btn kern-btn--tertiary kern-btn--x-small"
+                          id={`btn-delete-${slot.id}`}
+                          aria-labelledby={`btn-delete-${slot.id} ${rowId}`}
+                          title="Delete"
+                          onClick={() => deleteSlot(slot.id)}
+                          disabled={isLoading}
+                          type="button"
+                        >
+                          <span
+                            className="kern-icon kern-icon--delete"
+                            aria-hidden="true"
+                          />
+                          <span className="kern-label kern-sr-only">
+                            {state === "submitting" ? "Deleting…" : "Delete"}
+                          </span>
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div className="px-6 py-4">
+            <Button
+              style="secondary"
+              onClick={() => deleteAllSlots()}
+              disabled={isLoading}
+              type="button"
+            >
+              <Icon name="delete" />
+              <TextLabel
+                label={
+                  state === "submitting" ? "Deleting…" : "Delete all slots"
+                }
+              />
+            </Button>
+          </div>
+        </>
+      )}
+    </Card>
+  );
+}
+
+export function PartyAccessSection({
+  overview,
+}: {
+  readonly overview: OverviewDto;
+}) {
+  return (
+    <Card className="space-y-kern-space-small">
+      <h3 className="kern-heading-small">Party submission access</h3>
+      <div className="space-y-kern-space-small">
+        <PartyRow
+          hasSubmitted={overview.hasSubmitted.KLAEGER}
+          label="Kläger:"
+          partyRole="KLAEGER"
+        />
+        <PartyRow
+          hasSubmitted={overview.hasSubmitted.BEKLAGTER}
+          label="Beklagter:"
+          partyRole="BEKLAGTER"
+        />
+      </div>
+    </Card>
+  );
+}
+
+function PartyRow({
+  hasSubmitted,
+  label,
+  partyRole,
+}: {
+  readonly hasSubmitted: boolean;
+  readonly label: string;
+  readonly partyRole: PartyRole;
+}) {
+  const { unlock, isLoading } = useRichterActions();
+
+  return (
+    <Card className="space-y-kern-space-small flex items-center justify-between">
+      <div className="gap-kern-space-small flex items-center">
+        <span className="kern-title kern-title--small">{label}</span>
+        <Badge type={hasSubmitted ? "success" : "warning"}>
+          <TextLabel label={hasSubmitted ? "Submitted" : "Pending"} />
+        </Badge>
+      </div>
+      <Button
+        onClick={() => unlock(partyRole)}
+        disabled={!hasSubmitted || isLoading}
+        type="button"
+        title={hasSubmitted ? "Unlock submission" : "Submission open"}
+        aria-label={hasSubmitted ? "Unlock submission" : "Submission open"}
+        style="tertiary"
+      >
+        <span
+          className="material-symbols-outlined text-[18px] leading-none select-none"
+          aria-hidden="true"
+        >
+          {hasSubmitted ? "lock" : "lock_open"}
+        </span>
+      </Button>
+    </Card>
+  );
+}
+
+export function appendRandomSlots(drafts: readonly SlotDraft[]): SlotDraft[] {
+  return [...drafts, ...generateRandomSlotDrafts()];
+}

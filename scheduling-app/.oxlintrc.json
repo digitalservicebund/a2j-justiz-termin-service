@@ -1,0 +1,43 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "react", "unicorn", "jsx-a11y", "import", "vitest"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "pedantic": "off",
+    "perf": "error"
+  },
+  "rules": {
+    "no-console": "warn",
+    "react/react-in-jsx-scope": "off",
+    "@typescript-eslint/consistent-type-imports": [
+      "warn",
+      { "fixStyle": "inline-type-imports" }
+    ],
+    "@typescript-eslint/consistent-type-definitions": ["warn", "type"],
+    "@typescript-eslint/array-type": ["warn", { "default": "array-simple" }],
+    "@typescript-eslint/only-throw-error": "off",
+    "eslint/no-underscore-dangle": "off",
+    "vitest/no-conditional-expect": "off",
+    "vitest/valid-title": "off",
+
+    "eslint/no-shadow": "off",
+    "import/no-named-as-default": "off",
+    "import/no-unassigned-import": "off",
+    "jest/no-conditional-expect": "off",
+    "jest/require-to-throw-message": "off",
+    "jest/valid-title": "off",
+    "no-await-in-loop": "off",
+    "react/iframe-missing-sandbox": "off",
+    "react/no-array-index-key": "off",
+    "react/style-prop-object": "off",
+    "jsx-a11y/aria-role": "off",
+    "unicorn/no-array-reverse": "off",
+    "unicorn/no-array-sort": "off",
+    "unicorn/no-useless-spread": "off",
+    "vitest/expect-expect": "off",
+    "vitest/require-mock-type-parameters": "off",
+    "jsx-a11y/control-has-associated-label": "off"
+  },
+  "ignorePatterns": ["build", ".react-router", "node_modules"]
+}

@@ -1,0 +1,8 @@
+threshold: medium
+fileignoreconfig:
+  - filename: pnpm-lock.yaml
+    allowed_patterns:
+      - ^sha512-[A-Za-z0-9+/]+={0,2}$
+  - filename: .github/workflows/*
+    allowed_patterns:
+      - "@[a-z0-9]{40}" # Allow pinned action hashes
