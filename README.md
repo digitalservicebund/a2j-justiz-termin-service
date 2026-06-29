@@ -120,15 +120,15 @@ pnpm format && pnpm lint:fix
 ### Docker
 
 ```bash
-docker build -t scheduling-app .
-docker run -p 3000:3000 scheduling-app
+docker build -t a2j-justiz-termin-service .
+docker run -p 3000:3000 a2j-justiz-termin-service
 ```
 
 ### Podman
 
 ```bash
-podman build -t scheduling-app .
-podman run -p 3000:3000 localhost/scheduling-app
+podman build -t a2j-justiz-termin-service .
+podman run -p 3000:3000 localhost/a2j-justiz-termin-service
 ```
 
 On macOS, start the Podman machine first if it isn't running:
