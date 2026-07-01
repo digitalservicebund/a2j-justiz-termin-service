@@ -46,30 +46,30 @@ jobs:
       - name: Run tests
         run: pnpm test
 
-# TODO: add this after implementing e2e tests
-#      - name: Cache Playwright dependencies
-#        id: cache-playwright-deps
-#        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
-#        with:
-#          path: ~/.cache/ms-playwright
-#          key: ${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml') }}
-#          restore-keys: ${{ runner.os }}-playwright-
+      # TODO: add this after implementing e2e tests
+      #      - name: Cache Playwright dependencies
+      #        id: cache-playwright-deps
+      #        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
+      #        with:
+      #          path: ~/.cache/ms-playwright
+      #          key: ${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml') }}
+      #          restore-keys: ${{ runner.os }}-playwright-
 
-# TODO: add this after implementing A11y tests
-#      - name: Install A11y test dependencies
-#        if: steps.cache-playwright-deps.outputs.cache-hit != 'true'
-#        run: pnpm exec playwright install --with-deps
-#
-#      - name: Run A11y tests
-#        run: pnpm test:a11y
-#        env:
-#          VITE_PORT: 4183
-#
-#      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-#        if: ${{ failure() }}
-#        with:
-#          name: playwright-a11y-test-results
-#          path: tests/a11y/playwright-report
+      # TODO: add this after implementing A11y tests
+      #      - name: Install A11y test dependencies
+      #        if: steps.cache-playwright-deps.outputs.cache-hit != 'true'
+      #        run: pnpm exec playwright install --with-deps
+      #
+      #      - name: Run A11y tests
+      #        run: pnpm test:a11y
+      #        env:
+      #          VITE_PORT: 4183
+      #
+      #      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      #        if: ${{ failure() }}
+      #        with:
+      #          name: playwright-a11y-test-results
+      #          path: tests/a11y/playwright-report
 
       - name: Build Docker image
         run: |
