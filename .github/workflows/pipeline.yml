@@ -30,18 +30,7 @@ jobs:
           node-version-file: .tool-versions
           cache: pnpm
 
-      - name: Cache pnpm dependencies
-        id: cache-pnpm-deps
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
-        with:
-          path: |
-            ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
-
       - name: Perform a clean install of node dependencies
-        if: steps.cache-pnpm-deps.outputs.cache-hit != 'true'
         run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Check build
