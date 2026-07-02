@@ -96,7 +96,7 @@ jobs:
     uses: ./.github/workflows/vulnerability-scan.yml
     secrets: inherit
     with:
-      image_ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+      image_ref: ${{ github.repository }}:${{ github.sha }}
       image_artifact_name: docker-build
 
   build-and-push-image:
