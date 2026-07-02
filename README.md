@@ -1,6 +1,6 @@
-# Gerichtsterminplanung (Prototype)
+# Justiz Termin Service (JTS)
 
-In-memory scheduling prototype for legal appointments with three roles:
+**This application is currently a prototype/proof of concept and not meant for production.**
 
 - **Richter** (judge): creates and edits time slots, confirms the final appointment, can unlock party re-submission
 - **Kläger** (plaintiff): accepts/rejects each proposed time slot
@@ -20,7 +20,7 @@ Login requires no password — select a role from the dropdown.
 
 ## Prerequisites
 
-- Node.js 20+ (check with `node --version`)
+- Node.js 24+ (check with `node --version`)
 - pnpm (install with `npm install -g pnpm` if needed)
 - lefthook (install with `lefthook install`)
 
@@ -36,10 +36,10 @@ pnpm dev
 ### Development
 
 ```bash
-pnpm dev          # Start dev server with Vite + React Router
-pnpm build        # Build for production (client + SSR)
-pnpm start        # Serve production build
-pnpm typecheck    # Type-check with TypeScript
+pnpm dev         # Start dev server with Vite + React Router
+pnpm build       # Build for production (client + SSR)
+pnpm start       # Serve production build
+pnpm typecheck   # Type-check with TypeScript
 ```
 
 ### Testing
@@ -53,10 +53,10 @@ pnpm test:coverage  # Run tests with Istanbul coverage report
 ### Code Quality
 
 ```bash
-pnpm lint         # Check code with oxlint
-pnpm lint:fix     # Auto-fix oxlint issues
-pnpm format       # Format code with Prettier
-pnpm format:check # Check formatting without writing
+pnpm lint:check    # Check code with oxlint
+pnpm lint:fix      # Auto-fix oxlint issues
+pnpm format:fix    # Format code with Prettier
+pnpm format:check  # Check formatting without writing
 ```
 
 ## Project Structure
@@ -112,7 +112,7 @@ This project uses **Prettier** and **oxlint** with automatic fixes on save (Inte
 **Run format + lint together:**
 
 ```bash
-pnpm format && pnpm lint:fix
+pnpm format:fix && pnpm lint:fix
 ```
 
 ## Container
