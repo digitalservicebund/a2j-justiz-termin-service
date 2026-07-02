@@ -1,5 +1,6 @@
 # Hardened Alpine base image with security upgrades
-FROM node:24.15.0-alpine3.23 AS alpine-upgraded
+# See: https://stackoverflow.com/a/76440791/1239760
+FROM node:26.3.1-alpine3.23 AS alpine-upgraded
 RUN apk upgrade --no-cache && corepack enable
 
 # Download and install dependencies required to build the app
