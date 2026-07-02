@@ -23,7 +23,12 @@ RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
 # Production runtime image
 FROM alpine-upgraded AS prod
-RUN apk add --no-cache dumb-init
+RUN apk add --no-cache dumb-init \
+    && rm -rf /usr/local/lib/node_modules/npm \
+               /usr/local/lib/node_modules/corepack \
+               /usr/local/bin/npm \
+               /usr/local/bin/npx \
+               /usr/local/bin/corepack
 
 WORKDIR /app
 ENV NODE_ENV=production
