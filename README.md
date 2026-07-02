@@ -20,7 +20,7 @@ Login requires no password — select a role from the dropdown.
 
 ## Prerequisites
 
-- Node.js 24+ (check with `node --version`)
+- Node.js 26+ (check with `node --version`)
 - pnpm (install with `npm install -g pnpm` if needed)
 - lefthook (install with `lefthook install`)
 
