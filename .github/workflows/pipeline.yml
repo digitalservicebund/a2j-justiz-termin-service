@@ -17,7 +17,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      security-events: write
       actions: read
     steps:
       - name: Checkout code
@@ -77,42 +76,34 @@ jobs:
           docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} . --build-arg COMMIT_SHA=${{ github.sha }}
 
       - name: Save Docker image to artifact
-        if: github.ref == 'refs/heads/main'
         run: docker save ${{ env.IMAGE_NAME }}:${{ github.sha }} | gzip > image.tar.gz
 
       - name: Upload Docker image artifact
-        if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: docker-build
           path: image.tar.gz
           retention-days: 1
 
-      - name: Scan Docker image for vulnerabilities
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        env:
-          TRIVY_USERNAME: ${{ github.actor }}
-          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db,public.ecr.aws/aquasecurity/trivy-db
-        with:
-          image-ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
-          format: "sarif"
-          limit-severities-for-sarif: true
-          output: "trivy-results.sarif"
-          severity: "CRITICAL,HIGH"
-          exit-code: "1"
-
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4.35.2
-        if: always()
-        with:
-          sarif_file: "trivy-results.sarif"
+  vulnerability-scan:
+    needs:
+      - build
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    uses: ./.github/workflows/vulnerability-scan.yml
+    secrets: inherit
+    with:
+      image_ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+      image_artifact_name: docker-build
 
   build-and-push-image:
     runs-on: ubuntu-latest
     if: ${{ github.ref == 'refs/heads/main' }}
     needs:
       - build
+      - vulnerability-scan
     permissions:
       contents: read
       id-token: write
