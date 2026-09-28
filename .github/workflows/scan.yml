@@ -1,4 +1,4 @@
-name: Scan
+name: Vulnerability Scan
 
 on:
   schedule:
@@ -6,15 +6,6 @@ on:
   # Allow to run this workflow manually
   workflow_dispatch:
   workflow_call:
-    inputs:
-      image_ref:
-        description: Docker image reference to scan (e.g. owner/repo:sha)
-        required: false
-        type: string
-      image_artifact_name:
-        description: Artifact name containing image.tar.gz produced by docker save
-        required: false
-        type: string
 
 env:
   CONTAINER_REGISTRY: ghcr.io
@@ -22,34 +13,17 @@ env:
   CONTAINER_IMAGE_VERSION: latest
 
 jobs:
-  vulnerability-scan:
+  scan:
+    name: Scan
     runs-on: ubuntu-latest
     permissions:
       contents: read
       security-events: write # trivy scan needs this
-      packages: read # required for scanning private images in ghcr.io
-      actions: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
         with:
           fetch-depth: 0
-
-      - name: Validate reusable workflow inputs
-        if: ${{ github.event_name == 'workflow_call' && inputs.image_artifact_name != '' && inputs.image_ref == '' }}
-        run: |
-          echo "image_ref must be set when image_artifact_name is provided"
-          exit 1
-
-      - name: Download Docker image artifact
-        if: ${{ inputs.image_artifact_name != '' }}
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
-        with:
-          name: ${{ inputs.image_artifact_name }}
-
-      - name: Load Docker image
-        if: ${{ inputs.image_artifact_name != '' }}
-        run: docker load --input image.tar.gz
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
@@ -59,7 +33,7 @@ jobs:
           # Specify multiple registries: try default GitHub registry, if too many requests, use the aws mirror.
           TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db,public.ecr.aws/aquasecurity/trivy-db
         with:
-          image-ref: ${{ inputs.image_ref != '' && inputs.image_ref || format('{0}/{1}:{2}', env.CONTAINER_REGISTRY, env.CONTAINER_IMAGE_NAME, env.CONTAINER_IMAGE_VERSION) }}
+          image-ref: ${{ env.CONTAINER_REGISTRY }}/${{ env.CONTAINER_IMAGE_NAME }}:${{ env.CONTAINER_IMAGE_VERSION }}
           format: "sarif"
           # By default SARIF format enforces output of all vulnerabilities regardless of configured severities.
           # To override this set limit-severities-for-sarif to true.
@@ -69,9 +43,7 @@ jobs:
 
       - name: Check trivy results
         run: |
-          RESULT_COUNT=$(jq '[.runs[].results[]?] | length' trivy-results.sarif)
-
-          if [ "$RESULT_COUNT" -gt 0 ]; then
+          if grep -qE 'HIGH|CRITICAL' trivy-results.sarif; then
             echo "Vulnerabilities found:"
 
             jq -r '
@@ -90,14 +62,14 @@ jobs:
           fi
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4.35.2
+        uses: github/codeql-action/upload-sarif@1c5b675653bb5c22dbe9b12b556ec555138e09fd #v4.38.1
         if: always() # Bypass non-zero exit code..
         with:
           sarif_file: "trivy-results.sarif"
 
 #      - name: Send status to Slack
-#        uses: digitalservicebund/notify-on-failure-gha@671832f192aee0a068fd92b2f6deb975df794a84 # v1.6.1
-#        if: ${{ failure() && secrets.SLACK_BOT_TOKEN != '' && secrets.SLACK_CHANNEL_ID != '' }}
+#        uses: digitalservicebund/notify-on-failure-gha@b8fdda76a38fa8e94cf623ebdd03e4570bc4ceb0 # v1.9.0
+#        if: ${{ failure() }}
 #        with:
 #          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 #          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}

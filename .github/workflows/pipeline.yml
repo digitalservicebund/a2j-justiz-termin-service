@@ -86,18 +86,12 @@ jobs:
           retention-days: 1
 
   vulnerability-scan:
-    needs:
-      - build
+    name: Vulnerability Scan
+    uses: ./.github/workflows/scan.yml
+    secrets: inherit
     permissions:
       contents: read
-      security-events: write
-      packages: read
-      actions: read
-    uses: ./.github/workflows/vulnerability-scan.yml
-    secrets: inherit
-    with:
-      image_ref: ${{ github.repository }}:${{ github.sha }}
-      image_artifact_name: docker-build
+      security-events: write # trivy scan needs this
 
   build-and-push-image:
     runs-on: ubuntu-latest
