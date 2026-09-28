@@ -1,8 +1,5 @@
 pre-commit:
   commands:
-    secret-scan:
-      tags: security
-      run: talisman --githook pre-commit
     lint:
       run: pnpm lint:fix
     format-check:

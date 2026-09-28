@@ -51,5 +51,3 @@ perf_hooks-*.json
 .turbo/
 .cache/
 
-# Talisman
-talisman_report

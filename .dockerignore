@@ -12,5 +12,4 @@ app/**/__test__
 prettier.config.*
 .prettierignore
 lefthook.yml
-.talismanrc
 *.md
