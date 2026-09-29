@@ -154,30 +154,26 @@ jobs:
       - name: Attest the vulnerability scan
         run: cosign attest --yes --replace --predicate vulnerabilities.json --type vuln ghcr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-# DEPLOYMENT
-# TODO: add this when ready for deployment (below is an example from KomPla)
-#  deploy-staging-stackit:
-#    runs-on: ubuntu-latest
-#    if: ${{ github.ref == 'refs/heads/main' }}
-#    permissions:
-#      contents: read
-#    concurrency: deploy
-#    environment: staging
-#    needs: [build-and-push-image]
-#    steps:
-#      - name: Deploy latest container image to StackIT
-#        uses: digitalservicebund/argocd-deploy@6033da861398e0d7fcffe1b195f8d58f10b62c4e # auth-token branch
-#        with:
-#          environment: staging-stackit
-#          version: ${{ env.CONTAINER_IMAGE_VERSION }}
-#          deploying_repo: ${{ github.event.repository.name }}
-#          infra_repo: ${{ github.event.repository.name }}-infra
-#          github_app_private_key: ${{ secrets.GITOPS_A2J_APP_PRIVATE_KEY }}
-#          github_app_id: ${{ secrets.GITOPS_A2J_APP_ID }}
-#          app: ${{ github.event.repository.name }}-staging
-#          argocd_auth_token: ${{ secrets.ARGOCD_AUTH_TOKEN }}
-#          argocd_server: ${{ secrets.ARGOCD_SERVER_STACKIT }}
-#          argocd_sync_timeout: 600
+  deploy-staging:
+    runs-on: ubuntu-latest
+    if: ${{ github.ref == 'refs/heads/main' }}
+    environment: staging
+    needs: build-and-push-image
+    steps:
+      - name: Deploy latest container image
+        uses: digitalservicebund/argocd-deploy@6033da861398e0d7fcffe1b195f8d58f10b62c4e # auth-token branch
+        with:
+          environment: staging-
+          version: ${{ env.CONTAINER_IMAGE_VERSION }}
+          deploying_repo: ${{ github.event.repository.name }}
+          infra_repo: ${{ github.event.repository.name }}-infra
+          github_app_id: ${{ secrets.GITOPS_A2J_APP_ID }}
+          github_app_client_id: ${{ secrets.GITOPS_A2J_APP_CLIENT_ID }}
+          github_app_private_key: ${{ secrets.GITOPS_A2J_APP_PRIVATE_KEY }}
+          app: ${{ github.event.repository.name }}-staging
+          argocd_auth_token: ${{ secrets.ARGOCD_AUTH_TOKEN }}
+          argocd_server: ${{ secrets.ARGOCD_SERVER_STACKIT }}
+          argocd_sync_timeout: 600
 
 # E2E TESTS
 #  e2e-test-staging:
