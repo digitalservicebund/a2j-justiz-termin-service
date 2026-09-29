@@ -7,4 +7,6 @@ export default [
   route("richter", "routes/richter.tsx"),
   route("klaeger", "routes/klaeger.tsx"),
   route("beklagter", "routes/beklagter.tsx"),
+
+  route("health", "routes/health.ts"),
 ] satisfies RouteConfig;
