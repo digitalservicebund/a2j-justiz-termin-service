@@ -167,7 +167,6 @@ jobs:
           version: ${{ env.CONTAINER_IMAGE_VERSION }}
           deploying_repo: ${{ github.event.repository.name }}
           infra_repo: ${{ github.event.repository.name }}-infra
-          github_app_id: ${{ secrets.GITOPS_A2J_APP_ID }}
           github_app_client_id: ${{ secrets.GITOPS_A2J_APP_CLIENT_ID }}
           github_app_private_key: ${{ secrets.GITOPS_A2J_APP_PRIVATE_KEY }}
           app: ${{ github.event.repository.name }}-staging
