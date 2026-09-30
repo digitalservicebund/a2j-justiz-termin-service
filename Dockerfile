@@ -35,9 +35,9 @@ ENV NODE_ENV=production
 
 COPY --from=build-dependencies /build-deps/build ./build
 COPY --from=app-dependencies /app-deps/node_modules ./node_modules
-COPY package.json ./
+COPY package.json server.js ./
 
 EXPOSE 3000
 USER 1000
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["./node_modules/.bin/react-router-serve", "./build/server/index.js"]
+CMD ["node", "server.js"]
