@@ -163,7 +163,7 @@ jobs:
       - name: Deploy latest container image
         uses: digitalservicebund/argocd-deploy@355b2c4b9d9191a5048c8307f13e1cfc05150387 # v1.3.0
         with:
-          environment: staging-
+          environment: staging
           version: ${{ env.CONTAINER_IMAGE_VERSION }}
           deploying_repo: ${{ github.event.repository.name }}
           infra_repo: ${{ github.event.repository.name }}-infra
