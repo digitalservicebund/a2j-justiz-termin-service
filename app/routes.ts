@@ -9,4 +9,5 @@ export default [
   route("beklagter", "routes/beklagter.tsx"),
 
   route("health", "routes/health.ts"),
+  route("api/calendars/:calendarId/feed.ics", "routes/calendar.ts"),
 ] satisfies RouteConfig;

@@ -83,6 +83,32 @@ app/
 
 Tests live alongside their source in `__test__` subdirectories (e.g. `components/shared/__test__/`).
 
+## Mock Calendar Subscription
+
+Subscribe from a calendar application using this URL when running locally:
+
+```text
+http://localhost:3000/api/calendars/demo/feed.ics
+```
+
+The public `GET /api/calendars/:calendarId/feed.ics` endpoint requires no login.
+Replace `demo` with any nonempty, URL-encoded calendar ID occupying one path
+segment. The ID is logged with `console.log` and otherwise ignored; every ID
+returns the same mock feed. Do not put secrets or personal data in mock IDs.
+
+The feed contains one recurring event, **Test Termin**, every Tuesday from
+**13:00 to 14:00 Europe/Berlin**, starting on **13 October 2026**, without an end
+date. Its timezone definition preserves Berlin local time across daylight-saving
+changes. The event UID and timestamps remain fixed across requests.
+
+Responses use `Content-Type: text/calendar; charset=utf-8` and
+`Cache-Control: no-store`. Calendar applications choose their own refresh
+schedule. Adding the URL as a subscription keeps it refreshable; downloading and
+importing the file is a one-time copy.
+
+This endpoint is mock-only: it has no subscriber storage, access control, real
+appointments, attendees, location, description, or reminders.
+
 ## Confirmed Business Rules
 
 - Data stores in memory only (not persisted)
