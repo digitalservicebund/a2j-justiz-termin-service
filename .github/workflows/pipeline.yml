@@ -85,20 +85,11 @@ jobs:
           path: image.tar.gz
           retention-days: 1
 
-  vulnerability-scan:
-    name: Vulnerability Scan
-    uses: ./.github/workflows/scan.yml
-    secrets: inherit
-    permissions:
-      contents: read
-      security-events: write # trivy scan needs this
-
   build-and-push-image:
     runs-on: ubuntu-latest
     if: ${{ github.ref == 'refs/heads/main' }}
     needs:
       - build
-      - vulnerability-scan
     permissions:
       contents: read
       id-token: write
@@ -154,11 +145,22 @@ jobs:
       - name: Attest the vulnerability scan
         run: cosign attest --yes --replace --predicate vulnerabilities.json --type vuln ghcr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
+  vulnerability-scan:
+    name: Vulnerability Scan
+    needs: [build-and-push-image]
+    uses: ./.github/workflows/scan.yml
+    with:
+      image-version: ${{ github.sha }}
+    secrets: inherit
+    permissions:
+      contents: read
+      security-events: write # trivy scan needs this
+
   deploy-staging:
     runs-on: ubuntu-latest
     if: ${{ github.ref == 'refs/heads/main' }}
     environment: staging
-    needs: build-and-push-image
+    needs: [build-and-push-image, vulnerability-scan]
     steps:
       - name: Deploy latest container image
         uses: digitalservicebund/argocd-deploy@355b2c4b9d9191a5048c8307f13e1cfc05150387 # v1.3.0
