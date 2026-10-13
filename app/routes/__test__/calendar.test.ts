@@ -133,13 +133,13 @@ describe("calendar subscription", () => {
       "2026-10-13T12:00:00Z",
     );
     expect(event.description).toBe(
-      "Last synchronized (feed generated): 2026-10-13T12:00:00.000Z",
+      "Last synchronized (feed generated):\n13 October 2026 at 14:00:00 CEST",
     );
     expect(component.getFirstPropertyValue("created")?.toString()).toBe(
       "2026-10-13T00:00:00Z",
     );
-    expect(event.startDate.toString()).toBe("2026-10-13T13:15:00");
-    expect(event.endDate.toString()).toBe("2026-10-13T14:15:00");
+    expect(event.startDate.toString()).toBe("2026-10-13T13:20:00");
+    expect(event.endDate.toString()).toBe("2026-10-13T14:20:00");
     expect(event.startDate.zone.tzid).toBe("Europe/Berlin");
     expect(event.endDate.zone.tzid).toBe("Europe/Berlin");
     expect(component.getFirstPropertyValue("rrule")?.toString()).toBe(
@@ -161,10 +161,10 @@ describe("calendar subscription", () => {
     );
 
     expect(first.description).toBe(
-      "Last synchronized (feed generated): 2026-10-13T12:00:00.000Z",
+      "Last synchronized (feed generated):\n13 October 2026 at 14:00:00 CEST",
     );
     expect(refreshed.description).toBe(
-      "Last synchronized (feed generated): 2026-10-13T12:05:00.000Z",
+      "Last synchronized (feed generated):\n13 October 2026 at 14:05:00 CEST",
     );
     for (const name of ["dtstamp", "last-modified"]) {
       expect(refreshed.component.getFirstPropertyValue(name)?.toString()).toBe(
@@ -180,11 +180,27 @@ describe("calendar subscription", () => {
   });
 
   it.each([
-    ["2026-10-20", "2026-10-20T11:15:00.000Z"],
-    ["2026-10-27", "2026-10-27T12:15:00.000Z"],
-    ["2027-03-23", "2027-03-23T12:15:00.000Z"],
-    ["2027-03-30", "2027-03-30T11:15:00.000Z"],
-  ])("keeps 13:15-14:15 Berlin time on %s", async (date, utcStart) => {
+    ["2026-10-13T12:00:00Z", "13 October 2026 at 14:00:00 CEST"],
+    ["2026-10-27T12:00:00Z", "27 October 2026 at 13:00:00 CET"],
+    ["2026-10-13T22:30:00Z", "14 October 2026 at 00:30:00 CEST"],
+  ])(
+    "formats synchronization time in Berlin for %s",
+    async (timestamp, expected) => {
+      vi.setSystemTime(new Date(timestamp));
+      const calendar = await parseCalendar();
+      const event = new ICAL.Event(calendar.getFirstSubcomponent("vevent")!);
+      expect(event.description).toBe(
+        `Last synchronized (feed generated):\n${expected}`,
+      );
+    },
+  );
+
+  it.each([
+    ["2026-10-20", "2026-10-20T11:20:00.000Z"],
+    ["2026-10-27", "2026-10-27T12:20:00.000Z"],
+    ["2027-03-23", "2027-03-23T12:20:00.000Z"],
+    ["2027-03-30", "2027-03-30T11:20:00.000Z"],
+  ])("keeps 13:20-14:20 Berlin time on %s", async (date, utcStart) => {
     const calendar = await parseCalendar();
     const event = new ICAL.Event(calendar.getFirstSubcomponent("vevent")!);
     const iterator = event.iterator();
@@ -193,10 +209,10 @@ describe("calendar subscription", () => {
       occurrence = iterator.next();
     }
 
-    expect(occurrence?.toString()).toBe(`${date}T13:15:00`);
+    expect(occurrence?.toString()).toBe(`${date}T13:20:00`);
     const details = event.getOccurrenceDetails(occurrence!);
     expect(details.startDate.toJSDate().toISOString()).toBe(utcStart);
-    expect(details.endDate.toString()).toBe(`${date}T14:15:00`);
+    expect(details.endDate.toString()).toBe(`${date}T14:20:00`);
     expect(
       details.endDate.toJSDate().getTime() -
         details.startDate.toJSDate().getTime(),

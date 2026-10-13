@@ -5,6 +5,17 @@ function createCalendar(synchronizedAt: Date): string {
   const calendarTimestamp = isoTimestamp
     .replace(/[-:]/g, "")
     .replace(/\.\d{3}Z$/, "Z");
+  const readableTimestamp = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Berlin",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+    timeZoneName: "short",
+  }).format(synchronizedAt);
 
   return [
     "BEGIN:VCALENDAR",
@@ -41,11 +52,12 @@ function createCalendar(synchronizedAt: Date): string {
     `DTSTAMP:${calendarTimestamp}`,
     `LAST-MODIFIED:${calendarTimestamp}`,
     "CREATED:20261013T000000Z",
-    "DTSTART;TZID=Europe/Berlin:20261013T131500",
-    "DTEND;TZID=Europe/Berlin:20261013T141500",
+    "DTSTART;TZID=Europe/Berlin:20261013T132000",
+    "DTEND;TZID=Europe/Berlin:20261013T142000",
     "RRULE:FREQ=WEEKLY;BYDAY=TU",
     "SUMMARY:Test Termin",
-    `DESCRIPTION:Last synchronized (feed generated): ${isoTimestamp}`,
+    "DESCRIPTION:Last synchronized (feed generated):\\n",
+    ` ${readableTimestamp}`,
     "END:VEVENT",
     "END:VCALENDAR",
     "",
