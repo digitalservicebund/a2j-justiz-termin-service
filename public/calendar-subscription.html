@@ -497,13 +497,31 @@
             <h3 id="google-heading">Google Calendar in a desktop browser</h3>
             <div class="actions">
               <a
-                class="action secondary"
-                href="https://calendar.google.com/calendar/u/0/r/settings/addbyurl"
+                class="action secondary google-subscribe-link"
+                href="https://calendar.google.com/calendar/r?cid=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fcalendars%2Fdemo%2Ffeed.ics"
                 target="_blank"
                 rel="noopener noreferrer"
-                >Open Google Calendar</a
+                >Subscribe in Google Calendar</a
               >
             </div>
+            <ol>
+              <li>
+                Use a <strong>public HTTPS feed URL</strong> above. Google must
+                be able to fetch it without a login, VPN, or browser cookies.
+                Localhost will not work.
+              </li>
+              <li>
+                Select <strong>Subscribe in Google Calendar</strong> and sign in
+                to the Google account you want to use. The link passes your feed
+                URL to Google Calendar.
+              </li>
+              <li>
+                If Google shows an add-calendar prompt, review the calendar and
+                confirm. Select the new calendar under
+                <strong>Other calendars</strong> to display it.
+              </li>
+            </ol>
+            <p><strong>No subscription prompt? Add it manually:</strong></p>
             <ol>
               <li>
                 Copy the <strong>public HTTPS feed URL</strong> above. Google
@@ -516,8 +534,13 @@
               </li>
               <li>
                 Next to <strong>Other calendars</strong>, select
-                <strong>+ &gt; From URL</strong>. The button above opens that
-                settings page directly.
+                <strong>+ &gt; From URL</strong>, or open the
+                <a
+                  href="https://calendar.google.com/calendar/u/0/r/settings/addbyurl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >From URL settings page</a
+                >. This page does not prefill the feed URL.
               </li>
               <li>
                 Paste the feed URL and select <strong>Add calendar</strong>.
@@ -799,7 +822,9 @@
         } catch {
           status.textContent =
             "Enter a complete HTTP or HTTPS feed URL without credentials.";
-          for (const link of document.querySelectorAll(".webcal-link")) {
+          for (const link of document.querySelectorAll(
+            ".webcal-link, .google-subscribe-link",
+          )) {
             link.removeAttribute("href");
             link.setAttribute("aria-disabled", "true");
           }
@@ -818,6 +843,13 @@
           link.href = `webcal://${url.host}${url.pathname}${url.search}`;
           link.removeAttribute("aria-disabled");
         }
+        const googleSubscription = new URL(
+          "https://calendar.google.com/calendar/r",
+        );
+        googleSubscription.searchParams.set("cid", url.href);
+        const googleLink = document.querySelector(".google-subscribe-link");
+        googleLink.href = googleSubscription.href;
+        googleLink.removeAttribute("aria-disabled");
         return true;
       }
 
