@@ -97,7 +97,7 @@ segment. The ID is logged with `console.log` and otherwise ignored; every ID
 returns the same mock feed. Do not put secrets or personal data in mock IDs.
 
 The feed contains one recurring event, **Test Termin**, every Tuesday from
-**13:00 to 14:00 Europe/Berlin**, starting on **13 October 2026**, without an end
+**13:15 to 14:15 Europe/Berlin**, starting on **13 October 2026**, without an end
 date. Its timezone definition preserves Berlin local time across daylight-saving
 changes. The event UID and timestamps remain fixed across requests.
 

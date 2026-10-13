@@ -89,8 +89,8 @@ describe("calendar subscription", () => {
     expect(component.getFirstPropertyValue("created")?.toString()).toBe(
       "2026-10-13T00:00:00Z",
     );
-    expect(event.startDate.toString()).toBe("2026-10-13T13:00:00");
-    expect(event.endDate.toString()).toBe("2026-10-13T14:00:00");
+    expect(event.startDate.toString()).toBe("2026-10-13T13:15:00");
+    expect(event.endDate.toString()).toBe("2026-10-13T14:15:00");
     expect(event.startDate.zone.tzid).toBe("Europe/Berlin");
     expect(event.endDate.zone.tzid).toBe("Europe/Berlin");
     expect(component.getFirstPropertyValue("rrule")?.toString()).toBe(
@@ -103,11 +103,11 @@ describe("calendar subscription", () => {
   });
 
   it.each([
-    ["2026-10-20", "2026-10-20T11:00:00.000Z"],
-    ["2026-10-27", "2026-10-27T12:00:00.000Z"],
-    ["2027-03-23", "2027-03-23T12:00:00.000Z"],
-    ["2027-03-30", "2027-03-30T11:00:00.000Z"],
-  ])("keeps 13:00-14:00 Berlin time on %s", async (date, utcStart) => {
+    ["2026-10-20", "2026-10-20T11:15:00.000Z"],
+    ["2026-10-27", "2026-10-27T12:15:00.000Z"],
+    ["2027-03-23", "2027-03-23T12:15:00.000Z"],
+    ["2027-03-30", "2027-03-30T11:15:00.000Z"],
+  ])("keeps 13:15-14:15 Berlin time on %s", async (date, utcStart) => {
     const calendar = await parseCalendar();
     const event = new ICAL.Event(calendar.getFirstSubcomponent("vevent")!);
     const iterator = event.iterator();
@@ -116,10 +116,10 @@ describe("calendar subscription", () => {
       occurrence = iterator.next();
     }
 
-    expect(occurrence?.toString()).toBe(`${date}T13:00:00`);
+    expect(occurrence?.toString()).toBe(`${date}T13:15:00`);
     const details = event.getOccurrenceDetails(occurrence!);
     expect(details.startDate.toJSDate().toISOString()).toBe(utcStart);
-    expect(details.endDate.toString()).toBe(`${date}T14:00:00`);
+    expect(details.endDate.toString()).toBe(`${date}T14:15:00`);
     expect(
       details.endDate.toJSDate().getTime() -
         details.startDate.toJSDate().getTime(),
