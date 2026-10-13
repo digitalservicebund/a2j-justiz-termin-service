@@ -26,11 +26,14 @@ async function parseCalendar(): Promise<ICAL.Component> {
 
 describe("calendar subscription", () => {
   beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-13T12:00:00.000Z"));
     vi.spyOn(console, "log").mockImplementation(() => {});
     ICAL.TimezoneService.reset();
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
     ICAL.TimezoneService.reset();
   });
@@ -39,7 +42,7 @@ describe("calendar subscription", () => {
     const response = await requestCalendar();
     expect(response.status).toBe(200);
     expect(response.headers.get("Content-Type")).toBe(
-      "text/calendar; charset=utf-8",
+      "text/calendar; charset=utf-8; method=PUBLISH",
     );
     expect(response.headers.get("Cache-Control")).toBe("no-store");
 
@@ -49,7 +52,7 @@ describe("calendar subscription", () => {
     expect(body.split("\r\n").every((line) => line.length <= 75)).toBe(true);
   });
 
-  it("logs the decoded ID but returns identical content for all IDs and refreshes", async () => {
+  it("logs the decoded ID but returns identical content for all IDs at the same time", async () => {
     const first = await (await requestCalendar("calendar%20one")).text();
     const second = await (await requestCalendar("other-calendar")).text();
     const refreshed = await (await requestCalendar("calendar%20one")).text();
@@ -72,6 +75,46 @@ describe("calendar subscription", () => {
     expect(console.log).not.toHaveBeenCalled();
   });
 
+  it("publishes calendar-level names, descriptions, color, and five-minute refresh hints", async () => {
+    const calendar = await parseCalendar();
+    expect(calendar.getFirstPropertyValue("method")).toBe("PUBLISH");
+    for (const name of ["name", "x-wr-calname"]) {
+      expect(calendar.getFirstPropertyValue(name)).toBe("JTS Demo");
+    }
+    for (const name of ["description", "x-wr-caldesc"]) {
+      expect(calendar.getFirstPropertyValue(name)).toBe(
+        "Public mock calendar for Justiz Termin Service.",
+      );
+    }
+    expect(calendar.getFirstPropertyValue("color")).toBe("midnightblue");
+    const refresh = calendar.getFirstProperty("refresh-interval")!;
+    expect(refresh.type).toBe("duration");
+    expect(refresh.getFirstValue()?.toString()).toBe("PT5M");
+    expect(
+      ICAL.Duration.fromString(refresh.getFirstValue()!.toString()).toSeconds(),
+    ).toBe(300);
+    expect(calendar.getFirstPropertyValue("x-published-ttl")?.toString()).toBe(
+      "PT5M",
+    );
+    for (const name of [
+      "method",
+      "name",
+      "x-wr-calname",
+      "description",
+      "x-wr-caldesc",
+      "color",
+      "refresh-interval",
+      "x-published-ttl",
+    ]) {
+      expect(calendar.getAllProperties(name)).toHaveLength(1);
+      if (name !== "description") {
+        expect(calendar.getFirstSubcomponent("vevent")!.hasProperty(name)).toBe(
+          false,
+        );
+      }
+    }
+  });
+
   it("contains only the agreed recurring event and a Berlin timezone", async () => {
     const calendar = await parseCalendar();
     expect(calendar.name).toBe("vcalendar");
@@ -84,7 +127,13 @@ describe("calendar subscription", () => {
     expect(event.summary).toBe("Test Termin");
     expect(event.uid).toBe("test-termin@justiz-termin-service.invalid");
     expect(component.getFirstPropertyValue("dtstamp")?.toString()).toBe(
-      "2026-10-13T00:00:00Z",
+      "2026-10-13T12:00:00Z",
+    );
+    expect(component.getFirstPropertyValue("last-modified")?.toString()).toBe(
+      "2026-10-13T12:00:00Z",
+    );
+    expect(event.description).toBe(
+      "Last synchronized (feed generated): 2026-10-13T12:00:00.000Z",
     );
     expect(component.getFirstPropertyValue("created")?.toString()).toBe(
       "2026-10-13T00:00:00Z",
@@ -96,10 +145,38 @@ describe("calendar subscription", () => {
     expect(component.getFirstPropertyValue("rrule")?.toString()).toBe(
       "FREQ=WEEKLY;BYDAY=TU",
     );
-    for (const name of ["attendee", "location", "description"]) {
+    for (const name of ["attendee", "location"]) {
       expect(component.hasProperty(name)).toBe(false);
     }
     expect(component.getAllSubcomponents("valarm")).toHaveLength(0);
+  });
+
+  it("updates synchronization details per request without changing event identity or schedule", async () => {
+    const first = new ICAL.Event(
+      (await parseCalendar()).getFirstSubcomponent("vevent")!,
+    );
+    vi.setSystemTime(new Date("2026-10-13T12:05:00.000Z"));
+    const refreshed = new ICAL.Event(
+      (await parseCalendar()).getFirstSubcomponent("vevent")!,
+    );
+
+    expect(first.description).toBe(
+      "Last synchronized (feed generated): 2026-10-13T12:00:00.000Z",
+    );
+    expect(refreshed.description).toBe(
+      "Last synchronized (feed generated): 2026-10-13T12:05:00.000Z",
+    );
+    for (const name of ["dtstamp", "last-modified"]) {
+      expect(refreshed.component.getFirstPropertyValue(name)?.toString()).toBe(
+        "2026-10-13T12:05:00Z",
+      );
+    }
+    expect(refreshed.uid).toBe(first.uid);
+    for (const name of ["created", "dtstart", "dtend", "rrule"]) {
+      expect(refreshed.component.getFirstPropertyValue(name)?.toString()).toBe(
+        first.component.getFirstPropertyValue(name)?.toString(),
+      );
+    }
   });
 
   it.each([

@@ -99,15 +99,27 @@ returns the same mock feed. Do not put secrets or personal data in mock IDs.
 The feed contains one recurring event, **Test Termin**, every Tuesday from
 **13:15 to 14:15 Europe/Berlin**, starting on **13 October 2026**, without an end
 date. Its timezone definition preserves Berlin local time across daylight-saving
-changes. The event UID and timestamps remain fixed across requests.
+changes. The event UID and creation timestamp remain fixed across requests.
+The event description shows `Last synchronized (feed generated):` followed by
+the request's generation time in ISO 8601 UTC. `DTSTAMP` and `LAST-MODIFIED`
+update to the same instant. This reports server-side feed generation, not a
+confirmed synchronization time in the subscriber's calendar app.
 
-Responses use `Content-Type: text/calendar; charset=utf-8` and
-`Cache-Control: no-store`. Calendar applications choose their own refresh
-schedule. Adding the URL as a subscription keeps it refreshable; downloading and
-importing the file is a one-time copy.
+Calendar-level metadata publishes the name **JTS Demo**, the description
+**Public mock calendar for Justiz Termin Service.**, and the CSS color name
+`midnightblue`. Standard `NAME` and `DESCRIPTION` properties are paired with
+`X-WR-CALNAME` and `X-WR-CALDESC` for compatibility.
+
+Responses use `Content-Type: text/calendar; charset=utf-8; method=PUBLISH`,
+matching `METHOD:PUBLISH` in the feed, and `Cache-Control: no-store`.
+`REFRESH-INTERVAL;VALUE=DURATION:PT5M` and `X-PUBLISHED-TTL:PT5M` suggest a
+five-minute minimum polling interval. Clients may ignore or override these hints;
+they do not guarantee five-minute updates. Adding the URL as a subscription keeps it
+refreshable; downloading and importing the file is a one-time copy, regardless
+of metadata.
 
 This endpoint is mock-only: it has no subscriber storage, access control, real
-appointments, attendees, location, description, or reminders.
+appointments, attendees, event location, or reminders.
 
 ## Confirmed Business Rules
 
