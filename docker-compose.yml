@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: a2j-justiz-termin-service-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: a2j-justiz-termin-service
+      POSTGRES_USER: jts
+      POSTGRES_PASSWORD: jts
+    ports:
+      # 5433 on the host so it can run next to other projects' Postgres on 5432.
+      - "5433:5432"
+    volumes:
+      # Postgres 18+ keeps its data in a versioned subdirectory below this path.
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jts -d a2j-justiz-termin-service"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:
