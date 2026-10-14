@@ -1,0 +1,101 @@
+.richter-sections__card {
+  gap: var(--kern-metric-space-large);
+}
+
+.richter-sections__draft-form {
+  display: grid;
+  gap: var(--kern-metric-space-small);
+}
+
+.richter-sections__draft-input {
+  display: grid;
+  min-width: 0;
+  gap: var(--kern-metric-space-2x-small);
+}
+
+.richter-sections__draft-control {
+  min-width: 0;
+  width: 100%;
+}
+
+.richter-sections__draft-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: hidden;
+  border: var(--kern-metric-border-width-light) solid
+    var(--kern-color-layout-border-contextual);
+  border-radius: var(--kern-metric-border-radius-default);
+  background-color: var(--kern-color-layout-background-default-surface);
+}
+
+.richter-sections__draft-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kern-metric-space-default);
+  padding: var(--kern-metric-space-small) var(--kern-metric-space-default);
+}
+
+.richter-sections__draft-text {
+  color: var(--kern-color-layout-text-default-contextual);
+}
+
+.richter-sections__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kern-metric-space-small);
+}
+
+.richter-sections__table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.richter-sections__empty-state {
+  padding: var(--kern-metric-space-2x-large) var(--kern-metric-space-large);
+  text-align: center;
+}
+
+.richter-sections__table {
+  min-width: 48rem;
+}
+
+.richter-sections__slot-label {
+  display: flex;
+  align-items: center;
+  gap: var(--kern-metric-space-small);
+}
+
+.richter-sections__footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kern-metric-space-small);
+  padding-top: var(--kern-metric-space-small);
+}
+
+.richter-sections__party-list {
+  display: grid;
+  gap: var(--kern-metric-space-small);
+}
+
+.richter-sections__party-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kern-metric-space-default);
+}
+
+.richter-sections__party-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--kern-metric-space-small);
+}
+
+.richter-sections__lock-icon {
+  font-size: 18px;
+  line-height: 1;
+  user-select: none;
+}

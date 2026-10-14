@@ -13,6 +13,7 @@ import { TextLabel } from "~/components/shared/TextLabel";
 import type { Decision, PartyRole } from "~/core/domain/verfahren";
 import type { OverviewDto } from "~/core/services/schedulingQuery";
 import { useRichterActions } from "~/hooks/useRichterActions";
+import "./RichterSections.css";
 
 export function DraftSlotsSection({
   draft,
@@ -34,18 +35,15 @@ export function DraftSlotsSection({
   readonly error: string | null;
 }) {
   return (
-    <Card className="space-y-kern-space-large">
+    <Card className="richter-sections__card">
       <h3 className="kern-heading-small">Prepare new time slots</h3>
-      <form
-        className="space-y-kern-space-small space-x-kern-space-small"
-        onSubmit={onAddDraft}
-      >
-        <div className="kern-form-input">
+      <form className="richter-sections__draft-form" onSubmit={onAddDraft}>
+        <div className="kern-form-input richter-sections__draft-input">
           <label className="kern-label" htmlFor="starts-at">
             Start time
           </label>
           <input
-            className="kern-form-input__input"
+            className="kern-form-input__input richter-sections__draft-control"
             id="starts-at"
             type="datetime-local"
             required
@@ -58,12 +56,12 @@ export function DraftSlotsSection({
             }
           />
         </div>
-        <div className="kern-form-input">
+        <div className="kern-form-input richter-sections__draft-input">
           <label className="kern-label" htmlFor="ends-at">
             End time
           </label>
           <input
-            className="kern-form-input__input"
+            className="kern-form-input__input richter-sections__draft-control"
             id="ends-at"
             type="datetime-local"
             required
@@ -82,13 +80,13 @@ export function DraftSlotsSection({
         </Button>
       </form>
       {slotDrafts.length > 0 && (
-        <ul className="rounded-kern-default divide-y divide-slate-100 overflow-hidden bg-slate-50 dark:divide-slate-700 dark:bg-slate-800">
+        <ul className="richter-sections__draft-list">
           {slotDrafts.map((slot, index) => (
             <li
               key={`${slot.startsAtLocal}-${slot.endsAtLocal}-${index}`}
-              className="flex items-center justify-between gap-4 px-4 py-3"
+              className="richter-sections__draft-item"
             >
-              <span className="text-sm text-slate-700 dark:text-slate-200">
+              <span className="kern-body kern-body--small richter-sections__draft-text">
                 {new Date(slot.startsAtLocal).toLocaleString("de-DE")} –{" "}
                 {new Date(slot.endsAtLocal).toLocaleString("de-DE")}
               </span>
@@ -104,7 +102,7 @@ export function DraftSlotsSection({
         </ul>
       )}
 
-      <div className="gap-kern-space-small flex flex-wrap">
+      <div className="richter-sections__actions">
         <Button style="secondary" onClick={onSuggestRandom} type="button">
           <Icon name="autorenew" />
           <TextLabel label="Random slots" />
@@ -156,7 +154,7 @@ export function SlotsTableSection({
       2 && !overview.finalSlotId;
 
   return (
-    <Card className="space-y-kern-space-large">
+    <Card className="richter-sections__card">
       {hasMultipleMutualsWithoutFinal && (
         <Alert
           type="warning"
@@ -165,20 +163,20 @@ export function SlotsTableSection({
       )}
 
       {overview.slots.length === 0 ? (
-        <div className="px-6 py-10 text-center">
+        <div className="richter-sections__empty-state">
           <p className="kern-body">No time slots saved yet.</p>
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto">
+          <div className="richter-sections__table-scroll">
             <table
-              className="kern-table kern-table--striped"
+              className="kern-table kern-table--striped richter-sections__table"
               aria-labelledby="slots-table-title"
             >
               <caption className="kern-title" id="slots-table-title">
                 Time slots
               </caption>
-              <thead className="kern-table__head">
+              <thead>
                 <tr className="kern-table__row">
                   <th scope="col" className="kern-table__header">
                     Time slot
@@ -209,7 +207,7 @@ export function SlotsTableSection({
                   return (
                     <tr key={slot.id} className="kern-table__row">
                       <th scope="row" className="kern-table__header" id={rowId}>
-                        <div className="gap-kern-space-small flex items-center">
+                        <div className="richter-sections__slot-label">
                           {isFinal && (
                             <Badge type="info">
                               <TextLabel label="Final" />
@@ -281,7 +279,7 @@ export function SlotsTableSection({
               </tbody>
             </table>
           </div>
-          <div className="px-6 py-4">
+          <div className="richter-sections__footer">
             <Button
               style="secondary"
               onClick={() => deleteAllSlots()}
@@ -308,9 +306,9 @@ export function PartyAccessSection({
   readonly overview: OverviewDto;
 }) {
   return (
-    <Card className="space-y-kern-space-small">
+    <Card className="richter-sections__card">
       <h3 className="kern-heading-small">Party submission access</h3>
-      <div className="space-y-kern-space-small">
+      <div className="richter-sections__party-list">
         <PartyRow
           hasSubmitted={overview.hasSubmitted.KLAEGER}
           label="Kläger:"
@@ -338,8 +336,8 @@ function PartyRow({
   const { unlock, isLoading } = useRichterActions();
 
   return (
-    <Card className="space-y-kern-space-small flex items-center justify-between">
-      <div className="gap-kern-space-small flex items-center">
+    <Card className="richter-sections__party-row">
+      <div className="richter-sections__party-meta">
         <span className="kern-title kern-title--small">{label}</span>
         <Badge type={hasSubmitted ? "success" : "warning"}>
           <TextLabel label={hasSubmitted ? "Submitted" : "Pending"} />
@@ -354,7 +352,7 @@ function PartyRow({
         style="tertiary"
       >
         <span
-          className="material-symbols-outlined text-[18px] leading-none select-none"
+          className="material-symbols-outlined richter-sections__lock-icon"
           aria-hidden="true"
         >
           {hasSubmitted ? "lock" : "lock_open"}

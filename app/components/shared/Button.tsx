@@ -25,10 +25,16 @@ export function Button({
   const styleClass = styleClassMap[style];
 
   const classes = ["kern-btn", styleClass, className].filter(Boolean).join(" ");
+  const content =
+    typeof children === "string" || typeof children === "number" ? (
+      <span className="kern-label">{children}</span>
+    ) : (
+      children
+    );
 
   return (
     <button className={classes} {...buttonProps}>
-      {children}
+      {content}
     </button>
   );
 }

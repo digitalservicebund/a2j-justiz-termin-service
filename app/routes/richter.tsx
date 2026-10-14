@@ -31,6 +31,7 @@ import {
   UnlockPayloadSchema,
   type RichterActionIntent,
 } from "~/routes/richter.schema";
+import "./richter.css";
 
 type ActionResult = { error: string } | null;
 
@@ -86,7 +87,7 @@ export default function RichterRoute() {
   function saveSlots() {
     const slots = toIsoSlotRanges(slotDrafts);
     setSlotDrafts([]);
-    slotFetcher.submit(
+    void slotFetcher.submit(
       { intent: "setSlots", slots: JSON.stringify(slots) },
       { method: "post" },
     );
@@ -95,7 +96,7 @@ export default function RichterRoute() {
   return (
     <Shell title="Richter - Management" user={user}>
       <RichterProcessSection overview={overview} />
-      <div className="grid grid-cols-2">
+      <div className="richter-route__grid">
         <DraftSlotsSection
           draft={draft}
           error={fetcherError}

@@ -1,0 +1,85 @@
+.welcome {
+  min-height: 100vh;
+  padding: var(--kern-metric-space-x-large) var(--kern-metric-space-default);
+  background:
+    radial-gradient(
+      circle at top,
+      var(--kern-color-layout-background-default-surface),
+      transparent 55%
+    ),
+    linear-gradient(
+      180deg,
+      var(--kern-color-layout-background-default) 0%,
+      var(--kern-color-layout-background-default-surface) 100%
+    );
+}
+
+.welcome__shell {
+  display: grid;
+  gap: var(--kern-metric-space-x-large);
+  width: min(100%, 42rem);
+  margin-inline: auto;
+  justify-items: center;
+}
+
+.welcome__header,
+.welcome__panel {
+  width: 100%;
+}
+
+.welcome__logo {
+  width: min(100%, 31.25rem);
+  padding: var(--kern-metric-space-default);
+}
+
+.welcome__image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.welcome__panel {
+  display: grid;
+  justify-items: center;
+}
+
+.welcome__card {
+  display: grid;
+  gap: var(--kern-metric-space-default);
+  width: min(100%, 19rem);
+  padding: var(--kern-metric-space-default);
+  border: var(--kern-metric-border-width-light) solid
+    var(--kern-color-layout-border-contextual);
+  border-radius: var(--kern-metric-border-radius-default);
+  background-color: var(--kern-color-layout-background-default-surface);
+}
+
+.welcome__prompt {
+  margin: 0;
+  text-align: center;
+}
+
+.welcome__card ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.welcome__link {
+  display: flex;
+  align-items: center;
+  gap: var(--kern-metric-space-small);
+  padding: var(--kern-metric-space-small);
+  color: var(--kern-color-layout-text-default-contextual);
+  text-decoration: none;
+  border-radius: var(--kern-metric-border-radius-default);
+}
+
+.welcome__link:hover {
+  text-decoration: underline;
+}
+
+.welcome__icon {
+  flex: none;
+  stroke: currentColor;
+}

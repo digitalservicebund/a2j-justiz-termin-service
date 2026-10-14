@@ -13,7 +13,7 @@ export function AppNav({ user }: Readonly<{ user?: AuthUser }>) {
   return (
     <nav>
       <div className="kern-form-input">
-        <label className="kern-label" htmlFor="select">
+        <label className="kern-label" htmlFor="role-select">
           Role
         </label>
         <div className="kern-form-input__select-wrapper">

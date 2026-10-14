@@ -1,0 +1,4 @@
+.party-screen__form {
+  display: grid;
+  gap: var(--kern-metric-space-large);
+}

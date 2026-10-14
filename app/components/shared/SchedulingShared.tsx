@@ -3,8 +3,9 @@ import { DEFAULT_CASE_ID, schedulingQuery } from "~/bootstrap";
 import Alert from "~/components/shared/Alert";
 import { AppNav } from "~/components/shared/AppNav";
 import type { AuthUser } from "~/core/domain/user";
+import "./SchedulingShared.css";
 
-export async function loadOverview() {
+export function loadOverview() {
   return schedulingQuery.getOverview(DEFAULT_CASE_ID);
 }
 
@@ -54,19 +55,21 @@ export function Shell({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <header className="bg-kern-orange-050 p-kern-space-default sticky top-0 z-10 shadow-md dark:bg-slate-900">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-4">
-          <div>
-            <h1 className="kern-heading-large">Justitz Termin Service</h1>
-            <p className="kern-heading-small dark:text-slate-300">
+    <div className="app-shell">
+      <header className="app-shell__header">
+        <div className="app-shell__header-inner">
+          <div className="app-shell__brand">
+            <h1 className="kern-heading-large app-shell__title">
+              Justitz Termin Service
+            </h1>
+            <p className="kern-heading-small app-shell__subtitle">
               Court Appointment service
             </p>
           </div>
           <AppNav user={user} />
         </div>
       </header>
-      <main className="mx-auto max-w-5xl space-y-6 px-6 py-10 dark:text-slate-100">
+      <main className="app-shell__main">
         <h1 className="kern-heading-medium">{title}</h1>
         {children}
       </main>
