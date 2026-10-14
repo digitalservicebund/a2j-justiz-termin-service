@@ -10,7 +10,7 @@ describe("Card", () => {
 
   it("applies a custom className", () => {
     const { container } = render(<Card className="my-class">Content</Card>);
-    expect(container.firstChild).toHaveClass("my-class");
+    expect(container.firstChild).toHaveClass("app-card", "my-class");
   });
 
   it("renders without a custom className", () => {

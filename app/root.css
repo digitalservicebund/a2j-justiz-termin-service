@@ -1,0 +1,15 @@
+.app-error-stack {
+  max-width: 100%;
+  margin: 0;
+  overflow-x: auto;
+  padding: var(--kern-metric-space-default);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background-color: var(--kern-color-layout-background-default-surface);
+  border-top: var(--kern-metric-border-width-light) solid
+    var(--kern-color-layout-border-contextual);
+}
+
+.app-error-stack code {
+  display: block;
+}

@@ -15,6 +15,7 @@ import Alert from "~/components/shared/Alert";
 import { Shell } from "~/components/shared/SchedulingShared";
 import type { Route } from "./+types/root";
 import "./app.css";
+import "./root.css";
 
 export const links: Route.LinksFunction = () => [
   {
@@ -85,7 +86,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
     <Shell title="Court Appointment Scheduling">
       <Alert type="error" title={title} message={message} />
       {stack && (
-        <pre className="w-full overflow-x-auto p-4">
+        <pre className="app-error-stack">
           <code>{stack}</code>
         </pre>
       )}

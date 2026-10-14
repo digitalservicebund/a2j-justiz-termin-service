@@ -11,7 +11,7 @@ Login requires no password — select a role from the dropdown.
 ## Tech Stack
 
 - **Frontend**: React 19 + React Router 7 (SSR)
-- **Styling**: Tailwind CSS 4 + KERN UX theme
+- **Styling**: KERN UX Native + colocated component CSS
 - **Build**: Vite + esbuild
 - **Language**: TypeScript 5.9
 - **Package Manager**: pnpm
@@ -76,12 +76,21 @@ app/
 │   ├── RichterSections.tsx       # Judge dashboard sections
 │   └── RichterProcessSection.tsx # Task list for judge workflow
 ├── hooks/                  # useRichterActions
-├── app.css                 # Tailwind + custom styles
+├── app.css                 # KERN Native/font imports + global defaults
 ├── root.tsx                # Root layout
 └── bootstrap.ts            # Dependency injection root
 ```
 
 Tests live alongside their source in `__test__` subdirectories (e.g. `components/shared/__test__/`).
+
+### Styling
+
+Use documented `@kern-ux/native` component markup and native tokens. KERN-provided
+utilities are permitted when their native stylesheet is loaded; Tailwind and
+custom utility frameworks are not. Put application-specific rules in a
+colocated, component-prefixed stylesheet imported by its owning component.
+The application follows the system light/dark preference using KERN's native
+theme tokens.
 
 ## Mock Calendar Subscription
 
@@ -139,7 +148,6 @@ This project uses **Prettier** and **oxlint** with automatic fixes on save (Inte
 
 - Single quotes disabled
 - Trailing commas on all
-- Tailwind class sorting
 - Import organization
 
 ### oxlint

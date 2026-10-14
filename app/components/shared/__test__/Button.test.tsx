@@ -10,6 +10,11 @@ describe("Button", () => {
     ).toBeInTheDocument();
   });
 
+  it("wraps primitive children in kern-label markup", () => {
+    const { container } = render(<Button>Click</Button>);
+    expect(container.querySelector(".kern-label")).toHaveTextContent("Click");
+  });
+
   it("always includes the base kern-btn class", () => {
     const { container } = render(<Button>Click</Button>);
     expect(container.firstChild).toHaveClass("kern-btn");

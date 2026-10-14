@@ -12,6 +12,7 @@ import {
 import { TextLabel } from "~/components/shared/TextLabel";
 import type { AuthUser } from "~/core/domain/user";
 import type { PartyRole } from "~/core/domain/verfahren";
+import "./PartyScreen.css";
 
 type Overview = Awaited<ReturnType<typeof loadOverview>>;
 
@@ -136,7 +137,7 @@ export function PartyScreen({
         <Alert type="error" title="Error" message={actionData.error} />
       )}
 
-      <Form key={decisionKey} method="post" className="space-y-6">
+      <Form key={decisionKey} method="post" className="party-screen__form">
         {overview.slots.length === 0 ? (
           <Alert type="warning" title="No time slots available yet" />
         ) : (

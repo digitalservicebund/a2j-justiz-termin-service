@@ -8,6 +8,11 @@ describe("Badge", () => {
     expect(screen.getByText("Label")).toBeInTheDocument();
   });
 
+  it("wraps primitive children in kern-label markup", () => {
+    const { container } = render(<Badge type="info">Label</Badge>);
+    expect(container.querySelector(".kern-label")).toHaveTextContent("Label");
+  });
+
   it.each([
     ["success", "kern-badge--success"],
     ["info", "kern-badge--info"],

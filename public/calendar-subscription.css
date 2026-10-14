@@ -1,0 +1,264 @@
+.calendar-subscription {
+  color-scheme: light dark;
+  min-height: 100vh;
+  margin: 0;
+  background-color: var(--kern-color-layout-background-default);
+  color: var(--kern-color-layout-text-default-contextual);
+  font-family: var(--kern-typography-font-family-default);
+}
+
+.calendar-subscription__header {
+  border-bottom: var(--kern-metric-border-width-light) solid
+    var(--kern-color-layout-border-contextual);
+  background-color: var(--kern-color-layout-background-default-surface);
+}
+
+.calendar-subscription__header-inner,
+.calendar-subscription__main,
+.calendar-subscription__footer {
+  width: min(100%, 60rem);
+  margin-inline: auto;
+  padding-inline: var(--kern-metric-space-default);
+}
+
+.calendar-subscription__header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kern-metric-space-default);
+  padding-block: var(--kern-metric-space-default);
+}
+
+.calendar-subscription__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kern-metric-space-small);
+  min-width: 0;
+}
+
+.calendar-subscription__main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--kern-metric-space-x-large);
+  padding-block: var(--kern-metric-space-x-large) var(--kern-metric-space-2x-large);
+}
+
+.calendar-subscription__eyebrow {
+  margin: 0;
+}
+
+.calendar-subscription__intro {
+  max-width: 45rem;
+  margin: 0;
+}
+
+.calendar-subscription__appointment,
+.calendar-subscription__panel {
+  padding: var(--kern-metric-space-default);
+  border: var(--kern-metric-border-width-light) solid
+    var(--kern-color-layout-border-contextual);
+  border-radius: var(--kern-metric-border-radius-default);
+  background-color: var(--kern-color-layout-background-default-surface);
+  box-shadow: var(--kern-shadow-elevation-low);
+}
+
+.calendar-subscription__appointment {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  gap: var(--kern-metric-space-large);
+  align-items: start;
+}
+
+.calendar-subscription__day {
+  border-left: 0.25rem solid var(--kern-color-feedback-success-contextual, #00675b);
+  padding-left: var(--kern-metric-space-small);
+  color: var(--kern-color-feedback-success-contextual, #00675b);
+}
+
+.calendar-subscription__day strong {
+  display: block;
+  font-size: 2rem;
+  line-height: 1.1;
+}
+
+.calendar-subscription__day span,
+.calendar-subscription__small,
+.calendar-subscription__platform-note,
+.calendar-subscription__status {
+  color: var(--kern-color-layout-text-default-contextual);
+  opacity: 0.82;
+}
+
+.calendar-subscription__form-field {
+  display: grid;
+  gap: var(--kern-metric-space-small);
+}
+
+.calendar-subscription__url-row {
+  display: flex;
+  gap: var(--kern-metric-space-small);
+  align-items: stretch;
+}
+
+.calendar-subscription__url-row .kern-form-input__input {
+  flex: 1 1 22rem;
+}
+
+.calendar-subscription__status {
+  min-height: 1.5rem;
+  margin: var(--kern-metric-space-2x-small) 0 0;
+}
+
+.calendar-subscription__notice {
+  margin-top: var(--kern-metric-space-default);
+}
+
+.calendar-subscription__guide {
+  display: grid;
+  grid-template-columns: minmax(16rem, 19rem) minmax(0, 1fr);
+  gap: var(--kern-metric-space-x-large);
+  align-items: start;
+}
+
+.calendar-subscription__platform-picker {
+  display: grid;
+  gap: var(--kern-metric-space-default);
+}
+
+.calendar-subscription__platform-note {
+  margin: 0;
+}
+
+.calendar-subscription__steps {
+  display: grid;
+  gap: var(--kern-metric-space-default);
+}
+
+.calendar-subscription__step {
+  display: grid;
+  gap: var(--kern-metric-space-default);
+  padding-top: var(--kern-metric-space-default);
+  border-top: var(--kern-metric-border-width-light) solid
+    var(--kern-color-layout-border-contextual);
+  scroll-margin-top: var(--kern-metric-space-large);
+}
+
+.calendar-subscription__step:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.calendar-subscription__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kern-metric-space-small);
+}
+
+.calendar-subscription__list {
+  margin: 0;
+  padding-left: var(--kern-metric-space-large);
+}
+
+.calendar-subscription__list li {
+  margin-bottom: var(--kern-metric-space-small);
+  padding-left: var(--kern-metric-space-2x-small);
+}
+
+.calendar-subscription__list li::marker {
+  color: var(--kern-color-feedback-success-contextual, #00675b);
+  font-weight: 700;
+}
+
+.calendar-subscription__help-link,
+.calendar-subscription__inline-link {
+  color: var(--kern-color-feedback-success-contextual, #00675b);
+  text-underline-offset: 0.2em;
+}
+
+.calendar-subscription__help {
+  display: grid;
+  gap: var(--kern-metric-space-small);
+  padding-top: var(--kern-metric-space-x-large);
+  border-top: var(--kern-metric-border-width-light) solid
+    var(--kern-color-layout-border-contextual);
+}
+
+.calendar-subscription__details {
+  padding-block: var(--kern-metric-space-small);
+  border-bottom: var(--kern-metric-border-width-light) solid
+    var(--kern-color-layout-border-contextual);
+}
+
+.calendar-subscription__details summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.calendar-subscription__details p {
+  margin: var(--kern-metric-space-small) 0 0;
+}
+
+.calendar-subscription__footer {
+  padding-block: 0 var(--kern-metric-space-large);
+  font-size: 0.875rem;
+  color: var(--kern-color-layout-text-default-contextual);
+  opacity: 0.82;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 48rem) {
+  .calendar-subscription__header-inner,
+  .calendar-subscription__main,
+  .calendar-subscription__footer {
+    padding-inline: var(--kern-metric-space-small);
+  }
+
+  .calendar-subscription__main {
+    gap: var(--kern-metric-space-large);
+    padding-block: var(--kern-metric-space-large) var(--kern-metric-space-x-large);
+  }
+
+  .calendar-subscription__appointment,
+  .calendar-subscription__guide {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-subscription__url-row {
+    flex-wrap: wrap;
+  }
+
+  .calendar-subscription__url-row .kern-form-input__input {
+    flex-basis: 100%;
+  }
+
+  .calendar-subscription__day strong {
+    font-size: 1.75rem;
+  }
+}
+
+@media print {
+  .calendar-subscription__steps > .calendar-subscription__step[hidden] {
+    display: block !important;
+  }
+
+  .calendar-subscription__actions,
+  .calendar-subscription__platform-picker,
+  .calendar-subscription__footer a,
+  .kern-btn {
+    display: none !important;
+  }
+
+  .calendar-subscription__guide {
+    display: block;
+  }
+
+  .calendar-subscription__step,
+  .calendar-subscription__panel,
+  .calendar-subscription__appointment,
+  .calendar-subscription__help {
+    break-inside: avoid;
+  }
+}
