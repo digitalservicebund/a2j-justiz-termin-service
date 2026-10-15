@@ -110,7 +110,7 @@ describe("calendar subscription", () => {
     const calendar = await parseCalendar();
     expect(calendar.name).toBe("vcalendar");
     expect(calendar.getFirstPropertyValue("version")).toBe("2.0");
-    expect(calendar.getAllSubcomponents("vevent")).toHaveLength(1);
+    expect(calendar.getAllSubcomponents("vevent")).toHaveLength(2);
     expect(calendar.getAllSubcomponents("vtimezone")).toHaveLength(1);
 
     const component = calendar.getFirstSubcomponent("vevent")!;
@@ -134,6 +134,20 @@ describe("calendar subscription", () => {
       expect(component.hasProperty(name)).toBe(false);
     }
     expect(component.getAllSubcomponents("valarm")).toHaveLength(0);
+  });
+
+  it("contains a weekly Friday 10:30 TEST event without an end time", async () => {
+    const calendar = await parseCalendar();
+    const component = calendar
+      .getAllSubcomponents("vevent")
+      .find((candidate) => candidate.getFirstPropertyValue("summary") === "TEST")!;
+    const event = new ICAL.Event(component);
+
+    expect(event.startDate.toString()).toBe("2026-10-16T10:30:00");
+    expect(event.startDate.zone.tzid).toBe("Europe/Berlin");
+    expect(component.hasProperty("dtend")).toBe(false);
+    expect(component.hasProperty("duration")).toBe(false);
+    expect(component.getFirstPropertyValue("rrule")?.toString()).toBe("FREQ=WEEKLY;BYDAY=FR");
   });
 
   it("updates synchronization details per request without changing event identity or schedule", async () => {
