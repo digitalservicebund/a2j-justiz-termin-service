@@ -1,7 +1,9 @@
-import { FileMigrationProvider, Migrator } from "kysely/migration";
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+
+import { FileMigrationProvider, Migrator } from "kysely/migration";
+
 import { logError, logInfo } from "../lib/logging.ts";
 import { getDb } from "./database.ts";
 
@@ -32,8 +34,7 @@ export async function migrateToLatest(): Promise<void> {
 }
 
 const isExecutedDirectly =
-  process.argv[1] !== undefined &&
-  import.meta.url === pathToFileURL(process.argv[1]).href;
+  process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
 if (isExecutedDirectly) {
   try {

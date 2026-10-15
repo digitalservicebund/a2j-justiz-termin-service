@@ -55,8 +55,7 @@
 .calendar-subscription__appointment,
 .calendar-subscription__panel {
   padding: var(--kern-metric-space-default);
-  border: var(--kern-metric-border-width-light) solid
-    var(--kern-color-layout-border-contextual);
+  border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border-contextual);
   border-radius: var(--kern-metric-border-radius-default);
   background-color: var(--kern-color-layout-background-default-surface);
   box-shadow: var(--kern-shadow-elevation-low);
@@ -138,8 +137,7 @@
   display: grid;
   gap: var(--kern-metric-space-default);
   padding-top: var(--kern-metric-space-default);
-  border-top: var(--kern-metric-border-width-light) solid
-    var(--kern-color-layout-border-contextual);
+  border-top: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border-contextual);
   scroll-margin-top: var(--kern-metric-space-large);
 }
 
@@ -179,8 +177,7 @@
   display: grid;
   gap: var(--kern-metric-space-small);
   padding-top: var(--kern-metric-space-x-large);
-  border-top: var(--kern-metric-border-width-light) solid
-    var(--kern-color-layout-border-contextual);
+  border-top: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border-contextual);
 }
 
 .calendar-subscription__details {

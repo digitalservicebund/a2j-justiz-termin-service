@@ -1,11 +1,10 @@
 import ICAL from "ical.js";
 import { createStaticHandler } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
 import { loader } from "../calendar";
 
-const handler = createStaticHandler([
-  { path: "/api/calendars/:calendarId/feed.ics", loader },
-]);
+const handler = createStaticHandler([{ path: "/api/calendars/:calendarId/feed.ics", loader }]);
 
 async function requestCalendar(calendarId = "demo"): Promise<Response> {
   const response = await handler.queryRoute(
@@ -68,9 +67,7 @@ describe("calendar subscription", () => {
 
   it("does not match a subscription URL without an ID", async () => {
     await expect(
-      handler.queryRoute(
-        new Request("http://localhost/api/calendars/feed.ics"),
-      ),
+      handler.queryRoute(new Request("http://localhost/api/calendars/feed.ics")),
     ).rejects.toMatchObject({ status: 404 });
     expect(console.log).not.toHaveBeenCalled();
   });
@@ -90,12 +87,8 @@ describe("calendar subscription", () => {
     const refresh = calendar.getFirstProperty("refresh-interval")!;
     expect(refresh.type).toBe("duration");
     expect(refresh.getFirstValue()?.toString()).toBe("PT5M");
-    expect(
-      ICAL.Duration.fromString(refresh.getFirstValue()!.toString()).toSeconds(),
-    ).toBe(300);
-    expect(calendar.getFirstPropertyValue("x-published-ttl")?.toString()).toBe(
-      "PT5M",
-    );
+    expect(ICAL.Duration.fromString(refresh.getFirstValue()!.toString()).toSeconds()).toBe(300);
+    expect(calendar.getFirstPropertyValue("x-published-ttl")?.toString()).toBe("PT5M");
     for (const name of [
       "method",
       "name",
@@ -108,9 +101,7 @@ describe("calendar subscription", () => {
     ]) {
       expect(calendar.getAllProperties(name)).toHaveLength(1);
       if (name !== "description") {
-        expect(calendar.getFirstSubcomponent("vevent")!.hasProperty(name)).toBe(
-          false,
-        );
+        expect(calendar.getFirstSubcomponent("vevent")!.hasProperty(name)).toBe(false);
       }
     }
   });
@@ -126,25 +117,19 @@ describe("calendar subscription", () => {
     const event = new ICAL.Event(component);
     expect(event.summary).toBe("Test Termin");
     expect(event.uid).toBe("test-termin@justiz-termin-service.invalid");
-    expect(component.getFirstPropertyValue("dtstamp")?.toString()).toBe(
-      "2026-10-13T12:00:00Z",
-    );
+    expect(component.getFirstPropertyValue("dtstamp")?.toString()).toBe("2026-10-13T12:00:00Z");
     expect(component.getFirstPropertyValue("last-modified")?.toString()).toBe(
       "2026-10-13T12:00:00Z",
     );
     expect(event.description).toBe(
       "Last synchronized (feed generated):\n13 October 2026 at 14:00:00 CEST",
     );
-    expect(component.getFirstPropertyValue("created")?.toString()).toBe(
-      "2026-10-13T00:00:00Z",
-    );
+    expect(component.getFirstPropertyValue("created")?.toString()).toBe("2026-10-13T00:00:00Z");
     expect(event.startDate.toString()).toBe("2026-10-13T13:20:00");
     expect(event.endDate.toString()).toBe("2026-10-13T14:20:00");
     expect(event.startDate.zone.tzid).toBe("Europe/Berlin");
     expect(event.endDate.zone.tzid).toBe("Europe/Berlin");
-    expect(component.getFirstPropertyValue("rrule")?.toString()).toBe(
-      "FREQ=WEEKLY;BYDAY=TU",
-    );
+    expect(component.getFirstPropertyValue("rrule")?.toString()).toBe("FREQ=WEEKLY;BYDAY=TU");
     for (const name of ["attendee", "location"]) {
       expect(component.hasProperty(name)).toBe(false);
     }
@@ -152,13 +137,9 @@ describe("calendar subscription", () => {
   });
 
   it("updates synchronization details per request without changing event identity or schedule", async () => {
-    const first = new ICAL.Event(
-      (await parseCalendar()).getFirstSubcomponent("vevent")!,
-    );
+    const first = new ICAL.Event((await parseCalendar()).getFirstSubcomponent("vevent")!);
     vi.setSystemTime(new Date("2026-10-13T12:05:00.000Z"));
-    const refreshed = new ICAL.Event(
-      (await parseCalendar()).getFirstSubcomponent("vevent")!,
-    );
+    const refreshed = new ICAL.Event((await parseCalendar()).getFirstSubcomponent("vevent")!);
 
     expect(first.description).toBe(
       "Last synchronized (feed generated):\n13 October 2026 at 14:00:00 CEST",
@@ -183,17 +164,12 @@ describe("calendar subscription", () => {
     ["2026-10-13T12:00:00Z", "13 October 2026 at 14:00:00 CEST"],
     ["2026-10-27T12:00:00Z", "27 October 2026 at 13:00:00 CET"],
     ["2026-10-13T22:30:00Z", "14 October 2026 at 00:30:00 CEST"],
-  ])(
-    "formats synchronization time in Berlin for %s",
-    async (timestamp, expected) => {
-      vi.setSystemTime(new Date(timestamp));
-      const calendar = await parseCalendar();
-      const event = new ICAL.Event(calendar.getFirstSubcomponent("vevent")!);
-      expect(event.description).toBe(
-        `Last synchronized (feed generated):\n${expected}`,
-      );
-    },
-  );
+  ])("formats synchronization time in Berlin for %s", async (timestamp, expected) => {
+    vi.setSystemTime(new Date(timestamp));
+    const calendar = await parseCalendar();
+    const event = new ICAL.Event(calendar.getFirstSubcomponent("vevent")!);
+    expect(event.description).toBe(`Last synchronized (feed generated):\n${expected}`);
+  });
 
   it.each([
     ["2026-10-20", "2026-10-20T11:20:00.000Z"],
@@ -213,10 +189,9 @@ describe("calendar subscription", () => {
     const details = event.getOccurrenceDetails(occurrence!);
     expect(details.startDate.toJSDate().toISOString()).toBe(utcStart);
     expect(details.endDate.toString()).toBe(`${date}T14:20:00`);
-    expect(
-      details.endDate.toJSDate().getTime() -
-        details.startDate.toJSDate().getTime(),
-    ).toBe(60 * 60 * 1000);
+    expect(details.endDate.toJSDate().getTime() - details.startDate.toJSDate().getTime()).toBe(
+      60 * 60 * 1000,
+    );
     expect(details.startDate.toJSDate().getUTCDay()).toBe(2);
   });
 });

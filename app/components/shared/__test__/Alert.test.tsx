@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+
 import Alert from "~/components/shared/Alert";
 
 describe("Alert", () => {
@@ -30,8 +31,6 @@ describe("Alert", () => {
 
   it("does not render the message body when message is omitted", () => {
     const { container } = render(<Alert type="warning" title="Warning" />);
-    expect(
-      container.querySelector(".kern-alert__body"),
-    ).not.toBeInTheDocument();
+    expect(container.querySelector(".kern-alert__body")).not.toBeInTheDocument();
   });
 });

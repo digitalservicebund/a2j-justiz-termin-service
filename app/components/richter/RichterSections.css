@@ -23,8 +23,7 @@
   padding: 0;
   list-style: none;
   overflow: hidden;
-  border: var(--kern-metric-border-width-light) solid
-    var(--kern-color-layout-border-contextual);
+  border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border-contextual);
   border-radius: var(--kern-metric-border-radius-default);
   background-color: var(--kern-color-layout-background-default-surface);
 }

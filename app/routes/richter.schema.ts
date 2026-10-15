@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { PartyRoleSchema } from "~/core/domain/verfahren";
 
 export const RichterActionIntentSchema = z.enum([

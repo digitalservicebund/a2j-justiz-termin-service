@@ -1,4 +1,5 @@
 import { useFetcher } from "react-router";
+
 import type { AuthUser, UserRole } from "~/core/domain/user";
 
 const ROLES: Array<{ value: UserRole; label: string }> = [
@@ -21,10 +22,7 @@ export function AppNav({ user }: Readonly<{ user?: AuthUser }>) {
             id="role-select"
             value={user?.role ?? ""}
             onChange={(e) =>
-              fetcher.submit(
-                { role: e.target.value },
-                { method: "post", action: "/login" },
-              )
+              fetcher.submit({ role: e.target.value }, { method: "post", action: "/login" })
             }
             className="kern-form-input__select"
           >

@@ -14,9 +14,7 @@ export type Decision = z.infer<typeof DecisionSchema>;
 export const TimeSlotSchema = z
   .object({
     id: z.string(),
-    startsAtIso: z.iso.datetime(
-      "A time slot must have valid ISO date strings.",
-    ),
+    startsAtIso: z.iso.datetime("A time slot must have valid ISO date strings."),
     endsAtIso: z.iso.datetime("A time slot must have valid ISO date strings."),
   })
   .refine((s) => s.startsAtIso < s.endsAtIso, {

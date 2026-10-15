@@ -31,8 +31,7 @@ export function generateRandomSlotDrafts(count = 3): SlotDraft[] {
   const usedDays = new Set<string>();
 
   while (slots.length < count) {
-    const daysAhead =
-      MIN_DAYS_AHEAD + Math.floor(Math.random() * MAX_ADDITIONAL_DAYS);
+    const daysAhead = MIN_DAYS_AHEAD + Math.floor(Math.random() * MAX_ADDITIONAL_DAYS);
     const candidate = new Date(now);
     candidate.setDate(now.getDate() + daysAhead);
 
@@ -47,11 +46,9 @@ export function generateRandomSlotDrafts(count = 3): SlotDraft[] {
     }
     usedDays.add(dayKey);
 
-    const startHour =
-      BUSINESS_START_HOUR + Math.floor(Math.random() * BUSINESS_HOURS_SPAN);
+    const startHour = BUSINESS_START_HOUR + Math.floor(Math.random() * BUSINESS_HOURS_SPAN);
     const durationHours =
-      MIN_DURATION_HOURS +
-      Math.floor(Math.random() * MAX_ADDITIONAL_DURATION_HOURS);
+      MIN_DURATION_HOURS + Math.floor(Math.random() * MAX_ADDITIONAL_DURATION_HOURS);
 
     const start = new Date(candidate);
     start.setHours(startHour, 0, 0, 0);

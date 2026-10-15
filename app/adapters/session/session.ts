@@ -1,18 +1,18 @@
 import { createCookieSessionStorage, redirect } from "react-router";
+
 import type { AuthService, AuthUser, UserRole } from "~/core/domain/user";
 
-const { getSession, commitSession, destroySession } =
-  createCookieSessionStorage<{
-    userId: string;
-  }>({
-    cookie: {
-      name: "__session",
-      secrets: ["dev-secret"],
-      sameSite: "lax",
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-    },
-  });
+const { getSession, commitSession, destroySession } = createCookieSessionStorage<{
+  userId: string;
+}>({
+  cookie: {
+    name: "__session",
+    secrets: ["dev-secret"],
+    sameSite: "lax",
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+  },
+});
 
 export { commitSession, destroySession, getSession };
 
@@ -26,10 +26,7 @@ export async function getSessionUser(
   return authService.getUserById(userId);
 }
 
-export async function requireUser(
-  request: Request,
-  authService: AuthService,
-): Promise<AuthUser> {
+export async function requireUser(request: Request, authService: AuthService): Promise<AuthUser> {
   const user = await getSessionUser(request, authService);
   if (!user) throw redirect("/");
   return user;

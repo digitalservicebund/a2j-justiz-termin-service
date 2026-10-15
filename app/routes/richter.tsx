@@ -1,17 +1,10 @@
 import { useState, type SyntheticEvent } from "react";
 import { useFetcher, useLoaderData } from "react-router";
+
 import { requireRole } from "~/adapters/session/session";
-import {
-  authService,
-  DEFAULT_CASE_ID,
-  schedulingQuery,
-  schedulingService,
-} from "~/bootstrap";
+import { authService, DEFAULT_CASE_ID, schedulingQuery, schedulingService } from "~/bootstrap";
 import type { SlotDraft } from "~/components/richter/richterHelpers";
-import {
-  createEmptyDraft,
-  toIsoSlotRanges,
-} from "~/components/richter/richterHelpers";
+import { createEmptyDraft, toIsoSlotRanges } from "~/components/richter/richterHelpers";
 import { RichterProcessSection } from "~/components/richter/RichterProcessSection";
 import {
   appendRandomSlots,
@@ -19,10 +12,7 @@ import {
   PartyAccessSection,
   SlotsTableSection,
 } from "~/components/richter/RichterSections";
-import {
-  RouteErrorBoundary,
-  Shell,
-} from "~/components/shared/SchedulingShared";
+import { RouteErrorBoundary, Shell } from "~/components/shared/SchedulingShared";
 import {
   ConfirmSlotPayloadSchema,
   DeleteSlotPayloadSchema,
@@ -31,6 +21,7 @@ import {
   UnlockPayloadSchema,
   type RichterActionIntent,
 } from "~/routes/richter.schema";
+
 import "./richter.css";
 
 type ActionResult = { error: string } | null;
@@ -50,8 +41,7 @@ export async function action({ request }: { request: Request }) {
     return executeActionIntent(intentResult.data, raw);
   } catch (error) {
     return {
-      error:
-        error instanceof Error ? error.message : "Unexpected action error.",
+      error: error instanceof Error ? error.message : "Unexpected action error.",
     };
   }
 }
@@ -65,9 +55,7 @@ export default function RichterRoute() {
   const slotFetcher = useFetcher<typeof action>();
 
   const fetcherError =
-    slotFetcher.data && "error" in slotFetcher.data
-      ? slotFetcher.data.error
-      : null;
+    slotFetcher.data && "error" in slotFetcher.data ? slotFetcher.data.error : null;
 
   const [draft, setDraft] = useState<SlotDraft>(createEmptyDraft);
   const [slotDrafts, setSlotDrafts] = useState<SlotDraft[]>([]);
@@ -79,9 +67,7 @@ export default function RichterRoute() {
   };
 
   function removeDraftSlot(index: number) {
-    setSlotDrafts((current) =>
-      current.filter((_, currentIndex) => currentIndex !== index),
-    );
+    setSlotDrafts((current) => current.filter((_, currentIndex) => currentIndex !== index));
   }
 
   function saveSlots() {
@@ -103,9 +89,7 @@ export default function RichterRoute() {
           onAddDraft={addDraftSlot}
           onRemoveDraft={removeDraftSlot}
           onSaveDrafts={saveSlots}
-          onSuggestRandom={() =>
-            setSlotDrafts((current) => appendRandomSlots(current))
-          }
+          onSuggestRandom={() => setSlotDrafts((current) => appendRandomSlots(current))}
           setDraft={setDraft}
           slotDrafts={slotDrafts}
         />
@@ -139,9 +123,7 @@ function handleSetSlots(raw: Record<string, FormDataEntryValue>): ActionResult {
   return null;
 }
 
-function handleDeleteSlot(
-  raw: Record<string, FormDataEntryValue>,
-): ActionResult {
+function handleDeleteSlot(raw: Record<string, FormDataEntryValue>): ActionResult {
   const result = DeleteSlotPayloadSchema.safeParse(raw);
   if (!result.success) return { error: "Invalid slot id." };
   schedulingService.richterDeleteSlot(DEFAULT_CASE_ID, result.data.slotId);
@@ -153,9 +135,7 @@ function handleDeleteAllSlots(): ActionResult {
   return null;
 }
 
-function handleConfirmSlot(
-  raw: Record<string, FormDataEntryValue>,
-): ActionResult {
+function handleConfirmSlot(raw: Record<string, FormDataEntryValue>): ActionResult {
   const result = ConfirmSlotPayloadSchema.safeParse(raw);
   if (!result.success) return { error: "Invalid slot id." };
   schedulingService.richterConfirmSlot(DEFAULT_CASE_ID, result.data.slotId);
@@ -165,9 +145,6 @@ function handleConfirmSlot(
 function handleUnlock(raw: Record<string, FormDataEntryValue>): ActionResult {
   const result = UnlockPayloadSchema.safeParse(raw);
   if (!result.success) return { error: "Invalid party role." };
-  schedulingService.richterUnlockSubmission(
-    DEFAULT_CASE_ID,
-    result.data.partyRole,
-  );
+  schedulingService.richterUnlockSubmission(DEFAULT_CASE_ID, result.data.partyRole);
   return null;
 }

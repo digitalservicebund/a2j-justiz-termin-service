@@ -1,4 +1,5 @@
 import logoLight from "./logo-light.svg";
+
 import "./welcome.css";
 
 export function Welcome() {
@@ -7,11 +8,7 @@ export function Welcome() {
       <div className="welcome__shell">
         <header className="welcome__header">
           <div className="welcome__logo">
-            <img
-              src={logoLight}
-              alt="React Router"
-              className="welcome__image"
-            />
+            <img src={logoLight} alt="React Router" className="welcome__image" />
           </div>
         </header>
         <div className="welcome__panel">
@@ -20,12 +17,7 @@ export function Welcome() {
             <ul>
               {resources.map(({ href, text, icon }) => (
                 <li key={href}>
-                  <a
-                    className="welcome__link"
-                    href={href}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
+                  <a className="welcome__link" href={href} target="_blank" rel="noreferrer">
                     {icon}
                     {text}
                   </a>

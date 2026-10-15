@@ -1,17 +1,14 @@
 import { Form, useActionData } from "react-router";
+
 import Alert from "~/components/shared/Alert";
 import { Button } from "~/components/shared/Button";
 import { Card } from "~/components/shared/Card";
-
 import { Icon } from "~/components/shared/Icon";
-import {
-  formatSlotRange,
-  type loadOverview,
-  Shell,
-} from "~/components/shared/SchedulingShared";
+import { formatSlotRange, type loadOverview, Shell } from "~/components/shared/SchedulingShared";
 import { TextLabel } from "~/components/shared/TextLabel";
 import type { AuthUser } from "~/core/domain/user";
 import type { PartyRole } from "~/core/domain/verfahren";
+
 import "./PartyScreen.css";
 
 type Overview = Awaited<ReturnType<typeof loadOverview>>;
@@ -98,8 +95,7 @@ export function PartyScreen({
 
   const existingDecisionMap: Record<string, string> = {};
   for (const status of overview.statuses) {
-    const decision =
-      role === "KLAEGER" ? status.klaegerDecision : status.beklagterDecision;
+    const decision = role === "KLAEGER" ? status.klaegerDecision : status.beklagterDecision;
     if (decision) existingDecisionMap[status.slotId] = decision;
   }
 
@@ -108,10 +104,7 @@ export function PartyScreen({
 
   // Key changes when decisions are saved so uncontrolled inputs remount with fresh defaultChecked
   const decisionKey = overview.statuses
-    .map(
-      (s) =>
-        `${s.slotId}:${role === "KLAEGER" ? s.klaegerDecision : s.beklagterDecision}`,
-    )
+    .map((s) => `${s.slotId}:${role === "KLAEGER" ? s.klaegerDecision : s.beklagterDecision}`)
     .join(",");
 
   return (
@@ -127,15 +120,10 @@ export function PartyScreen({
           message="Submission is locked. Only the Richter can unlock it."
         />
       ) : (
-        <Alert
-          type="info"
-          title="Please accept or reject every time slot below, then submit."
-        />
+        <Alert type="info" title="Please accept or reject every time slot below, then submit." />
       )}
 
-      {actionData?.error && (
-        <Alert type="error" title="Error" message={actionData.error} />
-      )}
+      {actionData?.error && <Alert type="error" title="Error" message={actionData.error} />}
 
       <Form key={decisionKey} method="post" className="party-screen__form">
         {overview.slots.length === 0 ? (

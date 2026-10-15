@@ -48,8 +48,7 @@
   gap: var(--kern-metric-space-default);
   width: min(100%, 19rem);
   padding: var(--kern-metric-space-default);
-  border: var(--kern-metric-border-width-light) solid
-    var(--kern-color-layout-border-contextual);
+  border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border-contextual);
   border-radius: var(--kern-metric-border-radius-default);
   background-color: var(--kern-color-layout-background-default-surface);
 }

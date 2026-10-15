@@ -6,8 +6,7 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   background-color: var(--kern-color-layout-background-default-surface);
-  border-top: var(--kern-metric-border-width-light) solid
-    var(--kern-color-layout-border-contextual);
+  border-top: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border-contextual);
 }
 
 .app-error-stack code {

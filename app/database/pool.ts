@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+
 import { logError } from "../lib/logging.ts";
 import { getDBConfig } from "./config.ts";
 

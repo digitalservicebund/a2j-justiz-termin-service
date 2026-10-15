@@ -4,6 +4,7 @@ import { Icon } from "~/components/shared/Icon";
 import { formatSlotRange } from "~/components/shared/SchedulingShared";
 import { TextLabel } from "~/components/shared/TextLabel";
 import type { OverviewDto } from "~/core/services/schedulingQuery";
+
 import "./RichterProcessSection.css";
 
 type Stage1Status = "not-started" | "complete";
@@ -36,8 +37,7 @@ function getStage1Status(overview: OverviewDto): Stage1Status {
 function getStage2Status(overview: OverviewDto): Stage2Status {
   if (overview.slots.length === 0) return "not-started";
   if (overview.statuses.some((s) => s.isMutuallyAccepted)) return "complete";
-  if (overview.hasSubmitted.KLAEGER && overview.hasSubmitted.BEKLAGTER)
-    return "no-agreement";
+  if (overview.hasSubmitted.KLAEGER && overview.hasSubmitted.BEKLAGTER) return "no-agreement";
   return "in-progress";
 }
 
@@ -50,36 +50,23 @@ function TaskBadge(props: Readonly<BadgeConfig>) {
   );
 }
 
-export function RichterProcessSection({
-  overview,
-}: {
-  readonly overview: OverviewDto;
-}) {
+export function RichterProcessSection({ overview }: { readonly overview: OverviewDto }) {
   const stage1Status = getStage1Status(overview);
   const stage2Status = getStage2Status(overview);
-  const stage3Status: Stage3Status = overview.finalSlotId
-    ? "confirmed"
-    : "not-started";
+  const stage3Status: Stage3Status = overview.finalSlotId ? "confirmed" : "not-started";
   const finalSlot = overview.slots.find((s) => s.id === overview.finalSlotId);
 
   return (
     <Card>
-      <p className="kern-body kern-body--small richter-process__eyebrow">
-        Case
-      </p>
+      <p className="kern-body kern-body--small richter-process__eyebrow">Case</p>
       <div className="kern-task-list">
         <div className="kern-task-list__header">
-          <h2 className="kern-heading-medium richter-process__heading">
-            {overview.name}
-          </h2>
+          <h2 className="kern-heading-medium richter-process__heading">{overview.name}</h2>
         </div>
         <ul className="kern-task-list__list">
           <li className="kern-task-list__item richter-process__stage-item">
             <span className="kern-number">1</span>
-            <div
-              className="kern-task-list__title richter-process__task-title"
-              id="task1-title"
-            >
+            <div className="kern-task-list__title richter-process__task-title" id="task1-title">
               <p className="kern-body">Create time slots</p>
               <div className="kern-task-list__status" id="task1-status">
                 <TaskBadge {...stage1Config[stage1Status]} />
@@ -88,10 +75,7 @@ export function RichterProcessSection({
           </li>
           <li className="kern-task-list__item richter-process__stage-item">
             <span className="kern-number">2</span>
-            <div
-              className="kern-task-list__title richter-process__task-title"
-              id="task2-title"
-            >
+            <div className="kern-task-list__title richter-process__task-title" id="task2-title">
               <p className="kern-body">Collect responses</p>
               <div className="kern-task-list__status" id="task2-status">
                 <TaskBadge {...stage2Config[stage2Status]} />
@@ -105,10 +89,7 @@ export function RichterProcessSection({
                 <p className="kern-body">Confirm appointment</p>
                 {finalSlot && (
                   <p className="kern-hint">
-                    {formatSlotRange(
-                      finalSlot.startsAtIso,
-                      finalSlot.endsAtIso,
-                    )}
+                    {formatSlotRange(finalSlot.startsAtIso, finalSlot.endsAtIso)}
                   </p>
                 )}
               </div>

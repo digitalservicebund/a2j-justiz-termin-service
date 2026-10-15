@@ -1,6 +1,7 @@
 import compression from "compression";
 import express from "express";
 import morgan from "morgan";
+
 import { getDb } from "./app/database/database.ts";
 import { migrateToLatest } from "./app/database/migrate.ts";
 
@@ -43,10 +44,7 @@ if (DEVELOPMENT) {
   });
 } else {
   // console.log("Starting production server"); // TODO logging
-  app.use(
-    "/assets",
-    express.static("build/client/assets", { immutable: true, maxAge: "1y" }),
-  );
+  app.use("/assets", express.static("build/client/assets", { immutable: true, maxAge: "1y" }));
   app.use(morgan("tiny"));
   app.use(express.static("build/client", { maxAge: "1h" }));
   app.use(await import(BUILD_PATH).then((mod) => mod.app));

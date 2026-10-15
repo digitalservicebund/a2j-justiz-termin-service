@@ -8,14 +8,8 @@
       content="Subscribe to the Justiz Termin Service demo calendar on Apple, Google, Outlook, or Thunderbird."
     />
     <title>Demo calendar subscription | Justiz Termin Service</title>
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/@kern-ux/native/dist/kern.min.css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/@kern-ux/native/dist/fonts/fira-sans.css"
-    />
+    <link rel="stylesheet" href="https://unpkg.com/@kern-ux/native/dist/kern.min.css" />
+    <link rel="stylesheet" href="https://unpkg.com/@kern-ux/native/dist/fonts/fira-sans.css" />
     <link rel="stylesheet" href="/calendar-subscription.css" />
   </head>
   <body class="calendar-subscription">
@@ -31,31 +25,24 @@
       <p class="kern-label calendar-subscription__eyebrow">Demo calendar</p>
       <h1 class="kern-heading-large">Add a calendar subscription</h1>
       <p class="kern-body calendar-subscription__intro">
-        Choose your calendar app and subscribe using the feed URL below. This is
-        a public, read-only test calendar. No login or personal appointments are
-        involved.
+        Choose your calendar app and subscribe using the feed URL below. This is a public, read-only
+        test calendar. No login or personal appointments are involved.
       </p>
 
       <div class="calendar-subscription__appointment" aria-label="Demo event">
-        <div class="calendar-subscription__day">
-          <strong>TUE</strong><span>Every week</span>
-        </div>
+        <div class="calendar-subscription__day"><strong>TUE</strong><span>Every week</span></div>
         <div>
           <h2 class="kern-heading-medium">Test Termin</h2>
-          <p class="kern-body">
-            <strong>13:20 - 14:20</strong> &middot; Europe/Berlin
-          </p>
+          <p class="kern-body"><strong>13:20 - 14:20</strong> &middot; Europe/Berlin</p>
           <p class="kern-body kern-body--small calendar-subscription__small">
-            From 13 October 2026, with no end date. Your app may display the
-            time in your own timezone.
+            From 13 October 2026, with no end date. Your app may display the time in your own
+            timezone.
           </p>
         </div>
       </div>
 
       <section class="calendar-subscription__panel" aria-labelledby="url-heading">
-        <h2 class="kern-heading-medium" id="url-heading">
-          1. Get the subscription URL
-        </h2>
+        <h2 class="kern-heading-medium" id="url-heading">1. Get the subscription URL</h2>
         <div class="kern-form-input calendar-subscription__form-field">
           <label class="kern-label" for="feed-url">Calendar feed URL</label>
           <div class="calendar-subscription__url-row">
@@ -73,21 +60,29 @@
             </button>
           </div>
         </div>
-        <p id="copy-status" class="kern-body kern-body--small calendar-subscription__status" role="status" aria-live="polite"></p>
+        <p
+          id="copy-status"
+          class="kern-body kern-body--small calendar-subscription__status"
+          role="status"
+          aria-live="polite"
+        ></p>
         <p id="url-help" class="kern-body kern-body--small calendar-subscription__small">
-          When served by Termin Service, this page uses its own host. Replace
-          the URL with your deployed demo feed if needed.
+          When served by Termin Service, this page uses its own host. Replace the URL with your
+          deployed demo feed if needed.
         </p>
-        <div id="local-warning" class="kern-alert kern-alert--warning calendar-subscription__notice">
+        <div
+          id="local-warning"
+          class="kern-alert kern-alert--warning calendar-subscription__notice"
+        >
           <div class="kern-alert__header">
             <span class="kern-icon kern-icon--warning" aria-hidden="true"></span>
             <span class="kern-title">Local feed</span>
           </div>
           <div class="kern-alert__body">
             <p class="kern-body">
-              Google and Outlook cloud subscriptions cannot fetch localhost or
-              private-network URLs. Use a publicly reachable HTTPS deployment.
-              On a phone, localhost means the phone itself, not your computer.
+              Google and Outlook cloud subscriptions cannot fetch localhost or private-network URLs.
+              Use a publicly reachable HTTPS deployment. On a phone, localhost means the phone
+              itself, not your computer.
             </p>
           </div>
         </div>
@@ -99,8 +94,8 @@
             </div>
             <div class="kern-alert__body">
               <p class="kern-body">
-                JavaScript is disabled. Copy the URL manually, replace localhost
-                with your deployed host, and follow the instructions below.
+                JavaScript is disabled. Copy the URL manually, replace localhost with your deployed
+                host, and follow the instructions below.
               </p>
             </div>
           </div>
@@ -109,22 +104,16 @@
 
       <section class="calendar-subscription__guide" aria-labelledby="guide-heading">
         <aside class="calendar-subscription__platform-picker">
-          <h2 class="kern-heading-medium" id="guide-heading">
-            2. Choose your app
-          </h2>
+          <h2 class="kern-heading-medium" id="guide-heading">2. Choose your app</h2>
           <div class="kern-form-input">
             <label class="kern-label" for="platform">Calendar app / platform</label>
             <div class="kern-form-input__select-wrapper">
               <select class="kern-form-input__select" id="platform">
                 <option value="all">All platforms</option>
                 <option value="apple-mac">Apple Calendar / Mac</option>
-                <option value="apple-mobile">
-                  Apple Calendar / iPhone &amp; iPad
-                </option>
+                <option value="apple-mobile">Apple Calendar / iPhone &amp; iPad</option>
                 <option value="google">Google Calendar / web</option>
-                <option value="google-mobile">
-                  Google Calendar / Android &amp; iOS
-                </option>
+                <option value="google-mobile">Google Calendar / Android &amp; iOS</option>
                 <option value="outlook">Outlook / web &amp; new Outlook</option>
                 <option value="outlook-classic">Classic Outlook / Windows</option>
                 <option value="thunderbird">Thunderbird / desktop</option>
@@ -132,12 +121,16 @@
             </div>
           </div>
           <p class="kern-body kern-body--small calendar-subscription__platform-note">
-            Subscribe by URL, rather than importing an .ics file. A subscription
-            receives later changes; a file import is only a snapshot.
+            Subscribe by URL, rather than importing an .ics file. A subscription receives later
+            changes; a file import is only a snapshot.
           </p>
         </aside>
         <div class="calendar-subscription__steps" id="instructions">
-          <section class="calendar-subscription__step" data-platform="apple-mac" aria-labelledby="mac-heading">
+          <section
+            class="calendar-subscription__step"
+            data-platform="apple-mac"
+            aria-labelledby="mac-heading"
+          >
             <h3 class="kern-heading-small" id="mac-heading">Apple Calendar on Mac</h3>
             <div class="calendar-subscription__actions">
               <a
@@ -149,8 +142,8 @@
               </a>
             </div>
             <p class="kern-body">
-              If the link opens a subscription dialog, review it and confirm. If
-              it does not, add it manually:
+              If the link opens a subscription dialog, review it and confirm. If it does not, add it
+              manually:
             </p>
             <ol class="calendar-subscription__list">
               <li>
@@ -159,10 +152,9 @@
               </li>
               <li>Paste the feed URL and select <strong>Subscribe</strong>.</li>
               <li>
-                Name it <strong>JTS Demo</strong>. Choose
-                <strong>On My Mac</strong> for local testing, or
-                <strong>iCloud</strong> to make the subscription available on
-                your Apple devices.
+                Name it <strong>JTS Demo</strong>. Choose <strong>On My Mac</strong> for local
+                testing, or <strong>iCloud</strong> to make the subscription available on your Apple
+                devices.
               </li>
               <li>
                 Set <strong>Auto-refresh</strong> to
@@ -172,8 +164,8 @@
               </li>
             </ol>
             <p class="kern-body kern-body--small calendar-subscription__small">
-              For localhost, Calendar must run on the computer serving the feed.
-              For iCloud or other devices, use a reachable deployed URL.
+              For localhost, Calendar must run on the computer serving the feed. For iCloud or other
+              devices, use a reachable deployed URL.
             </p>
             <a
               class="calendar-subscription__help-link"
@@ -184,7 +176,11 @@
             >
           </section>
 
-          <section class="calendar-subscription__step" data-platform="apple-mobile" aria-labelledby="ios-heading">
+          <section
+            class="calendar-subscription__step"
+            data-platform="apple-mobile"
+            aria-labelledby="ios-heading"
+          >
             <h3 class="kern-heading-small" id="ios-heading">Apple Calendar on iPhone or iPad</h3>
             <div class="calendar-subscription__actions">
               <a
@@ -196,32 +192,27 @@
               </a>
             </div>
             <p class="kern-body">
-              Use a deployed URL reachable from your device. If the link does
-              not show a subscription prompt:
+              Use a deployed URL reachable from your device. If the link does not show a
+              subscription prompt:
             </p>
             <ol class="calendar-subscription__list">
-              <li>
-                Open <strong>Calendar</strong>, then tap
-                <strong>Calendars</strong>.
-              </li>
+              <li>Open <strong>Calendar</strong>, then tap <strong>Calendars</strong>.</li>
               <li>
                 Tap
                 <strong>Add Calendar &gt; Add Subscription Calendar</strong>.
               </li>
               <li>
-                Paste the feed URL, then tap <strong>Find</strong> (or
-                <strong>Subscribe</strong>, depending on your OS version).
+                Paste the feed URL, then tap <strong>Find</strong> (or <strong>Subscribe</strong>,
+                depending on your OS version).
               </li>
               <li>
-                Name it <strong>JTS Demo</strong>. Choose
-                <strong>iCloud</strong> under Account to share it across your
-                Apple devices, then tap <strong>Done</strong> on iOS/iPadOS 26
-                or later (<strong>Add</strong> on older versions). No username
-                or password is required.
+                Name it <strong>JTS Demo</strong>. Choose <strong>iCloud</strong> under Account to
+                share it across your Apple devices, then tap <strong>Done</strong> on iOS/iPadOS 26
+                or later (<strong>Add</strong> on older versions). No username or password is
+                required.
               </li>
               <li>
-                Return to <strong>Calendars</strong> and make sure the
-                subscription is selected.
+                Return to <strong>Calendars</strong> and make sure the subscription is selected.
               </li>
             </ol>
             <a
@@ -233,8 +224,14 @@
             >
           </section>
 
-          <section class="calendar-subscription__step" data-platform="google" aria-labelledby="google-heading">
-            <h3 class="kern-heading-small" id="google-heading">Google Calendar in a desktop browser</h3>
+          <section
+            class="calendar-subscription__step"
+            data-platform="google"
+            aria-labelledby="google-heading"
+          >
+            <h3 class="kern-heading-small" id="google-heading">
+              Google Calendar in a desktop browser
+            </h3>
             <div class="calendar-subscription__actions">
               <a
                 class="kern-btn kern-btn--primary"
@@ -248,35 +245,32 @@
             </div>
             <ol class="calendar-subscription__list">
               <li>
-                Use a <strong>public HTTPS feed URL</strong> above. Google must
-                be able to fetch it without a login, VPN, or browser cookies.
-                Localhost will not work.
+                Use a <strong>public HTTPS feed URL</strong> above. Google must be able to fetch it
+                without a login, VPN, or browser cookies. Localhost will not work.
               </li>
               <li>
-                Select <strong>Subscribe in Google Calendar</strong> and sign in
-                to the Google account you want to use. The link passes your feed
-                URL to Google Calendar.
+                Select <strong>Subscribe in Google Calendar</strong> and sign in to the Google
+                account you want to use. The link passes your feed URL to Google Calendar.
               </li>
               <li>
-                If Google shows an add-calendar prompt, review the calendar and
-                confirm. Select the new calendar under
+                If Google shows an add-calendar prompt, review the calendar and confirm. Select the
+                new calendar under
                 <strong>Other calendars</strong> to display it.
               </li>
             </ol>
             <p class="kern-body"><strong>No subscription prompt? Add it manually:</strong></p>
             <ol class="calendar-subscription__list">
               <li>
-                Copy the <strong>public HTTPS feed URL</strong> above. Google
-                must be able to fetch it without a login, VPN, or browser
-                cookies.
+                Copy the <strong>public HTTPS feed URL</strong> above. Google must be able to fetch
+                it without a login, VPN, or browser cookies.
               </li>
               <li>
-                Open <strong>Google Calendar</strong> in a computer browser and
-                sign in to the account you want to use.
+                Open <strong>Google Calendar</strong> in a computer browser and sign in to the
+                account you want to use.
               </li>
               <li>
-                Next to <strong>Other calendars</strong>, select
-                <strong>+ &gt; From URL</strong>, or open the
+                Next to <strong>Other calendars</strong>, select <strong>+ &gt; From URL</strong>,
+                or open the
                 <a
                   class="calendar-subscription__inline-link"
                   href="https://calendar.google.com/calendar/u/0/r/settings/addbyurl"
@@ -285,18 +279,15 @@
                   >From URL settings page</a
                 >. This page does not prefill the feed URL.
               </li>
-              <li>
-                Paste the feed URL and select <strong>Add calendar</strong>.
-              </li>
+              <li>Paste the feed URL and select <strong>Add calendar</strong>.</li>
               <li>
                 Return to the calendar and select the new calendar under
                 <strong>Other calendars</strong>.
               </li>
             </ol>
             <p class="kern-body kern-body--small calendar-subscription__small">
-              Use From URL, not the email-based Subscribe to calendar option.
-              Google decides when to refresh external feeds; updates are not
-              immediate.
+              Use From URL, not the email-based Subscribe to calendar option. Google decides when to
+              refresh external feeds; updates are not immediate.
             </p>
             <a
               class="calendar-subscription__help-link"
@@ -307,38 +298,39 @@
             >
           </section>
 
-          <section class="calendar-subscription__step" data-platform="google-mobile" aria-labelledby="android-heading">
+          <section
+            class="calendar-subscription__step"
+            data-platform="google-mobile"
+            aria-labelledby="android-heading"
+          >
             <h3 class="kern-heading-small" id="android-heading">
               Google Calendar on Android, iPhone, or iPad
             </h3>
             <ol class="calendar-subscription__list">
               <li>
                 On a computer, add the public feed in
-                <strong>
-                  Google Calendar &gt; Other calendars &gt; + &gt; From URL
-                </strong>
+                <strong> Google Calendar &gt; Other calendars &gt; + &gt; From URL </strong>
                 , using the same Google account as your phone.
               </li>
               <li>
-                Open the <strong>Google Calendar</strong> app on your phone and
-                allow the account to sync.
+                Open the <strong>Google Calendar</strong> app on your phone and allow the account to
+                sync.
               </li>
               <li>
-                Open the app's menu and make sure the new calendar is checked.
-                Scroll or expand the calendar list if necessary.
+                Open the app's menu and make sure the new calendar is checked. Scroll or expand the
+                calendar list if necessary.
               </li>
               <li>
                 On Android, if it is still missing, open
-                <strong>Settings</strong> in the Calendar app, select the
-                subscribed calendar (use <strong>Show more</strong> if needed),
-                and enable <strong>Sync</strong> if that option appears.
+                <strong>Settings</strong> in the Calendar app, select the subscribed calendar (use
+                <strong>Show more</strong> if needed), and enable <strong>Sync</strong> if that
+                option appears.
               </li>
             </ol>
             <p class="kern-body kern-body--small calendar-subscription__small">
-              The Google Calendar mobile app cannot create a new URL
-              subscription. Set it up in the desktop website first. Android apps
-              other than Google Calendar may require their own ICS subscription
-              support.
+              The Google Calendar mobile app cannot create a new URL subscription. Set it up in the
+              desktop website first. Android apps other than Google Calendar may require their own
+              ICS subscription support.
             </p>
             <a
               class="calendar-subscription__help-link"
@@ -349,8 +341,14 @@
             >
           </section>
 
-          <section class="calendar-subscription__step" data-platform="outlook" aria-labelledby="outlook-heading">
-            <h3 class="kern-heading-small" id="outlook-heading">Outlook on the web or new Outlook</h3>
+          <section
+            class="calendar-subscription__step"
+            data-platform="outlook"
+            aria-labelledby="outlook-heading"
+          >
+            <h3 class="kern-heading-small" id="outlook-heading">
+              Outlook on the web or new Outlook
+            </h3>
             <div class="calendar-subscription__actions">
               <a
                 class="kern-btn kern-btn--secondary calendar-subscription__help-link"
@@ -363,29 +361,27 @@
             </div>
             <ol class="calendar-subscription__list">
               <li>
-                Open <strong>Calendar</strong> in Outlook.com, your work/school
-                Outlook website, or new Outlook.
+                Open <strong>Calendar</strong> in Outlook.com, your work/school Outlook website, or
+                new Outlook.
               </li>
               <li>
-                Select <strong>Add calendar &gt; Subscribe from web</strong>.
-                Expand the left navigation if Add calendar is hidden.
+                Select <strong>Add calendar &gt; Subscribe from web</strong>. Expand the left
+                navigation if Add calendar is hidden.
               </li>
               <li>
-                Paste the <strong>public HTTPS feed URL</strong> and name the
-                calendar <strong>JTS Demo</strong>.
+                Paste the <strong>public HTTPS feed URL</strong> and name the calendar
+                <strong>JTS Demo</strong>.
               </li>
               <li>
-                Select <strong>Import</strong> or <strong>Save</strong>, as
-                shown in your version. Because you chose Subscribe from web,
-                this is a subscription, not a file import.
+                Select <strong>Import</strong> or <strong>Save</strong>, as shown in your version.
+                Because you chose Subscribe from web, this is a subscription, not a file import.
               </li>
               <li>Select the new calendar in the calendar list.</li>
             </ol>
             <p class="kern-body kern-body--small calendar-subscription__small">
-              For the Outlook mobile app, add the feed through the website first
-              using the same account. Mobile visibility varies by account and
-              app version; use the web calendar if the subscription is not
-              shown. Organization policy may block external calendars.
+              For the Outlook mobile app, add the feed through the website first using the same
+              account. Mobile visibility varies by account and app version; use the web calendar if
+              the subscription is not shown. Organization policy may block external calendars.
             </p>
             <a
               class="calendar-subscription__help-link"
@@ -396,20 +392,23 @@
             >
           </section>
 
-          <section class="calendar-subscription__step" data-platform="outlook-classic" aria-labelledby="classic-heading">
+          <section
+            class="calendar-subscription__step"
+            data-platform="outlook-classic"
+            aria-labelledby="classic-heading"
+          >
             <h3 class="kern-heading-small" id="classic-heading">Classic Outlook on Windows</h3>
             <ol class="calendar-subscription__list">
               <li>Open the <strong>Calendar</strong> view.</li>
               <li>
                 On the ribbon, choose
-                <strong>Home &gt; Add Calendar &gt; From Internet</strong>. Some
-                versions label this
+                <strong>Home &gt; Add Calendar &gt; From Internet</strong>. Some versions label this
                 <strong>Open Calendar &gt; From Internet</strong>.
               </li>
               <li>Paste the feed URL and select <strong>OK</strong>.</li>
               <li>
-                When asked whether to add the Internet Calendar and subscribe to
-                updates, select <strong>Yes</strong>.
+                When asked whether to add the Internet Calendar and subscribe to updates, select
+                <strong>Yes</strong>.
               </li>
               <li>
                 Select the new calendar in the left-hand list. Use
@@ -417,47 +416,46 @@
               </li>
             </ol>
             <p class="kern-body kern-body--small calendar-subscription__small">
-              This applies to classic Outlook, not the redesigned new Outlook.
-              If From Internet is unavailable, use the Outlook web instructions
-              instead. Do not open a downloaded .ics file as a substitute for
-              subscribing.
+              This applies to classic Outlook, not the redesigned new Outlook. If From Internet is
+              unavailable, use the Outlook web instructions instead. Do not open a downloaded .ics
+              file as a substitute for subscribing.
             </p>
           </section>
 
-          <section class="calendar-subscription__step" data-platform="thunderbird" aria-labelledby="thunderbird-heading">
+          <section
+            class="calendar-subscription__step"
+            data-platform="thunderbird"
+            aria-labelledby="thunderbird-heading"
+          >
             <h3 class="kern-heading-small" id="thunderbird-heading">
               Thunderbird on Windows, Mac, or Linux
             </h3>
             <ol class="calendar-subscription__list">
               <li>
-                Open <strong>Calendar</strong>. In the calendar list,
-                right-click and choose <strong>New Calendar</strong> (or use
-                <strong>File &gt; New &gt; Calendar</strong>).
+                Open <strong>Calendar</strong>. In the calendar list, right-click and choose
+                <strong>New Calendar</strong> (or use <strong>File &gt; New &gt; Calendar</strong>).
               </li>
               <li>Choose <strong>On the Network</strong>.</li>
               <li>
-                Enter the feed URL as the <strong>Location</strong>. Leave the
-                username empty; choose
-                <strong>This location doesn't require credentials</strong> if
-                offered.
+                Enter the feed URL as the <strong>Location</strong>. Leave the username empty;
+                choose <strong>This location doesn't require credentials</strong> if offered.
               </li>
               <li>
-                Select <strong>Find Calendars</strong> or <strong>Next</strong>.
-                Choose <strong>iCalendar (ICS)</strong> if a format is
-                requested.
+                Select <strong>Find Calendars</strong> or <strong>Next</strong>. Choose
+                <strong>iCalendar (ICS)</strong> if a format is requested.
               </li>
               <li>
                 Select the discovered calendar, name it
                 <strong>JTS Demo</strong>, and finish the subscription wizard.
               </li>
               <li>
-                In calendar properties, keep it <strong>Read-only</strong> and
-                choose a refresh interval. This demo feed does not accept edits.
+                In calendar properties, keep it <strong>Read-only</strong> and choose a refresh
+                interval. This demo feed does not accept edits.
               </li>
             </ol>
             <p class="kern-body kern-body--small calendar-subscription__small">
-              Thunderbird can use localhost when it runs on the same computer as
-              Termin Service. Wizard labels vary by version.
+              Thunderbird can use localhost when it runs on the same computer as Termin Service.
+              Wizard labels vary by version.
             </p>
             <a
               class="calendar-subscription__help-link"
@@ -471,73 +469,62 @@
       </section>
 
       <section class="calendar-subscription__help" aria-labelledby="help-heading">
-        <h2 class="kern-heading-medium" id="help-heading">
-          3. Check the subscription
-        </h2>
+        <h2 class="kern-heading-medium" id="help-heading">3. Check the subscription</h2>
         <p class="kern-body">
-          Look for <strong>Test Termin</strong> on a Tuesday on or after 13
-          October 2026. In the Berlin timezone it runs from
-          <strong>13:20 to 14:20</strong>, including after clock changes.
+          Look for <strong>Test Termin</strong> on a Tuesday on or after 13 October 2026. In the
+          Berlin timezone it runs from <strong>13:20 to 14:20</strong>, including after clock
+          changes.
         </p>
         <details class="calendar-subscription__details">
           <summary>The calendar is empty or cannot be added</summary>
           <p class="kern-body kern-body--small calendar-subscription__small">
-            Check that the feed URL is correct, the server is running, and the
-            calendar is selected. Cloud providers need a publicly accessible URL
-            with no authentication. Localhost only works on the computer serving
-            the feed. If your view is before 13 October 2026, move to a later
-            Tuesday.
+            Check that the feed URL is correct, the server is running, and the calendar is selected.
+            Cloud providers need a publicly accessible URL with no authentication. Localhost only
+            works on the computer serving the feed. If your view is before 13 October 2026, move to
+            a later Tuesday.
           </p>
         </details>
         <details class="calendar-subscription__details">
-          <summary>
-            The time has changed, but my app still shows the old time
-          </summary>
+          <summary>The time has changed, but my app still shows the old time</summary>
           <p class="kern-body kern-body--small calendar-subscription__small">
-            The feed suggests a five-minute minimum refresh interval, but
-            calendar apps may ignore or override it. Subscriptions refresh on
-            the calendar provider's schedule. Refresh manually where supported,
-            or wait. Outlook updates can take more than 24 hours; Google also
-            controls its own polling. The feed's no-store header does not force
-            calendar apps to refresh immediately.
+            The feed suggests a five-minute minimum refresh interval, but calendar apps may ignore
+            or override it. Subscriptions refresh on the calendar provider's schedule. Refresh
+            manually where supported, or wait. Outlook updates can take more than 24 hours; Google
+            also controls its own polling. The feed's no-store header does not force calendar apps
+            to refresh immediately.
           </p>
         </details>
         <details class="calendar-subscription__details">
-          <summary>
-            What does the event's synchronization timestamp mean?
-          </summary>
+          <summary>What does the event's synchronization timestamp mean?</summary>
           <p class="kern-body kern-body--small calendar-subscription__small">
-            Open Test Termin and read its description. "Last synchronized (feed
-            generated)" shows when the server generated that copy of the feed,
-            in Berlin local time, for example "13 October 2026 at 14:00:00
-            CEST". CET or CEST indicates winter or summer time. It updates on
-            every feed request. It is not proof of when your calendar app
-            synchronized; an old timestamp indicates that you are still viewing
-            an older copy.
+            Open Test Termin and read its description. "Last synchronized (feed generated)" shows
+            when the server generated that copy of the feed, in Berlin local time, for example "13
+            October 2026 at 14:00:00 CEST". CET or CEST indicates winter or summer time. It updates
+            on every feed request. It is not proof of when your calendar app synchronized; an old
+            timestamp indicates that you are still viewing an older copy.
           </p>
         </details>
         <details class="calendar-subscription__details">
           <summary>I see duplicate events</summary>
           <p class="kern-body kern-body--small calendar-subscription__small">
-            Keep one subscription and remove any extra subscriptions or one-time
-            imports. The feed uses a stable event identifier, but importing the
-            file separately may create another copy.
+            Keep one subscription and remove any extra subscriptions or one-time imports. The feed
+            uses a stable event identifier, but importing the file separately may create another
+            copy.
           </p>
         </details>
         <details class="calendar-subscription__details">
           <summary>How do I remove the demo?</summary>
           <p class="kern-body kern-body--small calendar-subscription__small">
-            Unsubscribe from or delete the JTS Demo calendar in your app's
-            calendar list or settings. Hide it by unchecking it if you only want
-            to stop displaying it. Removing the subscription does not affect
-            other calendars.
+            Unsubscribe from or delete the JTS Demo calendar in your app's calendar list or
+            settings. Hide it by unchecking it if you only want to stop displaying it. Removing the
+            subscription does not affect other calendars.
           </p>
         </details>
       </section>
     </main>
     <footer class="calendar-subscription__footer">
-      Prototype only &middot; Public mock data &middot; Menu labels may vary by
-      app version and language.
+      Prototype only &middot; Public mock data &middot; Menu labels may vary by app version and
+      language.
     </footer>
     <script>
       const feedInput = document.getElementById("feed-url");
@@ -545,10 +532,7 @@
       const warning = document.getElementById("local-warning");
       const platform = document.getElementById("platform");
       if (["http:", "https:"].includes(location.protocol)) {
-        feedInput.value = new URL(
-          "/api/calendars/demo/feed.ics",
-          location.origin,
-        ).href;
+        feedInput.value = new URL("/api/calendars/demo/feed.ics", location.origin).href;
       }
 
       function updateFeed() {
@@ -556,15 +540,10 @@
         let url;
         try {
           url = new URL(feedInput.value.trim());
-          if (
-            !["http:", "https:"].includes(url.protocol) ||
-            url.username ||
-            url.password
-          )
+          if (!["http:", "https:"].includes(url.protocol) || url.username || url.password)
             throw new Error("Invalid feed URL");
         } catch {
-          status.textContent =
-            "Enter a complete HTTP or HTTPS feed URL without credentials.";
+          status.textContent = "Enter a complete HTTP or HTTPS feed URL without credentials.";
           for (const link of document.querySelectorAll(
             "[data-webcal-link], [data-google-subscribe-link]",
           )) {
@@ -582,47 +561,36 @@
           host === "[::1]" ||
           /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host);
         warning.hidden = !local;
-        for (const link of document.querySelectorAll(
-          "[data-webcal-link]",
-        )) {
+        for (const link of document.querySelectorAll("[data-webcal-link]")) {
           link.href = `webcal://${url.host}${url.pathname}${url.search}`;
           link.removeAttribute("aria-disabled");
         }
-        const googleSubscription = new URL(
-          "https://calendar.google.com/calendar/r",
-        );
+        const googleSubscription = new URL("https://calendar.google.com/calendar/r");
         googleSubscription.searchParams.set("cid", url.href);
-        const googleLink = document.querySelector(
-          "[data-google-subscribe-link]",
-        );
+        const googleLink = document.querySelector("[data-google-subscribe-link]");
         googleLink.href = googleSubscription.href;
         googleLink.removeAttribute("aria-disabled");
         return true;
       }
 
       feedInput.addEventListener("input", updateFeed);
-      document
-        .getElementById("copy-url")
-        .addEventListener("click", async () => {
-          if (!updateFeed()) {
-            feedInput.focus();
-            return;
-          }
-          try {
-            await navigator.clipboard.writeText(feedInput.value.trim());
-            status.textContent = "Subscription URL copied.";
-          } catch {
-            feedInput.focus();
-            feedInput.select();
-            status.textContent =
-              "Copy the selected URL using your browser's Copy command.";
-          }
-        });
+      document.getElementById("copy-url").addEventListener("click", async () => {
+        if (!updateFeed()) {
+          feedInput.focus();
+          return;
+        }
+        try {
+          await navigator.clipboard.writeText(feedInput.value.trim());
+          status.textContent = "Subscription URL copied.";
+        } catch {
+          feedInput.focus();
+          feedInput.select();
+          status.textContent = "Copy the selected URL using your browser's Copy command.";
+        }
+      });
       platform.addEventListener("change", () => {
         for (const section of document.querySelectorAll("[data-platform]")) {
-          section.hidden =
-            platform.value !== "all" &&
-            section.dataset.platform !== platform.value;
+          section.hidden = platform.value !== "all" && section.dataset.platform !== platform.value;
         }
       });
       updateFeed();
