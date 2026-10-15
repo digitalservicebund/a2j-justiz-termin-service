@@ -1,0 +1,24 @@
+.breadcrumb__list {
+  display: flex;
+  align-items: center;
+  gap: var(--kern-metric-space-x-small);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.breadcrumb__item {
+  display: flex;
+  align-items: center;
+  gap: var(--kern-metric-space-x-small);
+}
+
+.breadcrumb .kern-icon {
+  display: block;
+}
+
+.breadcrumb__separator {
+  display: flex;
+  padding-block: var(--kern-metric-baseline-body-small-padding-top)
+    var(--kern-metric-baseline-body-small-padding-bottom);
+}

@@ -4,9 +4,10 @@ type AlertProps = {
   type: AlertType;
   title: string;
   message?: string;
+  children?: React.ReactNode;
 };
 
-export default function Alert({ type, title, message }: Readonly<AlertProps>) {
+export default function Alert({ type, title, message, children }: Readonly<AlertProps>) {
   const typeClasses: Record<AlertType, string> = {
     success: "kern-alert--success",
     error: "kern-alert--danger",
@@ -21,7 +22,7 @@ export default function Alert({ type, title, message }: Readonly<AlertProps>) {
     info: "kern-icon--info",
   };
 
-  const showBody = Boolean(message);
+  const showBody = Boolean(message) || Boolean(children);
 
   return (
     <div className={`kern-alert ${typeClasses[type]}`} role="alert">
@@ -30,7 +31,10 @@ export default function Alert({ type, title, message }: Readonly<AlertProps>) {
         <span className="kern-title">{title}</span>
       </div>
       {showBody && (
-        <div className="kern-alert__body">{message && <p className="kern-body">{message}</p>}</div>
+        <div className="kern-alert__body">
+          {message && <p className="kern-body">{message}</p>}
+          {children}
+        </div>
       )}
     </div>
   );
