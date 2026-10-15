@@ -19,5 +19,24 @@ services:
       timeout: 5s
       retries: 10
 
+  # Local SMTP mock: accepts any mail and keeps it in the container only, nothing is relayed.
+  mailpit:
+    image: axllent/mailpit:v1.31.6
+    container_name: a2j-justiz-termin-service-mailpit
+    restart: unless-stopped
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: "true"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "true"
+    ports:
+      # SMTP on 587 (as in staging), mapped to Mailpit's default 1025.
+      - "587:1025"
+      # Web UI and REST API.
+      - "8025:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
 volumes:
   postgres_data:

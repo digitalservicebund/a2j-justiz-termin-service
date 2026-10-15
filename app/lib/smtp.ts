@@ -10,7 +10,8 @@ export function createSmtpTransport() {
     host: requireEnv("SMTP_HOST"),
     port: Number.parseInt(requireEnv("SMTP_PORT"), 10),
     secure: false, // STARTTLS on 587
-    requireTLS: true,
+    // Only the local mock lacks STARTTLS, deployed environments leave this unset.
+    requireTLS: process.env.SMTP_REQUIRE_TLS !== "false",
     auth: {
       user: requireSecret("smtp", "SMTP_USER"),
       pass: requireSecret("smtp", "SMTP_PASSWORD"),
