@@ -1,0 +1,18 @@
+// Template, not executed (the .txt extension keeps the migrator from loading it).
+// Copy it to a new `NNNN-<description>.ts` file in this directory to add a migration.
+import { sql, type Kysely } from "kysely";
+
+export async function up(db: Kysely<unknown>): Promise<void> {
+  await db.schema
+    .createTable("person")
+    .addColumn("id", "serial", (col) => col.primaryKey())
+    .addColumn("first_name", "varchar", (col) => col.notNull())
+    .addColumn("created_at", "timestamptz", (col) =>
+      col.defaultTo(sql`now()`).notNull(),
+    )
+    .execute();
+}
+
+export async function down(db: Kysely<unknown>): Promise<void> {
+  await db.schema.dropTable("person").execute();
+}

@@ -1,11 +1,17 @@
 import compression from "compression";
 import express from "express";
 import morgan from "morgan";
+import { getDb } from "./app/database/database.ts";
+import { migrateToLatest } from "./app/database/migrate.ts";
 
 // Short-circuit the type-checking of the built output.
 const BUILD_PATH = "./build/server/index.js";
 const DEVELOPMENT = process.env.NODE_ENV === "development";
 const PORT = Number.parseInt(process.env.PORT || "3000");
+
+await migrateToLatest();
+// The app code is bundled with its own pool; release the one used for migrating.
+await getDb().destroy();
 
 const app = express();
 // Trust one hop (the Traefik ingress), which terminates TLS and forwards

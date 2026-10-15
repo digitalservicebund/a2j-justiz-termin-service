@@ -36,6 +36,8 @@ ENV NODE_ENV=production
 COPY --from=build-dependencies /build-deps/build ./build
 COPY --from=app-dependencies /app-deps/node_modules ./node_modules
 COPY package.json server.js ./
+COPY app/database ./app/database
+COPY app/lib ./app/lib
 
 EXPOSE 3000
 USER 1000
