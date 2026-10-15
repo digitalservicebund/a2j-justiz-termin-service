@@ -1,9 +1,4 @@
-import type {
-  PartyRole,
-  SlotDecisionStatus,
-  TimeSlot,
-  Verfahren,
-} from "../domain/verfahren";
+import type { PartyRole, SlotDecisionStatus, TimeSlot, Verfahren } from "../domain/verfahren";
 import type { VerfahrenRepository } from "../ports/verfahrenRepository";
 
 function buildSlotStatuses(c: Verfahren): SlotDecisionStatus[] {
@@ -14,8 +9,7 @@ function buildSlotStatuses(c: Verfahren): SlotDecisionStatus[] {
       slotId: slot.id,
       klaegerDecision,
       beklagterDecision,
-      isMutuallyAccepted:
-        klaegerDecision === "ACCEPT" && beklagterDecision === "ACCEPT",
+      isMutuallyAccepted: klaegerDecision === "ACCEPT" && beklagterDecision === "ACCEPT",
     };
   });
 }

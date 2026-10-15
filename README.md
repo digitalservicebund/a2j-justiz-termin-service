@@ -16,7 +16,7 @@ Login requires no password — select a role from the dropdown.
 - **Language**: TypeScript 5.9
 - **Database**: PostgreSQL 18 + Kysely (query builder and migrations)
 - **Package Manager**: pnpm
-- **Code Quality**: oxlint + Prettier
+- **Code Quality**: oxlint + oxfmt
 - **Testing**: Vitest + Istanbul coverage
 
 ## Prerequisites
@@ -66,7 +66,7 @@ pnpm test:coverage  # Run tests with Istanbul coverage report
 ```bash
 pnpm lint:check    # Check code with oxlint
 pnpm lint:fix      # Auto-fix oxlint issues
-pnpm format:fix    # Format code with Prettier
+pnpm format:fix    # Format code with oxfmt
 pnpm format:check  # Check formatting without writing
 ```
 
@@ -205,13 +205,14 @@ appointments, attendees, event location, or reminders.
 
 ## Code Style & Formatting
 
-This project uses **Prettier** and **oxlint** with automatic fixes on save (IntelliJ + VSCode).
+This project uses **oxfmt** and **oxlint** with automatic fixes on save (IntelliJ + VSCode).
 
-### Prettier
+### oxfmt
 
 - Single quotes disabled
 - Trailing commas on all
-- Import organization
+- Import sorting
+- Configured in `.oxfmtrc.json`
 
 ### oxlint
 

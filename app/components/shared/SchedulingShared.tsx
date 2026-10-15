@@ -1,18 +1,17 @@
 import { isRouteErrorResponse, useRouteError } from "react-router";
+
 import { DEFAULT_CASE_ID, schedulingQuery } from "~/bootstrap";
 import Alert from "~/components/shared/Alert";
 import { AppNav } from "~/components/shared/AppNav";
 import type { AuthUser } from "~/core/domain/user";
+
 import "./SchedulingShared.css";
 
 export function loadOverview() {
   return schedulingQuery.getOverview(DEFAULT_CASE_ID);
 }
 
-export function formatSlotRange(
-  startsAtIso: string,
-  endsAtIso: string,
-): string {
+export function formatSlotRange(startsAtIso: string, endsAtIso: string): string {
   const start = new Date(startsAtIso);
   const end = new Date(endsAtIso);
 
@@ -59,12 +58,8 @@ export function Shell({
       <header className="app-shell__header">
         <div className="app-shell__header-inner">
           <div className="app-shell__brand">
-            <h1 className="kern-heading-large app-shell__title">
-              Justitz Termin Service
-            </h1>
-            <p className="kern-heading-small app-shell__subtitle">
-              Court Appointment service
-            </p>
+            <h1 className="kern-heading-large app-shell__title">Justitz Termin Service</h1>
+            <p className="kern-heading-small app-shell__subtitle">Court Appointment service</p>
           </div>
           <AppNav user={user} />
         </div>

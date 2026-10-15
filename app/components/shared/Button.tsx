@@ -2,10 +2,7 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 export type ButtonStyle = "primary" | "secondary" | "tertiary";
 
-export type ButtonProps = Omit<
-  ButtonHTMLAttributes<HTMLButtonElement>,
-  "style"
-> & {
+export type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "style"> & {
   style?: ButtonStyle;
   children?: ReactNode;
 };

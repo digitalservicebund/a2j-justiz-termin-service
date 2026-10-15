@@ -1,4 +1,5 @@
 import { redirect } from "react-router";
+
 import { destroySession, getSession } from "~/adapters/session/session";
 
 export async function action({ request }: { request: Request }) {

@@ -1,4 +1,5 @@
 import { redirect } from "react-router";
+
 import { getSessionUser } from "~/adapters/session/session";
 import { authService } from "~/bootstrap";
 import { Shell } from "~/components/shared/SchedulingShared";
@@ -19,9 +20,7 @@ export async function loader({ request }: { request: Request }) {
 export default function Home() {
   return (
     <Shell title="Court Appointment Scheduling">
-      <p className="kern-body">
-        Select a role from the dropdown above to continue.
-      </p>
+      <p className="kern-body">Select a role from the dropdown above to continue.</p>
     </Shell>
   );
 }

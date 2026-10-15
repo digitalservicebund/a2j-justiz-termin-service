@@ -1,8 +1,6 @@
 import type { ComponentProps, Dispatch, SetStateAction } from "react";
-import {
-  generateRandomSlotDrafts,
-  type SlotDraft,
-} from "~/components/richter/richterHelpers";
+
+import { generateRandomSlotDrafts, type SlotDraft } from "~/components/richter/richterHelpers";
 import Alert from "~/components/shared/Alert";
 import { Badge } from "~/components/shared/Badge";
 import { Button } from "~/components/shared/Button";
@@ -13,6 +11,7 @@ import { TextLabel } from "~/components/shared/TextLabel";
 import type { Decision, PartyRole } from "~/core/domain/verfahren";
 import type { OverviewDto } from "~/core/services/schedulingQuery";
 import { useRichterActions } from "~/hooks/useRichterActions";
+
 import "./RichterSections.css";
 
 export function DraftSlotsSection({
@@ -90,11 +89,7 @@ export function DraftSlotsSection({
                 {new Date(slot.startsAtLocal).toLocaleString("de-DE")} –{" "}
                 {new Date(slot.endsAtLocal).toLocaleString("de-DE")}
               </span>
-              <Button
-                onClick={() => onRemoveDraft(index)}
-                type="button"
-                style="tertiary"
-              >
+              <Button onClick={() => onRemoveDraft(index)} type="button" style="tertiary">
                 <Icon name="delete" />
               </Button>
             </li>
@@ -139,19 +134,14 @@ function DecisionBadge({ decision }: { readonly decision?: Decision | null }) {
   );
 }
 
-export function SlotsTableSection({
-  overview,
-}: {
-  readonly overview: OverviewDto;
-}) {
-  const { confirmSlot, deleteSlot, deleteAllSlots, isLoading, state } =
-    useRichterActions();
+export function SlotsTableSection({ overview }: { readonly overview: OverviewDto }) {
+  const { confirmSlot, deleteSlot, deleteAllSlots, isLoading, state } = useRichterActions();
   const statusesBySlotId = new Map(
     overview.statuses.map((status) => [status.slotId, status] as const),
   );
   const hasMultipleMutualsWithoutFinal =
-    overview.statuses.filter((status) => status.isMutuallyAccepted).length >=
-      2 && !overview.finalSlotId;
+    overview.statuses.filter((status) => status.isMutuallyAccepted).length >= 2 &&
+    !overview.finalSlotId;
 
   return (
     <Card className="richter-sections__card">
@@ -190,10 +180,7 @@ export function SlotsTableSection({
                   <th scope="col" className="kern-table__header">
                     Mutual
                   </th>
-                  <th
-                    scope="col"
-                    className="kern-table__header kern-table__header--action"
-                  >
+                  <th scope="col" className="kern-table__header kern-table__header--action">
                     Actions
                   </th>
                 </tr>
@@ -218,14 +205,10 @@ export function SlotsTableSection({
                         </div>
                       </th>
                       <td className="kern-table__cell">
-                        <DecisionBadge
-                          decision={status?.klaegerDecision ?? undefined}
-                        />
+                        <DecisionBadge decision={status?.klaegerDecision ?? undefined} />
                       </td>
                       <td className="kern-table__cell">
-                        <DecisionBadge
-                          decision={status?.beklagterDecision ?? undefined}
-                        />
+                        <DecisionBadge decision={status?.beklagterDecision ?? undefined} />
                       </td>
                       <td className="kern-table__cell">
                         {status?.isMutuallyAccepted ? (
@@ -249,9 +232,7 @@ export function SlotsTableSection({
                           >
                             <Icon name="check" />
                             <span className="kern-label kern-sr-only">
-                              {state === "submitting"
-                                ? "Making final…"
-                                : "Make final"}
+                              {state === "submitting" ? "Making final…" : "Make final"}
                             </span>
                           </button>
                         )}
@@ -264,10 +245,7 @@ export function SlotsTableSection({
                           disabled={isLoading}
                           type="button"
                         >
-                          <span
-                            className="kern-icon kern-icon--delete"
-                            aria-hidden="true"
-                          />
+                          <span className="kern-icon kern-icon--delete" aria-hidden="true" />
                           <span className="kern-label kern-sr-only">
                             {state === "submitting" ? "Deleting…" : "Delete"}
                           </span>
@@ -287,11 +265,7 @@ export function SlotsTableSection({
               type="button"
             >
               <Icon name="delete" />
-              <TextLabel
-                label={
-                  state === "submitting" ? "Deleting…" : "Delete all slots"
-                }
-              />
+              <TextLabel label={state === "submitting" ? "Deleting…" : "Delete all slots"} />
             </Button>
           </div>
         </>
@@ -300,11 +274,7 @@ export function SlotsTableSection({
   );
 }
 
-export function PartyAccessSection({
-  overview,
-}: {
-  readonly overview: OverviewDto;
-}) {
+export function PartyAccessSection({ overview }: { readonly overview: OverviewDto }) {
   return (
     <Card className="richter-sections__card">
       <h3 className="kern-heading-small">Party submission access</h3>
@@ -351,10 +321,7 @@ function PartyRow({
         aria-label={hasSubmitted ? "Unlock submission" : "Submission open"}
         style="tertiary"
       >
-        <span
-          className="material-symbols-outlined richter-sections__lock-icon"
-          aria-hidden="true"
-        >
+        <span className="material-symbols-outlined richter-sections__lock-icon" aria-hidden="true">
           {hasSubmitted ? "lock" : "lock_open"}
         </span>
       </Button>

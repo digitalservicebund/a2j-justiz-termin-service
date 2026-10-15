@@ -26,16 +26,11 @@ export default function Alert({ type, title, message }: Readonly<AlertProps>) {
   return (
     <div className={`kern-alert ${typeClasses[type]}`} role="alert">
       <div className="kern-alert__header">
-        <span
-          className={`kern-icon ${iconClasses[type]}`}
-          aria-hidden="true"
-        ></span>
+        <span className={`kern-icon ${iconClasses[type]}`} aria-hidden="true"></span>
         <span className="kern-title">{title}</span>
       </div>
       {showBody && (
-        <div className="kern-alert__body">
-          {message && <p className="kern-body">{message}</p>}
-        </div>
+        <div className="kern-alert__body">{message && <p className="kern-body">{message}</p>}</div>
       )}
     </div>
   );

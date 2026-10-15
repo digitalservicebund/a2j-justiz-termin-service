@@ -1,11 +1,7 @@
 import { useLoaderData } from "react-router";
+
 import { requireRole } from "~/adapters/session/session";
-import {
-  authService,
-  DEFAULT_CASE_ID,
-  schedulingQuery,
-  schedulingService,
-} from "~/bootstrap";
+import { authService, DEFAULT_CASE_ID, schedulingQuery, schedulingService } from "~/bootstrap";
 import { PartyScreen } from "~/components/shared/PartyScreen";
 import { RouteErrorBoundary } from "~/components/shared/SchedulingShared";
 import type { Decision } from "~/core/domain/verfahren";
@@ -27,16 +23,11 @@ export async function action({ request }: { request: Request }) {
   }
 
   try {
-    schedulingService.partySubmitDecisions(
-      DEFAULT_CASE_ID,
-      "KLAEGER",
-      decisionMap,
-    );
+    schedulingService.partySubmitDecisions(DEFAULT_CASE_ID, "KLAEGER", decisionMap);
     return null;
   } catch (err) {
     return {
-      error:
-        err instanceof Error ? err.message : "Unknown error during submission.",
+      error: err instanceof Error ? err.message : "Unknown error during submission.",
     };
   }
 }

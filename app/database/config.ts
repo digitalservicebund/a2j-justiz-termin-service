@@ -1,4 +1,5 @@
 import type { PoolConfig } from "pg";
+
 import { requireEnv } from "../lib/env.ts";
 import { requireSecret } from "../lib/secrets.ts";
 

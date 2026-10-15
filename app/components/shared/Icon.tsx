@@ -45,9 +45,6 @@ export type IconProps = {
 
 export function Icon({ name, size = "default" }: Readonly<IconProps>) {
   return (
-    <span
-      className={`kern-icon kern-icon--${name} kern-icon--${size}`}
-      aria-hidden="true"
-    ></span>
+    <span className={`kern-icon kern-icon--${name} kern-icon--${size}`} aria-hidden="true"></span>
   );
 }

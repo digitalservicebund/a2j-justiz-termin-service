@@ -1,4 +1,5 @@
 import { sql } from "kysely";
+
 import { getDb } from "~/database/database";
 import { logError } from "~/lib/logging";
 

@@ -2,9 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 
 function createCalendar(synchronizedAt: Date): string {
   const isoTimestamp = synchronizedAt.toISOString();
-  const calendarTimestamp = isoTimestamp
-    .replace(/[-:]/g, "")
-    .replace(/\.\d{3}Z$/, "Z");
+  const calendarTimestamp = isoTimestamp.replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
   const readableTimestamp = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Europe/Berlin",
     day: "numeric",

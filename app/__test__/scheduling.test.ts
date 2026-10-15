@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { InMemoryStore } from "~/adapters/inMemory/inMemoryStore";
 import { SchedulingQuery } from "~/core/services/schedulingQuery";
 import { SchedulingService } from "~/core/services/schedulingService";
@@ -49,9 +50,7 @@ describe("SchedulingService", () => {
 
     it("throws when given an empty slot array", () => {
       const { service } = buildFixture();
-      expect(() => service.richterSetSlots("verfahren-1", [])).toThrow(
-        /at least one/i,
-      );
+      expect(() => service.richterSetSlots("verfahren-1", [])).toThrow(/at least one/i);
     });
 
     it("throws when a slot has invalid ISO date strings", () => {
@@ -127,9 +126,7 @@ describe("SchedulingService", () => {
     it("throws when the slot does not exist", () => {
       const { service } = buildFixture();
       service.richterSetSlots("verfahren-1", [SLOT_A]);
-      expect(() =>
-        service.richterDeleteSlot("verfahren-1", "nonexistent"),
-      ).toThrow(/not found/i);
+      expect(() => service.richterDeleteSlot("verfahren-1", "nonexistent")).toThrow(/not found/i);
     });
 
     it("resets submission locks for both parties", () => {
@@ -181,17 +178,13 @@ describe("SchedulingService", () => {
       service.richterSetSlots("verfahren-1", [SLOT_A]);
       const slotId = query.getOverview("verfahren-1").slots[0].id;
 
-      expect(() => service.richterConfirmSlot("verfahren-1", slotId)).toThrow(
-        /mutually accepted/,
-      );
+      expect(() => service.richterConfirmSlot("verfahren-1", slotId)).toThrow(/mutually accepted/);
     });
 
     it("throws when the slot id does not exist", () => {
       const { service } = buildFixture();
       service.richterSetSlots("verfahren-1", [SLOT_A]);
-      expect(() =>
-        service.richterConfirmSlot("verfahren-1", "nonexistent"),
-      ).toThrow(/not found/i);
+      expect(() => service.richterConfirmSlot("verfahren-1", "nonexistent")).toThrow(/not found/i);
     });
   });
 
@@ -223,9 +216,9 @@ describe("SchedulingService", () => {
 
     it("throws when there are no slots yet", () => {
       const { service } = buildFixture();
-      expect(() =>
-        service.partySubmitDecisions("verfahren-1", "KLAEGER", {}),
-      ).toThrow(/no time slots/i);
+      expect(() => service.partySubmitDecisions("verfahren-1", "KLAEGER", {})).toThrow(
+        /no time slots/i,
+      );
     });
 
     it("throws when not all slots are covered", () => {
@@ -347,16 +340,12 @@ describe("SchedulingQuery", () => {
     service.partySubmitDecisions("verfahren-1", "KLAEGER", {
       [slotId]: "ACCEPT",
     });
-    expect(
-      query.getOverview("verfahren-1").statuses[0].isMutuallyAccepted,
-    ).toBe(false);
+    expect(query.getOverview("verfahren-1").statuses[0].isMutuallyAccepted).toBe(false);
 
     service.partySubmitDecisions("verfahren-1", "BEKLAGTER", {
       [slotId]: "ACCEPT",
     });
-    expect(
-      query.getOverview("verfahren-1").statuses[0].isMutuallyAccepted,
-    ).toBe(true);
+    expect(query.getOverview("verfahren-1").statuses[0].isMutuallyAccepted).toBe(true);
   });
 
   it("reports isMutuallyAccepted as false when one party rejects", () => {
@@ -375,8 +364,6 @@ describe("SchedulingQuery", () => {
       [slotId]: "REJECT",
     });
 
-    expect(
-      query.getOverview("verfahren-1").statuses[0].isMutuallyAccepted,
-    ).toBe(false);
+    expect(query.getOverview("verfahren-1").statuses[0].isMutuallyAccepted).toBe(false);
   });
 });

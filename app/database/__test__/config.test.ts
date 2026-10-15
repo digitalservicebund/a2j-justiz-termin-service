@@ -1,7 +1,9 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
 import { getDBConfig } from "../config";
 
 describe("getDBConfig", () => {
@@ -49,10 +51,7 @@ describe("getDBConfig", () => {
       secretsDir = mkdtempSync(path.join(tmpdir(), "secrets-"));
       mkdirSync(path.join(secretsDir, "database"));
       writeFileSync(path.join(secretsDir, "database", "jts_user"), "jts\n");
-      writeFileSync(
-        path.join(secretsDir, "database", "jts_password"),
-        "file-password\n",
-      );
+      writeFileSync(path.join(secretsDir, "database", "jts_password"), "file-password\n");
       vi.stubEnv("SECRETS_FILE_PATH", secretsDir);
     });
 

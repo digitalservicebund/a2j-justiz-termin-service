@@ -7,8 +7,10 @@ import {
   type KyselyPlugin,
 } from "kysely";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { getDb } from "~/database/database";
 import type { Database } from "~/database/types";
+
 import { loader } from "../database-health";
 
 vi.mock("~/database/database", () => ({ getDb: vi.fn() }));
