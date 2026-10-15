@@ -1,6 +1,0 @@
-build/
-.react-router/
-node_modules/
-public/
-pnpm-lock.yaml
-
