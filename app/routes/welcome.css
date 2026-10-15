@@ -1,0 +1,195 @@
+.welcome {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--kern-color-layout-background-default);
+}
+
+.welcome__content,
+.welcome__hero-content {
+  width: min(100% - 2 * var(--kern-metric-space-default), 62rem);
+  margin-inline: auto;
+}
+
+.welcome__header {
+  padding-block: var(--kern-metric-space-large);
+  background-color: var(--kern-color-layout-background-default);
+}
+
+.welcome__service-name {
+  margin: 0;
+}
+
+.welcome__hero {
+  background-color: var(--kern-color-neutral-050);
+  padding-top: var(--kern-metric-space-default);
+}
+
+.welcome__hero-content {
+  display: grid;
+  gap: 0;
+  padding-block: var(--kern-metric-space-7x-large) var(--kern-metric-space-6x-large);
+}
+
+.welcome__hero-content h1,
+.welcome__hero-content p {
+  margin: 0;
+}
+
+.welcome__login {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--kern-metric-space-2x-small);
+  margin-top: var(--kern-metric-space-x-large);
+}
+
+.welcome__login .kern-form-input {
+  flex: 0 1 27.5rem;
+}
+
+.welcome__login .kern-form-input__input {
+  background-color: var(--kern-color-layout-background-default);
+}
+
+.welcome__pilot {
+  background-color: var(--kern-color-feedback-warning-background);
+  padding-block: var(--kern-metric-space-large);
+}
+
+.welcome__pilot-summary {
+  color: var(--kern-color-action-default-contextual);
+}
+
+.welcome__pilot details {
+  display: grid;
+  gap: var(--kern-metric-space-small);
+}
+
+.welcome__sections {
+  display: grid;
+  gap: var(--kern-metric-space-5x-large);
+  padding-top: var(--kern-metric-space-5x-large);
+}
+
+.welcome__sections > section:first-child {
+  margin-bottom: var(--kern-metric-space-5x-large);
+}
+
+.welcome__steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--kern-metric-space-large);
+  margin: var(--kern-metric-space-x-large) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.welcome__step {
+  display: grid;
+  align-content: start;
+  gap: var(--kern-metric-space-small);
+}
+
+.welcome__feedback {
+  display: grid;
+  gap: var(--kern-metric-space-default);
+  padding: var(--kern-metric-space-default);
+  border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border-level-1);
+  border-radius: var(--kern-metric-border-radius-default);
+}
+
+.welcome__feedback h2 {
+  margin: 0;
+}
+
+.welcome__feedback-actions {
+  display: flex;
+  gap: var(--kern-metric-space-default);
+}
+
+.welcome__report {
+  display: flex;
+  justify-content: flex-end;
+  padding-block: var(--kern-metric-space-6x-large) var(--kern-metric-space-10x-large);
+}
+
+.welcome__footer {
+  margin-top: auto;
+  background-color: var(--kern-color-layout-background-default);
+  border-top: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border-contextual);
+  padding-block: var(--kern-metric-space-3x-large) var(--kern-metric-space-6x-large);
+}
+
+.welcome__footer-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--kern-metric-space-3x-large);
+}
+
+.welcome__footer-brand {
+  display: grid;
+  align-content: start;
+  gap: var(--kern-metric-space-small);
+}
+
+.welcome__footer h2,
+.welcome__footer-brand p {
+  margin: 0;
+}
+
+.welcome__footer h2 {
+  margin-bottom: var(--kern-metric-space-small);
+}
+
+.welcome__link-list {
+  display: grid;
+  gap: var(--kern-metric-space-small);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.welcome__unapproved {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-block: var(--kern-metric-space-10x-large);
+  background-color: var(--kern-color-layout-background-inverted);
+}
+
+.welcome__unapproved .kern-btn {
+  background-color: var(--kern-color-layout-background-default);
+}
+
+@media (min-width: 64rem) {
+  .welcome__footer-grid {
+    grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr));
+    column-gap: 0;
+    row-gap: var(--kern-metric-space-6x-large);
+  }
+
+  .welcome__footer-brand {
+    grid-area: 1 / 1;
+  }
+
+  .welcome__footer-logo {
+    grid-area: 2 / 1;
+  }
+
+  .welcome__footer-legal {
+    grid-area: 1 / 2;
+  }
+
+  .welcome__footer-contact {
+    grid-area: 1 / 3;
+  }
+
+  .welcome__footer-pilot {
+    grid-area: 2 / 2;
+  }
+
+  .welcome__footer-operator {
+    grid-area: 2 / 3;
+  }
+}

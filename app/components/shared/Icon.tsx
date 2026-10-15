@@ -34,7 +34,8 @@ export type IconName =
   | "keyboard-double-arrow-right"
   | "language"
   | "dehaze"
-  | "account-circle";
+  | "account-circle"
+  | "calendar-today";
 
 export type IconSize = "small" | "default" | "large" | "x-large";
 

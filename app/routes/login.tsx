@@ -16,7 +16,7 @@ export async function action({ request }: { request: Request }) {
   if (!user) return null;
   const session = await getSession(request.headers.get("Cookie"));
   session.set("userId", user.id);
-  return redirect("/", {
+  return redirect("/home", {
     headers: { "Set-Cookie": await commitSession(session) },
   });
 }
