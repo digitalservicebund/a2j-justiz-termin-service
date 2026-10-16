@@ -4,6 +4,11 @@
 .react-router
 build
 coverage
+e2e
+.env.e2e
+playwright.config.ts
+playwright-report
+test-results
 node_modules
 vitest.config.ts
 vitest.setup.ts

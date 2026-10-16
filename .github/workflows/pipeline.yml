@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
   # Allow to run this workflow manually
   workflow_dispatch:
 
@@ -46,14 +45,19 @@ jobs:
       - name: Run tests
         run: pnpm test
 
-      # TODO: add this after implementing e2e tests
-      #      - name: Cache Playwright dependencies
-      #        id: cache-playwright-deps
-      #        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
-      #        with:
-      #          path: ~/.cache/ms-playwright
-      #          key: ${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml') }}
-      #          restore-keys: ${{ runner.os }}-playwright-
+      - name: Run Playwright E2E tests
+        timeout-minutes: 10
+        run: pnpm test:e2e
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: playwright-results
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
 
       # TODO: add this after implementing A11y tests
       #      - name: Install A11y test dependencies

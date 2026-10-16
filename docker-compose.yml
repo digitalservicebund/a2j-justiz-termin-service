@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:18-alpine
-    container_name: a2j-justiz-termin-service-postgres
+    container_name: ${COMPOSE_PROJECT_NAME:-a2j-justiz-termin-service}-postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: a2j-justiz-termin-service
@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: jts
     ports:
       # 5433 on the host so it can run next to other projects' Postgres on 5432.
-      - "5433:5432"
+      - "${COMPOSE_BIND_ADDRESS:-0.0.0.0}:${POSTGRES_HOST_PORT:-5433}:5432"
     volumes:
       # Postgres 18+ keeps its data in a versioned subdirectory below this path.
       - postgres_data:/var/lib/postgresql
@@ -22,16 +22,16 @@ services:
   # Local SMTP mock: accepts any mail and keeps it in the container only, nothing is relayed.
   mailpit:
     image: axllent/mailpit:v1.31.6
-    container_name: a2j-justiz-termin-service-mailpit
+    container_name: ${COMPOSE_PROJECT_NAME:-a2j-justiz-termin-service}-mailpit
     restart: unless-stopped
     environment:
       MP_SMTP_AUTH_ACCEPT_ANY: "true"
       MP_SMTP_AUTH_ALLOW_INSECURE: "true"
     ports:
       # SMTP on 587 (as in staging), mapped to Mailpit's default 1025.
-      - "587:1025"
+      - "${COMPOSE_BIND_ADDRESS:-0.0.0.0}:${SMTP_HOST_PORT:-587}:1025"
       # Web UI and REST API.
-      - "8025:8025"
+      - "${COMPOSE_BIND_ADDRESS:-0.0.0.0}:${MAILPIT_HOST_PORT:-8025}:8025"
     healthcheck:
       test: ["CMD", "/mailpit", "readyz"]
       interval: 5s

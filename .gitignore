@@ -43,6 +43,8 @@ lerna-debug.log*
 # Testing
 /coverage/
 .nyc_output/
+/playwright-report/
+/test-results/
 
 # Performance profiling
 perf_hooks-*.json
@@ -50,4 +52,3 @@ perf_hooks-*.json
 # Cache
 .turbo/
 .cache/
-
