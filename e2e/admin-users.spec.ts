@@ -1,0 +1,229 @@
+import { spawnSync } from "node:child_process";
+
+import { sql } from "kysely";
+
+import { baseURL, expect, issueMagicLink, signIn, test } from "./fixtures.ts";
+
+test("CLI provisions only admin users and rejects role options and duplicates", async ({
+  page,
+  users,
+  db,
+}) => {
+  const admin = await users.createAdmin();
+  expect(admin.roles).toEqual(["admin"]);
+  await signIn(page, admin);
+  await page.getByRole("link", { name: "Benutzerverwaltung" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Benutzerverwaltung", exact: true }),
+  ).toBeVisible();
+  expect(
+    await db.selectFrom("user").select("roles").where("id", "=", admin.id).executeTakeFirst(),
+  ).toEqual({ roles: ["admin"] });
+
+  const rejectedEmail = users.email();
+  const invalidOption = spawnSync(
+    process.execPath,
+    [
+      "scripts/create-admin.ts",
+      "--email",
+      rejectedEmail,
+      "--name",
+      "Invalid",
+      "--roles",
+      "klaeger",
+    ],
+    { encoding: "utf8" },
+  );
+  expect(invalidOption.status).toBe(1);
+  expect(invalidOption.stderr).toContain("Unknown option '--roles'");
+  expect(
+    await db.selectFrom("user").select("id").where("email", "=", rejectedEmail).execute(),
+  ).toEqual([]);
+
+  const duplicate = spawnSync(
+    process.execPath,
+    ["scripts/create-admin.ts", "--email", admin.email, "--name", "Duplicate"],
+    { encoding: "utf8" },
+  );
+  expect(duplicate.status).toBe(1);
+  expect(duplicate.stderr).toContain("bereits hinterlegt");
+  expect(
+    await db.selectFrom("user").select("id").where("email", "=", admin.email).execute(),
+  ).toEqual([{ id: admin.id }]);
+});
+
+test("an administrator can downgrade another CLI-provisioned administrator through the UI", async ({
+  page,
+  users,
+  db,
+}) => {
+  const actor = await users.createAdmin();
+  const target = await users.createAdmin();
+  await signIn(page, actor);
+  await page.getByRole("link", { name: "Benutzerverwaltung" }).click();
+  const entry = page.getByRole("region", { name: target.email, exact: true });
+  await entry.getByRole("checkbox", { name: "Administratorrechte" }).uncheck();
+  await entry.getByRole("checkbox", { name: "Kläger", exact: true }).check();
+  await entry.getByRole("button", { name: "Speichern" }).click();
+  await expect(page.getByRole("alert")).toContainText("Gespeichert");
+  expect(
+    await db.selectFrom("user").select("roles").where("id", "=", target.id).executeTakeFirst(),
+  ).toEqual({ roles: ["klaeger"] });
+  await page.getByRole("button", { name: "Abmelden" }).click();
+  await expect(page).toHaveURL(`${baseURL}/`);
+  await signIn(page, { ...target, roles: ["klaeger"] });
+  expect((await page.request.get("/admin/users")).status()).toBe(403);
+  expect((await page.request.get("/klaeger")).status()).toBe(200);
+});
+
+test("administrator can create, edit, grant/revoke admin rights and delete users through the UI", async ({
+  page,
+  browser,
+  users,
+  db,
+  extraHTTPHeaders,
+}) => {
+  const admin = await users.createAdmin();
+  await signIn(page, admin);
+  await page.getByRole("link", { name: "Benutzerverwaltung" }).click();
+  const email = users.email();
+  const newUser = page.getByRole("region", { name: "Benutzer hinzufügen", exact: true });
+  await newUser.getByRole("textbox", { name: "Name", exact: true }).fill("Managed user");
+  await newUser.getByRole("textbox", { name: "E-Mail-Adresse" }).fill(email);
+  await newUser.getByRole("checkbox", { name: "Richter", exact: true }).uncheck();
+  await newUser.getByRole("checkbox", { name: "Beklagter", exact: true }).check();
+  await newUser.getByRole("button", { name: "Hinzufügen" }).click();
+  await expect(page.getByRole("alert")).toContainText("Gespeichert");
+  const stored = await db
+    .selectFrom("user")
+    .selectAll()
+    .where("email", "=", email)
+    .executeTakeFirstOrThrow();
+  expect(stored).toMatchObject({ name: "Managed user", roles: ["beklagter"] });
+  const entry = page.getByRole("region", { name: email, exact: true });
+  await expect(entry).toBeVisible();
+
+  const otherContext = await browser.newContext({ extraHTTPHeaders });
+  try {
+    const otherPage = await otherContext.newPage();
+    await signIn(otherPage, stored);
+    expect((await otherPage.request.get("/admin/users")).status()).toBe(403);
+
+    await entry.getByRole("textbox", { name: "Name", exact: true }).fill("Updated managed user");
+    await entry.getByRole("checkbox", { name: "Beklagter", exact: true }).uncheck();
+    await entry.getByRole("checkbox", { name: "Kläger", exact: true }).check();
+    await entry.getByRole("checkbox", { name: "Administratorrechte" }).check();
+    await entry.getByRole("button", { name: "Speichern" }).click();
+    await expect(entry.getByRole("checkbox", { name: "Administratorrechte" })).toBeChecked();
+    await expect
+      .poll(async () =>
+        db
+          .selectFrom("user")
+          .select(["name", "roles"])
+          .where("id", "=", stored.id)
+          .executeTakeFirst(),
+      )
+      .toEqual({ name: "Updated managed user", roles: ["admin", "klaeger"] });
+    expect(
+      await db.selectFrom("session").select("id").where("userId", "=", stored.id).execute(),
+    ).toEqual([]);
+    await otherPage.reload();
+    await expect(otherPage).toHaveURL(`${baseURL}/`);
+    await signIn(otherPage, {
+      ...stored,
+      name: "Updated managed user",
+      roles: ["admin", "klaeger"],
+    });
+    expect((await otherPage.request.get("/admin/users")).status()).toBe(200);
+
+    await entry.getByRole("checkbox", { name: "Administratorrechte" }).uncheck();
+    await entry.getByRole("button", { name: "Speichern" }).click();
+    await expect(entry.getByRole("checkbox", { name: "Administratorrechte" })).not.toBeChecked();
+    await expect
+      .poll(async () =>
+        db.selectFrom("user").select("roles").where("id", "=", stored.id).executeTakeFirst(),
+      )
+      .toEqual({ roles: ["klaeger"] });
+    expect((await otherPage.request.get("/admin/users", { maxRedirects: 0 })).status()).toBe(302);
+
+    const pendingLink = await issueMagicLink(page.request, email);
+    await entry.getByRole("button", { name: "Benutzer löschen" }).click();
+    await expect(entry).toHaveCount(0);
+    expect(await db.selectFrom("user").select("id").where("id", "=", stored.id).execute()).toEqual(
+      [],
+    );
+    expect(
+      await db.selectFrom("session").select("id").where("userId", "=", stored.id).execute(),
+    ).toEqual([]);
+    expect(
+      await db
+        .selectFrom("verification")
+        .select("id")
+        .where(sql<string>`"value"::jsonb ->> 'email'`, "=", email)
+        .execute(),
+    ).toEqual([]);
+
+    await newUser.getByRole("textbox", { name: "Name", exact: true }).fill("Recreated user");
+    await newUser.getByRole("textbox", { name: "E-Mail-Adresse" }).fill(email);
+    await newUser.getByRole("button", { name: "Hinzufügen" }).click();
+    await expect(entry).toBeVisible();
+    const recreated = await db
+      .selectFrom("user")
+      .select("id")
+      .where("email", "=", email)
+      .executeTakeFirstOrThrow();
+    expect(recreated.id).not.toBe(stored.id);
+    await otherPage.goto(pendingLink);
+    await expect(otherPage).toHaveURL(/\/\?error=INVALID_TOKEN/);
+    await expect(
+      otherPage.getByRole("alert").filter({ hasText: "Ungültiger Anmeldelink" }),
+    ).toBeVisible();
+  } finally {
+    await otherContext.close();
+  }
+});
+
+test("management validates duplicates, blocks self-removal and rejects cross-origin mutations", async ({
+  page,
+  users,
+  db,
+}) => {
+  const admin = await users.createAdmin();
+  const user = await users.create();
+  await signIn(page, admin);
+  await page.getByRole("link", { name: "Benutzerverwaltung" }).click();
+  const ownEntry = page.getByRole("region", { name: admin.email, exact: true });
+  await expect(ownEntry.getByRole("checkbox", { name: "Administratorrechte" })).toBeDisabled();
+  await expect(ownEntry.getByRole("button", { name: "Benutzer löschen" })).toHaveCount(0);
+
+  const newUser = page.getByRole("region", { name: "Benutzer hinzufügen", exact: true });
+  await newUser.getByRole("textbox", { name: "Name", exact: true }).fill("Duplicate");
+  await newUser.getByRole("textbox", { name: "E-Mail-Adresse" }).fill(user.email);
+  await newUser.getByRole("button", { name: "Hinzufügen" }).click();
+  await expect(page.getByRole("alert")).toContainText(
+    "Diese E-Mail-Adresse ist bereits hinterlegt.",
+  );
+  expect(
+    await db.selectFrom("user").select("id").where("email", "=", user.email).execute(),
+  ).toEqual([{ id: user.id }]);
+
+  const invalidForms: Array<Record<string, string>> = [
+    { intent: "update", id: admin.id, name: admin.name, roles: "klaeger" },
+    { intent: "delete", id: admin.id },
+    { intent: "create", name: "Invalid role", email: users.email(), roles: "ADMIN" },
+  ];
+  for (const form of invalidForms) {
+    expect((await page.request.post("/admin/users", { form })).status()).toBe(400);
+  }
+  const crossOrigin = await page.request.post("/admin/users", {
+    form: { intent: "delete", id: user.id },
+    headers: { Origin: "https://untrusted.example" },
+  });
+  expect(crossOrigin.status()).toBe(400);
+  expect(
+    await db.selectFrom("user").select("roles").where("id", "=", admin.id).executeTakeFirst(),
+  ).toEqual({ roles: ["admin"] });
+  expect(
+    await db.selectFrom("user").select("id").where("id", "=", user.id).executeTakeFirst(),
+  ).toBeDefined();
+});

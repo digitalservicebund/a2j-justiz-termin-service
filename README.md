@@ -18,7 +18,7 @@ already provisioned in the database can sign in; public sign-up is disabled.
 - **Database**: PostgreSQL 18 + Kysely (query builder and migrations)
 - **Package Manager**: pnpm
 - **Code Quality**: oxlint + oxfmt
-- **Testing**: Vitest + Istanbul coverage
+- **Testing**: Vitest + Istanbul coverage, Playwright Chrome/Chromium E2E
 
 ## Prerequisites
 
@@ -60,7 +60,67 @@ pnpm docker:reset   # Wipe the local database and start a fresh one
 pnpm test           # Run unit/component tests once
 pnpm test:watch     # Run tests in watch mode
 pnpm test:coverage  # Run tests with Istanbul coverage report
+pnpm test:e2e       # Build and run isolated Playwright E2E tests (requires Docker)
+pnpm test:all       # Run unit/component tests and E2E tests
 ```
+
+### End-to-end tests
+
+Playwright automatically uses Google Chrome if it is installed in a standard
+macOS/Linux location or available as `google-chrome`/`google-chrome-stable` on
+`PATH`. Otherwise it uses Playwright's bundled Chromium, which must be installed
+once after installing the dependencies:
+
+```bash
+pnpm exec playwright install chromium
+pnpm test:e2e
+```
+
+On Linux, use `pnpm exec playwright install --with-deps chromium` to install the
+browser's OS dependencies too. No real mail credentials or 1Password setup are
+needed for E2E tests.
+
+The POSIX shell runner [`e2e/run.sh`](e2e/run.sh) loads the isolated settings from
+[`.env.e2e`](.env.e2e). It runs on macOS/Linux; Windows requires Git Bash or WSL.
+Keep this file compatible with both POSIX shell assignments and Node's env parser.
+It contains public test-only dummy credentials, never real secrets.
+The runner starts the dedicated `jts-e2e` Compose project from
+the root [`docker-compose.yml`](docker-compose.yml), builds the production app,
+and lets Playwright start the server and wait for `/health`. It uses PostgreSQL
+on **5544**, SMTP on **1026**, Mailpit on **8026**, and the app on **3109**.
+These ports must be free. Container names and the database volume are scoped to
+the `jts-e2e` project, separate from development. The runner overrides
+`COMPOSE_BIND_ADDRESS`, `POSTGRES_HOST_PORT`, `SMTP_HOST_PORT`, and
+`MAILPIT_HOST_PORT`; normal development keeps the root file's default ports.
+Tests ignore local/deployed credentials,
+use a public test-only signing value, and send mail only to the isolated Mailpit.
+The runner removes its containers and database volume after success or failure.
+
+Tests in [`e2e/`](e2e/) cover:
+
+- Welcome-page email submission, mixed-case addresses, delivery
+  to Mailpit, email verification, persisted sessions, and logout.
+- Unknown-address rejection without account enumeration or outgoing mail,
+  hashed tokens, token expiry/replay, invalid links, and unthrottled API/form requests.
+- Anonymous access, each scheduling role, admin access, privilege escalation,
+  profile updates, and cross-origin management requests.
+- CLI administrator provisioning, duplicate rejection, browser-driven user
+  creation/editing/deletion, granting/revoking admin rights, session revocation,
+  self-removal prevention, and invalidation of deleted users' outstanding links.
+
+Tests use unique addresses, seed their own users, and clean up database rows
+and captured mail. They run with one worker. To run a focused test:
+
+```bash
+pnpm test:e2e e2e/auth.spec.ts
+```
+
+Open the latest report with `pnpm exec playwright show-report`. On failure,
+Playwright retains screenshots and traces in `test-results/`. The CI pipeline
+uses Google Chrome preinstalled on the `ubuntu-latest` runner, runs the same E2E
+command on every pull request and main-branch push, and uploads the report and
+failure artifacts. No separate Chromium installation step is needed in CI.
+E2E failures block image publication and deployment.
 
 ### Code Quality
 
