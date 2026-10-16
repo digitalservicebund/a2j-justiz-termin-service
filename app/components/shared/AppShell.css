@@ -1,0 +1,147 @@
+.page-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--kern-color-layout-background-default);
+}
+
+.page-shell__content {
+  width: min(100% - 2 * var(--kern-metric-space-default), 62rem);
+  margin-inline: auto;
+}
+
+.page-shell__header {
+  padding-block: var(--kern-metric-space-large);
+  background-color: var(--kern-color-layout-background-default);
+}
+
+.page-shell__header-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kern-metric-space-default);
+}
+
+.page-shell__service-name {
+  margin: 0;
+}
+
+.page-shell__user {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--kern-metric-space-x-large);
+}
+
+.page-shell__user-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--kern-metric-space-small);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.page-shell__user-info .kern-icon {
+  margin: 0;
+  background-color: var(--kern-color-layout-text-muted);
+}
+
+.page-shell__logout {
+  display: inline-flex;
+  align-items: center;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.page-shell__breadcrumbs {
+  padding-top: var(--kern-metric-space-default);
+}
+
+.page-shell__report {
+  display: flex;
+  justify-content: flex-end;
+  padding-block: var(--kern-metric-space-6x-large) var(--kern-metric-space-10x-large);
+}
+
+.page-shell__footer {
+  margin-top: auto;
+  background-color: var(--kern-color-layout-background-default);
+  border-top: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border-contextual);
+  padding-block: var(--kern-metric-space-3x-large) var(--kern-metric-space-6x-large);
+}
+
+.page-shell__footer-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--kern-metric-space-3x-large);
+}
+
+.page-shell__footer-brand {
+  display: grid;
+  align-content: start;
+  gap: var(--kern-metric-space-small);
+}
+
+.page-shell__footer h2,
+.page-shell__footer-brand p {
+  margin: 0;
+}
+
+.page-shell__footer h2 {
+  margin-bottom: var(--kern-metric-space-small);
+}
+
+.page-shell__link-list {
+  display: grid;
+  gap: var(--kern-metric-space-small);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.page-shell__unapproved {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-block: var(--kern-metric-space-10x-large);
+  background-color: var(--kern-color-layout-background-inverted);
+}
+
+.page-shell__unapproved .kern-btn {
+  background-color: var(--kern-color-layout-background-default);
+}
+
+@media (min-width: 64rem) {
+  .page-shell__footer-grid {
+    grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr));
+    column-gap: 0;
+    row-gap: var(--kern-metric-space-6x-large);
+  }
+
+  .page-shell__footer-brand {
+    grid-area: 1 / 1;
+  }
+
+  .page-shell__footer-logo {
+    grid-area: 2 / 1;
+  }
+
+  .page-shell__footer-legal {
+    grid-area: 1 / 2;
+  }
+
+  .page-shell__footer-contact {
+    grid-area: 1 / 3;
+  }
+
+  .page-shell__footer-pilot {
+    grid-area: 2 / 2;
+  }
+
+  .page-shell__footer-operator {
+    grid-area: 2 / 3;
+  }
+}

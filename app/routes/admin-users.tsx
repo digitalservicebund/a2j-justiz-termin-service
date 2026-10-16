@@ -11,8 +11,8 @@ import {
   UserManagementError,
 } from "~/adapters/users/users.server";
 import Alert from "~/components/shared/Alert";
+import { AppShell } from "~/components/shared/AppShell";
 import { Button } from "~/components/shared/Button";
-import { Shell } from "~/components/shared/SchedulingShared";
 import { NewUserSchema, type AuthUser, type UserRole } from "~/core/domain/user";
 import { getDb } from "~/database/database";
 
@@ -127,7 +127,13 @@ export default function AdminUsersRoute() {
   const result = useActionData<typeof action>();
   const pending = useNavigation().state !== "idle";
   return (
-    <Shell title="Benutzerverwaltung" user={user}>
+    <AppShell
+      breadcrumbs={[
+        { label: "Startseite", href: "/", icon: "home" },
+        { label: "Benutzerverwaltung", href: "#" },
+      ]}
+      user={user}
+    >
       <p className="kern-body">
         Nur hinterlegte E-Mail-Adressen können sich anmelden. Änderungen beenden bestehende
         Sitzungen des betroffenen Benutzers. E-Mail-Adressen können nicht geändert werden: Löschen
@@ -183,6 +189,6 @@ export default function AdminUsersRoute() {
           )}
         </section>
       ))}
-    </Shell>
+    </AppShell>
   );
 }
