@@ -2,6 +2,9 @@
 
 **This application is currently a prototype/proof of concept and not meant for production.**
 
+Production access logs record request paths without query strings, keeping
+sensitive query parameters out of those logs.
+
 - **Richter** (judge): creates and edits time slots, confirms the final appointment, can unlock party re-submission
 - **Kläger** (plaintiff): accepts/rejects each proposed time slot
 - **Beklagter** (defendant): accepts/rejects each proposed time slot
