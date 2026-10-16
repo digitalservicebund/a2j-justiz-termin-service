@@ -21,6 +21,12 @@ Login requires no password — select a role from the dropdown.
 
 ## Prerequisites
 
+The initial authentication schema uses a vanilla Better Auth 1.7.10 migration,
+followed by an application migration adding a `roles` text array and email
+normalization. Role names are validated by the application, not the database.
+Existing development databases with an earlier version of these migrations
+must be recreated; no production migration compatibility is provided.
+
 - Node.js 26+ (check with `node --version`)
 - pnpm (install with `npm install -g pnpm` if needed)
 - Docker (or another container runtime with `docker compose`) for the local database and mail mock
