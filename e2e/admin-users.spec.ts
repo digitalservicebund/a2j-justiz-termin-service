@@ -1,5 +1,3 @@
-import { spawnSync } from "node:child_process";
-
 import { sql } from "kysely";
 
 import { baseURL, expect, issueMagicLink, signIn, test } from "./fixtures.ts";
