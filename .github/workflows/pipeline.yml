@@ -173,6 +173,9 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.ref == 'refs/heads/main' }}
     environment: staging
+    concurrency:
+      group: deploy-staging-${{ github.repository }}
+      cancel-in-progress: false
     needs: [build-and-push-image, vulnerability-scan]
     steps:
       - name: Deploy latest container image
