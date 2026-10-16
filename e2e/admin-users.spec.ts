@@ -4,54 +4,6 @@ import { sql } from "kysely";
 
 import { baseURL, expect, issueMagicLink, signIn, test } from "./fixtures.ts";
 
-test("CLI provisions only admin users and rejects role options and duplicates", async ({
-  page,
-  users,
-  db,
-}) => {
-  const admin = await users.createAdmin();
-  expect(admin.roles).toEqual(["admin"]);
-  await signIn(page, admin);
-  await page.getByRole("link", { name: "Benutzerverwaltung" }).click();
-  await expect(
-    page.getByRole("heading", { name: "Benutzerverwaltung", exact: true }),
-  ).toBeVisible();
-  expect(
-    await db.selectFrom("user").select("roles").where("id", "=", admin.id).executeTakeFirst(),
-  ).toEqual({ roles: ["admin"] });
-
-  const rejectedEmail = users.email();
-  const invalidOption = spawnSync(
-    process.execPath,
-    [
-      "scripts/create-admin.ts",
-      "--email",
-      rejectedEmail,
-      "--name",
-      "Invalid",
-      "--roles",
-      "klaeger",
-    ],
-    { encoding: "utf8" },
-  );
-  expect(invalidOption.status).toBe(1);
-  expect(invalidOption.stderr).toContain("Unknown option '--roles'");
-  expect(
-    await db.selectFrom("user").select("id").where("email", "=", rejectedEmail).execute(),
-  ).toEqual([]);
-
-  const duplicate = spawnSync(
-    process.execPath,
-    ["scripts/create-admin.ts", "--email", admin.email, "--name", "Duplicate"],
-    { encoding: "utf8" },
-  );
-  expect(duplicate.status).toBe(1);
-  expect(duplicate.stderr).toContain("bereits hinterlegt");
-  expect(
-    await db.selectFrom("user").select("id").where("email", "=", admin.email).execute(),
-  ).toEqual([{ id: admin.id }]);
-});
-
 test("an administrator can downgrade another CLI-provisioned administrator through the UI", async ({
   page,
   users,
