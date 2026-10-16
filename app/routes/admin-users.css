@@ -1,0 +1,13 @@
+.admin-users__section {
+  display: grid;
+  gap: var(--kern-metric-space-default);
+  padding-block: var(--kern-metric-space-default);
+  border-top: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border-contextual);
+  overflow-wrap: anywhere;
+}
+
+.admin-users__form {
+  display: grid;
+  gap: var(--kern-metric-space-default);
+  max-width: 40rem;
+}

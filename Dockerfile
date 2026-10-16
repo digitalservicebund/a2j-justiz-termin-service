@@ -38,6 +38,9 @@ COPY --from=app-dependencies /app-deps/node_modules ./node_modules
 COPY package.json server.js ./
 COPY app/database ./app/database
 COPY app/lib ./app/lib
+COPY app/core/domain/user.ts ./app/core/domain/user.ts
+COPY app/adapters/users ./app/adapters/users
+COPY scripts ./scripts
 
 EXPOSE 3000
 USER 1000

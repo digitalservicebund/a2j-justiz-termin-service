@@ -7,6 +7,7 @@
     "dev": "cross-env NODE_ENV=development node --env-file=.env.defaults --env-file-if-exists=.env.local --conditions development server.js",
     "start": "node --env-file-if-exists=.env.defaults server.js",
     "db:migrate": "node --env-file=.env.defaults --env-file-if-exists=.env.local app/database/migrate.ts",
+    "user:create-admin": "node --env-file=.env.defaults --env-file-if-exists=.env.local scripts/create-admin.ts",
     "psql": "docker compose exec postgres psql -U jts -d a2j-justiz-termin-service",
     "docker:reset": "docker compose down --volumes --remove-orphans && docker compose up -d",
     "typecheck": "react-router typegen && tsc",

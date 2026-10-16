@@ -1,0 +1,15 @@
+.login-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--kern-metric-space-2x-small);
+  margin-top: var(--kern-metric-space-x-large);
+}
+
+.login-form .kern-form-input {
+  flex: 0 1 27.5rem;
+}
+
+.login-form .kern-form-input__input {
+  background-color: var(--kern-color-layout-background-default);
+}

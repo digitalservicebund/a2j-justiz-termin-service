@@ -1,26 +1,44 @@
-import { redirect } from "react-router";
+import { Link, useLoaderData } from "react-router";
 
-import { getSessionUser } from "~/adapters/session/session";
-import { authService } from "~/bootstrap";
+import { requireUser } from "~/adapters/session/session";
 import { Shell } from "~/components/shared/SchedulingShared";
-import type { Role } from "~/core/domain/verfahren";
-
-const roleRedirectLinks: Record<Role, string> = {
-  RICHTER: "/richter",
-  KLAEGER: "/klaeger",
-  BEKLAGTER: "/beklagter",
-};
+import { hasRole } from "~/core/domain/user";
 
 export async function loader({ request }: { request: Request }) {
-  const user = await getSessionUser(request, authService);
-  if (user) return redirect(roleRedirectLinks[user.role]);
-  return {};
+  return { user: await requireUser(request) };
 }
 
 export default function Home() {
+  const { user } = useLoaderData<typeof loader>();
   return (
-    <Shell title="Court Appointment Scheduling">
-      <p className="kern-body">Select a role from the dropdown above to continue.</p>
+    <Shell title="Terminübersicht" user={user}>
+      {hasRole(user, "richter") && (
+        <section>
+          <h2 className="kern-heading-small">Termine erstellen und verwalten</h2>
+          <Link className="kern-link" to="/richter">
+            Terminplanung öffnen
+          </Link>
+        </section>
+      )}
+      {(hasRole(user, "klaeger") || hasRole(user, "beklagter")) && (
+        <section>
+          <h2 className="kern-heading-small">Auf Terminvorschläge antworten</h2>
+          {hasRole(user, "klaeger") && (
+            <p>
+              <Link className="kern-link" to="/klaeger">
+                Als Kläger antworten
+              </Link>
+            </p>
+          )}
+          {hasRole(user, "beklagter") && (
+            <p>
+              <Link className="kern-link" to="/beklagter">
+                Als Beklagter antworten
+              </Link>
+            </p>
+          )}
+        </section>
+      )}
     </Shell>
   );
 }

@@ -6,7 +6,8 @@
 - **Kläger** (plaintiff): accepts/rejects each proposed time slot
 - **Beklagter** (defendant): accepts/rejects each proposed time slot
 
-Login requires no password — select a role from the dropdown.
+Login uses a single-use magic link sent by email through Better Auth. Only users
+already provisioned in the database can sign in; public sign-up is disabled.
 
 ## Tech Stack
 
@@ -20,12 +21,6 @@ Login requires no password — select a role from the dropdown.
 - **Testing**: Vitest + Istanbul coverage
 
 ## Prerequisites
-
-The initial authentication schema uses a vanilla Better Auth 1.7.10 migration,
-followed by an application migration adding a `roles` text array and email
-normalization. Role names are validated by the application, not the database.
-Existing development databases with an earlier version of these migrations
-must be recreated; no production migration compatibility is provided.
 
 - Node.js 26+ (check with `node --version`)
 - pnpm (install with `npm install -g pnpm` if needed)
@@ -62,7 +57,7 @@ pnpm docker:reset   # Wipe the local database and start a fresh one
 ### Testing
 
 ```bash
-pnpm test           # Run tests once
+pnpm test           # Run unit/component tests once
 pnpm test:watch     # Run tests in watch mode
 pnpm test:coverage  # Run tests with Istanbul coverage report
 ```
@@ -85,8 +80,9 @@ app/
 │   ├── ports/              # Repository/Service interfaces
 │   └── services/           # SchedulingService, SchedulingQuery
 ├── adapters/               # External integrations
-│   ├── inMemory/           # In-memory Store & Auth
-│   └── session/            # React Router session
+│   ├── inMemory/           # In-memory scheduling store
+│   ├── users/              # Persistent user management
+│   └── session/            # Better Auth session and access checks
 ├── routes/                 # Route modules (React Router)
 ├── database/               # Kysely, connection pool, migrations (see "Database")
 ├── lib/                    # Env, secrets and logging helpers
@@ -130,22 +126,42 @@ Postgres is published on host port **5433**, so it can run next to other project
 
 [`.env.defaults`](.env.defaults) holds the local connection settings and matches `docker-compose.yml`. `pnpm dev`, `pnpm start` and `pnpm db:migrate` load it, plus an optional, git-ignored `.env.local` for overrides.
 
-| Variable                             | Purpose                                                |
-| ------------------------------------ | ------------------------------------------------------ |
-| `DATABASE_HOST`, `DATABASE_PORT`     | Server address                                         |
-| `DATABASE_NAME`                      | Database name                                          |
-| `DATABASE_USER`, `DATABASE_PASSWORD` | Credentials, local only (see below for deployed)       |
-| `DATABASE_SSL_MODE`                  | `verify-full` enables TLS, anything else disables it   |
-| `SMTP_HOST`, `SMTP_PORT`             | Mail server address                                    |
-| `SMTP_USER`, `SMTP_PASSWORD`         | Mail credentials, local only (see below for deployed)  |
-| `SMTP_REQUIRE_TLS`                   | `false` skips the STARTTLS requirement (local mock)    |
-| `SECRETS_FILE_PATH`                  | If set, credentials are read from files instead of env |
+| Variable                             | Purpose                                                                                   |
+| ------------------------------------ | ----------------------------------------------------------------------------------------- |
+| `DATABASE_HOST`, `DATABASE_PORT`     | Server address                                                                            |
+| `DATABASE_NAME`                      | Database name                                                                             |
+| `DATABASE_USER`, `DATABASE_PASSWORD` | Credentials, injected locally (see below for deployed)                                    |
+| `DATABASE_SSL_MODE`                  | `verify-full` enables TLS, anything else disables it                                      |
+| `SMTP_HOST`, `SMTP_PORT`             | Mail server address                                                                       |
+| `SMTP_USER`, `SMTP_PASSWORD`         | Mail credentials, injected locally (see below for deployed)                               |
+| `SMTP_REQUIRE_TLS`                   | `false` skips the STARTTLS requirement (local mock)                                       |
+| `SECRETS_FILE_PATH`                  | If set, credentials are read from files instead of env                                    |
+| `BASE_URL`                           | Canonical public origin without a trailing slash (local default: `http://localhost:3000`) |
+| `BETTER_AUTH_SECRET`                 | Public local-only dummy by default; deployed signing secret mounted from the secret manager |
 
 In deployed environments the credentials are mounted from the secrets manager as `$SECRETS_FILE_PATH/database/jts_user` and `jts_password`, and the host, port and name come from the ConfigMap generated by the infra repo's Terraform. The SMTP credentials are mounted the same way as `$SECRETS_FILE_PATH/smtp/SMTP_USER` and `SMTP_PASSWORD`, while `SMTP_HOST` and `SMTP_PORT` come from a ConfigMap in the staging overlay.
 
 ### Migrations
 
 Migrations are Kysely migration files in `app/database/migrations`. They run automatically on startup (`pnpm dev`, `pnpm start` and the container), or manually with `pnpm db:migrate`. If the database is unreachable, the app does not start.
+
+The initial schema is split deliberately:
+
+- [`0001-auth.ts`](app/database/migrations/0001-auth.ts) uses Kysely's migration
+  DSL to reproduce exactly the vanilla PostgreSQL schema generated by Better Auth
+  CLI **1.7.10**.
+- [`0002-user-management.ts`](app/database/migrations/0002-user-management.ts)
+  adds the application's `roles` text array, the default for provisioned users'
+  `emailVerified`, and email normalization.
+  Role names are validated in the application, not constrained in the database.
+
+Keep historical migrations unchanged after deployment; generate new migrations
+when upgrading Better Auth or changing the application schema.
+
+**Development reset required:** the initial auth migration was rewritten before
+production use. If you applied its earlier version, recreate your local database
+with `pnpm docker:reset`, then restart the app and provision your administrator
+again. No compatibility migration is provided.
 
 To add one:
 
@@ -174,7 +190,89 @@ curl localhost:3000/health/database
 - REST API, e.g. `curl localhost:8025/api/v1/messages`
 - Mails are lost when the container is removed (`docker compose down`)
 
-To use a real server instead, override `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` and `SMTP_REQUIRE_TLS` in `.env.local`.
+To use a real server instead, override the non-secret `SMTP_HOST`, `SMTP_PORT`
+and `SMTP_REQUIRE_TLS` settings in `.env.local`. Inject `SMTP_USER` and
+`SMTP_PASSWORD` from 1Password, using the same CLI pattern as the auth secret below.
+
+## Authentication
+
+Better Auth stores users, sessions, accounts, and hashed magic-link tokens
+in PostgreSQL. The existing SMTP transport sends the links. The public
+`/api/auth/*` endpoint and the login form both enforce the maintained user list.
+Unknown addresses receive the same confirmation but no email. Links expire after
+5 minutes and can only be used once; sessions last 24 hours.
+IP-based rate limiting is explicitly disabled. Better Auth 1.7.10's magic-link
+plugin has no built-in per-email resend cooldown; email throttling is not
+currently implemented.
+
+### Configuration
+
+Set `BASE_URL` to the application's public origin in each environment, including
+`http://` or `https://` and without a trailing slash.
+It is used to generate emailed links and to validate trusted origins. For a
+different local port, override this non-secret setting accordingly.
+
+Local development uses a public dummy signing value from `.env.defaults`, so
+sessions survive server restarts. Never use this dummy value in deployed
+environments. For deployment, create a random signing secret of at least 32
+characters in **1Password**; never put a real secret in source code or an
+environment file. Mounted secrets take precedence over the local default.
+
+To override the local dummy value, optionally inject a secret from 1Password using your
+own vault/item reference:
+
+```bash
+export BETTER_AUTH_SECRET='op://<vault>/<item>/<field>'
+op run -- pnpm dev
+```
+
+For staging, create a dedicated secret named `better-auth` in the existing STACKIT
+Secrets Manager instance, with the property `BETTER_AUTH_SECRET`. Use a new
+random value, not an SMTP/database password or HTTP basic-auth credential.
+Keep the value in 1Password as the source of truth and provision it into STACKIT.
+The infra repo's ExternalSecret syncs that property to Kubernetes Secret
+`better-auth-credentials`, mounted read-only at
+`$SECRETS_FILE_PATH/better-auth/BETTER_AUTH_SECRET`. The app reads the mounted file,
+not a Kubernetes environment variable. Configure this secret and `BASE_URL`
+before deploying. All replicas must use the same secret; after rotation, restart
+the application pods so their cached auth configuration picks it up. Rotating
+the signing secret invalidates existing session cookies.
+The SMTP credential is also used as the email's sender address, so configure a
+valid sender address for the real mail server.
+
+### Provision the first administrator
+
+There are no default accounts. After starting the local database:
+
+```bash
+pnpm user:create-admin --email admin@example.org --name "Administrator"
+```
+
+The command runs migrations and creates an administrator; it fails if the
+address already exists. It assigns only `admin` and accepts no role options.
+Another administrator can change the user's roles in the admin UI, including
+removing `admin`; users cannot remove their own administrator access.
+In the deployed container, run the equivalent command using its mounted
+database credentials:
+
+```bash
+node scripts/create-admin.ts --email admin@example.org --name "Administrator"
+```
+
+Request a link on the welcome page (`/`), then open the email in
+[Mailpit](http://localhost:8025) locally. The account menu links administrators
+to `/admin/users`, where they can add users, change names/roles/admin rights,
+and delete users. Updating a user revokes their sessions. Deleting one removes
+their sessions and outstanding magic links. Email addresses are immutable:
+delete and re-create a user to change their address.
+
+Administrators cannot delete their own account or remove their own admin rights.
+Each user has a nonempty list containing any combination of `admin`, `richter`,
+`klaeger`, and `beklagter`. The home page combines the available entry points
+for creating/managing schedules and replying to proposals. The `admin` role
+grants access to every scheduling view as well as user management.
+All loaders and actions enforce access server-side. The former role-picker
+login and development-secret cookie are no longer accepted.
 
 ## Mock Calendar Subscription
 

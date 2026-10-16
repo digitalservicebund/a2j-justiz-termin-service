@@ -36,22 +36,6 @@
   margin: 0;
 }
 
-.welcome__login {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--kern-metric-space-2x-small);
-  margin-top: var(--kern-metric-space-x-large);
-}
-
-.welcome__login .kern-form-input {
-  flex: 0 1 27.5rem;
-}
-
-.welcome__login .kern-form-input__input {
-  background-color: var(--kern-color-layout-background-default);
-}
-
 .welcome__pilot {
   background-color: var(--kern-color-feedback-warning-background);
   padding-block: var(--kern-metric-space-large);
