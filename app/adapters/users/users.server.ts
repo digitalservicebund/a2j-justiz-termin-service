@@ -18,7 +18,7 @@ export async function insertUser(db: Kysely<Database>, input: z.infer<typeof New
   const user = NewUserSchema.parse(input);
   const result = await db
     .insertInto("user")
-    .values({ ...user, id: randomUUID() })
+    .values({ ...user, id: randomUUID(), emailVerified: false })
     .onConflict((conflict) => conflict.column("email").doNothing())
     .returning(["id", "name", "email", "roles"])
     .executeTakeFirst();

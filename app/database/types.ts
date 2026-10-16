@@ -16,7 +16,7 @@ export type UserTable = DefaultTimestamps & {
   id: string;
   name: string;
   email: string;
-  emailVerified: Generated<boolean>;
+  emailVerified: boolean;
   image: string | null;
   roles: UserRole[];
 };
