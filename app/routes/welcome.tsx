@@ -1,11 +1,65 @@
+import { data, redirect, useActionData, useLoaderData } from "react-router";
+import { z } from "zod";
+
+import { getSessionUser } from "~/adapters/session/session";
 import Alert from "~/components/shared/Alert";
 import { BmjvLogo } from "~/components/shared/BmjvLogo";
 import { Breadcrumb } from "~/components/shared/Breadcrumb";
 import { Button } from "~/components/shared/Button";
 import { Icon, type IconName } from "~/components/shared/Icon";
 import { KernKopfZeile } from "~/components/shared/KernKopfZeile";
+import { LoginForm } from "~/components/shared/LoginForm";
+import { getAuth } from "~/lib/auth.server";
+import { logError } from "~/lib/logging";
 
 import "./welcome.css";
+
+export async function loader({ request }: { request: Request }) {
+  if (await getSessionUser(request)) return redirect("/home");
+  return { invalidLink: new URL(request.url).searchParams.has("error") };
+}
+
+export async function action({ request }: { request: Request }) {
+  const formData = await request.formData();
+  if (formData.get("intent") === "logout") {
+    const response = await getAuth().handler(
+      new Request(new URL("/api/auth/sign-out", request.url), {
+        method: "POST",
+        headers: request.headers,
+      }),
+    );
+    if (!response.ok) return response;
+    const headers = new Headers();
+    for (const cookie of response.headers.getSetCookie()) headers.append("Set-Cookie", cookie);
+    return redirect("/", { headers });
+  }
+  const result = z.string().trim().toLowerCase().pipe(z.email()).safeParse(formData.get("email"));
+  if (!result.success) {
+    return data({ error: "Bitte geben Sie eine gültige E-Mail-Adresse ein." }, { status: 400 });
+  }
+  const headers = new Headers(request.headers);
+  headers.set("Content-Type", "application/json");
+  headers.delete("Content-Length");
+  const response = await getAuth().handler(
+    new Request(new URL("/api/auth/sign-in/magic-link", request.url), {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        email: result.data,
+        callbackURL: "/home",
+        errorCallbackURL: "/",
+      }),
+    }),
+  );
+  if (!response.ok) {
+    logError(`Magic-link request failed with status ${response.status}`);
+    return data(
+      { error: "Die Anmeldung ist derzeit nicht möglich. Bitte versuchen Sie es später erneut." },
+      { status: response.status },
+    );
+  }
+  return data({ sent: true });
+}
 
 const steps: Array<{ icon: IconName; label: string }> = [
   { icon: "calendar-today", label: "Richterschaft erstellt die Terminumfrage" },
@@ -66,6 +120,8 @@ function ExternalLinkList({ links }: Readonly<{ links: Array<{ href: string; lab
 }
 
 export default function Welcome() {
+  const { invalidLink } = useLoaderData<typeof loader>();
+  const result = useActionData<typeof action>();
   return (
     <div className="welcome">
       <KernKopfZeile />
@@ -92,25 +148,24 @@ export default function Welcome() {
                 Der Gerichtstermin-Finder vereinfacht die Terminkoordination zwischen Gericht und
                 Verfahrensbeteiligten.
               </p>
-              <form className="welcome__login">
-                <div className="kern-form-input">
-                  <label className="kern-label" htmlFor="welcome-email">
-                    E-Mail-Adresse
-                  </label>
-                  <input
-                    className="kern-form-input__input"
-                    id="welcome-email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                  />
-                </div>
-                <Button type="submit">
-                  <span className="kern-label">Anmelden</span>
-                  <Icon name="arrow-forward" />
-                </Button>
-              </form>
+              {invalidLink && (
+                <Alert
+                  type="error"
+                  title="Ungültiger Anmeldelink"
+                  message="Der Link ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen Link an."
+                />
+              )}
+              {result && "error" in result && (
+                <Alert type="error" title="Anmeldung nicht möglich" message={result.error} />
+              )}
+              {result && "sent" in result && (
+                <Alert
+                  type="success"
+                  title="Bitte prüfen Sie Ihr Postfach"
+                  message="Wenn Ihre E-Mail-Adresse hinterlegt ist, erhalten Sie einen Anmeldelink. Er ist 5 Minuten gültig."
+                />
+              )}
+              <LoginForm />
             </div>
           </div>
         </section>

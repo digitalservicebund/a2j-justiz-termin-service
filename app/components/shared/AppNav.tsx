@@ -1,44 +1,36 @@
-import { useFetcher } from "react-router";
+import { Form, Link } from "react-router";
 
-import type { AuthUser, UserRole } from "~/core/domain/user";
-
-const ROLES: Array<{ value: UserRole; label: string }> = [
-  { value: "RICHTER", label: "Richter" },
-  { value: "KLAEGER", label: "Kläger" },
-  { value: "BEKLAGTER", label: "Beklagter" },
-];
+import { Button } from "~/components/shared/Button";
+import type { AuthUser } from "~/core/domain/user";
 
 export function AppNav({ user }: Readonly<{ user?: AuthUser }>) {
-  const fetcher = useFetcher();
-
   return (
-    <nav>
-      <div className="kern-form-input">
-        <label className="kern-label" htmlFor="role-select">
-          Role
-        </label>
-        <div className="kern-form-input__select-wrapper">
-          <select
-            id="role-select"
-            value={user?.role ?? ""}
-            onChange={(e) =>
-              fetcher.submit({ role: e.target.value }, { method: "post", action: "/login" })
-            }
-            className="kern-form-input__select"
-          >
-            {!user && (
-              <option value="" disabled>
-                Select a role…
-              </option>
-            )}
-            {ROLES.map((r) => (
-              <option key={r.value} value={r.value}>
-                {r.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+    <nav aria-label="Benutzerkonto">
+      {user ? (
+        <>
+          <p className="kern-body">
+            {user.name} ({user.roles.join(", ")})
+          </p>
+          <Link className="kern-link" to="/home">
+            Übersicht
+          </Link>
+          {user.roles.includes("admin") && (
+            <Link className="kern-link" to="/admin/users">
+              Benutzerverwaltung
+            </Link>
+          )}
+          <Form method="post" action="/?index">
+            <input type="hidden" name="intent" value="logout" />
+            <Button type="submit" style="secondary">
+              Abmelden
+            </Button>
+          </Form>
+        </>
+      ) : (
+        <Link className="kern-link" to="/">
+          Anmelden
+        </Link>
+      )}
     </nav>
   );
 }

@@ -2,7 +2,7 @@ import { useState, type SyntheticEvent } from "react";
 import { useFetcher, useLoaderData } from "react-router";
 
 import { requireRole } from "~/adapters/session/session";
-import { authService, DEFAULT_CASE_ID, schedulingQuery, schedulingService } from "~/bootstrap";
+import { DEFAULT_CASE_ID, schedulingQuery, schedulingService } from "~/bootstrap";
 import type { SlotDraft } from "~/components/richter/richterHelpers";
 import { createEmptyDraft, toIsoSlotRanges } from "~/components/richter/richterHelpers";
 import { RichterProcessSection } from "~/components/richter/RichterProcessSection";
@@ -27,12 +27,13 @@ import "./richter.css";
 type ActionResult = { error: string } | null;
 
 export async function loader({ request }: { request: Request }) {
-  const user = await requireRole(request, authService, "RICHTER");
+  const user = await requireRole(request, "richter");
   const overview = schedulingQuery.getOverview(DEFAULT_CASE_ID);
   return { user, overview };
 }
 
 export async function action({ request }: { request: Request }) {
+  await requireRole(request, "richter");
   const raw = Object.fromEntries(await request.formData());
   const intentResult = RichterActionIntentSchema.safeParse(raw.intent);
   if (!intentResult.success) return null;

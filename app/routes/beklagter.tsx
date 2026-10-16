@@ -1,19 +1,20 @@
 import { useLoaderData } from "react-router";
 
 import { requireRole } from "~/adapters/session/session";
-import { authService, DEFAULT_CASE_ID, schedulingQuery, schedulingService } from "~/bootstrap";
+import { DEFAULT_CASE_ID, schedulingQuery, schedulingService } from "~/bootstrap";
 import { PartyScreen } from "~/components/shared/PartyScreen";
 import { RouteErrorBoundary } from "~/components/shared/SchedulingShared";
 import type { Decision } from "~/core/domain/verfahren";
 import { DecisionSchema } from "~/core/domain/verfahren";
 
 export async function loader({ request }: { request: Request }) {
-  const user = await requireRole(request, authService, "BEKLAGTER");
+  const user = await requireRole(request, "beklagter");
   const overview = schedulingQuery.getOverview(DEFAULT_CASE_ID);
   return { user, overview };
 }
 
 export async function action({ request }: { request: Request }) {
+  await requireRole(request, "beklagter");
   const formData = await request.formData();
   const decisionMap: Record<string, Decision> = {};
 

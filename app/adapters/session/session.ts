@@ -1,43 +1,34 @@
-import { createCookieSessionStorage, redirect } from "react-router";
+import { redirect } from "react-router";
 
-import type { AuthService, AuthUser, UserRole } from "~/core/domain/user";
+import { AuthUserSchema, hasRole, type AuthUser, type UserRole } from "~/core/domain/user";
+import { getDb } from "~/database/database";
+import { getAuth } from "~/lib/auth.server";
 
-const { getSession, commitSession, destroySession } = createCookieSessionStorage<{
-  userId: string;
-}>({
-  cookie: {
-    name: "__session",
-    secrets: ["dev-secret"],
-    sameSite: "lax",
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-  },
-});
-
-export { commitSession, destroySession, getSession };
-
-export async function getSessionUser(
-  request: Request,
-  authService: AuthService,
-): Promise<AuthUser | null> {
-  const session = await getSession(request.headers.get("Cookie"));
-  const userId = session.get("userId");
-  if (!userId) return null;
-  return authService.getUserById(userId);
+export async function getSessionUser(request: Request): Promise<AuthUser | null> {
+  const session = await getAuth().api.getSession({ headers: request.headers });
+  if (!session) return null;
+  const user = await getDb()
+    .selectFrom("user")
+    .select(["id", "name", "email", "roles"])
+    .where("id", "=", session.user.id)
+    .executeTakeFirst();
+  return user ? AuthUserSchema.parse(user) : null;
 }
 
-export async function requireUser(request: Request, authService: AuthService): Promise<AuthUser> {
-  const user = await getSessionUser(request, authService);
+export async function requireUser(request: Request): Promise<AuthUser> {
+  const user = await getSessionUser(request);
   if (!user) throw redirect("/");
   return user;
 }
 
-export async function requireRole(
-  request: Request,
-  authService: AuthService,
-  role: UserRole,
-): Promise<AuthUser> {
-  const user = await requireUser(request, authService);
-  if (user.role !== role) throw redirect("/");
+export async function requireRole(request: Request, role: UserRole): Promise<AuthUser> {
+  const user = await requireUser(request);
+  if (!hasRole(user, role)) throw new Response("Forbidden", { status: 403 });
+  return user;
+}
+
+export async function requireAdmin(request: Request): Promise<AuthUser> {
+  const user = await requireUser(request);
+  if (!user.roles.includes("admin")) throw new Response("Forbidden", { status: 403 });
   return user;
 }
