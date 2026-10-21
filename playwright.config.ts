@@ -35,7 +35,12 @@ export default defineConfig({
   retries: 0,
   workers: 1,
   timeout: 30_000,
-  reporter: [["list"], ["html", { open: "never" }]],
+  // On CI the github reporter turns each failure into an annotation on the pull request.
+  reporter: [
+    ["list"],
+    ["html", { open: "never" }],
+    ...(process.env.CI ? [["github"] as const] : []),
+  ],
   use: {
     baseURL,
     trace: "retain-on-failure",
