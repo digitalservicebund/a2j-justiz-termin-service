@@ -1,10 +1,37 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import CreateTermin, { action } from "../create-termin";
+import {
+  createDraftAppointment,
+  publishAppointment,
+  updateDraftAppointment,
+} from "~/adapters/appointments/appointments.server";
+
+import CreateTermin, { action, loader } from "../create-termin";
+import CreateTerminConfirm, {
+  action as confirmAction,
+  loader as confirmLoader,
+} from "../create-termin.confirm";
 import { MAX_SLOTS, type SlotInput } from "../create-termin.schema";
+
+const appointments = vi.hoisted(() => new Map<string, Record<string, unknown>>());
+
+// A fake of the database adapter: drafts live in a map, so the pages can be exercised end to end.
+vi.mock("~/adapters/appointments/appointments.server", () => ({
+  createDraftAppointment: vi.fn(async (_db, _userId, draft) => {
+    appointments.set("abc", { id: "abc", status: "draft", ...draft });
+    return "abc";
+  }),
+  updateDraftAppointment: vi.fn(async (_db, _userId, id, draft) => {
+    appointments.set(id, { id, status: "draft", ...draft });
+    return true;
+  }),
+  getAppointment: vi.fn(async (_db, _userId, id) => appointments.get(id)),
+  publishAppointment: vi.fn(async () => true),
+}));
+vi.mock("~/database/database", () => ({ getDb: () => ({}) }));
 
 vi.mock("~/adapters/session/session", () => ({
   requireRole: vi.fn().mockResolvedValue({
@@ -15,20 +42,19 @@ vi.mock("~/adapters/session/session", () => ({
   }),
 }));
 
+beforeEach(() => {
+  appointments.clear();
+  vi.clearAllMocks();
+});
+
 function renderPage() {
   const Stub = createRoutesStub([
+    { path: "/overview/new", Component: CreateTermin, action, loader },
     {
-      path: "/overview/new",
-      Component: CreateTermin,
-      action,
-      loader: () => ({
-        user: {
-          id: "1",
-          name: "Muthig",
-          email: "muthig@justiz.niedersachsen.de",
-          roles: ["richter"],
-        },
-      }),
+      path: "/overview/:appointmentId/confirm",
+      Component: CreateTerminConfirm,
+      action: confirmAction,
+      loader: confirmLoader,
     },
     { path: "/overview", Component: () => <h1>Übersicht</h1> },
   ]);
@@ -406,12 +432,127 @@ describe("CreateTermin validation", () => {
     expect(within(remaining[0]!).queryByRole("alert")).not.toBeInTheDocument();
   });
 
-  it("goes to the overview when everything is valid", async () => {
+  it("shows the review step when everything is valid", async () => {
     renderPage();
     await fillValidForm();
 
     submit();
 
+    expect(
+      await screen.findByRole("heading", { name: "Bitte überprüfen Sie Ihre Angaben" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Übersicht" })).not.toBeInTheDocument();
+  });
+
+  it("saves the Terminumfrage as a draft before showing the review", async () => {
+    renderPage();
+    await fillValidForm();
+
+    submit();
+
+    await screen.findByRole("heading", { name: "Bitte überprüfen Sie Ihre Angaben" });
+    expect(createDraftAppointment).toHaveBeenCalledOnce();
+    expect(createDraftAppointment).toHaveBeenCalledWith(expect.anything(), "1", {
+      aktenzeichen: "574 C 65412/26",
+      // 09:00 and 10:00 Berlin time in January are 08:00 and 09:00 UTC.
+      slots: [
+        { start: new Date("2099-01-05T08:00:00Z"), end: new Date("2099-01-05T09:00:00Z") },
+        { start: new Date("2099-01-06T08:00:00Z"), end: new Date("2099-01-06T09:00:00Z") },
+      ],
+    });
+    expect(publishAppointment).not.toHaveBeenCalled();
+  });
+
+  it("does not save anything when the form is invalid", async () => {
+    renderPage();
+    await rows();
+
+    submit();
+
+    await screen.findByText(TOO_FEW);
+    expect(createDraftAppointment).not.toHaveBeenCalled();
+  });
+});
+
+async function reviewStep() {
+  renderPage();
+  await fillValidForm();
+  submit();
+  await screen.findByRole("heading", { name: "Bitte überprüfen Sie Ihre Angaben" });
+}
+
+const sections = () => [...document.querySelectorAll("details")];
+
+describe("CreateTermin review step", () => {
+  it("summarizes the Aktenzeichen and the time windows by day", async () => {
+    await reviewStep();
+
+    const data = screen.getByRole("group", { name: "Verhandlungsdaten" });
+    expect(within(data).getByText("Aktenzeichen")).toBeInTheDocument();
+    expect(within(data).getByText("574 C 65412/26")).toBeInTheDocument();
+
+    const windows = screen.getByRole("group", { name: "Zeitfenster" });
+    expect(within(windows).getByText("5. Januar 2099")).toBeInTheDocument();
+    expect(within(windows).getByText("6. Januar 2099")).toBeInTheDocument();
+    expect(within(windows).getAllByText("09:00 – 10:00")).toHaveLength(2);
+  });
+
+  it("collapses and expands every section at once", async () => {
+    await reviewStep();
+    expect(sections().every((element) => element.open)).toBe(true);
+
+    await userEvent.click(screen.getByRole("button", { name: "Alle ausblenden" }));
+    expect(sections().every((element) => !element.open)).toBe(true);
+
+    await userEvent.click(screen.getByRole("button", { name: "Alle einblenden" }));
+    expect(sections().every((element) => element.open)).toBe(true);
+  });
+
+  it.each(["Zurück", "Bearbeiten Verhandlungsdaten", "Bearbeiten Zeitfenster"])(
+    "%s returns to the form with the entered values",
+    async (name) => {
+      await reviewStep();
+
+      await userEvent.click(screen.getByRole("button", { name }));
+
+      expect(await screen.findByRole("textbox", { name: "Aktenzeichen" })).toHaveValue(
+        "574 C 65412/26",
+      );
+      const [first, second] = await rows();
+      expect(within(first!).getAllByRole("textbox", { name: "Tag" })[0]).toHaveValue("05");
+      expect(within(second!).getAllByRole("textbox", { name: "Tag" })[0]).toHaveValue("06");
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    },
+  );
+
+  it("updates the saved draft instead of creating another one after going back", async () => {
+    await reviewStep();
+    await userEvent.click(screen.getByRole("button", { name: "Zurück" }));
+    const [first] = await rows();
+    fireEvent.change(within(first!).getAllByRole("textbox", { name: "Tag" })[0]!, {
+      target: { value: "8" },
+    });
+
+    submit();
+
+    const windows = await screen.findByRole("group", { name: "Zeitfenster" });
+    expect(within(windows).getByText("8. Januar 2099")).toBeInTheDocument();
+    expect(createDraftAppointment).toHaveBeenCalledOnce();
+    expect(updateDraftAppointment).toHaveBeenCalledOnce();
+    expect(updateDraftAppointment).toHaveBeenCalledWith(
+      expect.anything(),
+      "1",
+      "abc",
+      expect.objectContaining({ aktenzeichen: "574 C 65412/26" }),
+    );
+  });
+
+  it("goes to the overview when the Terminumfrage is created", async () => {
+    await reviewStep();
+
+    await userEvent.click(screen.getByRole("button", { name: "Terminumfrage erstellen" }));
+
     expect(await screen.findByRole("heading", { name: "Übersicht" })).toBeInTheDocument();
+    expect(publishAppointment).toHaveBeenCalledWith(expect.anything(), "1", "abc");
   });
 });

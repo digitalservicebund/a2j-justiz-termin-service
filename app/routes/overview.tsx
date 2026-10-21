@@ -1,33 +1,30 @@
 import { Link, useLoaderData } from "react-router";
 
+import { listAppointments } from "~/adapters/appointments/appointments.server";
 import { requireUser } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { Badge, type BadgeType } from "~/components/shared/Badge";
 import { Icon, type IconName } from "~/components/shared/Icon";
+import { getDb } from "~/database/database";
+
+import { describeStatus } from "./overview.status";
 
 import "./overview.css";
 
 export async function loader({ request }: { request: Request }) {
-  return { user: await requireUser(request) };
+  const user = await requireUser(request);
+  const appointments = await listAppointments(getDb(), user.id);
+  return {
+    user,
+    entries: appointments.map(({ id, aktenzeichen, status, confirmedSlot }) => ({
+      id,
+      aktenzeichen,
+      // Only drafts have a page to continue on; the others have no detail page yet.
+      href: status === "draft" ? `/overview/${encodeURIComponent(id)}/confirm` : null,
+      badge: describeStatus({ status, confirmedSlot }),
+    })),
+  };
 }
-
-type OverviewEntry = {
-  title: string;
-  status: string;
-  statusType: BadgeType;
-};
-
-// Hardcoded until the overview is backed by real data.
-const entries: OverviewEntry[] = [
-  {
-    title: "574 C 65412/26",
-    status: "Termin ist Montag, 9. November 2026 um 15:30",
-    statusType: "success",
-  },
-  { title: "574 C 65412/26", status: "Kein Zeitfenster passt", statusType: "danger" },
-  { title: "574 C 65412/26", status: "Offen für Rückmeldungen", statusType: "info" },
-  { title: "574 C 65412/26", status: "Montag, 3. August 2026 um 13:30", statusType: "custom-grey" },
-];
 
 const statusIcons: Partial<Record<BadgeType, IconName>> = {
   success: "success",
@@ -36,11 +33,8 @@ const statusIcons: Partial<Record<BadgeType, IconName>> = {
   warning: "warning",
 };
 
-// Targets for these links are not defined in the design yet.
-const TODO_HREF = "#";
-
 export default function Overview() {
-  const { user } = useLoaderData<typeof loader>();
+  const { user, entries } = useLoaderData<typeof loader>();
   return (
     <AppShell
       user={user}
@@ -57,38 +51,46 @@ export default function Overview() {
           <span className="kern-label">Terminumfrage erstellen</span>
         </Link>
 
-        <table className="kern-table overview__table">
-          <thead className="kern-table__header">
-            <tr className="kern-table__row">
-              <th className="kern-table__header" scope="col">
-                Aktenzeichen
-              </th>
-              <th className="kern-table__header" scope="col">
-                Status
-              </th>
-            </tr>
-          </thead>
-          <tbody className="kern-table__body">
-            {entries.map(({ title, status, statusType }) => {
-              const icon = statusIcons[statusType];
-              return (
-                <tr className="kern-table__row" key={status}>
-                  <td className="kern-table__cell">
-                    <a className="kern-link" href={TODO_HREF}>
-                      {title}
-                    </a>
-                  </td>
-                  <td className="kern-table__cell">
-                    <Badge type={statusType}>
-                      {icon && <Icon name={icon} />}
-                      <span className="kern-label">{status}</span>
-                    </Badge>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        {entries.length === 0 ? (
+          <p className="kern-body">Sie haben noch keine Terminumfragen erstellt.</p>
+        ) : (
+          <table className="kern-table overview__table">
+            <thead className="kern-table__header">
+              <tr className="kern-table__row">
+                <th className="kern-table__header" scope="col">
+                  Aktenzeichen
+                </th>
+                <th className="kern-table__header" scope="col">
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody className="kern-table__body">
+              {entries.map(({ id, aktenzeichen, href, badge }) => {
+                const icon = statusIcons[badge.type];
+                return (
+                  <tr className="kern-table__row" key={id}>
+                    <td className="kern-table__cell">
+                      {href ? (
+                        <Link className="kern-link" to={href}>
+                          {aktenzeichen}
+                        </Link>
+                      ) : (
+                        aktenzeichen
+                      )}
+                    </td>
+                    <td className="kern-table__cell">
+                      <Badge type={badge.type}>
+                        {icon && <Icon name={icon} />}
+                        <span className="kern-label">{badge.text}</span>
+                      </Badge>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
     </AppShell>
   );
