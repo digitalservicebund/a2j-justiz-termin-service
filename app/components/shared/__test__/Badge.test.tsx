@@ -15,6 +15,7 @@ describe("Badge", () => {
   });
 
   it.each([
+    ["default", "kern-badge--default"],
     ["success", "kern-badge--success"],
     ["info", "kern-badge--info"],
     ["warning", "kern-badge--warning"],

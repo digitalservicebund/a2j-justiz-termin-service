@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 
-export type BadgeType = "success" | "info" | "warning" | "danger";
+import "./Badge.css";
+
+export type BadgeType = "default" | "success" | "info" | "warning" | "danger";
 
 export function Badge({ type, children }: Readonly<{ type: BadgeType; children: ReactNode }>) {
   const content =

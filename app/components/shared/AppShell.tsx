@@ -82,10 +82,17 @@ type AppShellProps = {
   breadcrumbs?: BreadcrumbItem[];
   user?: AuthUser;
   className?: string;
+  showReportProblem?: boolean;
   children: ReactNode;
 };
 
-export function AppShell({ breadcrumbs, user, className, children }: Readonly<AppShellProps>) {
+export function AppShell({
+  breadcrumbs,
+  user,
+  className,
+  showReportProblem = false,
+  children,
+}: Readonly<AppShellProps>) {
   const classes = ["page-shell", className].filter(Boolean).join(" ");
 
   return (
@@ -125,18 +132,20 @@ export function AppShell({ breadcrumbs, user, className, children }: Readonly<Ap
 
         {children}
 
-        <div className="page-shell__content page-shell__report">
-          <Button type="button" style="secondary">
-            <Icon name="danger" />
-            <span className="kern-label">Problem mit dieser Seite melden</span>
-          </Button>
-        </div>
+        {showReportProblem && (
+          <div className="page-shell__content page-shell__report">
+            <Button type="button" style="secondary">
+              <Icon name="danger" />
+              <span className="kern-label">Problem mit dieser Seite melden</span>
+            </Button>
+          </div>
+        )}
       </main>
 
       <footer className="page-shell__footer">
         <div className="kern-container page-shell__footer-grid">
           <div className="page-shell__footer-brand">
-            <p className="kern-heading-medium">Gerichtstermin-Finder</p>
+            <p className="kern-heading-medium">Verhandlungstermin-Finder</p>
             <p className="kern-body kern-body--muted">Onlinedienste der Justiz</p>
           </div>
 
@@ -169,13 +178,6 @@ export function AppShell({ breadcrumbs, user, className, children }: Readonly<Ap
           </div>
         </div>
       </footer>
-
-      <div className="page-shell__unapproved">
-        <Button type="button" style="secondary">
-          <span className="kern-label">Nicht freigegebene E-Mail-Adresse</span>
-          <Icon name="arrow-forward" />
-        </Button>
-      </div>
     </div>
   );
 }
