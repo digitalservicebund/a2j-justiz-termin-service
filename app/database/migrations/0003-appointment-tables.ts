@@ -18,11 +18,7 @@ export async function up(db: Kysely<any>): Promise<void> {
     .execute();
 
   // Index so we can quickly look up appointments by user_id
-  await db.schema
-    .createIndex("idx_appointment_user")
-    .on("appointment")
-    .column("user_id")
-    .execute();
+  await db.schema.createIndex("idx_appointment_user").on("appointment").column("user_id").execute();
 
   // 2. Create 'time_slot' Table
   await db.schema
@@ -54,15 +50,12 @@ export async function up(db: Kysely<any>): Promise<void> {
       col.notNull().references("appointment.id").onDelete("cascade"),
     )
     .addColumn("name", "text", (col) => col.notNull())
-    .addColumn(
-      "type",
-      "text",
-      (col) =>
-        // related to universal/anonymous invite links vs. a personal invite link per participant.
-        // Product is still deciding which approach to support, so we implement both for now
-        // and will simplify (e.g. drop columns) once that is settled.
-        // "individual": each participant has a unique link, "universal": all participants share the same link.
-        col.notNull().defaultTo("individual"),
+    .addColumn("type", "text", (col) =>
+      // related to universal/anonymous invite links vs. a personal invite link per participant.
+      // Product is still deciding which approach to support, so we implement both for now
+      // and will simplify (e.g. drop columns) once that is settled.
+      // "individual": each participant has a unique link, "universal": all participants share the same link.
+      col.notNull().defaultTo("individual"),
     )
     .addColumn("token", "text", (col) => col.unique())
     .addColumn("last_accessed_at", "timestamptz")
