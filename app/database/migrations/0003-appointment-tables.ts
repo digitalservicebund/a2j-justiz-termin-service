@@ -4,39 +4,31 @@ export async function up(db: Kysely<any>): Promise<void> {
   // 1. Create 'appointment' Table - which has a list of proposed time_slot associated with it.
   await db.schema
     .createTable("appointment")
-    .addColumn("id", "uuid", (col) => col.primaryKey().defaultTo(sql`gen_random_uuid()`))
-    .addColumn("judge_id", "text", (col) =>
-      // refers to the user (judge) who created the appointment
+    .addColumn("id", "text", (col) => col.primaryKey().defaultTo(sql`gen_random_uuid()::text`))
+    .addColumn("user_id", "text", (col) =>
+      // refers to the user who created the appointment
       col.notNull().references("user.id").onDelete("cascade"),
     )
-    .addColumn("title", "varchar(255)", (col) => col.notNull()) // Aktenzeichen
-    .addColumn("description", "text")
-    .addColumn("court_room", "varchar(100)")
-    .addColumn("status", "varchar(20)", (col) =>
-      // "draft" (user is still working on it)
-      // "open" (waiting for other participants to respond)
-      // "confirmed" (a given time_slot has been chosen)
-      // "cancelled" (no time_slot was possible for all participants.)
-      col.notNull().defaultTo("open"),
-    )
+    .addColumn("aktenzeichen", "text", (col) => col.notNull())
+    .addColumn("status", "text", (col) => col.notNull().defaultTo("open")) // see AppointmentStatus in types.ts
     .addColumn("universal_token", "text", (col) => col.unique()) // used for generating "anonymous" links to the appointment
-    .addColumn("confirmed_slot_id", "uuid") // Foreign key added after time_slot table exists
+    .addColumn("confirmed_slot_id", "text") // Foreign key added after time_slot table exists
     .addColumn("created_at", "timestamptz", (col) => col.notNull().defaultTo(sql`NOW()`))
     .addColumn("updated_at", "timestamptz", (col) => col.notNull().defaultTo(sql`NOW()`))
     .execute();
 
-  // Index so we can quickly look up appointments by judge_id
+  // Index so we can quickly look up appointments by user_id
   await db.schema
-    .createIndex("idx_appointment_judge")
+    .createIndex("idx_appointment_user")
     .on("appointment")
-    .column("judge_id")
+    .column("user_id")
     .execute();
 
   // 2. Create 'time_slot' Table
   await db.schema
     .createTable("time_slot")
-    .addColumn("id", "uuid", (col) => col.primaryKey().defaultTo(sql`gen_random_uuid()`))
-    .addColumn("appointment_id", "uuid", (col) =>
+    .addColumn("id", "text", (col) => col.primaryKey().defaultTo(sql`gen_random_uuid()::text`))
+    .addColumn("appointment_id", "text", (col) =>
       col.notNull().references("appointment.id").onDelete("cascade"),
     )
     .addColumn("start_time", "timestamptz", (col) => col.notNull())
@@ -57,19 +49,20 @@ export async function up(db: Kysely<any>): Promise<void> {
   // Participants are scoped per appointment: if the same person attends multiple appointments, they will have separate participant entries: one for each appointment.
   await db.schema
     .createTable("participant")
-    .addColumn("id", "uuid", (col) => col.primaryKey().defaultTo(sql`gen_random_uuid()`))
-    .addColumn("appointment_id", "uuid", (col) =>
+    .addColumn("id", "text", (col) => col.primaryKey().defaultTo(sql`gen_random_uuid()::text`))
+    .addColumn("appointment_id", "text", (col) =>
       col.notNull().references("appointment.id").onDelete("cascade"),
     )
-    .addColumn("name", "varchar(255)", (col) => col.notNull())
-    .addColumn("email", "varchar(255)")
-    .addColumn("role", "varchar(100)")
+    .addColumn("name", "text", (col) => col.notNull())
     .addColumn(
       "type",
-      "varchar(20)",
+      "text",
       (col) =>
-        // related to universal/anonymous invite links, vs. personal invite link per participant. (We support both.)
-        col.notNull().defaultTo("individual"), // "individual": each participant has a unique link, "universal": all participant share the same link.
+        // related to universal/anonymous invite links vs. a personal invite link per participant.
+        // Product is still deciding which approach to support, so we implement both for now
+        // and will simplify (e.g. drop columns) once that is settled.
+        // "individual": each participant has a unique link, "universal": all participants share the same link.
+        col.notNull().defaultTo("individual"),
     )
     .addColumn("token", "text", (col) => col.unique())
     .addColumn("last_accessed_at", "timestamptz")
@@ -81,14 +74,14 @@ export async function up(db: Kysely<any>): Promise<void> {
   // Each participant has a list of participant_response - one per time_slot they respond to.
   await db.schema
     .createTable("participant_response")
-    .addColumn("id", "uuid", (col) => col.primaryKey().defaultTo(sql`gen_random_uuid()`))
-    .addColumn("participant_id", "uuid", (col) =>
+    .addColumn("id", "text", (col) => col.primaryKey().defaultTo(sql`gen_random_uuid()::text`))
+    .addColumn("participant_id", "text", (col) =>
       col.notNull().references("participant.id").onDelete("cascade"),
     )
-    .addColumn("slot_id", "uuid", (col) =>
+    .addColumn("slot_id", "text", (col) =>
       col.notNull().references("time_slot.id").onDelete("cascade"),
     )
-    .addColumn("status", "varchar(10)", (col) => col.notNull().defaultTo("no"))
+    .addColumn("status", "text", (col) => col.notNull())
     .addColumn("created_at", "timestamptz", (col) => col.notNull().defaultTo(sql`NOW()`))
     .addColumn("updated_at", "timestamptz", (col) => col.notNull().defaultTo(sql`NOW()`))
     .addUniqueConstraint("uq_participant_slot", ["participant_id", "slot_id"])
@@ -134,7 +127,7 @@ export async function down(db: Kysely<any>): Promise<void> {
   await db.schema.dropIndex("idx_participant_appointment").execute();
   await db.schema.dropIndex("idx_time_slot_appointment").execute();
   await db.schema.dropIndex("idx_participant_token").execute();
-  await db.schema.dropIndex("idx_appointment_judge").execute();
+  await db.schema.dropIndex("idx_appointment_user").execute();
   await db.schema.dropIndex("idx_appointment_universal_token").execute();
 
   // Drop tables in reverse order of foreign key dependencies

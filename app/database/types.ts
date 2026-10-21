@@ -2,16 +2,18 @@ import type { Generated } from "kysely";
 
 import type { UserRole } from "../core/domain/user.ts";
 
+// "draft": user is still working on it
+// "open": waiting for other participants to respond
+// "confirmed": a given time_slot has been chosen
+// "cancelled": no time_slot was possible for all participants
 export type AppointmentStatus = "draft" | "open" | "confirmed" | "cancelled";
 export type ResponseStatus = "yes" | "no" | "maybe";
 export type LinkType = "individual" | "universal";
 
 export interface AppointmentsTable {
   id: Generated<string>;
-  judge_id: string; // Foreign key referencing better-auth "user.id"
-  title: string;
-  description: string | null;
-  court_room: string | null;
+  user_id: string; // Foreign key referencing better-auth "user.id"
+  aktenzeichen: string;
   status: AppointmentStatus;
   universal_token: string | null;
   confirmed_slot_id: string | null;
@@ -31,8 +33,6 @@ export interface ParticipantsTable {
   id: Generated<string>;
   appointment_id: string;
   name: string;
-  email: string | null;
-  role: string | null;
   type: LinkType;
   token: string | null;
   last_accessed_at: Date | string | null;
@@ -97,8 +97,8 @@ export type Database = {
     value: string;
     expiresAt: Date;
   };
-  appointments: AppointmentsTable;
-  time_slots: TimeSlotsTable;
-  participants: ParticipantsTable;
-  participant_responses: ParticipantResponsesTable;
+  appointment: AppointmentsTable;
+  time_slot: TimeSlotsTable;
+  participant: ParticipantsTable;
+  participant_response: ParticipantResponsesTable;
 };
