@@ -10,6 +10,3 @@ minimumReleaseAgeExclude:
   - "@better-auth/prisma-adapter@1.7.10"
   - "@better-auth/telemetry@1.7.10"
   - better-auth@1.7.10
-
-overrides:
-  vite: 8.1.1
