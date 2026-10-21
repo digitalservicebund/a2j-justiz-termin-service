@@ -1,0 +1,148 @@
+.create-termin {
+  background-color: var(--kern-color-layout-background-hued);
+  padding-block: var(--kern-metric-space-5x-large)
+    calc(var(--kern-metric-space-6x-large) * 2 + var(--kern-metric-space-default));
+}
+
+.create-termin__form {
+  display: grid;
+  gap: var(--kern-metric-space-x-large);
+  /* KERN has no token for a form column width, so build it from dimension tokens. */
+  width: min(100%, calc(var(--kern-metric-dimension-4x-large) * 9));
+  margin-inline: auto;
+}
+
+.create-termin__section {
+  display: grid;
+  gap: var(--kern-metric-space-default);
+  justify-items: start;
+}
+
+.create-termin__aktenzeichen {
+  width: min(100%, calc(var(--kern-metric-dimension-4x-large) * 5));
+}
+
+/* Inputs sit on a white surface in the flow-page design. */
+.create-termin__form .kern-form-input__input {
+  background-color: var(--kern-color-layout-background-default);
+}
+
+/* Rows, add button, hint and the window-level error share one group, as in the error sketch. */
+.create-termin__windows {
+  display: grid;
+  gap: var(--kern-metric-space-default);
+  justify-items: start;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.create-termin__windows.kern-fieldset--error {
+  border-left: var(--kern-metric-border-width-bold) solid
+    var(--kern-color-feedback-danger-contextual);
+  padding-left: var(--kern-metric-space-default);
+}
+
+.create-termin__rows {
+  display: grid;
+}
+
+/* The column titles belong to the first row, so only data rows are spaced apart. */
+.create-termin__row:not(.create-termin__row--head) + .create-termin__row {
+  margin-top: var(--kern-metric-space-large);
+}
+
+.create-termin__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--kern-metric-space-4x-large);
+  /* A row's error message wraps onto its own line below the inputs. */
+  row-gap: var(--kern-metric-space-small);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.create-termin__row--head {
+  align-items: start;
+}
+
+.create-termin__range {
+  display: flex;
+  align-items: center;
+  gap: var(--kern-metric-space-default);
+}
+
+.create-termin__row--head .create-termin__range {
+  align-items: start;
+}
+
+.create-termin__head {
+  display: grid;
+  gap: var(--kern-metric-space-small);
+}
+
+.create-termin__group {
+  display: flex;
+  align-items: center;
+  gap: var(--kern-metric-space-small);
+}
+
+.create-termin__row--head .create-termin__group {
+  align-items: start;
+  margin-bottom: var(--kern-metric-space-small);
+}
+
+/* Inputs are 48px tall; the colon and dash are centered on them, the dot sits on the baseline. */
+.create-termin__separator,
+.create-termin__dash {
+  padding-bottom: var(--kern-metric-space-x-small);
+}
+
+.create-termin__separator--dot {
+  align-self: end;
+  padding-bottom: var(--kern-metric-space-none);
+}
+
+/* In the header the separators only take up space so the captions line up with the inputs. */
+.create-termin__row--head .create-termin__separator,
+.create-termin__row--head .create-termin__dash {
+  padding-bottom: var(--kern-metric-space-none);
+  visibility: hidden;
+}
+
+.create-termin__caption--2 {
+  width: var(--kern-metric-dimension-2x-large);
+}
+
+.create-termin__caption--4 {
+  width: var(--kern-metric-dimension-4x-large);
+}
+
+/* A row with an error gets KERN's error border; hang it into the gutter so the columns stay aligned. */
+.create-termin__row.kern-fieldset--error {
+  border-left: var(--kern-metric-border-width-bold) solid
+    var(--kern-color-feedback-danger-contextual);
+  padding-left: var(--kern-metric-space-default);
+  margin-left: calc(-1 * (var(--kern-metric-border-width-bold) + var(--kern-metric-space-default)));
+}
+
+.create-termin__row-errors {
+  display: grid;
+  flex-basis: 100%;
+  gap: var(--kern-metric-space-small);
+}
+
+.create-termin__add {
+  margin-top: var(--kern-metric-space-default);
+}
+
+.create-termin__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kern-metric-space-default);
+  padding-top: var(--kern-metric-space-default);
+}

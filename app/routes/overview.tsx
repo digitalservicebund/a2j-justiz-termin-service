@@ -1,9 +1,8 @@
-import { useLoaderData } from "react-router";
+import { Link, useLoaderData } from "react-router";
 
 import { requireUser } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { Badge, type BadgeType } from "~/components/shared/Badge";
-import { Button } from "~/components/shared/Button";
 import { Icon, type IconName } from "~/components/shared/Icon";
 
 import "./overview.css";
@@ -53,10 +52,10 @@ export default function Overview() {
     >
       <div className="page-shell__content overview__content">
         <h1 className="kern-sr-only">Übersicht</h1>
-        <Button type="button">
+        <Link className="kern-btn kern-btn--primary" to="/overview/new">
           <Icon name="add" />
           <span className="kern-label">Terminumfrage erstellen</span>
-        </Button>
+        </Link>
 
         <table className="kern-table overview__table">
           <thead className="kern-table__header">
