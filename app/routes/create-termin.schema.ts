@@ -1,5 +1,23 @@
 import { z } from "zod";
 
+export const MIN_SLOTS = 2;
+export const MAX_SLOTS = 20;
+export const MAX_AKTENZEICHEN_LENGTH = 50;
+
+export const messages = {
+  aktenzeichenRequired: "Geben Sie ein Aktenzeichen an.",
+  aktenzeichenTooLong: `Das Aktenzeichen darf höchstens ${MAX_AKTENZEICHEN_LENGTH} Zeichen lang sein.`,
+  date: "Geben Sie ein gültiges Datum an.",
+  pastDate: "Das Datum darf nicht in der Vergangenheit liegen.",
+  start: "Geben Sie eine gültige Startzeit an.",
+  end: "Geben Sie eine gültige Endzeit an.",
+  range: "Die Endzeit muss nach der Startzeit liegen.",
+  overlap: (otherRow: number) =>
+    `Dieses Zeitfenster überschneidet sich mit Zeitfenster ${otherRow}.`,
+  tooFewSlots: "Geben Sie mindestens zwei Zeitfenster an.",
+  tooManySlots: `Geben Sie höchstens ${MAX_SLOTS} Zeitfenster an.`,
+};
+
 export const slotFields = [
   "day",
   "month",
@@ -13,8 +31,8 @@ export const slotFields = [
 export type SlotField = (typeof slotFields)[number];
 export type SlotInput = Record<SlotField, string>;
 
-// Part of a row an error belongs to; "range" covers the whole start/end pair.
-export type SlotErrorGroup = "date" | "start" | "end" | "range";
+// Part of a row an error belongs to. "range" covers the start/end pair, "overlap" the whole row.
+export type SlotErrorGroup = "date" | "start" | "end" | "range" | "overlap";
 
 export const emptySlot: SlotInput = {
   day: "",
@@ -72,42 +90,62 @@ function parseMinutes(hour: string, minute: string): number | null {
   return h * 60 + m;
 }
 
+type CompleteSlot = { index: number; date: string; start: number; end: number };
+
 export function createTerminSchema(now: Date = new Date()) {
   return z
     .object({
-      aktenzeichen: z.string().trim().min(1, "Bitte geben Sie ein Aktenzeichen an."),
+      aktenzeichen: z
+        .string()
+        .trim()
+        .min(1, messages.aktenzeichenRequired)
+        .max(MAX_AKTENZEICHEN_LENGTH, messages.aktenzeichenTooLong),
       slots: z.array(SlotInputSchema),
     })
     .superRefine(({ slots }, ctx) => {
-      const addIssue = (index: number, group: SlotErrorGroup, message: string) =>
+      let rowErrors = 0;
+      const addRowIssue = (index: number, group: SlotErrorGroup, message: string) => {
+        rowErrors += 1;
         ctx.addIssue({ code: "custom", path: ["slots", index, group], message });
+      };
 
-      let filled = 0;
+      const complete: CompleteSlot[] = [];
       slots.forEach((slot, index) => {
         if (isEmptySlot(slot)) return;
-        filled += 1;
+        const errorsBefore = rowErrors;
 
         const date = parseDate(slot);
         const start = parseMinutes(slot.startHour, slot.startMinute);
         const end = parseMinutes(slot.endHour, slot.endMinute);
 
-        if (date === null) addIssue(index, "date", "Bitte geben Sie ein gültiges Datum an.");
-        else if (date < todayInBerlin(now)) {
-          addIssue(index, "date", "Das Datum darf nicht in der Vergangenheit liegen.");
-        }
-        if (start === null) addIssue(index, "start", "Bitte geben Sie eine gültige Startzeit an.");
-        if (end === null) addIssue(index, "end", "Bitte geben Sie eine gültige Endzeit an.");
+        if (date === null) addRowIssue(index, "date", messages.date);
+        else if (date < todayInBerlin(now)) addRowIssue(index, "date", messages.pastDate);
+        if (start === null) addRowIssue(index, "start", messages.start);
+        if (end === null) addRowIssue(index, "end", messages.end);
         if (start !== null && end !== null && end <= start) {
-          addIssue(index, "range", "Die Endzeit muss nach der Startzeit liegen.");
+          addRowIssue(index, "range", messages.range);
+        }
+
+        if (rowErrors === errorsBefore && date !== null && start !== null && end !== null) {
+          complete.push({ index, date, start, end });
         }
       });
 
-      if (filled === 0) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["slots"],
-          message: "Bitte geben Sie mindestens ein Zeitfenster an.",
-        });
+      // Windows that merely touch (one ends when the next starts) are fine.
+      complete.forEach((slot, position) => {
+        const earlier = complete
+          .slice(0, position)
+          .find(
+            (other) => other.date === slot.date && other.start < slot.end && slot.start < other.end,
+          );
+        if (earlier) addRowIssue(slot.index, "overlap", messages.overlap(earlier.index + 1));
+      });
+
+      if (slots.length > MAX_SLOTS) {
+        ctx.addIssue({ code: "custom", path: ["slots"], message: messages.tooManySlots });
+      } else if (rowErrors === 0 && complete.length < MIN_SLOTS) {
+        // Row errors come first; the count only matters once every filled row is valid.
+        ctx.addIssue({ code: "custom", path: ["slots"], message: messages.tooFewSlots });
       }
     });
 }

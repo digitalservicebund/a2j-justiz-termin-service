@@ -27,6 +27,13 @@
   background-color: var(--kern-color-layout-background-default);
 }
 
+/* Rows, add button, hint and the window-level error share one group, as in the error sketch. */
+.create-termin__windows {
+  display: grid;
+  gap: var(--kern-metric-space-default);
+  justify-items: start;
+}
+
 .create-termin__rows {
   display: grid;
 }
@@ -40,7 +47,9 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--kern-metric-space-4x-large);
+  column-gap: var(--kern-metric-space-4x-large);
+  /* A row's error message wraps onto its own line below the inputs. */
+  row-gap: var(--kern-metric-space-small);
   margin: 0;
   padding: 0;
   border: 0;
@@ -103,11 +112,18 @@
   width: var(--kern-metric-dimension-4x-large);
 }
 
+/* A row with an error gets KERN's error border; hang it into the gutter so the columns stay aligned. */
+.create-termin__row.kern-fieldset--error {
+  border-left: var(--kern-metric-border-width-bold) solid
+    var(--kern-color-feedback-danger-contextual);
+  padding-left: var(--kern-metric-space-default);
+  margin-left: calc(-1 * (var(--kern-metric-border-width-bold) + var(--kern-metric-space-default)));
+}
+
 .create-termin__row-errors {
+  display: grid;
   flex-basis: 100%;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  gap: var(--kern-metric-space-small);
 }
 
 .create-termin__add {

@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   data,
   Form,
@@ -10,13 +10,15 @@ import {
 } from "react-router";
 
 import { requireRole } from "~/adapters/session/session";
-import Alert from "~/components/shared/Alert";
 import { AppShell } from "~/components/shared/AppShell";
 import { Button } from "~/components/shared/Button";
 import { Icon } from "~/components/shared/Icon";
 
 import {
   emptySlot,
+  MAX_SLOTS,
+  messages,
+  MIN_SLOTS,
   parseCreateTerminForm,
   validateCreateTermin,
   type CreateTerminErrors,
@@ -83,9 +85,13 @@ const firstFieldOfGroup: Record<SlotErrorGroup, SlotField> = {
   start: "startHour",
   end: "endHour",
   range: "endHour",
+  overlap: "day",
 };
 
 const fieldId = (index: number, field: SlotField) => `slots-${index}-${field}`;
+const ADD_BUTTON_ID = "add-zeitfenster";
+const SLOTS_ERROR_ID = "slots-error";
+const rowErrorId = (id: number, group: SlotErrorGroup) => `row-${id}-${group}-error`;
 
 function initialRows(values?: SlotInput[]): Row[] {
   const slots = values?.length
@@ -94,19 +100,43 @@ function initialRows(values?: SlotInput[]): Row[] {
   return slots.map((slot, id) => ({ id, slot }));
 }
 
-type SummaryItem = { href: string; message: string };
+// Errors are keyed by row id, not index, so they follow a row when others are removed.
+type ErrorKey = "aktenzeichen" | "slots" | `${number}:${SlotErrorGroup}`;
+type KeyedErrors = Partial<Record<ErrorKey, string>>;
 
-function summaryItems(errors: CreateTerminErrors): SummaryItem[] {
-  const items: SummaryItem[] = [];
-  if (errors.aktenzeichen) items.push({ href: "#aktenzeichen", message: errors.aktenzeichen });
-  if (errors.slots) items.push({ href: `#${fieldId(0, "day")}`, message: errors.slots });
+function keyErrors(errors: CreateTerminErrors, rows: Row[]): KeyedErrors {
+  const keyed: KeyedErrors = {};
+  if (errors.aktenzeichen) keyed.aktenzeichen = errors.aktenzeichen;
+  if (errors.slots) keyed.slots = errors.slots;
   for (const [index, groups] of Object.entries(errors.rows)) {
+    const row = rows[Number(index)];
+    if (!row) continue;
     for (const [group, message] of Object.entries(groups)) {
-      const target = fieldId(Number(index), firstFieldOfGroup[group as SlotErrorGroup]);
-      items.push({ href: `#${target}`, message: `Zeitfenster ${Number(index) + 1}: ${message}` });
+      keyed[`${row.id}:${group as SlotErrorGroup}`] = message;
     }
   }
-  return items;
+  return keyed;
+}
+
+function firstErrorTarget(errors: CreateTerminErrors): string | null {
+  if (errors.aktenzeichen) return "aktenzeichen";
+  const [index] = Object.keys(errors.rows)
+    .map(Number)
+    .sort((a, b) => a - b);
+  if (index !== undefined) {
+    const [group] = Object.keys(errors.rows[index]!) as SlotErrorGroup[];
+    return fieldId(index, firstFieldOfGroup[group!]);
+  }
+  return errors.slots ? ADD_BUTTON_ID : null;
+}
+
+function ErrorMessage({ id, children }: Readonly<{ id: string; children: ReactNode }>) {
+  return (
+    <p className="kern-error" id={id} role="alert">
+      <span className="kern-icon kern-icon--danger" aria-hidden="true"></span>
+      <span className="kern-body">{children}</span>
+    </p>
+  );
 }
 
 function SegmentedFields({
@@ -122,34 +152,36 @@ function SegmentedFields({
   errors: Partial<Record<SlotErrorGroup, string>>;
   onChange: (field: SlotField, value: string) => void;
 }>) {
-  return fields.map(({ field, label, maxLength }, position) => (
-    <Fragment key={field}>
-      {position > 0 && (
-        <span
-          className={`create-termin__separator create-termin__separator--${separatorFor(field) === "." ? "dot" : "colon"}`}
-          aria-hidden="true"
-        >
-          {separatorFor(field)}
-        </span>
-      )}
-      <input
-        className={`kern-form-input__input kern-form-input__input--width-${maxLength}${
-          errors[groupOfField[field]] || (errors.range && groupOfField[field] === "end")
-            ? " kern-form-input__input--error"
-            : ""
-        }`}
-        id={fieldId(index, field)}
-        name={`slots.${index}.${field}`}
-        aria-label={label}
-        aria-invalid={Boolean(errors[groupOfField[field]]) || undefined}
-        inputMode="numeric"
-        autoComplete="off"
-        maxLength={maxLength}
-        value={slot[field]}
-        onChange={(event) => onChange(field, event.target.value)}
-      />
-    </Fragment>
-  ));
+  return fields.map(({ field, label, maxLength }, position) => {
+    const group = groupOfField[field];
+    const invalid = Boolean(errors[group] || (group === "end" && errors.range));
+    return (
+      <Fragment key={field}>
+        {position > 0 && (
+          <span
+            className={`create-termin__separator create-termin__separator--${separatorFor(field) === "." ? "dot" : "colon"}`}
+            aria-hidden="true"
+          >
+            {separatorFor(field)}
+          </span>
+        )}
+        <input
+          className={`kern-form-input__input kern-form-input__input--width-${maxLength}${
+            invalid ? " kern-form-input__input--error" : ""
+          }`}
+          id={fieldId(index, field)}
+          name={`slots.${index}.${field}`}
+          aria-label={label}
+          aria-invalid={invalid || undefined}
+          inputMode="numeric"
+          autoComplete="off"
+          maxLength={maxLength}
+          value={slot[field]}
+          onChange={(event) => onChange(field, event.target.value)}
+        />
+      </Fragment>
+    );
+  });
 }
 
 // Column captions reuse the input layout, with invisible separators, so they stay aligned.
@@ -176,24 +208,70 @@ export default function CreateTermin() {
   const pending = useNavigation().state !== "idle";
 
   const nextId = useRef(INITIAL_ROWS);
+  const [aktenzeichen, setAktenzeichen] = useState(result?.values.aktenzeichen ?? "");
   const [rows, setRows] = useState<Row[]>(() => initialRows(result?.values.slots));
-  const errors = result?.errors;
-  const items = errors ? summaryItems(errors) : [];
+  // Set when the user tries to remove a row while only the minimum number is left.
+  const [removeBlocked, setRemoveBlocked] = useState(false);
 
-  const summary = useRef<HTMLDivElement>(null);
+  // Errors only appear for what the server flagged on submit, then clear live once fixed.
+  const [flagged, setFlagged] = useState<Set<ErrorKey>>(
+    () =>
+      new Set(
+        result
+          ? (Object.keys(keyErrors(result.errors, initialRows(result.values.slots))) as ErrorKey[])
+          : [],
+      ),
+  );
+  const handledResult = useRef(result);
   useEffect(() => {
-    if (errors) summary.current?.focus();
-  }, [errors]);
+    if (!result || result === handledResult.current) return;
+    handledResult.current = result;
+    setFlagged(new Set(Object.keys(keyErrors(result.errors, rows)) as ErrorKey[]));
+    const target = firstErrorTarget(result.errors);
+    if (target) document.getElementById(target)?.focus();
+  }, [result, rows]);
 
-  const updateSlot = (id: number, field: SlotField, value: string) =>
+  const live = useMemo(() => {
+    const validation = validateCreateTermin({ aktenzeichen, slots: rows.map((row) => row.slot) });
+    return validation.success ? {} : keyErrors(validation.errors, rows);
+  }, [aktenzeichen, rows]);
+
+  const shown: KeyedErrors = {};
+  for (const key of flagged) {
+    if (live[key]) shown[key] = live[key];
+  }
+  if (removeBlocked) shown.slots = messages.tooFewSlots;
+
+  const rowErrorsOf = (id: number) => {
+    const errors: Partial<Record<SlotErrorGroup, string>> = {};
+    for (const group of ["date", "start", "end", "range", "overlap"] as const) {
+      const message = shown[`${id}:${group}`];
+      if (message) errors[group] = message;
+    }
+    return errors;
+  };
+
+  const updateSlot = (id: number, field: SlotField, value: string) => {
+    setRemoveBlocked(false);
     setRows((current) =>
       current.map((row) =>
         row.id === id ? { ...row, slot: { ...row.slot, [field]: value } } : row,
       ),
     );
-  const addRow = () =>
+  };
+  const addRow = () => {
+    setRemoveBlocked(false);
     setRows((current) => [...current, { id: nextId.current++, slot: { ...emptySlot } }]);
-  const removeRow = (id: number) => setRows((current) => current.filter((row) => row.id !== id));
+  };
+  const removeRow = (id: number) => {
+    if (rows.length <= MIN_SLOTS) {
+      setRemoveBlocked(true);
+      return;
+    }
+    setRows((current) => current.filter((row) => row.id !== id));
+  };
+
+  const atLimit = rows.length >= MAX_SLOTS;
 
   return (
     <AppShell
@@ -208,29 +286,13 @@ export default function CreateTermin() {
         <div className="page-shell__content">
           <h1 className="kern-sr-only">Erstellen der Terminumfrage</h1>
           <Form method="post" className="create-termin__form" noValidate>
-            {items.length > 0 && (
-              <div ref={summary} tabIndex={-1} className="create-termin__summary">
-                <Alert type="error" title="Bitte prüfen Sie Ihre Angaben">
-                  <ul className="kern-list">
-                    {items.map(({ href, message }) => (
-                      <li key={`${href}-${message}`}>
-                        <a className="kern-link" href={href}>
-                          {message}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </Alert>
-              </div>
-            )}
-
             <section aria-labelledby="verhandlungsdaten" className="create-termin__section">
               <h2 className="kern-heading-large" id="verhandlungsdaten">
                 Verhandlungsdaten
               </h2>
               <div
                 className={`kern-form-input create-termin__aktenzeichen${
-                  errors?.aktenzeichen ? " kern-form-input--error" : ""
+                  shown.aktenzeichen ? " kern-form-input--error" : ""
                 }`}
               >
                 <label className="kern-label" htmlFor="aktenzeichen">
@@ -238,19 +300,18 @@ export default function CreateTermin() {
                 </label>
                 <input
                   className={`kern-form-input__input${
-                    errors?.aktenzeichen ? " kern-form-input__input--error" : ""
+                    shown.aktenzeichen ? " kern-form-input__input--error" : ""
                   }`}
                   id="aktenzeichen"
                   name="aktenzeichen"
-                  defaultValue={result?.values.aktenzeichen}
-                  aria-invalid={Boolean(errors?.aktenzeichen) || undefined}
-                  aria-describedby={errors?.aktenzeichen ? "aktenzeichen-error" : undefined}
+                  value={aktenzeichen}
+                  onChange={(event) => setAktenzeichen(event.target.value)}
+                  aria-invalid={Boolean(shown.aktenzeichen) || undefined}
+                  aria-describedby={shown.aktenzeichen ? "aktenzeichen-error" : undefined}
                   autoComplete="off"
                 />
-                {errors?.aktenzeichen && (
-                  <span className="kern-error" id="aktenzeichen-error">
-                    {errors.aktenzeichen}
-                  </span>
+                {shown.aktenzeichen && (
+                  <ErrorMessage id="aktenzeichen-error">{shown.aktenzeichen}</ErrorMessage>
                 )}
               </div>
             </section>
@@ -260,70 +321,82 @@ export default function CreateTermin() {
                 Geben Sie Ihre verfügbaren Zeitfenster an
               </h2>
 
-              <div className="create-termin__rows">
-                <div className="create-termin__row create-termin__row--head" aria-hidden="true">
-                  <div className="create-termin__head">
-                    <span className="kern-label">Datum</span>
-                    <div className="create-termin__group create-termin__group--date">
-                      <Captions fields={dateFields} />
-                    </div>
-                  </div>
-                  <div className="create-termin__range">
+              <div
+                role="group"
+                aria-labelledby="zeitfenster"
+                aria-describedby={shown.slots ? SLOTS_ERROR_ID : undefined}
+                className={`create-termin__windows${shown.slots ? " kern-fieldset--error" : ""}`}
+              >
+                <div className="create-termin__rows">
+                  <div className="create-termin__row create-termin__row--head" aria-hidden="true">
                     <div className="create-termin__head">
-                      <span className="kern-label">Startzeit</span>
-                      <div className="create-termin__group create-termin__group--time">
-                        <Captions fields={startFields} />
-                      </div>
-                    </div>
-                    <span className="create-termin__dash">–</span>
-                    <div className="create-termin__head">
-                      <span className="kern-label">Endzeit</span>
-                      <div className="create-termin__group create-termin__group--time">
-                        <Captions fields={endFields} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {rows.map(({ id, slot }, index) => {
-                  const rowErrors = errors?.rows[index] ?? {};
-                  const onChange = (field: SlotField, value: string) =>
-                    updateSlot(id, field, value);
-                  return (
-                    <fieldset className="create-termin__row" key={id}>
-                      <legend className="kern-sr-only">{`Zeitfenster ${index + 1}`}</legend>
+                      <span className="kern-label">Datum</span>
                       <div className="create-termin__group create-termin__group--date">
-                        <SegmentedFields
-                          fields={dateFields}
-                          index={index}
-                          slot={slot}
-                          errors={rowErrors}
-                          onChange={onChange}
-                        />
+                        <Captions fields={dateFields} />
                       </div>
-                      <div className="create-termin__range">
+                    </div>
+                    <div className="create-termin__range">
+                      <div className="create-termin__head">
+                        <span className="kern-label">Startzeit</span>
                         <div className="create-termin__group create-termin__group--time">
+                          <Captions fields={startFields} />
+                        </div>
+                      </div>
+                      <span className="create-termin__dash">–</span>
+                      <div className="create-termin__head">
+                        <span className="kern-label">Endzeit</span>
+                        <div className="create-termin__group create-termin__group--time">
+                          <Captions fields={endFields} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {rows.map(({ id, slot }, index) => {
+                    const rowErrors = rowErrorsOf(id);
+                    const groups = Object.keys(rowErrors) as SlotErrorGroup[];
+                    const onChange = (field: SlotField, value: string) =>
+                      updateSlot(id, field, value);
+                    return (
+                      <fieldset
+                        className={`create-termin__row${groups.length ? " kern-fieldset--error" : ""}`}
+                        aria-describedby={
+                          groups.map((group) => rowErrorId(id, group)).join(" ") || undefined
+                        }
+                        key={id}
+                      >
+                        <legend className="kern-sr-only">{`Zeitfenster ${index + 1}`}</legend>
+                        <div className="create-termin__group create-termin__group--date">
                           <SegmentedFields
-                            fields={startFields}
+                            fields={dateFields}
                             index={index}
                             slot={slot}
                             errors={rowErrors}
                             onChange={onChange}
                           />
                         </div>
-                        <span className="create-termin__dash" aria-hidden="true">
-                          –
-                        </span>
-                        <div className="create-termin__group create-termin__group--time">
-                          <SegmentedFields
-                            fields={endFields}
-                            index={index}
-                            slot={slot}
-                            errors={rowErrors}
-                            onChange={onChange}
-                          />
-                        </div>
-                        {rows.length > 1 && (
+                        <div className="create-termin__range">
+                          <div className="create-termin__group create-termin__group--time">
+                            <SegmentedFields
+                              fields={startFields}
+                              index={index}
+                              slot={slot}
+                              errors={rowErrors}
+                              onChange={onChange}
+                            />
+                          </div>
+                          <span className="create-termin__dash" aria-hidden="true">
+                            –
+                          </span>
+                          <div className="create-termin__group create-termin__group--time">
+                            <SegmentedFields
+                              fields={endFields}
+                              index={index}
+                              slot={slot}
+                              errors={rowErrors}
+                              onChange={onChange}
+                            />
+                          </div>
                           <Button
                             type="button"
                             style="tertiary"
@@ -332,31 +405,40 @@ export default function CreateTermin() {
                           >
                             <Icon name="delete" />
                           </Button>
+                        </div>
+                        {groups.length > 0 && (
+                          <div className="create-termin__row-errors">
+                            {groups.map((group) => (
+                              <ErrorMessage id={rowErrorId(id, group)} key={group}>
+                                {rowErrors[group]}
+                              </ErrorMessage>
+                            ))}
+                          </div>
                         )}
-                      </div>
-                      {Object.keys(rowErrors).length > 0 && (
-                        <ul className="create-termin__row-errors">
-                          {Object.entries(rowErrors).map(([group, message]) => (
-                            <li className="kern-error" key={group}>
-                              {message}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </fieldset>
-                  );
-                })}
-              </div>
+                      </fieldset>
+                    );
+                  })}
+                </div>
 
-              <Button
-                type="button"
-                style="secondary"
-                className="create-termin__add"
-                onClick={addRow}
-              >
-                <Icon name="add" />
-                <span className="kern-label">Zeitfenster hinzufügen</span>
-              </Button>
+                <Button
+                  id={ADD_BUTTON_ID}
+                  type="button"
+                  style="secondary"
+                  className="create-termin__add"
+                  disabled={atLimit}
+                  aria-describedby={atLimit ? "add-hint" : undefined}
+                  onClick={addRow}
+                >
+                  <Icon name="add" />
+                  <span className="kern-label">Zeitfenster hinzufügen</span>
+                </Button>
+                {atLimit && (
+                  <p className="kern-hint" id="add-hint">
+                    {`Sie können höchstens ${MAX_SLOTS} Zeitfenster angeben.`}
+                  </p>
+                )}
+                {shown.slots && <ErrorMessage id={SLOTS_ERROR_ID}>{shown.slots}</ErrorMessage>}
+              </div>
             </section>
 
             <div className="create-termin__actions">
