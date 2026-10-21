@@ -1,0 +1,10 @@
+.overview__content {
+  display: grid;
+  gap: var(--kern-metric-space-x-large);
+  justify-items: start;
+  padding-block: var(--kern-metric-space-x-large) var(--kern-metric-space-6x-large);
+}
+
+.overview__table {
+  width: 100%;
+}

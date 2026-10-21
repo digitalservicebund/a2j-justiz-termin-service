@@ -77,14 +77,14 @@ export default function Welcome() {
       className="welcome"
       breadcrumbs={[
         { label: "Startseite", href: "/", icon: "home" },
-        { label: "Gerichtstermin-Finder" },
+        { label: "Verhandlungstermin-Finder" },
       ]}
     >
       <section className="welcome__hero">
         <div className="welcome__hero-content">
-          <h1 className="kern-heading-x-large">Gerichtstermin-Finder</h1>
+          <h1 className="kern-heading-x-large">Verhandlungstermin-Finder</h1>
           <p className="kern-body kern-body--large kern-body--bold">
-            Der Gerichtstermin-Finder vereinfacht die Terminkoordination zwischen Gericht und
+            Der Verhandlungstermin-Finder vereinfacht die Terminkoordination zwischen Gericht und
             Verfahrensbeteiligten.
           </p>
           {invalidLink && (

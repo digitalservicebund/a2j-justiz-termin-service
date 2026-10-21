@@ -1,6 +1,6 @@
 import { Badge, type BadgeType } from "~/components/shared/Badge";
 import { Card } from "~/components/shared/Card";
-import { Icon } from "~/components/shared/Icon";
+import { Icon, type IconName } from "~/components/shared/Icon";
 import { formatSlotRange } from "~/components/shared/SchedulingShared";
 import { TextLabel } from "~/components/shared/TextLabel";
 import type { OverviewDto } from "~/core/services/schedulingQuery";
@@ -11,7 +11,7 @@ type Stage1Status = "not-started" | "complete";
 type Stage2Status = "not-started" | "in-progress" | "no-agreement" | "complete";
 type Stage3Status = "not-started" | "confirmed";
 
-type BadgeConfig = { type: BadgeType; icon: BadgeType; label: string };
+type BadgeConfig = { type: BadgeType; icon: IconName; label: string };
 
 const stage1Config: Record<Stage1Status, BadgeConfig> = {
   "not-started": { type: "info", icon: "info", label: "Not started" },

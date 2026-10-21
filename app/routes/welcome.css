@@ -4,7 +4,6 @@
   margin-inline: auto;
 }
 
-.welcome .page-shell__breadcrumbs,
 .welcome__hero {
   background-color: var(--kern-color-neutral-050);
 }

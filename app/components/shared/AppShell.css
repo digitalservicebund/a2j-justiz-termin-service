@@ -57,7 +57,8 @@
 }
 
 .page-shell__breadcrumbs {
-  padding-top: var(--kern-metric-space-default);
+  background-color: var(--kern-color-neutral-050);
+  padding-block: var(--kern-metric-space-default);
 }
 
 .page-shell__report {
@@ -100,18 +101,6 @@
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-.page-shell__unapproved {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-block: var(--kern-metric-space-10x-large);
-  background-color: var(--kern-color-layout-background-inverted);
-}
-
-.page-shell__unapproved .kern-btn {
-  background-color: var(--kern-color-layout-background-default);
 }
 
 @media (min-width: 64rem) {
