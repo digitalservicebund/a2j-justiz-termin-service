@@ -1,3 +1,5 @@
+import type { Page } from "@playwright/test";
+
 import { expect, signIn, test } from "./fixtures.ts";
 
 const TOO_FEW = "Geben Sie mindestens zwei Zeitfenster an.";
@@ -29,11 +31,11 @@ test.beforeEach(async ({ page, users }) => {
   await expect(page.getByRole("heading", { name: "Verhandlungsdaten" })).toBeVisible();
 });
 
-function windowRow(page: import("@playwright/test").Page, number: number) {
+function windowRow(page: Page, number: number) {
   return page.getByRole("group", { name: `Zeitfenster ${number}`, exact: true });
 }
 
-async function fillWindow(page: import("@playwright/test").Page, number: number, window: Window) {
+async function fillWindow(page: Page, number: number, window: Window) {
   const row = windowRow(page, number);
   const { day, month, year } = inDays(window.daysFromToday);
   await row.getByRole("textbox", { name: "Tag" }).fill(day);

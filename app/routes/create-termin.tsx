@@ -321,8 +321,7 @@ export default function CreateTermin() {
                 Geben Sie Ihre verfügbaren Zeitfenster an
               </h2>
 
-              <div
-                role="group"
+              <fieldset
                 aria-labelledby="zeitfenster"
                 aria-describedby={shown.slots ? SLOTS_ERROR_ID : undefined}
                 className={`create-termin__windows${shown.slots ? " kern-fieldset--error" : ""}`}
@@ -438,7 +437,7 @@ export default function CreateTermin() {
                   </p>
                 )}
                 {shown.slots && <ErrorMessage id={SLOTS_ERROR_ID}>{shown.slots}</ErrorMessage>}
-              </div>
+              </fieldset>
             </section>
 
             <div className="create-termin__actions">

@@ -32,6 +32,16 @@
   display: grid;
   gap: var(--kern-metric-space-default);
   justify-items: start;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.create-termin__windows.kern-fieldset--error {
+  border-left: var(--kern-metric-border-width-bold) solid
+    var(--kern-color-feedback-danger-contextual);
+  padding-left: var(--kern-metric-space-default);
 }
 
 .create-termin__rows {
