@@ -10,7 +10,7 @@ export type AppointmentStatus = "draft" | "open" | "confirmed" | "cancelled";
 export type ResponseStatus = "yes" | "no" | "maybe";
 export type LinkType = "individual" | "universal";
 
-export interface AppointmentsTable {
+export type AppointmentsTable = {
   id: Generated<string>;
   user_id: string; // Foreign key referencing better-auth "user.id"
   aktenzeichen: string;
@@ -19,17 +19,17 @@ export interface AppointmentsTable {
   confirmed_slot_id: string | null;
   created_at: Generated<Date>;
   updated_at: Generated<Date>;
-}
+};
 
-export interface TimeSlotsTable {
+export type TimeSlotsTable = {
   id: Generated<string>;
   appointment_id: string;
   start_time: Date | string;
   end_time: Date | string | null;
   created_at: Generated<Date>;
-}
+};
 
-export interface ParticipantsTable {
+export type ParticipantsTable = {
   id: Generated<string>;
   appointment_id: string;
   name: string;
@@ -38,16 +38,16 @@ export interface ParticipantsTable {
   last_accessed_at: Date | string | null;
   created_at: Generated<Date>;
   updated_at: Generated<Date>;
-}
+};
 
-export interface ParticipantResponsesTable {
+export type ParticipantResponsesTable = {
   id: Generated<string>;
   participant_id: string;
   slot_id: string;
   status: ResponseStatus;
   created_at: Generated<Date>;
   updated_at: Generated<Date>;
-}
+};
 
 type Timestamps = {
   createdAt: Generated<Date>;
