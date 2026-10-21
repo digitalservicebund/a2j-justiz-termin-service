@@ -1,4 +1,5 @@
-.kern-badge--default {
+/* Non-standard KERN badge type, implemented in JTS to match the Figma design. */
+.kern-badge--custom-grey {
   background: var(--kern-color-feedback-default-background);
   border: var(--kern-metric-border-width-light) solid var(--kern-color-feedback-default-contextual);
 }

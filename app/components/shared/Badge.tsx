@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 
 import "./Badge.css";
 
-export type BadgeType = "default" | "success" | "info" | "warning" | "danger";
+// "custom-grey" is not a standard KERN badge type; it is implemented in JTS (see Badge.css).
+export type BadgeType = "custom-grey" | "success" | "info" | "warning" | "danger";
 
 export function Badge({ type, children }: Readonly<{ type: BadgeType; children: ReactNode }>) {
   const content =

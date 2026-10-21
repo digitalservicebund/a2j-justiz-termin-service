@@ -27,7 +27,7 @@ const entries: OverviewEntry[] = [
   },
   { title: "574 C 65412/26", status: "Kein Zeitfenster passt", statusType: "danger" },
   { title: "574 C 65412/26", status: "Offen für Rückmeldungen", statusType: "info" },
-  { title: "574 C 65412/26", status: "Montag, 3. August 2026 um 13:30", statusType: "default" },
+  { title: "574 C 65412/26", status: "Montag, 3. August 2026 um 13:30", statusType: "custom-grey" },
 ];
 
 const statusIcons: Partial<Record<BadgeType, IconName>> = {
@@ -52,7 +52,7 @@ export default function Overview() {
       ]}
     >
       <div className="page-shell__content overview__content">
-        <h1 className="overview__heading">Übersicht</h1>
+        <h1 className="kern-sr-only">Übersicht</h1>
         <Button type="button">
           <Icon name="add" />
           <span className="kern-label">Terminumfrage erstellen</span>
