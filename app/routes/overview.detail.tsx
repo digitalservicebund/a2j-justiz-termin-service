@@ -24,6 +24,7 @@ export async function loader({ request, params }: { request: Request } & Params)
   if (!appointment) throw data("Not found", { status: 404 });
   if (appointment.status === "draft") throw redirect(`/overview/${encodeURIComponent(id)}/confirm`);
   const { aktenzeichen, confirmedSlot } = appointment;
+  const days = groupSlotsByDay(appointment.slots.map(rangeToSlot), " bis ");
 
   if (appointment.status === "confirmed") {
     // A confirmed appointment always has its slot; without it there is nothing to show.
@@ -32,12 +33,14 @@ export async function loader({ request, params }: { request: Request } & Params)
       user,
       aktenzeichen,
       state: "confirmed" as const,
+      // Once the Termin is over, the page looks back at it and lists the proposed windows.
+      past: confirmedSlot.end < new Date(),
       badge: describeStatus({ status: appointment.status, confirmedSlot }),
       termin: formatInstant(confirmedSlot.start),
+      days,
     };
   }
 
-  const days = groupSlotsByDay(appointment.slots.map(rangeToSlot), " bis ");
   if (appointment.status === "open") {
     const { origin } = new URL(request.url);
     return {
@@ -122,9 +125,14 @@ export default function OverviewDetail() {
                 {detail.badge.type === "success" && <Icon name="success" />}
                 <span className="kern-label">{detail.badge.text}</span>
               </Badge>
-              <h1 className="kern-heading-large">Der Termin ist am {detail.termin}.</h1>
+              <h1 className="kern-heading-large">
+                {detail.past
+                  ? `Der Termin war am ${detail.termin}`
+                  : `Der Termin ist am ${detail.termin}.`}
+              </h1>
             </header>
             <Verhandlungsdaten aktenzeichen={aktenzeichen} />
+            {detail.past && <Zeitfenster days={detail.days} />}
           </>
         ) : detail.state === "open" ? (
           <OpenForReplies
