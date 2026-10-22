@@ -23,7 +23,7 @@ test("an administrator can downgrade another CLI-provisioned administrator throu
   await expect(page).toHaveURL(`${baseURL}/`);
   await signIn(page, { ...target, roles: ["klaeger"] });
   expect((await page.request.get("/admin/users")).status()).toBe(403);
-  expect((await page.request.get("/klaeger")).status()).toBe(200);
+  expect((await page.request.get("/home")).status()).toBe(200);
 });
 
 test("administrator can create, edit, grant/revoke admin rights and delete users through the UI", async ({
