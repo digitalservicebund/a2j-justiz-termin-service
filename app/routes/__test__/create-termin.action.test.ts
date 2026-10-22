@@ -23,7 +23,7 @@ vi.mock("~/database/database", () => ({ getDb: () => ({ db: true }) }));
 const judge: AuthUser = {
   id: "1",
   name: "Muthig",
-  email: "muthig@justiz.niedersachsen.de",
+  email: "muthig@justiz.example.org",
   roles: ["richter"],
 };
 

@@ -8,7 +8,7 @@ import type { AuthUser } from "~/core/domain/user";
 const user: AuthUser = {
   id: "1",
   name: "Richterin Muthig",
-  email: "muthig@justiz.niedersachsen.de",
+  email: "muthig@justiz.example.org",
   roles: ["richter"],
 };
 

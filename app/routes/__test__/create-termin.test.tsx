@@ -37,7 +37,7 @@ vi.mock("~/adapters/session/session", () => ({
   requireRole: vi.fn().mockResolvedValue({
     id: "1",
     name: "Muthig",
-    email: "muthig@justiz.niedersachsen.de",
+    email: "muthig@justiz.example.org",
     roles: ["richter"],
   }),
 }));
