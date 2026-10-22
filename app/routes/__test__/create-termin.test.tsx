@@ -57,6 +57,10 @@ function renderPage() {
       loader: confirmLoader,
     },
     { path: "/overview", Component: () => <h1>Übersicht</h1> },
+    {
+      path: "/overview/:appointmentId/created",
+      Component: () => <h1>Sie haben die Terminumfrage erstellt.</h1>,
+    },
   ]);
   return render(<Stub initialEntries={["/overview/new"]} />);
 }
@@ -547,12 +551,14 @@ describe("CreateTermin review step", () => {
     );
   });
 
-  it("goes to the overview when the Terminumfrage is created", async () => {
+  it("shows the next steps when the Terminumfrage is created", async () => {
     await reviewStep();
 
     await userEvent.click(screen.getByRole("button", { name: "Terminumfrage erstellen" }));
 
-    expect(await screen.findByRole("heading", { name: "Übersicht" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Sie haben die Terminumfrage erstellt." }),
+    ).toBeInTheDocument();
     expect(publishAppointment).toHaveBeenCalledWith(expect.anything(), "1", "abc");
   });
 });
