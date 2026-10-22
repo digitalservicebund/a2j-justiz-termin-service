@@ -14,7 +14,7 @@ function buildSlotStatuses(c: Verfahren): SlotDecisionStatus[] {
   });
 }
 
-export type AppointmentQueries = {
+type AppointmentQueries = {
   getOverview(verfahrenId: string): OverviewDto;
 };
 

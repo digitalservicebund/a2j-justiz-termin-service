@@ -37,7 +37,7 @@ export type IconName =
   | "account-circle"
   | "calendar-today";
 
-export type IconSize = "small" | "default" | "large" | "x-large";
+type IconSize = "small" | "default" | "large" | "x-large";
 
 export type IconProps = {
   name: IconName;

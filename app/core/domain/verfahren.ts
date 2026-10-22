@@ -2,11 +2,8 @@ import { z } from "zod";
 
 export const PARTY_ROLES = ["KLAEGER", "BEKLAGTER"] as const;
 
- const PartyRoleSchema = z.enum(PARTY_ROLES);
+const PartyRoleSchema = z.enum(PARTY_ROLES);
 export type PartyRole = z.infer<typeof PartyRoleSchema>;
-
- const RoleSchema = z.enum(["RICHTER", "KLAEGER", "BEKLAGTER"]);
-export type Role = z.infer<typeof RoleSchema>;
 
 export const DecisionSchema = z.enum(["ACCEPT", "REJECT"]);
 export type Decision = z.infer<typeof DecisionSchema>;
@@ -29,7 +26,7 @@ export const TimeSlotsSchema = z
     message: "Each time slot must have a unique id.",
   });
 
- const VerfahrenSchema = z.object({
+const VerfahrenSchema = z.object({
   id: z.string(),
   name: z.string(),
   slots: z.array(TimeSlotSchema),
