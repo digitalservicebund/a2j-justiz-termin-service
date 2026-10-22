@@ -70,6 +70,30 @@ describe("overview detail route", () => {
     expect("days" in result && result.days).toHaveLength(2);
   });
 
+  it("marks a confirmed appointment as past once its slot is over and returns the windows", async () => {
+    vi.mocked(getAppointment).mockResolvedValue({
+      id: "a1",
+      status: "confirmed",
+      aktenzeichen: "574 C 65412/26",
+      slots,
+      // 13:30 Berlin time in August is 11:30 UTC; Monday 3 August 2020.
+      confirmedSlot: {
+        start: new Date("2020-08-03T11:30:00Z"),
+        end: new Date("2020-08-03T12:30:00Z"),
+      },
+    });
+
+    const result = await loader({ request: request(), params });
+
+    expect(result).toMatchObject({
+      state: "confirmed",
+      past: true,
+      badge: { type: "custom-grey" },
+      termin: expect.stringMatching(/^\p{L}+, 3\. August 2020 um 13:30$/u),
+    });
+    expect("days" in result && result.days).toHaveLength(2);
+  });
+
   it("answers 404 for a confirmed appointment without a confirmed slot", async () => {
     vi.mocked(getAppointment).mockResolvedValue({
       id: "a1",
@@ -101,6 +125,7 @@ describe("overview detail route", () => {
 
     expect(result).toMatchObject({
       state: "confirmed",
+      past: false,
       aktenzeichen: "574 C 65412/26",
       badge: { type: "success" },
     });
@@ -147,6 +172,38 @@ describe("overview detail route", () => {
 });
 
 describe("OverviewDetail", () => {
+  it("looks back at a past appointment and lists its time windows", async () => {
+    vi.mocked(requireRole).mockResolvedValue(judge);
+    vi.mocked(getAppointment).mockResolvedValue({
+      id: "a1",
+      status: "confirmed",
+      aktenzeichen: "574 C 65412/26",
+      slots,
+      confirmedSlot: {
+        start: new Date("2020-08-03T11:30:00Z"),
+        end: new Date("2020-08-03T12:30:00Z"),
+      },
+    });
+    const Stub = createRoutesStub([
+      { path: "/overview/:appointmentId", Component: OverviewDetail, loader },
+      { path: "/overview", Component: () => <h1>Übersicht</h1> },
+    ]);
+
+    render(<Stub initialEntries={["/overview/a1"]} />);
+
+    expect(
+      await screen.findByRole("heading", {
+        level: 1,
+        name: /^Der Termin war am \p{L}+, 3\. August 2020 um 13:30$/u,
+      }),
+    ).toBeVisible();
+    // The badge carries the date only, without the announcement.
+    expect(screen.getByText(/^\p{L}+, 3\. August 2020 um 13:30$/u)).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Verhandlungsdaten" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Zeitfenster" })).toBeVisible();
+    expect(screen.getByText("09:00 bis 11:00")).toBeVisible();
+  });
+
   it("shows an open appointment with its actions and time windows", async () => {
     vi.mocked(requireRole).mockResolvedValue(judge);
     vi.mocked(getAppointment).mockResolvedValue({

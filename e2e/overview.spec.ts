@@ -212,3 +212,30 @@ test("an open termin survey opens a detail page with its survey link", async ({
   const copied = await page.evaluate(() => navigator.clipboard.readText());
   expect(copied).toMatch(new RegExp(`/umfrage/${id}$`));
 });
+
+test("a past termin opens a detail page that looks back at it", async ({ page, users, db }) => {
+  const user = await users.create({ roles: ["richter"] });
+  // 13:30 Berlin time in August is 11:30 UTC.
+  const id = await seed(db, user.id, "574 C 65412/26", "confirmed", {
+    start: "2020-08-03T11:30:00Z",
+    end: "2020-08-03T12:30:00Z",
+  });
+  await db
+    .insertInto("time_slot")
+    .values({
+      appointment_id: id,
+      start_time: "2020-07-27T08:00:00Z",
+      end_time: "2020-07-27T12:00:00Z",
+    })
+    .execute();
+
+  await signIn(page, user);
+  await page.goto(`/overview/${id}`);
+
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    /^Der Termin war am \p{L}+, 3\. August 2020 um 13:30$/u,
+  );
+  await expect(page.getByRole("heading", { name: "Zeitfenster" })).toBeVisible();
+  await expect(page.getByText("27. Juli 2020")).toBeVisible();
+  await expect(page.getByText("10:00 bis 14:00")).toBeVisible();
+});
