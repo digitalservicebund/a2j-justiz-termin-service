@@ -1,0 +1,6 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": ["app/app.ts!", "app/database/migrations/*.ts!", "scripts/*.ts!"],
+  "project": ["**/*.{js,ts,tsx}!", "!e2e/**!", "!vitest.setup.ts!"],
+  "tags": ["-lintignore"]
+}
