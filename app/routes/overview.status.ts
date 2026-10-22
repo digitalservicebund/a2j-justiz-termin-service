@@ -15,7 +15,7 @@ const timeFormat = new Intl.DateTimeFormat("de-DE", {
   timeZone: "Europe/Berlin",
 });
 
-const formatInstant = (instant: Date) =>
+export const formatInstant = (instant: Date) =>
   `${dateFormat.format(instant)} um ${timeFormat.format(instant)}`;
 
 export type StatusBadge = { type: BadgeType; text: string };
