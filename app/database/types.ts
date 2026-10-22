@@ -7,10 +7,10 @@ import type { UserRole } from "../core/domain/user.ts";
 // "confirmed": a given time_slot has been chosen
 // "cancelled": no time_slot was possible for all participants
 export type AppointmentStatus = "draft" | "open" | "confirmed" | "cancelled";
-export type ResponseStatus = "yes" | "no" | "maybe";
-export type LinkType = "individual" | "universal";
+type ResponseStatus = "yes" | "no" | "maybe";
+type LinkType = "individual" | "universal";
 
-export type AppointmentsTable = {
+type AppointmentsTable = {
   id: Generated<string>;
   user_id: string; // Foreign key referencing better-auth "user.id"
   aktenzeichen: string;
@@ -24,7 +24,7 @@ export type AppointmentsTable = {
   updated_at: Generated<Date>;
 };
 
-export type TimeSlotsTable = {
+type TimeSlotsTable = {
   id: Generated<string>;
   appointment_id: string;
   start_time: Date | string;
@@ -32,7 +32,7 @@ export type TimeSlotsTable = {
   created_at: Generated<Date>;
 };
 
-export type ParticipantsTable = {
+type ParticipantsTable = {
   id: Generated<string>;
   appointment_id: string;
   name: string;
@@ -43,7 +43,7 @@ export type ParticipantsTable = {
   updated_at: Generated<Date>;
 };
 
-export type ParticipantResponsesTable = {
+type ParticipantResponsesTable = {
   id: Generated<string>;
   participant_id: string;
   slot_id: string;
@@ -62,7 +62,7 @@ type DefaultTimestamps = {
   updatedAt: Generated<Date>;
 };
 
-export type UserTable = DefaultTimestamps & {
+type UserTable = DefaultTimestamps & {
   id: string;
   name: string;
   email: string;

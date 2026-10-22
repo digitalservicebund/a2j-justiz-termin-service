@@ -3,7 +3,7 @@ import type { Kysely } from "kysely";
 import type { AppointmentStatus, Database } from "../../database/types.ts";
 import { logInfo } from "../../lib/logging.ts";
 
-export type TimeRange = { start: Date; end: Date };
+type TimeRange = { start: Date; end: Date };
 
 export type AppointmentDraft = { aktenzeichen: string; slots: TimeRange[] };
 

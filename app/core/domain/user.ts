@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+/**
+ * Exported so tests can iterate over every role via `UserRoleSchema.options`.
+ * Production code only uses it inside this module, so `knip --production` would
+ * report it as unused.
+ * @public
+ */
 export const UserRoleSchema = z.enum(["admin", "richter", "klaeger", "beklagter"]);
 export type UserRole = z.infer<typeof UserRoleSchema>;
 
