@@ -72,7 +72,7 @@ export async function messages(request: APIRequestContext, email: string) {
     .messages.filter((message) => message.To.some((recipient) => recipient.Address === email));
 }
 
-export async function readMagicLink(request: APIRequestContext, email: string): Promise<string> {
+async function readMagicLink(request: APIRequestContext, email: string): Promise<string> {
   await expect.poll(async () => (await messages(request, email)).length).toBeGreaterThan(0);
   const [message] = await messages(request, email);
   const response = await request.get(`${mailpitURL}/api/v1/message/${message!.ID}`, {

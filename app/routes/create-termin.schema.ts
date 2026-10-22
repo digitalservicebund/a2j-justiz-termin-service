@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const MIN_SLOTS = 2;
 export const MAX_SLOTS = 20;
-export const MAX_AKTENZEICHEN_LENGTH = 50;
+const MAX_AKTENZEICHEN_LENGTH = 50;
 
 export const messages = {
   aktenzeichenRequired: "Geben Sie ein Aktenzeichen an.",
@@ -18,7 +18,7 @@ export const messages = {
   tooManySlots: `Geben Sie höchstens ${MAX_SLOTS} Zeitfenster an.`,
 };
 
-export const slotFields = [
+const slotFields = [
   "day",
   "month",
   "year",
@@ -92,7 +92,7 @@ function parseMinutes(hour: string, minute: string): number | null {
 
 type CompleteSlot = { index: number; date: string; start: number; end: number };
 
-export function createTerminSchema(now: Date = new Date()) {
+function createTerminSchema(now: Date = new Date()) {
   return z
     .object({
       aktenzeichen: z
