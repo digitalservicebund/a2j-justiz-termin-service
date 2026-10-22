@@ -12,13 +12,10 @@ import { describeStatus } from "./overview.status";
 
 import "./overview.css";
 
-// Drafts continue on their confirmation page, cancelled and confirmed appointments have a detail
-// page; open ones have no page yet.
-function detailHref(id: string, status: AppointmentStatus): string | null {
+// Drafts continue on their confirmation page, all other states have a detail page.
+function detailHref(id: string, status: AppointmentStatus): string {
   const encoded = encodeURIComponent(id);
-  if (status === "draft") return `/overview/${encoded}/confirm`;
-  if (status === "cancelled" || status === "confirmed") return `/overview/${encoded}`;
-  return null;
+  return status === "draft" ? `/overview/${encoded}/confirm` : `/overview/${encoded}`;
 }
 
 export async function loader({ request }: { request: Request }) {
@@ -80,13 +77,9 @@ export default function Overview() {
                 return (
                   <tr className="kern-table__row" key={id}>
                     <td className="kern-table__cell">
-                      {href ? (
-                        <Link className="kern-link" to={href}>
-                          {aktenzeichen}
-                        </Link>
-                      ) : (
-                        aktenzeichen
-                      )}
+                      <Link className="kern-link" to={href}>
+                        {aktenzeichen}
+                      </Link>
                     </td>
                     <td className="kern-table__cell">
                       <Badge type={badge.type}>

@@ -20,6 +20,12 @@
   justify-items: start;
 }
 
+.overview-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kern-metric-space-default);
+}
+
 .overview-detail__section {
   display: grid;
   gap: var(--kern-metric-space-small);

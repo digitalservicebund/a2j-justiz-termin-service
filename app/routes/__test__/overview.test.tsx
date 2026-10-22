@@ -53,7 +53,7 @@ describe("Overview", () => {
     expect(listAppointments).toHaveBeenCalledWith({ db: true }, "u1");
   });
 
-  it("links drafts to their confirmation page and cancelled and confirmed ones to their detail page", async () => {
+  it("links drafts to their confirmation page and all other states to their detail page", async () => {
     vi.mocked(listAppointments).mockResolvedValue([
       { id: "a", aktenzeichen: "574 C 1/26", status: "draft", confirmedSlot: null },
       { id: "b", aktenzeichen: "574 C 2/26", status: "open", confirmedSlot: null },
@@ -69,7 +69,10 @@ describe("Overview", () => {
       "/overview/a/confirm",
     );
     const openRow = screen.getByText("574 C 2/26").closest("tr")!;
-    expect(within(openRow).queryByRole("link")).not.toBeInTheDocument();
+    expect(within(openRow).getByRole("link", { name: "574 C 2/26" })).toHaveAttribute(
+      "href",
+      "/overview/b",
+    );
     const cancelledRow = screen.getByText("574 C 3/26").closest("tr")!;
     expect(within(cancelledRow).getByRole("link", { name: "574 C 3/26" })).toHaveAttribute(
       "href",

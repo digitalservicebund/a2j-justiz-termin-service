@@ -52,17 +52,22 @@ describe("overview detail route", () => {
     expect(getAppointment).toHaveBeenCalledWith({ db: true }, "1", "a1");
   });
 
-  it("answers 404 for an open appointment, which has no detail page yet", async () => {
+  it("returns the windows and the survey link of an open appointment", async () => {
     vi.mocked(getAppointment).mockResolvedValue({
       id: "a1",
       status: "open",
-      aktenzeichen: "A 1",
+      aktenzeichen: "574 C 65412/26",
       slots,
     });
 
-    await expect(loader({ request: request(), params })).rejects.toMatchObject({
-      init: { status: 404 },
+    const result = await loader({ request: request(), params });
+
+    expect(result).toMatchObject({
+      state: "open",
+      aktenzeichen: "574 C 65412/26",
+      surveyUrl: "http://localhost:3000/umfrage/a1",
     });
+    expect("days" in result && result.days).toHaveLength(2);
   });
 
   it("answers 404 for a confirmed appointment without a confirmed slot", async () => {
@@ -142,6 +147,36 @@ describe("overview detail route", () => {
 });
 
 describe("OverviewDetail", () => {
+  it("shows an open appointment with its actions and time windows", async () => {
+    vi.mocked(requireRole).mockResolvedValue(judge);
+    vi.mocked(getAppointment).mockResolvedValue({
+      id: "a1",
+      status: "open",
+      aktenzeichen: "574 C 65412/26",
+      slots,
+    });
+    const Stub = createRoutesStub([
+      { path: "/overview/:appointmentId", Component: OverviewDetail, loader },
+      { path: "/overview", Component: () => <h1>Übersicht</h1> },
+    ]);
+
+    render(<Stub initialEntries={["/overview/a1"]} />);
+
+    expect(
+      await screen.findByRole("heading", {
+        level: 1,
+        name: "Die Terminumfrage ist aktiv und die Verfahrensbeteiligten können ihre Verfügbarkeiten teilen.",
+      }),
+    ).toBeVisible();
+    expect(screen.getByText("Offen für Rückmeldungen")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Termin auswählen" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Link zur Terminumfrage kopieren" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Verhandlungsdaten" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Zeitfenster" })).toBeVisible();
+    expect(screen.getByText("09:00 bis 11:00")).toBeVisible();
+    expect(screen.queryByRole("link", { name: "Terminumfrage erstellen" })).not.toBeInTheDocument();
+  });
+
   it("announces the date of a confirmed appointment", async () => {
     vi.mocked(requireRole).mockResolvedValue(judge);
     vi.mocked(getAppointment).mockResolvedValue({

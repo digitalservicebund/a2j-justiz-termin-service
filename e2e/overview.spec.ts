@@ -76,8 +76,7 @@ test("overview lists the user's termin surveys with their status, newest first",
   // Only the judge's own appointments are listed.
   await expect(page.getByText("574 C 9/26")).toHaveCount(0);
 
-  // A draft continues on its confirmation page; the other rows are not links.
-  await expect(page.getByRole("link", { name: "574 C 2/26" })).toHaveCount(0);
+  // A draft continues on its confirmation page.
   await page.getByRole("link", { name: "574 C 5/26" }).click();
   await expect(page).toHaveURL(new RegExp(`/overview/${draftId}/confirm$`));
 });
@@ -176,4 +175,40 @@ test("a confirmed termin survey opens a detail page announcing the date", async 
 
   await page.getByRole("link", { name: "Zurück zu den Terminumfragen" }).click();
   await expect(page).toHaveURL(/\/overview$/);
+});
+
+test("an open termin survey opens a detail page with its survey link", async ({
+  page,
+  users,
+  db,
+  context,
+}) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  const user = await users.create({ roles: ["richter"] });
+  const id = await seed(db, user.id, "574 C 65412/26", "open");
+  await db
+    .insertInto("time_slot")
+    .values([
+      { appointment_id: id, start_time: "2026-09-17T08:00:00Z", end_time: "2026-09-17T12:00:00Z" },
+      { appointment_id: id, start_time: "2026-09-21T07:00:00Z", end_time: "2026-09-21T09:00:00Z" },
+    ])
+    .execute();
+
+  await signIn(page, user);
+  await page.goto("/overview");
+  await page.getByRole("link", { name: "574 C 65412/26" }).click();
+
+  await expect(page).toHaveURL(new RegExp(`/overview/${id}$`));
+  await expect(page.getByText("Offen für Rückmeldungen")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Die Terminumfrage ist aktiv und die Verfahrensbeteiligten können ihre Verfügbarkeiten teilen.",
+  );
+  await expect(page.getByRole("button", { name: "Termin auswählen" })).toBeVisible();
+  await expect(page.getByText("10:00 bis 14:00")).toBeVisible();
+  await expect(page.getByText("21. September 2026")).toBeVisible();
+
+  await page.getByRole("button", { name: "Link zur Terminumfrage kopieren" }).click();
+  await expect(page.getByRole("button", { name: "Link kopiert" })).toBeVisible();
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  expect(copied).toMatch(new RegExp(`/umfrage/${id}$`));
 });
