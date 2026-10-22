@@ -1,0 +1,29 @@
+.create-termin-review__bulk {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kern-metric-space-default);
+}
+
+/* The summary sits on a white surface in the flow-page design. */
+.create-termin-review__summary {
+  align-items: flex-start;
+  background-color: var(--kern-color-layout-background-default);
+}
+
+.create-termin-review__summary .kern-description-list {
+  width: 100%;
+}
+
+.create-termin-review__summary .kern-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.create-termin-review__times {
+  margin: 0;
+  padding: 0;
+}

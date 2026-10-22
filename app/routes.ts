@@ -5,6 +5,7 @@ export default [
   route("home", "routes/home.tsx"),
   route("overview", "routes/overview.tsx"),
   route("overview/new", "routes/create-termin.tsx"),
+  route("overview/:appointmentId/confirm", "routes/create-termin.confirm.tsx"),
   route("admin/users", "routes/admin-users.tsx"),
   route("api/auth/*", "routes/auth.ts"),
   route("richter", "routes/richter.tsx"),

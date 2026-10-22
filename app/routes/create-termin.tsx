@@ -9,41 +9,82 @@ import {
   useNavigation,
 } from "react-router";
 
+import {
+  createDraftAppointment,
+  getAppointment,
+  updateDraftAppointment,
+} from "~/adapters/appointments/appointments.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { Button } from "~/components/shared/Button";
 import { Icon } from "~/components/shared/Icon";
+import { getDb } from "~/database/database";
 
+import { createTerminBreadcrumbs } from "./create-termin.review";
 import {
   emptySlot,
+  isEmptySlot,
   MAX_SLOTS,
   messages,
   MIN_SLOTS,
   parseCreateTerminForm,
   validateCreateTermin,
   type CreateTerminErrors,
+  type CreateTerminValues,
   type SlotErrorGroup,
   type SlotField,
   type SlotInput,
 } from "./create-termin.schema";
+import { rangeToSlot, slotToRange } from "./create-termin.slots";
 
 import "./create-termin.css";
 
 const INITIAL_ROWS = 3;
 
 export async function loader({ request }: { request: Request }) {
-  return { user: await requireRole(request, "richter") };
+  const user = await requireRole(request, "richter");
+  const draftId = new URL(request.url).searchParams.get("entwurf");
+  if (!draftId) return { user, draft: null };
+
+  // Going back from the review reopens the saved draft.
+  const appointment = await getAppointment(getDb(), user.id, draftId);
+  if (!appointment) throw data("Not found", { status: 404 });
+  if (appointment.status !== "draft") throw redirect("/overview");
+  return {
+    user,
+    draft: {
+      id: appointment.id,
+      values: {
+        aktenzeichen: appointment.aktenzeichen,
+        slots: appointment.slots.map(rangeToSlot),
+      },
+    },
+  };
 }
 
 export async function action({ request }: { request: Request }) {
-  await requireRole(request, "richter");
-  const values = parseCreateTerminForm(await request.formData());
+  const user = await requireRole(request, "richter");
+  const formData = await request.formData();
+  const values = parseCreateTerminForm(formData);
+
   const result = validateCreateTermin(values);
   if (!result.success) {
     return data({ values, errors: result.errors }, { status: 400 });
   }
-  // The next step of the flow is not designed yet and nothing is persisted.
-  return redirect("/overview");
+
+  const appointment = {
+    aktenzeichen: values.aktenzeichen.trim(),
+    slots: values.slots.filter((slot) => !isEmptySlot(slot)).map(slotToRange),
+  };
+  const draftId = formData.get("appointmentId");
+  if (typeof draftId === "string" && draftId) {
+    const updated = await updateDraftAppointment(getDb(), user.id, draftId, appointment);
+    if (!updated) throw data("Not found", { status: 404 });
+    return redirect(`/overview/${encodeURIComponent(draftId)}/confirm`);
+  }
+
+  const id = await createDraftAppointment(getDb(), user.id, appointment);
+  return redirect(`/overview/${id}/confirm`);
 }
 
 type Row = { id: number; slot: SlotInput };
@@ -202,14 +243,30 @@ function Captions({ fields }: Readonly<{ fields: FieldConfig[] }>) {
   ));
 }
 
+type Result = { values: CreateTerminValues; errors: CreateTerminErrors };
+
 export default function CreateTermin() {
-  const { user } = useLoaderData<typeof loader>();
+  const { user, draft } = useLoaderData<typeof loader>();
   const result = useActionData<typeof action>();
+
+  return (
+    <AppShell user={user} breadcrumbs={createTerminBreadcrumbs}>
+      <CreateTerminForm draft={draft} result={result} />
+    </AppShell>
+  );
+}
+
+function CreateTerminForm({
+  draft,
+  result,
+}: Readonly<{ draft: { id: string; values: CreateTerminValues } | null; result?: Result }>) {
   const pending = useNavigation().state !== "idle";
 
-  const nextId = useRef(INITIAL_ROWS);
-  const [aktenzeichen, setAktenzeichen] = useState(result?.values.aktenzeichen ?? "");
-  const [rows, setRows] = useState<Row[]>(() => initialRows(result?.values.slots));
+  // What the user just submitted wins over the saved draft.
+  const initial = result?.values ?? draft?.values;
+  const nextId = useRef(Math.max(INITIAL_ROWS, initial?.slots.length ?? 0));
+  const [aktenzeichen, setAktenzeichen] = useState(initial?.aktenzeichen ?? "");
+  const [rows, setRows] = useState<Row[]>(() => initialRows(initial?.slots));
   // Set when the user tries to remove a row while only the minimum number is left.
   const [removeBlocked, setRemoveBlocked] = useState(false);
 
@@ -274,18 +331,12 @@ export default function CreateTermin() {
   const atLimit = rows.length >= MAX_SLOTS;
 
   return (
-    <AppShell
-      user={user}
-      breadcrumbs={[
-        { label: "Startseite", href: "/", icon: "home" },
-        { label: "Verhandlungstermin-Finder", href: "/home" },
-        { label: "Erstellen der Terminumfrage" },
-      ]}
-    >
+    <>
       <div className="create-termin">
         <div className="page-shell__content">
           <h1 className="kern-sr-only">Erstellen der Terminumfrage</h1>
           <Form method="post" className="create-termin__form" noValidate>
+            {draft && <input type="hidden" name="appointmentId" value={draft.id} />}
             <section aria-labelledby="verhandlungsdaten" className="create-termin__section">
               <h2 className="kern-heading-large" id="verhandlungsdaten">
                 Verhandlungsdaten
@@ -451,6 +502,6 @@ export default function CreateTermin() {
           </Form>
         </div>
       </div>
-    </AppShell>
+    </>
   );
 }
