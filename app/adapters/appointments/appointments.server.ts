@@ -10,7 +10,7 @@ export type AppointmentDraft = { aktenzeichen: string; slots: TimeRange[] };
 export type Appointment = AppointmentDraft & {
   id: string;
   status: AppointmentStatus;
-  // The chosen time slot, once the appointment is confirmed. It is one of the slots.
+  // The chosen window, once the appointment is confirmed. It lies within one of the slots.
   confirmedSlot?: TimeRange | null;
 };
 
@@ -77,7 +77,14 @@ export async function getAppointment(
 ): Promise<Appointment | undefined> {
   const appointment = await db
     .selectFrom("appointment")
-    .select(["id", "aktenzeichen", "status", "confirmed_slot_id"])
+    .select([
+      "id",
+      "aktenzeichen",
+      "status",
+      "confirmed_slot_id",
+      "confirmed_start_time",
+      "confirmed_end_time",
+    ])
     .where("id", "=", id)
     .where("user_id", "=", userId)
     .executeTakeFirst();
@@ -96,14 +103,63 @@ export async function getAppointment(
     end: new Date(end_time ?? start_time),
   });
   const confirmed = slots.find(({ id: slotId }) => slotId === appointment.confirmed_slot_id);
+  // A window chosen within a slot wins over the whole slot, which older rows still rely on.
+  const confirmedWindow =
+    appointment.confirmed_start_time && appointment.confirmed_end_time
+      ? {
+          start: new Date(appointment.confirmed_start_time),
+          end: new Date(appointment.confirmed_end_time),
+        }
+      : null;
 
   return {
     id: appointment.id,
     aktenzeichen: appointment.aktenzeichen,
     status: appointment.status,
     slots: slots.map(toRange),
-    confirmedSlot: confirmed ? toRange(confirmed) : null,
+    confirmedSlot: confirmedWindow ?? (confirmed ? toRange(confirmed) : null),
   };
+}
+
+// Confirms the window, which has to lie within one of the proposed slots, for an open appointment.
+// Returns false when the user has no such open appointment or no slot contains the window.
+export async function confirmAppointment(
+  db: Kysely<Database>,
+  userId: string,
+  id: string,
+  { start, end }: TimeRange,
+): Promise<boolean> {
+  const confirmed = await db.transaction().execute(async (trx) => {
+    const slot = await trx
+      .selectFrom("time_slot")
+      .innerJoin("appointment", "appointment.id", "time_slot.appointment_id")
+      .select("time_slot.id")
+      .where("appointment.id", "=", id)
+      .where("appointment.user_id", "=", userId)
+      .where("appointment.status", "=", "open")
+      .where("time_slot.start_time", "<=", start)
+      .where("time_slot.end_time", ">=", end)
+      .executeTakeFirst();
+    if (!slot) return false;
+
+    const updated = await trx
+      .updateTable("appointment")
+      .set({
+        status: "confirmed",
+        confirmed_slot_id: slot.id,
+        confirmed_start_time: start,
+        confirmed_end_time: end,
+        updated_at: new Date(),
+      })
+      .where("id", "=", id)
+      .where("user_id", "=", userId)
+      .where("status", "=", "open")
+      .returning("id")
+      .executeTakeFirst();
+    return Boolean(updated);
+  });
+  if (confirmed) logInfo(`User ${userId} confirmed appointment ${id}`);
+  return confirmed;
 }
 
 // Returns false when the user has no draft with this id.
@@ -128,7 +184,7 @@ export type AppointmentSummary = {
   id: string;
   aktenzeichen: string;
   status: AppointmentStatus;
-  // The chosen time slot, once the appointment is confirmed.
+  // The chosen window, once the appointment is confirmed.
   confirmedSlot: TimeRange | null;
 };
 
@@ -144,6 +200,8 @@ export async function listAppointments(
       "appointment.id",
       "appointment.aktenzeichen",
       "appointment.status",
+      "appointment.confirmed_start_time",
+      "appointment.confirmed_end_time",
       "time_slot.start_time",
       "time_slot.end_time",
     ])
@@ -152,10 +210,15 @@ export async function listAppointments(
     .orderBy("appointment.id")
     .execute();
 
-  return rows.map(({ start_time, end_time, ...appointment }) => ({
-    ...appointment,
-    confirmedSlot: start_time
-      ? { start: new Date(start_time), end: new Date(end_time ?? start_time) }
-      : null,
-  }));
+  return rows.map(
+    ({ start_time, end_time, confirmed_start_time, confirmed_end_time, ...appointment }) => {
+      // A window chosen within a slot wins over the whole slot.
+      const start = confirmed_start_time ?? start_time;
+      const end = confirmed_end_time ?? end_time;
+      return {
+        ...appointment,
+        confirmedSlot: start ? { start: new Date(start), end: new Date(end ?? start) } : null,
+      };
+    },
+  );
 }

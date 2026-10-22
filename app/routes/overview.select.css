@@ -1,0 +1,73 @@
+/* The flow-page background spans the full width; the content sits in the page container. */
+.overview-select {
+  background-color: var(--kern-color-layout-background-hued);
+  padding-block: var(--kern-metric-space-large) calc(var(--kern-metric-space-6x-large) * 2);
+}
+
+.overview-select__layout {
+  display: grid;
+  gap: var(--kern-metric-space-x-large);
+  align-items: start;
+  width: min(100% - 2 * var(--kern-metric-space-default), 94rem);
+  margin-inline: auto;
+}
+
+.overview-select__form {
+  display: grid;
+  gap: var(--kern-metric-space-x-large);
+  /* The flow-page form column is 992px wide in the design; KERN has no token for it. */
+  width: min(100%, 62rem);
+}
+
+.overview-select__fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.overview-select__fieldset.kern-fieldset--error {
+  border-left: var(--kern-metric-border-width-bold) solid
+    var(--kern-color-feedback-danger-contextual);
+  padding-left: var(--kern-metric-space-default);
+}
+
+/* Inputs sit on a white surface in the flow-page design. */
+.overview-select__form .kern-form-input__input {
+  background-color: var(--kern-color-layout-background-default);
+}
+
+.overview-select__time {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--kern-metric-space-small);
+}
+
+/* The colon is centered on the 48px inputs, not on their captions. */
+.overview-select__colon {
+  padding-bottom: var(--kern-metric-space-x-small);
+}
+
+.overview-select__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kern-metric-space-default);
+  padding-top: var(--kern-metric-space-default);
+}
+
+/* The Aktenzeichen takes a column of its own next to the form on wide screens. */
+@media (min-width: 64rem) {
+  .overview-select__layout {
+    /* The form starts 528px from the page container in the design, which includes the gap. */
+    grid-template-columns: 31rem minmax(0, 1fr);
+  }
+}
+
+/* The review is wider than the survey forms in the design, and sits closer to the breadcrumb. */
+.overview-select-confirm.create-termin {
+  padding-block-start: var(--kern-metric-space-2x-large);
+}
+
+.overview-select-confirm .create-termin__form {
+  width: min(100%, 54rem);
+}

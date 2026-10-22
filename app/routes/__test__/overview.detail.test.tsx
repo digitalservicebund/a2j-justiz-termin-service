@@ -226,7 +226,10 @@ describe("OverviewDetail", () => {
       }),
     ).toBeVisible();
     expect(screen.getByText("Offen für Rückmeldungen")).toBeVisible();
-    expect(screen.getByRole("button", { name: "Termin auswählen" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Termin auswählen" })).toHaveAttribute(
+      "href",
+      "/overview/a1/select",
+    );
     expect(screen.getByRole("button", { name: "Link zur Terminumfrage kopieren" })).toBeVisible();
     expect(screen.getByRole("heading", { name: "Verhandlungsdaten" })).toBeVisible();
     expect(screen.getByRole("heading", { name: "Zeitfenster" })).toBeVisible();

@@ -4,7 +4,6 @@ import { getAppointment } from "~/adapters/appointments/appointments.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { Badge } from "~/components/shared/Badge";
-import { Button } from "~/components/shared/Button";
 import { CopyLinkButton } from "~/components/shared/CopyLinkButton";
 import { Icon } from "~/components/shared/Icon";
 import { getDb } from "~/database/database";
@@ -47,6 +46,7 @@ export async function loader({ request, params }: { request: Request } & Params)
       user,
       aktenzeichen,
       state: "open" as const,
+      selectUrl: `/overview/${encodeURIComponent(id)}/select`,
       days,
       surveyUrl: `${origin}/umfrage/${encodeURIComponent(id)}`,
     };
@@ -138,6 +138,7 @@ export default function OverviewDetail() {
           <OpenForReplies
             aktenzeichen={aktenzeichen}
             days={detail.days}
+            selectUrl={detail.selectUrl}
             surveyUrl={detail.surveyUrl}
           />
         ) : (
@@ -151,8 +152,9 @@ export default function OverviewDetail() {
 function OpenForReplies({
   aktenzeichen,
   days,
+  selectUrl,
   surveyUrl,
-}: Readonly<{ aktenzeichen: string; days: DayWindows[]; surveyUrl: string }>) {
+}: Readonly<{ aktenzeichen: string; days: DayWindows[]; selectUrl: string; surveyUrl: string }>) {
   return (
     <>
       <header className="overview-detail__header">
@@ -167,11 +169,10 @@ function OpenForReplies({
       </header>
 
       <div className="overview-detail__actions">
-        {/* Choosing the final Termin is not designed yet, so the button has no action. */}
-        <Button type="button">
+        <Link className="kern-btn kern-btn--primary" to={selectUrl}>
           <Icon name="check" />
           <span className="kern-label">Termin auswählen</span>
-        </Button>
+        </Link>
         <CopyLinkButton url={surveyUrl} />
       </div>
 

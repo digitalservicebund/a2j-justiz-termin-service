@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import {
   data,
   Form,
@@ -17,6 +17,7 @@ import {
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { Button } from "~/components/shared/Button";
+import { ErrorMessage } from "~/components/shared/ErrorMessage";
 import { Icon } from "~/components/shared/Icon";
 import { getDb } from "~/database/database";
 
@@ -169,15 +170,6 @@ function firstErrorTarget(errors: CreateTerminErrors): string | null {
     return fieldId(index, firstFieldOfGroup[group!]);
   }
   return errors.slots ? ADD_BUTTON_ID : null;
-}
-
-function ErrorMessage({ id, children }: Readonly<{ id: string; children: ReactNode }>) {
-  return (
-    <p className="kern-error" id={id} role="alert">
-      <span className="kern-icon kern-icon--danger" aria-hidden="true"></span>
-      <span className="kern-body">{children}</span>
-    </p>
-  );
 }
 
 function SegmentedFields({
