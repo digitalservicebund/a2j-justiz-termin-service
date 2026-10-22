@@ -35,7 +35,7 @@ export async function action({ request, params }: { request: Request } & Params)
   }
   if (intent === "create") {
     if (!(await publishAppointment(getDb(), user.id, id))) throw notFound();
-    return redirect("/overview");
+    return redirect(`/overview/${encodeURIComponent(id)}/created`);
   }
   throw data("Bad request", { status: 400 });
 }

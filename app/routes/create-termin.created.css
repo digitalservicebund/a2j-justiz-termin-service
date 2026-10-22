@@ -1,0 +1,109 @@
+.create-termin-created {
+  display: grid;
+  gap: var(--kern-metric-space-4x-large);
+  padding-block: var(--kern-metric-space-large) var(--kern-metric-space-6x-large);
+}
+
+/* The banner is wider than the text column, as in the result page design. */
+.create-termin-created__banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--kern-metric-space-default);
+  width: min(100% - 2 * var(--kern-metric-space-default), 78rem);
+  margin-inline: auto;
+  padding: var(--kern-metric-space-x-large) var(--kern-metric-space-default);
+  border-radius: var(--kern-metric-border-radius-large);
+}
+
+.create-termin-created__banner > .kern-icon {
+  flex: none;
+  margin-top: var(--kern-metric-space-x-small);
+}
+
+.create-termin-created__banner-body {
+  display: grid;
+  gap: var(--kern-metric-space-large);
+  justify-items: start;
+}
+
+.create-termin-created__banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kern-metric-space-large);
+}
+
+.create-termin-created__steps {
+  display: grid;
+  gap: var(--kern-metric-space-default);
+  width: min(100% - 2 * var(--kern-metric-space-default), 62rem);
+  margin-inline: auto;
+}
+
+.create-termin-created__list {
+  display: grid;
+  gap: var(--kern-metric-space-3x-large);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.create-termin-created__step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--kern-metric-space-default);
+  counter-increment: step;
+}
+
+.create-termin-created__step::before {
+  content: counter(step);
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--kern-metric-dimension-x-large);
+  height: var(--kern-metric-dimension-x-large);
+  border-radius: 50%;
+  background-color: var(--kern-color-layout-text-default);
+  color: var(--kern-color-layout-background-default);
+  font-weight: var(--kern-typography-font-weight-medium);
+}
+
+.create-termin-created__step-body {
+  display: grid;
+  flex: 1;
+  gap: var(--kern-metric-space-small);
+  justify-items: start;
+  min-width: 0;
+  padding-top: var(--kern-metric-space-x-small);
+}
+
+.create-termin-created__step-title {
+  margin: 0;
+}
+
+/* Date and times side by side without the date wrapping. */
+.create-termin-created__step-body .kern-description-list {
+  width: 100%;
+  max-width: 54rem;
+}
+
+.create-termin-created__step-body .kern-description-list-item {
+  flex-wrap: wrap;
+}
+
+.create-termin-created__step-body .kern-description-list-item__key {
+  flex: 1 1 12rem;
+  white-space: nowrap;
+}
+
+.create-termin-created__step-body .kern-description-list-item__value {
+  flex: 1 1 12rem;
+}
+
+.create-termin-created__url {
+  display: flex;
+  align-items: center;
+  gap: var(--kern-metric-space-x-small);
+  overflow-wrap: anywhere;
+  color: var(--kern-color-action-default);
+}

@@ -106,6 +106,15 @@ test("a richter creates a Terminumfrage with four time slots next week", async (
 
   await page.getByRole("button", { name: "Terminumfrage erstellen" }).click();
 
+  await expect(page).toHaveURL(new RegExp(`/overview/${id}/created$`));
+  await expect(
+    page.getByRole("heading", { name: "Sie haben die Terminumfrage erstellt." }),
+  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Nächste Schritte" })).toBeVisible();
+  await expect(page.getByText(`/umfrage/${id}`)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Link zur Terminumfrage kopieren" })).toBeVisible();
+
+  await page.getByRole("link", { name: "Zu den Terminumfragen" }).click();
   await expect(page).toHaveURL(/\/overview$/);
   await expect(page.getByRole("heading", { name: "Übersicht" })).toBeAttached();
   const { status } = await db

@@ -109,12 +109,12 @@ describe("create-termin confirm route", () => {
       expect(publishAppointment).not.toHaveBeenCalled();
     });
 
-    it("publishes the draft and goes to the overview", async () => {
+    it("publishes the draft and shows the next steps", async () => {
       const response = (await action({ request: postRequest("create"), params })) as Response;
 
       expect(publishAppointment).toHaveBeenCalledWith({ db: true }, "1", "d1");
       expect(response.status).toBe(302);
-      expect(response.headers.get("Location")).toBe("/overview");
+      expect(response.headers.get("Location")).toBe("/overview/d1/created");
     });
 
     it("answers 404 when there is no draft to publish", async () => {
