@@ -53,10 +53,11 @@ describe("Overview", () => {
     expect(listAppointments).toHaveBeenCalledWith({ db: true }, "u1");
   });
 
-  it("links only drafts, to their confirmation page", async () => {
+  it("links drafts to their confirmation page and cancelled ones to their detail page", async () => {
     vi.mocked(listAppointments).mockResolvedValue([
       { id: "a", aktenzeichen: "574 C 1/26", status: "draft", confirmedSlot: null },
       { id: "b", aktenzeichen: "574 C 2/26", status: "open", confirmedSlot: null },
+      { id: "c", aktenzeichen: "574 C 3/26", status: "cancelled", confirmedSlot: null },
     ]);
 
     renderPage();
@@ -68,6 +69,11 @@ describe("Overview", () => {
     );
     const openRow = screen.getByText("574 C 2/26").closest("tr")!;
     expect(within(openRow).queryByRole("link")).not.toBeInTheDocument();
+    const cancelledRow = screen.getByText("574 C 3/26").closest("tr")!;
+    expect(within(cancelledRow).getByRole("link", { name: "574 C 3/26" })).toHaveAttribute(
+      "href",
+      "/overview/c",
+    );
   });
 
   it("shows a message instead of an empty table when there are no appointments", async () => {

@@ -100,3 +100,52 @@ test("a richter can open the create-termin page from the overview", async ({ pag
   await expect(page.getByRole("heading", { name: "Verhandlungsdaten" })).toBeVisible();
   await expect(page.getByRole("textbox", { name: "Aktenzeichen" })).toBeVisible();
 });
+
+test("a cancelled termin survey opens a detail page with its time windows", async ({
+  page,
+  users,
+  db,
+}) => {
+  const user = await users.create({ roles: ["richter"] });
+  const id = await seed(db, user.id, "574 C 65412/26", "cancelled");
+  // 10:00 to 14:00 and 09:00 to 11:00 Berlin time in September are 08:00 to 12:00 and 07:00 to 09:00 UTC.
+  await db
+    .insertInto("time_slot")
+    .values([
+      { appointment_id: id, start_time: "2026-09-17T08:00:00Z", end_time: "2026-09-17T12:00:00Z" },
+      { appointment_id: id, start_time: "2026-09-21T07:00:00Z", end_time: "2026-09-21T09:00:00Z" },
+    ])
+    .execute();
+
+  await signIn(page, user);
+  await page.goto("/overview");
+  await page.getByRole("link", { name: "574 C 65412/26" }).click();
+
+  await expect(page).toHaveURL(new RegExp(`/overview/${id}$`));
+  await expect(page.getByText("Kein Zeitfenster passt")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Es gibt leider keine Terminoption, bei der alle Verfahrensbeteiligten Zeit haben.",
+  );
+  await expect(page.getByText("17. September 2026")).toBeVisible();
+  await expect(page.getByText("10:00 bis 14:00")).toBeVisible();
+  await expect(page.getByText("21. September 2026")).toBeVisible();
+  await expect(page.getByText("09:00 bis 11:00")).toBeVisible();
+
+  await page.getByRole("link", { name: "Terminumfrage erstellen" }).click();
+  await expect(page).toHaveURL(/\/overview\/new$/);
+});
+
+test("another judge cannot open the detail page of a termin survey", async ({
+  page,
+  users,
+  db,
+}) => {
+  const owner = await users.create({ roles: ["richter"] });
+  const other = await users.create({ roles: ["richter"] });
+  const id = await seed(db, owner.id, "574 C 7/26", "cancelled");
+
+  await signIn(page, other);
+  const response = await page.goto(`/overview/${id}`);
+
+  expect(response?.status()).toBe(404);
+});
