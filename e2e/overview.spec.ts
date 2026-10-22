@@ -203,7 +203,7 @@ test("an open termin survey opens a detail page with its survey link", async ({
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Die Terminumfrage ist aktiv und die Verfahrensbeteiligten können ihre Verfügbarkeiten teilen.",
   );
-  await expect(page.getByRole("button", { name: "Termin auswählen" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Termin auswählen" })).toBeVisible();
   await expect(page.getByText("10:00 bis 14:00")).toBeVisible();
   await expect(page.getByText("21. September 2026")).toBeVisible();
 

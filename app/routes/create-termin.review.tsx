@@ -49,21 +49,22 @@ export function groupSlotsByDay(slots: SlotInput[], separator = " – "): DayWin
   return days;
 }
 
-type SectionId = "verhandlungsdaten" | "zeitfenster";
+type ReviewSectionProps = {
+  id: string;
+  title: string;
+  // Sections offer to go back and edit unless this is turned off.
+  editable?: boolean;
+  children: ReactNode;
+};
 
 function Section({
   id,
   title,
+  editable = true,
   open,
   onToggle,
   children,
-}: Readonly<{
-  id: SectionId;
-  title: string;
-  open: boolean;
-  onToggle: (open: boolean) => void;
-  children: ReactNode;
-}>) {
+}: Readonly<ReviewSectionProps & { open: boolean; onToggle: (open: boolean) => void }>) {
   return (
     <details
       className="kern-accordion"
@@ -79,17 +80,19 @@ function Section({
       <div className="kern-accordion__body">
         <div className="kern-summary__body create-termin-review__summary">
           {children}
-          <button type="submit" name="intent" value="back" className="kern-link">
-            <Icon name="edit" />
-            Bearbeiten<span className="kern-sr-only">{` ${title}`}</span>
-          </button>
+          {editable && (
+            <button type="submit" name="intent" value="back" className="kern-link">
+              <Icon name="edit" />
+              Bearbeiten<span className="kern-sr-only">{` ${title}`}</span>
+            </button>
+          )}
         </div>
       </div>
     </details>
   );
 }
 
-function Item({ label, children }: Readonly<{ label: string; children: ReactNode }>) {
+export function ReviewItem({ label, children }: Readonly<{ label: string; children: ReactNode }>) {
   return (
     <div className="kern-description-list-item">
       <dt className="kern-description-list-item__key">{label}</dt>
@@ -98,20 +101,31 @@ function Item({ label, children }: Readonly<{ label: string; children: ReactNode
   );
 }
 
-export function CreateTerminReview({ values }: Readonly<{ values: CreateTerminValues }>) {
+// A form that lists the sections for a last check. Every edit button and "Zurück" submit
+// the intent "back"; the main button submits the given intent.
+export function ReviewPage({
+  sections,
+  submit,
+  className,
+  children,
+}: Readonly<{
+  sections: ReviewSectionProps[];
+  className?: string;
+  submit: { label: string; intent: string };
+  // Hidden inputs the action needs.
+  children?: ReactNode;
+}>) {
   const pending = useNavigation().state !== "idle";
-  const [open, setOpen] = useState<Record<SectionId, boolean>>({
-    verhandlungsdaten: true,
-    zeitfenster: true,
-  });
-  const setAll = (value: boolean) => setOpen({ verhandlungsdaten: value, zeitfenster: value });
-  const toggle = (id: SectionId) => (value: boolean) =>
-    setOpen((current) => ({ ...current, [id]: value }));
+  const [open, setOpen] = useState<Record<string, boolean>>({});
+  const isOpen = (id: string) => open[id] ?? true;
+  const setAll = (value: boolean) =>
+    setOpen(Object.fromEntries(sections.map(({ id }) => [id, value])));
 
   return (
-    <div className="create-termin">
+    <div className={["create-termin", className].filter(Boolean).join(" ")}>
       <div className="page-shell__content">
         <Form method="post" className="create-termin__form">
+          {children}
           <h1 className="kern-heading-large">Bitte überprüfen Sie Ihre Angaben</h1>
 
           <div className="create-termin-review__bulk">
@@ -124,46 +138,65 @@ export function CreateTerminReview({ values }: Readonly<{ values: CreateTerminVa
           </div>
 
           <div>
-            <Section
-              id="verhandlungsdaten"
-              title="Verhandlungsdaten"
-              open={open.verhandlungsdaten}
-              onToggle={toggle("verhandlungsdaten")}
-            >
-              <dl className="kern-description-list">
-                <Item label="Aktenzeichen">{values.aktenzeichen}</Item>
-              </dl>
-            </Section>
-            <Section
-              id="zeitfenster"
-              title="Zeitfenster"
-              open={open.zeitfenster}
-              onToggle={toggle("zeitfenster")}
-            >
-              <dl className="kern-description-list">
-                {groupSlotsByDay(values.slots).map(({ key, label, times }) => (
-                  <Item key={key} label={label}>
-                    <ul className="create-termin-review__times">
-                      {times.map((time) => (
-                        <li key={time}>{time}</li>
-                      ))}
-                    </ul>
-                  </Item>
-                ))}
-              </dl>
-            </Section>
+            {sections.map(({ id, children: content, ...section }) => (
+              <Section
+                key={id}
+                id={id}
+                {...section}
+                open={isOpen(id)}
+                onToggle={(value) => setOpen((current) => ({ ...current, [id]: value }))}
+              >
+                {content}
+              </Section>
+            ))}
           </div>
 
           <div className="create-termin__actions">
             <Button type="submit" name="intent" value="back" style="secondary">
               Zurück
             </Button>
-            <Button type="submit" name="intent" value="create" disabled={pending}>
-              Terminumfrage erstellen
+            <Button type="submit" name="intent" value={submit.intent} disabled={pending}>
+              {submit.label}
             </Button>
           </div>
         </Form>
       </div>
     </div>
+  );
+}
+
+export function CreateTerminReview({ values }: Readonly<{ values: CreateTerminValues }>) {
+  return (
+    <ReviewPage
+      sections={[
+        {
+          id: "verhandlungsdaten",
+          title: "Verhandlungsdaten",
+          children: (
+            <dl className="kern-description-list">
+              <ReviewItem label="Aktenzeichen">{values.aktenzeichen}</ReviewItem>
+            </dl>
+          ),
+        },
+        {
+          id: "zeitfenster",
+          title: "Zeitfenster",
+          children: (
+            <dl className="kern-description-list">
+              {groupSlotsByDay(values.slots).map(({ key, label, times }) => (
+                <ReviewItem key={key} label={label}>
+                  <ul className="create-termin-review__times">
+                    {times.map((time) => (
+                      <li key={time}>{time}</li>
+                    ))}
+                  </ul>
+                </ReviewItem>
+              ))}
+            </dl>
+          ),
+        },
+      ]}
+      submit={{ label: "Terminumfrage erstellen", intent: "create" }}
+    />
   );
 }

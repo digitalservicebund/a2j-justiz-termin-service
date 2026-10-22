@@ -30,7 +30,7 @@ export async function loader({ request, params }: { request: Request } & Params)
   };
 }
 
-function Step({ title, children }: Readonly<{ title: string; children?: React.ReactNode }>) {
+export function Step({ title, children }: Readonly<{ title: string; children?: React.ReactNode }>) {
   return (
     <li className="create-termin-created__step">
       <div className="create-termin-created__step-body">
@@ -41,65 +41,76 @@ function Step({ title, children }: Readonly<{ title: string; children?: React.Re
   );
 }
 
+// Success banner and the numbered steps that follow, shared with the page after choosing a Termin.
+export function SuccessBanner({ title }: Readonly<{ title: string }>) {
+  return (
+    <div className="kern-alert kern-alert--success create-termin-created__banner">
+      <Icon name="success" size="x-large" />
+      <div className="create-termin-created__banner-body">
+        <h1 className="kern-heading-large">{title}</h1>
+        <div className="create-termin-created__banner-actions">
+          <a className="kern-btn kern-btn--primary" href="#naechste-schritte">
+            <span className="kern-label">Nächste Schritte</span>
+            <Icon name="arrow-down" />
+          </a>
+          <Link className="kern-btn kern-btn--secondary" to="/overview">
+            <span className="kern-label">Zu den Terminumfragen</span>
+            <Icon name="arrow-forward" />
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function NextSteps({ children }: Readonly<{ children: React.ReactNode }>) {
+  return (
+    <section aria-labelledby="naechste-schritte" className="create-termin-created__steps">
+      <h2 className="kern-heading-large" id="naechste-schritte">
+        Nächste Schritte
+      </h2>
+      <ol className="create-termin-created__list">{children}</ol>
+    </section>
+  );
+}
+
 export default function CreateTerminCreated() {
   const { user, days, surveyUrl } = useLoaderData<typeof loader>();
   return (
     <AppShell user={user} breadcrumbs={createTerminBreadcrumbs}>
       <div className="create-termin-created">
-        <div className="kern-alert kern-alert--success create-termin-created__banner">
-          <Icon name="success" size="x-large" />
-          <div className="create-termin-created__banner-body">
-            <h1 className="kern-heading-large">Sie haben die Terminumfrage erstellt.</h1>
-            <div className="create-termin-created__banner-actions">
-              <a className="kern-btn kern-btn--primary" href="#naechste-schritte">
-                <span className="kern-label">Nächste Schritte</span>
-                <Icon name="arrow-down" />
-              </a>
-              <Link className="kern-btn kern-btn--secondary" to="/overview">
-                <span className="kern-label">Zu den Terminumfragen</span>
-                <Icon name="arrow-forward" />
-              </Link>
-            </div>
-          </div>
-        </div>
+        <SuccessBanner title="Sie haben die Terminumfrage erstellt." />
 
-        <section aria-labelledby="naechste-schritte" className="create-termin-created__steps">
-          <h2 className="kern-heading-large" id="naechste-schritte">
-            Nächste Schritte
-          </h2>
-          <ol className="create-termin-created__list">
-            <Step title="Halten Sie sich die vorgeschlagenen Zeitfenster frei.">
-              <dl className="kern-description-list">
-                {days.map(({ key, label, times }) => (
-                  <div className="kern-description-list-item" key={key}>
-                    <dt className="kern-description-list-item__key">{label}</dt>
-                    <dd className="kern-description-list-item__value">
-                      <ul className="create-termin-review__times">
-                        {times.map((time) => (
-                          <li key={time}>{time}</li>
-                        ))}
-                      </ul>
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            </Step>
-            <Step title="Teilen Sie den Link zur Terminumfrage mit allen Verfahrensbeteiligten.">
-              <p className="kern-body">
-                Erwähnen Sie, bis wann Sie sich eine Rückmeldung wünschen.
-              </p>
-              <p className="kern-body create-termin-created__url">
-                <Icon name="open-in-new" size="small" />
-                <span>{surveyUrl}</span>
-              </p>
-              <CopyLinkButton url={surveyUrl} className="kern-btn--small" />
-            </Step>
-            <Step title="Alle Verfahrensbeteiligten geben Ihre Verfügbarkeiten an." />
-            <Step title="Wählen Sie einen passenden Termin aus." />
-            <Step title="Informieren Sie alle Verfahrensbeteiligten und Ihre Servicestelle über den ausgewählten Termin." />
-            <Step title="Die Servicestelle verschickt die Ladung." />
-          </ol>
-        </section>
+        <NextSteps>
+          <Step title="Halten Sie sich die vorgeschlagenen Zeitfenster frei.">
+            <dl className="kern-description-list">
+              {days.map(({ key, label, times }) => (
+                <div className="kern-description-list-item" key={key}>
+                  <dt className="kern-description-list-item__key">{label}</dt>
+                  <dd className="kern-description-list-item__value">
+                    <ul className="create-termin-review__times">
+                      {times.map((time) => (
+                        <li key={time}>{time}</li>
+                      ))}
+                    </ul>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </Step>
+          <Step title="Teilen Sie den Link zur Terminumfrage mit allen Verfahrensbeteiligten.">
+            <p className="kern-body">Erwähnen Sie, bis wann Sie sich eine Rückmeldung wünschen.</p>
+            <p className="kern-body create-termin-created__url">
+              <Icon name="open-in-new" size="small" />
+              <span>{surveyUrl}</span>
+            </p>
+            <CopyLinkButton url={surveyUrl} className="kern-btn--small" />
+          </Step>
+          <Step title="Alle Verfahrensbeteiligten geben Ihre Verfügbarkeiten an." />
+          <Step title="Wählen Sie einen passenden Termin aus." />
+          <Step title="Informieren Sie alle Verfahrensbeteiligten und Ihre Servicestelle über den ausgewählten Termin." />
+          <Step title="Die Servicestelle verschickt die Ladung." />
+        </NextSteps>
       </div>
     </AppShell>
   );

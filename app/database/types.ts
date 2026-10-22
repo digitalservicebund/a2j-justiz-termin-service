@@ -17,6 +17,9 @@ export type AppointmentsTable = {
   status: AppointmentStatus;
   universal_token: string | null;
   confirmed_slot_id: string | null;
+  // The confirmed window lies within the confirmed slot and may be shorter than it.
+  confirmed_start_time: Date | string | null;
+  confirmed_end_time: Date | string | null;
   created_at: Generated<Date>;
   updated_at: Generated<Date>;
 };
