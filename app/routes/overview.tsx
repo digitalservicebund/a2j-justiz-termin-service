@@ -6,10 +6,20 @@ import { AppShell } from "~/components/shared/AppShell";
 import { Badge, type BadgeType } from "~/components/shared/Badge";
 import { Icon, type IconName } from "~/components/shared/Icon";
 import { getDb } from "~/database/database";
+import type { AppointmentStatus } from "~/database/types";
 
 import { describeStatus } from "./overview.status";
 
 import "./overview.css";
+
+// Drafts continue on their confirmation page and appointments without a fitting slot have a detail
+// page; the other states have no page yet.
+function detailHref(id: string, status: AppointmentStatus): string | null {
+  const encoded = encodeURIComponent(id);
+  if (status === "draft") return `/overview/${encoded}/confirm`;
+  if (status === "cancelled") return `/overview/${encoded}`;
+  return null;
+}
 
 export async function loader({ request }: { request: Request }) {
   const user = await requireUser(request);
@@ -19,8 +29,7 @@ export async function loader({ request }: { request: Request }) {
     entries: appointments.map(({ id, aktenzeichen, status, confirmedSlot }) => ({
       id,
       aktenzeichen,
-      // Only drafts have a page to continue on; the others have no detail page yet.
-      href: status === "draft" ? `/overview/${encodeURIComponent(id)}/confirm` : null,
+      href: detailHref(id, status),
       badge: describeStatus({ status, confirmedSlot }),
     })),
   };

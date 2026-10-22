@@ -28,7 +28,7 @@ export const createTerminBreadcrumbs = [
 export type DayWindows = { key: string; label: string; times: string[] };
 
 // Expects slots that passed validation. Windows on the same day share one entry.
-export function groupSlotsByDay(slots: SlotInput[]): DayWindows[] {
+export function groupSlotsByDay(slots: SlotInput[], separator = " – "): DayWindows[] {
   const windows = slots
     .filter((slot) => !isEmptySlot(slot))
     .map((slot) => {
@@ -36,7 +36,7 @@ export function groupSlotsByDay(slots: SlotInput[]): DayWindows[] {
       const start = `${pad(slot.startHour)}:${pad(slot.startMinute)}`;
       const end = `${pad(slot.endHour)}:${pad(slot.endMinute)}`;
       const date = new Date(Date.UTC(Number(slot.year), Number(slot.month) - 1, Number(slot.day)));
-      return { key, label: dateFormat.format(date), start, time: `${start} – ${end}` };
+      return { key, label: dateFormat.format(date), start, time: `${start}${separator}${end}` };
     })
     .sort((a, b) => a.key.localeCompare(b.key) || a.start.localeCompare(b.start));
 

@@ -1,0 +1,41 @@
+.overview-detail {
+  display: grid;
+  gap: var(--kern-metric-space-x-large);
+  justify-items: start;
+  /* The flow-page text column is 864px wide in the design; KERN has no token for it. */
+  width: min(100%, 54rem);
+  margin-inline: auto;
+  padding-block: var(--kern-metric-space-large) var(--kern-metric-space-6x-large);
+}
+
+.overview-detail__back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kern-metric-space-2x-small);
+}
+
+.overview-detail__header {
+  display: grid;
+  gap: var(--kern-metric-space-default);
+  justify-items: start;
+}
+
+.overview-detail__section {
+  display: grid;
+  gap: var(--kern-metric-space-small);
+  width: 100%;
+}
+
+/* Date and times side by side without the date wrapping. */
+.overview-detail__windows .kern-description-list-item {
+  flex-wrap: wrap;
+}
+
+.overview-detail__windows .kern-description-list-item__key,
+.overview-detail__windows .kern-description-list-item__value {
+  flex: 1 1 12rem;
+}
+
+.overview-detail__windows .kern-description-list-item__key {
+  white-space: nowrap;
+}
