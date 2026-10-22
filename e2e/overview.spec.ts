@@ -149,3 +149,31 @@ test("another judge cannot open the detail page of a termin survey", async ({
 
   expect(response?.status()).toBe(404);
 });
+
+test("a confirmed termin survey opens a detail page announcing the date", async ({
+  page,
+  users,
+  db,
+}) => {
+  const user = await users.create({ roles: ["richter"] });
+  // 15:30 Berlin time in November is 14:30 UTC.
+  const id = await seed(db, user.id, "574 C 65412/26", "confirmed", {
+    start: "2099-11-09T14:30:00Z",
+    end: "2099-11-09T15:30:00Z",
+  });
+
+  await signIn(page, user);
+  await page.goto("/overview");
+  await page.getByRole("link", { name: "574 C 65412/26" }).click();
+
+  await expect(page).toHaveURL(new RegExp(`/overview/${id}$`));
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    /^Der Termin ist am \p{L}+, 9\. November 2099 um 15:30\.$/u,
+  );
+  await expect(page.getByText(/^Termin ist \p{L}+, 9\. November 2099 um 15:30$/u)).toBeVisible();
+  await expect(page.getByText("574 C 65412/26", { exact: true }).last()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Zeitfenster" })).toHaveCount(0);
+
+  await page.getByRole("link", { name: "Zurück zu den Terminumfragen" }).click();
+  await expect(page).toHaveURL(/\/overview$/);
+});

@@ -52,19 +52,56 @@ describe("overview detail route", () => {
     expect(getAppointment).toHaveBeenCalledWith({ db: true }, "1", "a1");
   });
 
-  it("answers 404 for states that have no detail page yet", async () => {
-    for (const status of ["open", "confirmed"] as const) {
-      vi.mocked(getAppointment).mockResolvedValue({
-        id: "a1",
-        status,
-        aktenzeichen: "A 1",
-        slots,
-      });
+  it("answers 404 for an open appointment, which has no detail page yet", async () => {
+    vi.mocked(getAppointment).mockResolvedValue({
+      id: "a1",
+      status: "open",
+      aktenzeichen: "A 1",
+      slots,
+    });
 
-      await expect(loader({ request: request(), params })).rejects.toMatchObject({
-        init: { status: 404 },
-      });
-    }
+    await expect(loader({ request: request(), params })).rejects.toMatchObject({
+      init: { status: 404 },
+    });
+  });
+
+  it("answers 404 for a confirmed appointment without a confirmed slot", async () => {
+    vi.mocked(getAppointment).mockResolvedValue({
+      id: "a1",
+      status: "confirmed",
+      aktenzeichen: "A 1",
+      slots,
+      confirmedSlot: null,
+    });
+
+    await expect(loader({ request: request(), params })).rejects.toMatchObject({
+      init: { status: 404 },
+    });
+  });
+
+  it("returns the date and the status badge of a confirmed appointment", async () => {
+    vi.mocked(getAppointment).mockResolvedValue({
+      id: "a1",
+      status: "confirmed",
+      aktenzeichen: "574 C 65412/26",
+      slots,
+      // 15:30 Berlin time in November is 14:30 UTC; Monday 9 November 2099.
+      confirmedSlot: {
+        start: new Date("2099-11-09T14:30:00Z"),
+        end: new Date("2099-11-09T15:30:00Z"),
+      },
+    });
+
+    const result = await loader({ request: request(), params });
+
+    expect(result).toMatchObject({
+      state: "confirmed",
+      aktenzeichen: "574 C 65412/26",
+      badge: { type: "success" },
+    });
+    expect(result).toMatchObject({
+      termin: expect.stringMatching(/^\p{L}+, 9\. November 2099 um 15:30$/u),
+    });
   });
 
   it("sends a draft back to its review", async () => {
@@ -92,8 +129,8 @@ describe("overview detail route", () => {
 
     const result = await loader({ request: request(), params });
 
-    expect(result.aktenzeichen).toBe("574 C 65412/26");
-    expect(result.days).toEqual([
+    expect(result).toMatchObject({ state: "cancelled", aktenzeichen: "574 C 65412/26" });
+    expect("days" in result && result.days).toEqual([
       { key: "2026-09-17", label: "17. September 2026", times: ["10:00 bis 14:00"] },
       {
         key: "2026-09-24",
@@ -105,6 +142,42 @@ describe("overview detail route", () => {
 });
 
 describe("OverviewDetail", () => {
+  it("announces the date of a confirmed appointment", async () => {
+    vi.mocked(requireRole).mockResolvedValue(judge);
+    vi.mocked(getAppointment).mockResolvedValue({
+      id: "a1",
+      status: "confirmed",
+      aktenzeichen: "574 C 65412/26",
+      slots,
+      confirmedSlot: {
+        start: new Date("2099-11-09T14:30:00Z"),
+        end: new Date("2099-11-09T15:30:00Z"),
+      },
+    });
+    const Stub = createRoutesStub([
+      { path: "/overview/:appointmentId", Component: OverviewDetail, loader },
+      { path: "/overview", Component: () => <h1>Übersicht</h1> },
+    ]);
+
+    render(<Stub initialEntries={["/overview/a1"]} />);
+
+    expect(
+      await screen.findByRole("heading", {
+        level: 1,
+        name: /^Der Termin ist am \p{L}+, 9\. November 2099 um 15:30\.$/u,
+      }),
+    ).toBeVisible();
+    expect(screen.getByText(/^Termin ist \p{L}+, 9\. November 2099 um 15:30$/u)).toBeVisible();
+    expect(screen.getByRole("link", { name: "Zurück zu den Terminumfragen" })).toHaveAttribute(
+      "href",
+      "/overview",
+    );
+    expect(screen.getByRole("heading", { name: "Verhandlungsdaten" })).toBeVisible();
+    expect(screen.getByText("574 C 65412/26", { selector: "dd" })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Zeitfenster" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Terminumfrage erstellen" })).not.toBeInTheDocument();
+  });
+
   it("explains that no slot fits and offers a new Terminumfrage", async () => {
     vi.mocked(requireRole).mockResolvedValue(judge);
     vi.mocked(getAppointment).mockResolvedValue({

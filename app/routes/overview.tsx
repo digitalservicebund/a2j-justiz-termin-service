@@ -12,12 +12,12 @@ import { describeStatus } from "./overview.status";
 
 import "./overview.css";
 
-// Drafts continue on their confirmation page and appointments without a fitting slot have a detail
-// page; the other states have no page yet.
+// Drafts continue on their confirmation page, cancelled and confirmed appointments have a detail
+// page; open ones have no page yet.
 function detailHref(id: string, status: AppointmentStatus): string | null {
   const encoded = encodeURIComponent(id);
   if (status === "draft") return `/overview/${encoded}/confirm`;
-  if (status === "cancelled") return `/overview/${encoded}`;
+  if (status === "cancelled" || status === "confirmed") return `/overview/${encoded}`;
   return null;
 }
 

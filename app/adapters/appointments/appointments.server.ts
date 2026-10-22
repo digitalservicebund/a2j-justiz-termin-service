@@ -7,7 +7,12 @@ export type TimeRange = { start: Date; end: Date };
 
 export type AppointmentDraft = { aktenzeichen: string; slots: TimeRange[] };
 
-export type Appointment = AppointmentDraft & { id: string; status: AppointmentStatus };
+export type Appointment = AppointmentDraft & {
+  id: string;
+  status: AppointmentStatus;
+  // The chosen time slot, once the appointment is confirmed. It is one of the slots.
+  confirmedSlot?: TimeRange | null;
+};
 
 function insertSlots(db: Kysely<Database>, appointmentId: string, slots: TimeRange[]) {
   return db
@@ -72,7 +77,7 @@ export async function getAppointment(
 ): Promise<Appointment | undefined> {
   const appointment = await db
     .selectFrom("appointment")
-    .select(["id", "aktenzeichen", "status"])
+    .select(["id", "aktenzeichen", "status", "confirmed_slot_id"])
     .where("id", "=", id)
     .where("user_id", "=", userId)
     .executeTakeFirst();
@@ -80,18 +85,24 @@ export async function getAppointment(
 
   const slots = await db
     .selectFrom("time_slot")
-    .select(["start_time", "end_time"])
+    .select(["id", "start_time", "end_time"])
     .where("appointment_id", "=", id)
     .orderBy("start_time")
     .execute();
 
+  // end_time is nullable in the schema, but the form always sets it.
+  const toRange = ({ start_time, end_time }: (typeof slots)[number]): TimeRange => ({
+    start: new Date(start_time),
+    end: new Date(end_time ?? start_time),
+  });
+  const confirmed = slots.find(({ id: slotId }) => slotId === appointment.confirmed_slot_id);
+
   return {
-    ...appointment,
-    slots: slots.map(({ start_time, end_time }) => ({
-      start: new Date(start_time),
-      // end_time is nullable in the schema, but the form always sets it.
-      end: new Date(end_time ?? start_time),
-    })),
+    id: appointment.id,
+    aktenzeichen: appointment.aktenzeichen,
+    status: appointment.status,
+    slots: slots.map(toRange),
+    confirmedSlot: confirmed ? toRange(confirmed) : null,
   };
 }
 
