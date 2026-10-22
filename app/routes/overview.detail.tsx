@@ -4,6 +4,8 @@ import { getAppointment } from "~/adapters/appointments/appointments.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { Badge } from "~/components/shared/Badge";
+import { Button } from "~/components/shared/Button";
+import { CopyLinkButton } from "~/components/shared/CopyLinkButton";
 import { Icon } from "~/components/shared/Icon";
 import { getDb } from "~/database/database";
 
@@ -35,14 +37,19 @@ export async function loader({ request, params }: { request: Request } & Params)
     };
   }
 
-  // The "open" state has no detail page yet.
-  if (appointment.status !== "cancelled") throw data("Not found", { status: 404 });
-  return {
-    user,
-    aktenzeichen,
-    state: "cancelled" as const,
-    days: groupSlotsByDay(appointment.slots.map(rangeToSlot), " bis "),
-  };
+  const days = groupSlotsByDay(appointment.slots.map(rangeToSlot), " bis ");
+  if (appointment.status === "open") {
+    const { origin } = new URL(request.url);
+    return {
+      user,
+      aktenzeichen,
+      state: "open" as const,
+      days,
+      surveyUrl: `${origin}/umfrage/${encodeURIComponent(id)}`,
+    };
+  }
+
+  return { user, aktenzeichen, state: "cancelled" as const, days };
 }
 
 function BackLink() {
@@ -65,6 +72,28 @@ function Verhandlungsdaten({ aktenzeichen }: Readonly<{ aktenzeichen: string }>)
           <dt className="kern-description-list-item__key">Aktenzeichen</dt>
           <dd className="kern-description-list-item__value">{aktenzeichen}</dd>
         </div>
+      </dl>
+    </section>
+  );
+}
+
+function Zeitfenster({ days }: Readonly<{ days: DayWindows[] }>) {
+  return (
+    <section aria-labelledby="detail-zeitfenster" className="overview-detail__section">
+      <h2 className="kern-heading-medium" id="detail-zeitfenster">
+        Zeitfenster
+      </h2>
+      <dl className="kern-description-list overview-detail__windows">
+        {days.map(({ key, label, times }) => (
+          <div className="kern-description-list-item" key={key}>
+            <dt className="kern-description-list-item__key">{label}</dt>
+            <dd className="kern-description-list-item__value">
+              {times.map((time) => (
+                <div key={time}>{time}</div>
+              ))}
+            </dd>
+          </div>
+        ))}
       </dl>
     </section>
   );
@@ -97,11 +126,50 @@ export default function OverviewDetail() {
             </header>
             <Verhandlungsdaten aktenzeichen={aktenzeichen} />
           </>
+        ) : detail.state === "open" ? (
+          <OpenForReplies
+            aktenzeichen={aktenzeichen}
+            days={detail.days}
+            surveyUrl={detail.surveyUrl}
+          />
         ) : (
           <NoOptionWorks aktenzeichen={aktenzeichen} days={detail.days} />
         )}
       </div>
     </AppShell>
+  );
+}
+
+function OpenForReplies({
+  aktenzeichen,
+  days,
+  surveyUrl,
+}: Readonly<{ aktenzeichen: string; days: DayWindows[]; surveyUrl: string }>) {
+  return (
+    <>
+      <header className="overview-detail__header">
+        <Badge type="info">
+          <Icon name="info" />
+          <span className="kern-label">Offen für Rückmeldungen</span>
+        </Badge>
+        <h1 className="kern-heading-large">
+          Die Terminumfrage ist aktiv und die Verfahrensbeteiligten können ihre Verfügbarkeiten
+          teilen.
+        </h1>
+      </header>
+
+      <div className="overview-detail__actions">
+        {/* Choosing the final Termin is not designed yet, so the button has no action. */}
+        <Button type="button">
+          <Icon name="check" />
+          <span className="kern-label">Termin auswählen</span>
+        </Button>
+        <CopyLinkButton url={surveyUrl} />
+      </div>
+
+      <Verhandlungsdaten aktenzeichen={aktenzeichen} />
+      <Zeitfenster days={days} />
+    </>
   );
 }
 
@@ -131,23 +199,7 @@ function NoOptionWorks({
 
       <Verhandlungsdaten aktenzeichen={aktenzeichen} />
 
-      <section aria-labelledby="detail-zeitfenster" className="overview-detail__section">
-        <h2 className="kern-heading-medium" id="detail-zeitfenster">
-          Zeitfenster
-        </h2>
-        <dl className="kern-description-list overview-detail__windows">
-          {days.map(({ key, label, times }) => (
-            <div className="kern-description-list-item" key={key}>
-              <dt className="kern-description-list-item__key">{label}</dt>
-              <dd className="kern-description-list-item__value">
-                {times.map((time) => (
-                  <div key={time}>{time}</div>
-                ))}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </section>
+      <Zeitfenster days={days} />
     </>
   );
 }

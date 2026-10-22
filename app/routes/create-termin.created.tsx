@@ -1,10 +1,9 @@
-import { useState } from "react";
 import { data, Link, redirect, useLoaderData } from "react-router";
 
 import { getAppointment } from "~/adapters/appointments/appointments.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
-import { Button } from "~/components/shared/Button";
+import { CopyLinkButton } from "~/components/shared/CopyLinkButton";
 import { Icon } from "~/components/shared/Icon";
 import { getDb } from "~/database/database";
 
@@ -29,33 +28,6 @@ export async function loader({ request, params }: { request: Request } & Params)
     days: groupSlotsByDay(appointment.slots.map(rangeToSlot)),
     surveyUrl: `${origin}/umfrage/${encodeURIComponent(appointment.id)}`,
   };
-}
-
-function CopyLinkButton({ url }: Readonly<{ url: string }>) {
-  const [copied, setCopied] = useState(false);
-
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-    } catch {
-      setCopied(false);
-    }
-  }
-
-  return (
-    <>
-      <Button type="button" style="secondary" className="kern-btn--small" onClick={copy}>
-        <Icon name={copied ? "check" : "content-copy"} size="small" />
-        <span className="kern-label">
-          {copied ? "Link kopiert" : "Link zur Terminumfrage kopieren"}
-        </span>
-      </Button>
-      <output className="kern-sr-only">
-        {copied ? "Der Link zur Terminumfrage wurde kopiert." : ""}
-      </output>
-    </>
-  );
 }
 
 function Step({ title, children }: Readonly<{ title: string; children?: React.ReactNode }>) {
@@ -120,7 +92,7 @@ export default function CreateTerminCreated() {
                 <Icon name="open-in-new" size="small" />
                 <span>{surveyUrl}</span>
               </p>
-              <CopyLinkButton url={surveyUrl} />
+              <CopyLinkButton url={surveyUrl} className="kern-btn--small" />
             </Step>
             <Step title="Alle Verfahrensbeteiligten geben Ihre Verfügbarkeiten an." />
             <Step title="Wählen Sie einen passenden Termin aus." />
