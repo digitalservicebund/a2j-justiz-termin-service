@@ -1,27 +1,7 @@
-import { isRouteErrorResponse, useRouteError } from "react-router";
-
-import Alert from "~/components/shared/Alert";
 import { AppNav } from "~/components/shared/AppNav";
 import type { AuthUser } from "~/core/domain/user";
 
 import "./SchedulingShared.css";
-
-export function RouteErrorBoundary({ title }: Readonly<{ title: string }>) {
-  const error = useRouteError();
-  let message = "An unexpected error occurred.";
-
-  if (isRouteErrorResponse(error)) {
-    message = error.statusText;
-  } else if (error instanceof Error) {
-    message = error.message;
-  }
-
-  return (
-    <Shell title={title}>
-      <Alert type="error" title="Error" message={message} />
-    </Shell>
-  );
-}
 
 export function Shell({
   title,
