@@ -98,8 +98,6 @@ export async function issueMagicLink(request: APIRequestContext, email: string):
 
 export const rolePaths = {
   richter: "/richter",
-  klaeger: "/klaeger",
-  beklagter: "/beklagter",
 } as const;
 
 export async function signIn(page: Page, user: AuthUser, options = { uppercase: false }) {

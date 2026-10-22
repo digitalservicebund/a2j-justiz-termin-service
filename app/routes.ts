@@ -8,8 +8,6 @@ export default [
   route("admin/users", "routes/admin-users.tsx"),
   route("api/auth/*", "routes/auth.ts"),
   route("richter", "routes/richter.tsx"),
-  route("klaeger", "routes/klaeger.tsx"),
-  route("beklagter", "routes/beklagter.tsx"),
 
   route("health", "routes/health.ts"),
   route("health/database", "routes/database-health.ts"),

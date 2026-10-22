@@ -20,25 +20,6 @@ export default function Home() {
           </Link>
         </section>
       )}
-      {(hasRole(user, "klaeger") || hasRole(user, "beklagter")) && (
-        <section>
-          <h2 className="kern-heading-small">Auf Terminvorschläge antworten</h2>
-          {hasRole(user, "klaeger") && (
-            <p>
-              <Link className="kern-link" to="/klaeger">
-                Als Kläger antworten
-              </Link>
-            </p>
-          )}
-          {hasRole(user, "beklagter") && (
-            <p>
-              <Link className="kern-link" to="/beklagter">
-                Als Beklagter antworten
-              </Link>
-            </p>
-          )}
-        </section>
-      )}
     </Shell>
   );
 }

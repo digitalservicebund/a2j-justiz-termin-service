@@ -24,17 +24,18 @@ test("anonymous users cannot read protected pages or invoke scheduling and admin
 });
 
 for (const role of ["richter", "klaeger", "beklagter"] as const) {
-  test(`${role} can use their own dashboard but cannot assume another role or administer users`, async ({
+  test(`${role} cannot open other roles' scheduling views or administer users`, async ({
     page,
     users,
     db,
   }) => {
     const user = await users.create({ roles: [role] });
     await signIn(page, user);
-    expect((await page.request.get(rolePaths[role])).status()).toBe(200);
+    for (const [pathRole, path] of Object.entries(rolePaths)) {
+      expect((await page.request.get(path)).status()).toBe(pathRole === role ? 200 : 403);
+    }
     await expect(page.getByRole("link", { name: "Benutzerverwaltung" })).toHaveCount(0);
-    for (const path of Object.values(rolePaths).filter((path) => path !== rolePaths[role])) {
-      expect((await page.request.get(path)).status()).toBe(403);
+    for (const [, path] of Object.entries(rolePaths).filter(([pathRole]) => pathRole !== role)) {
       expect(
         (await page.request.post(path, { form: { intent: "setSlots", slots: "[]" } })).status(),
       ).toBe(403);
@@ -63,7 +64,7 @@ for (const role of ["richter", "klaeger", "beklagter"] as const) {
   });
 }
 
-test("multiple roles share a combined overview with creation and response entry points", async ({
+test("multiple roles share an overview with the scheduling entry point only", async ({
   page,
   users,
 }) => {
@@ -72,16 +73,11 @@ test("multiple roles share a combined overview with creation and response entry 
   await expect(
     page.getByRole("heading", { name: "Termine erstellen und verwalten" }),
   ).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Auf Terminvorschläge antworten" })).toBeVisible();
-  for (const [name, path] of [
-    ["Terminplanung öffnen", "/richter"],
-    ["Als Kläger antworten", "/klaeger"],
-    ["Als Beklagter antworten", "/beklagter"],
-  ]) {
-    await page.getByRole("link", { name }).click();
-    await expect(page).toHaveURL(new RegExp(`${path}$`));
-    await page.getByRole("link", { name: "Übersicht", exact: true }).click();
-  }
+  await expect(page.getByRole("heading", { name: "Auf Terminvorschläge antworten" })).toHaveCount(
+    0,
+  );
+  await page.getByRole("link", { name: "Terminplanung öffnen" }).click();
+  await expect(page).toHaveURL(/\/richter$/);
   expect((await page.request.get("/admin/users")).status()).toBe(403);
 });
 
@@ -98,6 +94,4 @@ test("admin-only users can access every scheduling view and manage users", async
     expect((await page.request.post(path, { form: {} })).status()).toBe(200);
   }
   await expect(page.getByRole("link", { name: "Terminplanung öffnen" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Als Kläger antworten" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Als Beklagter antworten" })).toBeVisible();
 });
