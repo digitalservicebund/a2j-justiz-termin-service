@@ -96,10 +96,6 @@ export async function issueMagicLink(request: APIRequestContext, email: string):
   return readMagicLink(request, email.toLowerCase());
 }
 
-export const rolePaths = {
-  richter: "/richter",
-} as const;
-
 export async function signIn(page: Page, user: AuthUser, options = { uppercase: false }) {
   await page.goto("/");
   await page

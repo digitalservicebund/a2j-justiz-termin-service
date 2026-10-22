@@ -1,27 +1,17 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { requireAdmin, requireRole } from "~/adapters/session/session";
+import { requireAdmin } from "~/adapters/session/session";
 import { hasRole, NewUserSchema, UserRoleSchema } from "~/core/domain/user";
 
 import { action as adminAction, loader as adminLoader } from "../admin-users";
-import { action as judgeAction } from "../richter";
 
 vi.mock("~/adapters/session/session", () => ({
   requireAdmin: vi.fn(),
-  requireRole: vi.fn(),
 }));
 
 describe("protected route entry points", () => {
   beforeEach(() => vi.clearAllMocks());
-
-  it("requires richter before processing a scheduling action", async () => {
-    const forbidden = new Response("Forbidden", { status: 403 });
-    vi.mocked(requireRole).mockRejectedValue(forbidden);
-    const request = new Request("http://localhost/", { method: "POST" });
-    await expect(judgeAction({ request })).rejects.toBe(forbidden);
-    expect(requireRole).toHaveBeenCalledWith(request, "richter");
-  });
 
   it("requires administrator permission on both management entry points", async () => {
     const forbidden = new Response("Forbidden", { status: 403 });

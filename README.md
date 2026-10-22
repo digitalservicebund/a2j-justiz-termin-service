@@ -150,10 +150,7 @@ app/
 ├── database/               # Kysely, connection pool, migrations (see "Database")
 ├── lib/                    # Env, secrets and logging helpers
 ├── components/             # Reusable UI components
-│   ├── shared/             # Alert, AppNav, Badge, Button, Card, InputRadios, SchedulingShared
-│   ├── RichterSections.tsx       # Judge dashboard sections
-│   └── RichterProcessSection.tsx # Task list for judge workflow
-├── hooks/                  # useRichterActions
+│   └── shared/             # Alert, AppNav, Badge, Button, Card, InputRadios
 ├── app.css                 # KERN Native/font imports + global defaults
 ├── root.tsx                # Root layout
 └── bootstrap.ts            # Dependency injection root
@@ -332,9 +329,8 @@ delete and re-create a user to change their address.
 
 Administrators cannot delete their own account or remove their own admin rights.
 Each user has a nonempty list containing any combination of `admin`, `richter`,
-`klaeger`, and `beklagter`. The home page links `richter` users to schedule
-creation and management; The `admin` role
-grants access to every scheduling view as well as user management.
+`klaeger`, and `beklagter`. The home page is an empty placeholder for now. The
+`admin` role grants access to every page as well as user management.
 All loaders and actions enforce access server-side. The former role-picker
 login and development-secret cookie are no longer accepted.
 
