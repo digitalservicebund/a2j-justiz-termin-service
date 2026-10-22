@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "react-router build",
-    "dev": "cross-env NODE_ENV=development node --env-file=.env.defaults --env-file-if-exists=.env.local --conditions development server.js",
+    "dev": "NODE_ENV=development node --env-file=.env.defaults --env-file-if-exists=.env.local --conditions development server.js",
     "start": "node --env-file-if-exists=.env.defaults server.js",
     "db:migrate": "node --env-file=.env.defaults --env-file-if-exists=.env.local app/database/migrate.ts",
     "user:create-admin": "node --env-file=.env.defaults --env-file-if-exists=.env.local scripts/create-admin.ts",
@@ -20,7 +20,7 @@
     "lint:fix": "oxlint --fix",
     "format:check": "oxfmt --check",
     "format:fix": "oxfmt",
-    "knip": "knip"
+    "knip": "knip && knip --production"
   },
   "dependencies": {
     "@kern-ux/native": "^2.8.2",
@@ -28,7 +28,6 @@
     "@react-router/node": "8.4.0",
     "better-auth": "^1.7.10",
     "compression": "^1.8.2",
-    "cross-env": "^10.1.0",
     "express": "^5.3.0",
     "isbot": "^5.2.2",
     "kysely": "^0.29.6",
