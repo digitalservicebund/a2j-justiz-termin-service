@@ -12,10 +12,15 @@ async function seedSurvey(
   userId: string,
   status: AppointmentStatus = "open",
 ) {
-  const { id } = await db
+  const { id, universal_token } = await db
     .insertInto("appointment")
-    .values({ user_id: userId, aktenzeichen: "574 C 65412/26", status })
-    .returning("id")
+    .values({
+      user_id: userId,
+      aktenzeichen: "574 C 65412/26",
+      status,
+      universal_token: randomUUID(),
+    })
+    .returning(["id", "universal_token"])
     .executeTakeFirstOrThrow();
   const slots = await db
     .insertInto("time_slot")
@@ -26,7 +31,7 @@ async function seedSurvey(
     ])
     .returning("id")
     .execute();
-  return { id, slotIds: slots.map((slot) => slot.id) };
+  return { id, token: universal_token!, slotIds: slots.map((slot) => slot.id) };
 }
 
 const FIRST = "Verfügbar am 9. November 2099, 15:30 bis 18:00";
@@ -39,10 +44,10 @@ test("a guest of the universal link gives a name and availabilities, reviews the
   db,
 }) => {
   const judge = await users.create({ roles: ["richter"] });
-  const { id } = await seedSurvey(db, judge.id);
+  const { id, token } = await seedSurvey(db, judge.id);
 
   // No login is needed.
-  await page.goto(`/umfrage/${id}`);
+  await page.goto(`/umfrage/${token}`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Geben Sie Ihre Verfügbarkeiten an",
   );
@@ -58,7 +63,7 @@ test("a guest of the universal link gives a name and availabilities, reviews the
   await page.getByRole("checkbox", { name: THIRD }).check();
   await page.getByRole("button", { name: "Weiter" }).click();
 
-  await expect(page).toHaveURL(new RegExp(`/umfrage/${id}/zusammenfassung\\?`));
+  await expect(page).toHaveURL(new RegExp(`/umfrage/${token}/zusammenfassung\\?`));
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Bitte überprüfen Sie Ihre Angaben",
   );
@@ -73,7 +78,7 @@ test("a guest of the universal link gives a name and availabilities, reviews the
     await db.selectFrom("participant").select("id").where("appointment_id", "=", id).execute(),
   ).toEqual([]);
   await page.getByRole("button", { name: "Zurück" }).click();
-  await expect(page).toHaveURL(new RegExp(`/umfrage/${id}\\?`));
+  await expect(page).toHaveURL(new RegExp(`/umfrage/${token}\\?`));
   await expect(page.getByRole("textbox", { name: "Ihr Name" })).toHaveValue("Guest C");
   await expect(page.getByRole("checkbox", { name: FIRST })).toBeChecked();
   await expect(page.getByRole("checkbox", { name: SECOND })).not.toBeChecked();
@@ -82,7 +87,7 @@ test("a guest of the universal link gives a name and availabilities, reviews the
   await page.getByRole("button", { name: "Weiter" }).click();
   await page.getByRole("button", { name: "Terminumfrage abschließen" }).click();
 
-  await expect(page).toHaveURL(new RegExp(`/umfrage/${id}/naechste-schritte\\?teilnehmer=`));
+  await expect(page).toHaveURL(new RegExp(`/umfrage/${token}/naechste-schritte\\?teilnehmer=`));
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Danke für das Angeben Ihrer Verfügbarkeiten.",
   );
@@ -110,9 +115,9 @@ test("a guest of the universal link gives a name and availabilities, reviews the
 
 test("a guest who has no time at all is told that no option works", async ({ page, users, db }) => {
   const judge = await users.create({ roles: ["richter"] });
-  const { id } = await seedSurvey(db, judge.id);
+  const { id, token } = await seedSurvey(db, judge.id);
 
-  await page.goto(`/umfrage/${id}`);
+  await page.goto(`/umfrage/${token}`);
   await page.getByRole("textbox", { name: "Ihr Name" }).fill("Guest C");
   await page.getByRole("checkbox", { name: "Kein Zeitfenster passt" }).check();
   await page.getByRole("button", { name: "Weiter" }).click();
@@ -125,7 +130,7 @@ test("a guest who has no time at all is told that no option works", async ({ pag
 
   await page.getByRole("button", { name: "Terminumfrage abschließen" }).click();
 
-  await expect(page).toHaveURL(new RegExp(`/umfrage/${id}/naechste-schritte\\?teilnehmer=`));
+  await expect(page).toHaveURL(new RegExp(`/umfrage/${token}/naechste-schritte\\?teilnehmer=`));
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Es gibt leider keine Terminoption, bei der alle Verfahrensbeteiligten Zeit haben.",
   );
@@ -144,9 +149,9 @@ test("a guest who has no time at all is told that no option works", async ({ pag
 
 test("the form needs a name and an answer", async ({ page, users, db }) => {
   const judge = await users.create({ roles: ["richter"] });
-  const { id } = await seedSurvey(db, judge.id);
+  const { id, token } = await seedSurvey(db, judge.id);
 
-  await page.goto(`/umfrage/${id}`);
+  await page.goto(`/umfrage/${token}`);
   await page.getByRole("button", { name: "Weiter" }).click();
   await expect(page.getByText("Geben Sie Ihren Namen an.")).toBeVisible();
   await expect(
@@ -170,7 +175,7 @@ test("the form needs a name and an answer", async ({ page, users, db }) => {
 
   await page.getByRole("checkbox", { name: "Kein Zeitfenster passt" }).uncheck();
   await page.getByRole("button", { name: "Weiter" }).click();
-  await expect(page).toHaveURL(new RegExp(`/umfrage/${id}/zusammenfassung`));
+  await expect(page).toHaveURL(new RegExp(`/umfrage/${token}/zusammenfassung`));
 
   expect(
     await db.selectFrom("participant").select("id").where("appointment_id", "=", id).execute(),
@@ -179,20 +184,20 @@ test("the form needs a name and an answer", async ({ page, users, db }) => {
 
 test("the review and the result need a valid answer", async ({ page, users, db }) => {
   const judge = await users.create({ roles: ["richter"] });
-  const { id } = await seedSurvey(db, judge.id);
+  const { token } = await seedSurvey(db, judge.id);
 
   // A made-up answer goes back to the form.
-  await page.goto(`/umfrage/${id}/zusammenfassung?name=Guest+C&verfuegbar=${randomUUID()}`);
-  await expect(page).toHaveURL(new RegExp(`/umfrage/${id}\\?name=Guest\\+C`));
+  await page.goto(`/umfrage/${token}/zusammenfassung?name=Guest+C&verfuegbar=${randomUUID()}`);
+  await expect(page).toHaveURL(new RegExp(`/umfrage/${token}\\?name=Guest\\+C`));
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Geben Sie Ihre Verfügbarkeiten an",
   );
 
   // Neither does the result page show anything for someone who has not answered.
-  await page.goto(`/umfrage/${id}/naechste-schritte?teilnehmer=${randomUUID()}`);
-  await expect(page).toHaveURL(new RegExp(`/umfrage/${id}$`));
-  await page.goto(`/umfrage/${id}/naechste-schritte`);
-  await expect(page).toHaveURL(new RegExp(`/umfrage/${id}$`));
+  await page.goto(`/umfrage/${token}/naechste-schritte?teilnehmer=${randomUUID()}`);
+  await expect(page).toHaveURL(new RegExp(`/umfrage/${token}$`));
+  await page.goto(`/umfrage/${token}/naechste-schritte`);
+  await expect(page).toHaveURL(new RegExp(`/umfrage/${token}$`));
 });
 
 test("a personal link knows the guest, asks for no name and answers once", async ({
@@ -240,7 +245,7 @@ test("a personal link knows the guest, asks for no name and answers once", async
 
 test("a window another participant has no time for is not offered", async ({ page, users, db }) => {
   const judge = await users.create({ roles: ["richter"] });
-  const { id, slotIds } = await seedSurvey(db, judge.id);
+  const { id, token, slotIds } = await seedSurvey(db, judge.id);
   const { id: other } = await db
     .insertInto("participant")
     .values({ appointment_id: id, name: "Guest E", type: "universal" })
@@ -255,7 +260,7 @@ test("a window another participant has no time for is not offered", async ({ pag
     ])
     .execute();
 
-  await page.goto(`/umfrage/${id}`);
+  await page.goto(`/umfrage/${token}`);
   await expect(page.getByRole("checkbox", { name: /^Verfügbar/ })).toHaveCount(2);
   await expect(page.getByRole("checkbox", { name: FIRST })).toHaveCount(0);
   await expect(page.getByRole("heading", { level: 2, name: "9. November 2099" })).toHaveCount(0);
@@ -271,10 +276,12 @@ test("a window another participant has no time for is not offered", async ({ pag
 
 test("unknown, draft and closed surveys are not found", async ({ page, users, db }) => {
   const judge = await users.create({ roles: ["richter"] });
+  const open = await seedSurvey(db, judge.id);
   const draft = await seedSurvey(db, judge.id, "draft");
   const confirmed = await seedSurvey(db, judge.id, "confirmed");
 
-  for (const token of [randomUUID(), draft.id, confirmed.id]) {
+  // The appointment id is no link; only the universal token is.
+  for (const token of [randomUUID(), open.id, draft.token, confirmed.token]) {
     for (const path of ["", "/zusammenfassung?keines=1&name=Guest+C", "/naechste-schritte"]) {
       const response = await page.goto(`/umfrage/${token}${path}`);
       expect(response?.status()).toBe(404);
@@ -288,13 +295,13 @@ test("answering a survey that closed in the meantime stores nothing", async ({
   db,
 }) => {
   const judge = await users.create({ roles: ["richter"] });
-  const { id } = await seedSurvey(db, judge.id);
+  const { id, token } = await seedSurvey(db, judge.id);
 
-  await page.goto(`/umfrage/${id}`);
+  await page.goto(`/umfrage/${token}`);
   await page.getByRole("textbox", { name: "Ihr Name" }).fill("Guest C");
   await page.getByRole("checkbox", { name: FIRST }).check();
   await page.getByRole("button", { name: "Weiter" }).click();
-  await expect(page).toHaveURL(new RegExp(`/umfrage/${id}/zusammenfassung`));
+  await expect(page).toHaveURL(new RegExp(`/umfrage/${token}/zusammenfassung`));
 
   await db.updateTable("appointment").set({ status: "cancelled" }).where("id", "=", id).execute();
   await page.getByRole("button", { name: "Terminumfrage abschließen" }).click();

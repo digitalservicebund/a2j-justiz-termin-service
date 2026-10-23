@@ -39,6 +39,7 @@ describe("create-termin created route", () => {
     vi.mocked(getAppointment).mockResolvedValue({
       id: "a1",
       status: "open",
+      universalToken: "tok1",
       aktenzeichen: "574 C 65412/26",
       // 10:00 and 14:00 Berlin time in summer are 08:00 and 12:00 UTC.
       slots: [
@@ -54,7 +55,21 @@ describe("create-termin created route", () => {
       { key: "2026-09-17", label: "17. September 2026", times: ["10:00 – 11:00"] },
       { key: "2026-09-24", label: "24. September 2026", times: ["14:00 – 15:00"] },
     ]);
-    expect(result.surveyUrl).toBe("http://localhost:3000/umfrage/a1");
+    expect(result.surveyUrl).toBe("http://localhost:3000/umfrage/tok1");
+  });
+
+  it("answers 404 for a published appointment without a survey token", async () => {
+    vi.mocked(getAppointment).mockResolvedValue({
+      id: "a1",
+      status: "open",
+      universalToken: null,
+      aktenzeichen: "574 C 65412/26",
+      slots: [],
+    });
+
+    await expect(loader({ request: request(), params })).rejects.toMatchObject({
+      init: { status: 404 },
+    });
   });
 
   it("answers 404 for an unknown appointment or one of another user", async () => {

@@ -22,11 +22,14 @@ export async function loader({ request, params }: { request: Request } & Params)
   // A draft has not been published yet, so there is nothing to share.
   if (appointment.status === "draft") throw redirect(`/overview/${encodeURIComponent(id)}/confirm`);
 
+  // Published appointments always have their token.
+  if (!appointment.universalToken) throw data("Not found", { status: 404 });
+
   const { origin } = new URL(request.url);
   return {
     user,
     days: groupSlotsByDay(appointment.slots.map(rangeToSlot)),
-    surveyUrl: `${origin}/umfrage/${encodeURIComponent(appointment.id)}`,
+    surveyUrl: `${origin}/umfrage/${encodeURIComponent(appointment.universalToken)}`,
   };
 }
 

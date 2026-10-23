@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import type { Kysely } from "kysely";
 
 import type { Database } from "../app/database/types.ts";
@@ -7,7 +9,12 @@ import { expect, signIn, test } from "./fixtures.ts";
 async function seedOpen(db: Kysely<Database>, userId: string) {
   const { id } = await db
     .insertInto("appointment")
-    .values({ user_id: userId, aktenzeichen: "574 C 65412/26", status: "open" })
+    .values({
+      user_id: userId,
+      aktenzeichen: "574 C 65412/26",
+      status: "open",
+      universal_token: randomUUID(),
+    })
     .returning("id")
     .executeTakeFirstOrThrow();
   await db

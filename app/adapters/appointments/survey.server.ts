@@ -52,7 +52,7 @@ function visibleSlots(db: Executor, appointmentId: string, ownParticipantId?: st
     );
 }
 
-// The token is either the secret of a personal link or, for the universal link, the appointment id.
+// The token is either the secret of a personal link or the universal_token of the appointment.
 // Returns undefined unless the appointment is open for replies.
 export async function findSurvey(db: Executor, token: string): Promise<Survey | undefined> {
   const personal = await db
@@ -64,7 +64,11 @@ export async function findSurvey(db: Executor, token: string): Promise<Survey | 
   const appointment = await db
     .selectFrom("appointment")
     .select(["id", "aktenzeichen"])
-    .where("id", "=", personal?.appointment_id ?? token)
+    .$call((qb) =>
+      personal
+        ? qb.where("id", "=", personal.appointment_id)
+        : qb.where("universal_token", "=", token),
+    )
     .where("status", "=", "open")
     .executeTakeFirst();
   if (!appointment) return undefined;

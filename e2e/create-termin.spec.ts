@@ -111,7 +111,14 @@ test("a richter creates a Terminumfrage with four time slots next week", async (
     page.getByRole("heading", { name: "Sie haben die Terminumfrage erstellt." }),
   ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Nächste Schritte" })).toBeVisible();
-  await expect(page.getByText(`/umfrage/${id}`)).toBeVisible();
+  // Publishing issues the token of the universal survey link, which is not the appointment id.
+  const { universal_token } = await db
+    .selectFrom("appointment")
+    .select("universal_token")
+    .where("id", "=", id)
+    .executeTakeFirstOrThrow();
+  expect(universal_token).toBeTruthy();
+  await expect(page.getByText(`/umfrage/${universal_token}`)).toBeVisible();
   await expect(page.getByRole("button", { name: "Link zur Terminumfrage kopieren" })).toBeVisible();
 
   await page.getByRole("link", { name: "Zu den Terminumfragen" }).click();
