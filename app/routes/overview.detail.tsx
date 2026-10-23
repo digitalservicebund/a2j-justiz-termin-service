@@ -3,9 +3,9 @@ import { data, Link, redirect, useLoaderData } from "react-router";
 import { getAppointment } from "~/adapters/appointments/appointments.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
-import { Badge } from "~/components/shared/Badge";
 import { CopyLinkButton } from "~/components/shared/CopyLinkButton";
-import { Icon } from "~/components/shared/Icon";
+import { KernBadge } from "~/components/shared/kern/KernBadge";
+import { KernIcon } from "~/components/shared/kern/KernIcon";
 import { getDb } from "~/database/database";
 
 import { groupSlotsByDay, type DayWindows } from "./create-termin.review";
@@ -59,7 +59,7 @@ export async function loader({ request, params }: { request: Request } & Params)
 function BackLink() {
   return (
     <Link className="kern-link overview-detail__back" to="/overview">
-      <Icon name="arrow-back" size="small" />
+      <KernIcon name="arrow-back" size="small" />
       Zurück zu den Terminumfragen
     </Link>
   );
@@ -122,10 +122,10 @@ export default function OverviewDetail() {
         {detail.state === "confirmed" ? (
           <>
             <header className="overview-detail__header">
-              <Badge type={detail.badge.type}>
-                {detail.badge.type === "success" && <Icon name="success" />}
+              <KernBadge type={detail.badge.type}>
+                {detail.badge.type === "success" && <KernIcon name="success" />}
                 <span className="kern-label">{detail.badge.text}</span>
-              </Badge>
+              </KernBadge>
               <h1 className="kern-heading-large">
                 {detail.past
                   ? `Der Termin war am ${detail.termin}`
@@ -159,10 +159,10 @@ function OpenForReplies({
   return (
     <>
       <header className="overview-detail__header">
-        <Badge type="info">
-          <Icon name="info" />
+        <KernBadge type="info">
+          <KernIcon name="info" />
           <span className="kern-label">Offen für Rückmeldungen</span>
-        </Badge>
+        </KernBadge>
         <h1 className="kern-heading-large">
           Die Terminumfrage ist aktiv und die Verfahrensbeteiligten können ihre Verfügbarkeiten
           teilen.
@@ -171,7 +171,7 @@ function OpenForReplies({
 
       <div className="overview-detail__actions">
         <Link className="kern-btn kern-btn--primary" to={selectUrl}>
-          <Icon name="check" />
+          <KernIcon name="check" />
           <span className="kern-label">Termin auswählen</span>
         </Link>
         <CopyLinkButton url={surveyUrl} />
@@ -190,10 +190,10 @@ function NoOptionWorks({
   return (
     <>
       <header className="overview-detail__header">
-        <Badge type="danger">
-          <Icon name="danger" />
+        <KernBadge type="danger">
+          <KernIcon name="danger" />
           <span className="kern-label">Kein Zeitfenster passt</span>
-        </Badge>
+        </KernBadge>
         <div>
           <h1 className="kern-heading-large">
             Es gibt leider keine Terminoption, bei der alle Verfahrensbeteiligten Zeit haben.
@@ -203,7 +203,7 @@ function NoOptionWorks({
       </header>
 
       <Link className="kern-btn kern-btn--primary" to="/overview/new">
-        <Icon name="add" />
+        <KernIcon name="add" />
         <span className="kern-label">Terminumfrage erstellen</span>
       </Link>
 

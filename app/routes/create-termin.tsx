@@ -16,10 +16,10 @@ import {
 } from "~/adapters/appointments/appointments.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
-import { Button } from "~/components/shared/Button";
 import { ErrorMessage } from "~/components/shared/ErrorMessage";
 import { FlowPage } from "~/components/shared/FlowPage";
-import { Icon } from "~/components/shared/Icon";
+import { KernButton } from "~/components/shared/kern/KernButton";
+import { KernIcon } from "~/components/shared/kern/KernIcon";
 import { getDb } from "~/database/database";
 
 import { createTerminBreadcrumbs } from "./create-termin.review";
@@ -440,14 +440,14 @@ function CreateTerminForm({
                               onChange={onChange}
                             />
                           </div>
-                          <Button
+                          <KernButton
                             type="button"
                             style="tertiary"
                             aria-label={`Zeitfenster ${index + 1} entfernen`}
                             onClick={() => removeRow(id)}
                           >
-                            <Icon name="delete" />
-                          </Button>
+                            <KernIcon name="delete" />
+                          </KernButton>
                         </div>
                         {groups.length > 0 && (
                           <div className="create-termin__row-errors">
@@ -463,7 +463,7 @@ function CreateTerminForm({
                   })}
                 </div>
 
-                <Button
+                <KernButton
                   id={ADD_BUTTON_ID}
                   type="button"
                   style="secondary"
@@ -472,9 +472,9 @@ function CreateTerminForm({
                   aria-describedby={atLimit ? "add-hint" : undefined}
                   onClick={addRow}
                 >
-                  <Icon name="add" />
+                  <KernIcon name="add" />
                   <span className="kern-label">Zeitfenster hinzufügen</span>
-                </Button>
+                </KernButton>
                 {atLimit && (
                   <p className="kern-hint" id="add-hint">
                     {`Sie können höchstens ${MAX_SLOTS} Zeitfenster angeben.`}
@@ -488,9 +488,9 @@ function CreateTerminForm({
               <Link className="kern-btn kern-btn--secondary" to="/overview">
                 <span className="kern-label">Abbrechen</span>
               </Link>
-              <Button type="submit" disabled={pending}>
+              <KernButton type="submit" disabled={pending}>
                 Weiter
-              </Button>
+              </KernButton>
             </div>
           </Form>
         </div>

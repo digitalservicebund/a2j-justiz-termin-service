@@ -5,9 +5,9 @@ import type { AuthUser } from "~/core/domain/user";
 
 import { BmjvLogo } from "./BmjvLogo";
 import { Breadcrumb, type BreadcrumbItem } from "./Breadcrumb";
-import { Button } from "./Button";
-import { Icon } from "./Icon";
-import { KernKopfZeile } from "./KernKopfZeile";
+import { KernButton } from "./kern/KernButton";
+import { KernIcon } from "./kern/KernIcon";
+import { KernKopfZeile } from "./kern/KernKopfZeile";
 
 import "./AppShell.css";
 
@@ -69,7 +69,7 @@ function ExternalLinkList({ links }: Readonly<{ links: Link[] }>) {
       {links.map(({ href, label }) => (
         <li key={label}>
           <a className="kern-link" href={href} target="_blank" rel="noreferrer">
-            <Icon name="open-in-new" />
+            <KernIcon name="open-in-new" />
             {label}
           </a>
         </li>
@@ -105,14 +105,14 @@ export function AppShell({
           {user && (
             <div className="page-shell__user">
               <p className="kern-body kern-body--muted page-shell__user-info">
-                <Icon name="account-circle" />
+                <KernIcon name="account-circle" />
                 <span>Angemeldet als:</span>
                 <span>{user.email}</span>
               </p>
               <Form method="post" action="/?index">
                 <input type="hidden" name="intent" value="logout" />
                 <button type="submit" className="kern-link kern-link--small page-shell__logout">
-                  <Icon name="logout" />
+                  <KernIcon name="logout" />
                   Abmelden
                 </button>
               </Form>
@@ -134,10 +134,10 @@ export function AppShell({
 
         {showReportProblem && (
           <div className="page-shell__content page-shell__report">
-            <Button type="button" style="secondary">
-              <Icon name="danger" />
+            <KernButton type="button" style="secondary">
+              <KernIcon name="danger" />
               <span className="kern-label">Problem mit dieser Seite melden</span>
-            </Button>
+            </KernButton>
           </div>
         )}
       </main>

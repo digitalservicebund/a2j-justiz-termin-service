@@ -1,16 +1,16 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { Badge } from "~/components/shared/Badge";
+import { KernBadge } from "~/components/shared/kern/KernBadge";
 
-describe("Badge", () => {
+describe("KernBadge", () => {
   it("renders children", () => {
-    render(<Badge type="info">Label</Badge>);
+    render(<KernBadge type="info">Label</KernBadge>);
     expect(screen.getByText("Label")).toBeInTheDocument();
   });
 
   it("wraps primitive children in kern-label markup", () => {
-    const { container } = render(<Badge type="info">Label</Badge>);
+    const { container } = render(<KernBadge type="info">Label</KernBadge>);
     expect(container.querySelector(".kern-label")).toHaveTextContent("Label");
   });
 
@@ -21,7 +21,7 @@ describe("Badge", () => {
     ["warning", "kern-badge--warning"],
     ["danger", "kern-badge--danger"],
   ] as const)("applies correct class for type '%s'", (type, expectedClass) => {
-    const { container } = render(<Badge type={type}>x</Badge>);
+    const { container } = render(<KernBadge type={type}>x</KernBadge>);
     expect(container.firstChild).toHaveClass(expectedClass);
   });
 });

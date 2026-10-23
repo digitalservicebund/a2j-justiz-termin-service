@@ -2,9 +2,9 @@ import { useState, type ReactNode } from "react";
 import { Form, useNavigation } from "react-router";
 
 import type { BreadcrumbItem } from "~/components/shared/Breadcrumb";
-import { Button } from "~/components/shared/Button";
 import { FlowPage } from "~/components/shared/FlowPage";
-import { Icon } from "~/components/shared/Icon";
+import { KernButton } from "~/components/shared/kern/KernButton";
+import { KernIcon } from "~/components/shared/kern/KernIcon";
 
 import { isEmptySlot, type CreateTerminValues, type SlotInput } from "./create-termin.schema";
 
@@ -83,7 +83,7 @@ function Section({
           {children}
           {editable && (
             <button type="submit" name="intent" value="back" className="kern-link">
-              <Icon name="edit" />
+              <KernIcon name="edit" />
               Bearbeiten<span className="kern-sr-only">{` ${title}`}</span>
             </button>
           )}
@@ -130,12 +130,12 @@ export function ReviewPage({
           <h1 className="kern-heading-large">Bitte überprüfen Sie Ihre Angaben</h1>
 
           <div className="create-termin-review__bulk">
-            <Button type="button" style="secondary" onClick={() => setAll(true)}>
+            <KernButton type="button" style="secondary" onClick={() => setAll(true)}>
               Alle einblenden
-            </Button>
-            <Button type="button" style="secondary" onClick={() => setAll(false)}>
+            </KernButton>
+            <KernButton type="button" style="secondary" onClick={() => setAll(false)}>
               Alle ausblenden
-            </Button>
+            </KernButton>
           </div>
 
           <div>
@@ -153,12 +153,12 @@ export function ReviewPage({
           </div>
 
           <div className="create-termin__actions">
-            <Button type="submit" name="intent" value="back" style="secondary">
+            <KernButton type="submit" name="intent" value="back" style="secondary">
               Zurück
-            </Button>
-            <Button type="submit" name="intent" value={submit.intent} disabled={pending}>
+            </KernButton>
+            <KernButton type="submit" name="intent" value={submit.intent} disabled={pending}>
               {submit.label}
-            </Button>
+            </KernButton>
           </div>
         </Form>
       </div>

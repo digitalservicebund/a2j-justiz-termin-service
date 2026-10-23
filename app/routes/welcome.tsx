@@ -2,10 +2,10 @@ import { data, redirect, useActionData, useLoaderData } from "react-router";
 import { z } from "zod";
 
 import { getSessionUser } from "~/adapters/session/session";
-import Alert from "~/components/shared/Alert";
 import { AppShell } from "~/components/shared/AppShell";
-import { Button } from "~/components/shared/Button";
-import { Icon, type IconName } from "~/components/shared/Icon";
+import { KernAlert } from "~/components/shared/kern/KernAlert";
+import { KernButton } from "~/components/shared/kern/KernButton";
+import { KernIcon, type KernIconName } from "~/components/shared/kern/KernIcon";
 import { LoginForm } from "~/components/shared/LoginForm";
 import { getAuth } from "~/lib/auth.server";
 import { logError } from "~/lib/logging";
@@ -59,7 +59,7 @@ export async function action({ request }: { request: Request }) {
   return data({ sent: true });
 }
 
-const steps: Array<{ icon: IconName; label: string }> = [
+const steps: Array<{ icon: KernIconName; label: string }> = [
   { icon: "calendar-today", label: "Richterschaft erstellt die Terminumfrage" },
   { icon: "checklist", label: "Verfahrensbeteiligte teilen ihre Verfügbarkeit" },
   { icon: "success", label: "Richterschaft wählt einen passenden Termin aus" },
@@ -88,17 +88,17 @@ export default function Welcome() {
             Verfahrensbeteiligten.
           </p>
           {invalidLink && (
-            <Alert
+            <KernAlert
               type="error"
               title="Ungültiger Anmeldelink"
               message="Der Link ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen Link an."
             />
           )}
           {result && "error" in result && (
-            <Alert type="error" title="Anmeldung nicht möglich" message={result.error} />
+            <KernAlert type="error" title="Anmeldung nicht möglich" message={result.error} />
           )}
           {result && "sent" in result && (
-            <Alert
+            <KernAlert
               type="success"
               title="Bitte prüfen Sie Ihr Postfach"
               message="Wenn Ihre E-Mail-Adresse hinterlegt ist, erhalten Sie einen Anmeldelink. Er ist 5 Minuten gültig."
@@ -130,36 +130,36 @@ export default function Welcome() {
           <ol className="welcome__steps">
             {steps.map(({ icon, label }) => (
               <li key={label} className="welcome__step">
-                <Icon name={icon} size="x-large" />
+                <KernIcon name={icon} size="x-large" />
                 <span className="kern-title">{label}</span>
               </li>
             ))}
           </ol>
         </section>
 
-        <Alert type="info" title="Gestalten Sie die digitalen Angebote der Justiz mit">
+        <KernAlert type="info" title="Gestalten Sie die digitalen Angebote der Justiz mit">
           <p className="kern-body">
             Wir wollen digitale Justiz-Angebote entwickeln, die für alle Menschen gut funktionieren.
             Ihre Hilfe ist dabei sehr wichtig. In kurzen Online-Gesprächen können Sie Ihre
             Erfahrungen mit uns teilen und neue Services testen.
           </p>
           <a className="kern-link" href={TODO_HREF}>
-            <Icon name="arrow-forward" size="small" />
+            <KernIcon name="arrow-forward" size="small" />
             Jetzt für die Teilnahme anmelden
           </a>
-        </Alert>
+        </KernAlert>
 
         <section aria-labelledby="welcome-feedback" className="welcome__feedback">
           <h2 className="kern-title kern-title--small" id="welcome-feedback">
             Hat Ihnen diese Seite geholfen?
           </h2>
           <div className="welcome__feedback-actions">
-            <Button type="button" style="secondary">
+            <KernButton type="button" style="secondary">
               Ja
-            </Button>
-            <Button type="button" style="secondary">
+            </KernButton>
+            <KernButton type="button" style="secondary">
               Nein
-            </Button>
+            </KernButton>
           </div>
         </section>
       </div>

@@ -1,5 +1,5 @@
 import type { AppointmentSummary } from "~/adapters/appointments/appointments.server";
-import type { BadgeType } from "~/components/shared/Badge";
+import type { KernBadgeType } from "~/components/shared/kern/KernBadge";
 
 const dateFormat = new Intl.DateTimeFormat("de-DE", {
   weekday: "long",
@@ -18,7 +18,7 @@ const timeFormat = new Intl.DateTimeFormat("de-DE", {
 export const formatInstant = (instant: Date) =>
   `${dateFormat.format(instant)} um ${timeFormat.format(instant)}`;
 
-export type StatusBadge = { type: BadgeType; text: string };
+export type StatusBadge = { type: KernBadgeType; text: string };
 
 export function describeStatus(
   { status, confirmedSlot }: Pick<AppointmentSummary, "status" | "confirmedSlot">,

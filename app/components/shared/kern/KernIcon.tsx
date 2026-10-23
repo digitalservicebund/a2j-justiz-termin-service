@@ -1,4 +1,4 @@
-export type IconName =
+export type KernIconName =
   | "home"
   | "arrow-up"
   | "arrow-down"
@@ -40,11 +40,11 @@ export type IconName =
 type IconSize = "small" | "default" | "large" | "x-large";
 
 export type IconProps = {
-  name: IconName;
+  name: KernIconName;
   size?: IconSize;
 };
 
-export function Icon({ name, size = "default" }: Readonly<IconProps>) {
+export function KernIcon({ name, size = "default" }: Readonly<IconProps>) {
   return (
     <span className={`kern-icon kern-icon--${name} kern-icon--${size}`} aria-hidden="true"></span>
   );

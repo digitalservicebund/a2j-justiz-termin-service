@@ -10,9 +10,9 @@ import {
   UpdateUserSchema,
   UserManagementError,
 } from "~/adapters/users/users.server";
-import Alert from "~/components/shared/Alert";
 import { AppShell } from "~/components/shared/AppShell";
-import { Button } from "~/components/shared/Button";
+import { KernAlert } from "~/components/shared/kern/KernAlert";
+import { KernButton } from "~/components/shared/kern/KernButton";
 import { NewUserSchema, type AuthUser, type UserRole } from "~/core/domain/user";
 import { getDb } from "~/database/database";
 
@@ -140,10 +140,10 @@ export default function AdminUsersRoute() {
         Sie den Benutzer und legen Sie ihn neu an.
       </p>
       {result && "error" in result && (
-        <Alert type="error" title="Änderung nicht möglich" message={result.error} />
+        <KernAlert type="error" title="Änderung nicht möglich" message={result.error} />
       )}
       {result && "success" in result && (
-        <Alert type="success" title="Gespeichert" message={result.success} />
+        <KernAlert type="success" title="Gespeichert" message={result.success} />
       )}
       <section aria-labelledby="new-user-title" className="admin-users__section">
         <h2 className="kern-heading-small" id="new-user-title">
@@ -152,9 +152,9 @@ export default function AdminUsersRoute() {
         <Form method="post" className="admin-users__form">
           <input type="hidden" name="intent" value="create" />
           <UserFields />
-          <Button type="submit" disabled={pending}>
+          <KernButton type="submit" disabled={pending}>
             Hinzufügen
-          </Button>
+          </KernButton>
         </Form>
       </section>
       {users.map((entry) => (
@@ -174,17 +174,17 @@ export default function AdminUsersRoute() {
               user={entry}
               ownAccount={entry.id === user.id}
             />
-            <Button type="submit" disabled={pending}>
+            <KernButton type="submit" disabled={pending}>
               Speichern
-            </Button>
+            </KernButton>
           </Form>
           {entry.id !== user.id && (
             <Form method="post">
               <input type="hidden" name="intent" value="delete" />
               <input type="hidden" name="id" value={entry.id} />
-              <Button type="submit" style="secondary" disabled={pending}>
+              <KernButton type="submit" style="secondary" disabled={pending}>
                 Benutzer löschen
-              </Button>
+              </KernButton>
             </Form>
           )}
         </section>

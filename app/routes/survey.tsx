@@ -2,9 +2,9 @@ import { data, Form, redirect, useActionData, useLoaderData, useNavigation } fro
 
 import { findSurvey } from "~/adapters/appointments/survey.server";
 import { AppShell } from "~/components/shared/AppShell";
-import { Button } from "~/components/shared/Button";
 import { ErrorMessage } from "~/components/shared/ErrorMessage";
 import { FlowPage } from "~/components/shared/FlowPage";
+import { KernButton } from "~/components/shared/kern/KernButton";
 import { getDb } from "~/database/database";
 
 import { NoOption } from "./survey.result";
@@ -159,9 +159,9 @@ export default function Survey() {
             </fieldset>
 
             <div className="survey__actions">
-              <Button type="submit" disabled={pending}>
+              <KernButton type="submit" disabled={pending}>
                 Weiter
-              </Button>
+              </KernButton>
             </div>
           </Form>
         </div>

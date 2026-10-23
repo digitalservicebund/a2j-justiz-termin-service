@@ -4,7 +4,7 @@ import { getAppointment } from "~/adapters/appointments/appointments.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { CopyLinkButton } from "~/components/shared/CopyLinkButton";
-import { Icon } from "~/components/shared/Icon";
+import { KernIcon } from "~/components/shared/kern/KernIcon";
 import { getDb } from "~/database/database";
 
 import { createTerminBreadcrumbs, groupSlotsByDay } from "./create-termin.review";
@@ -52,18 +52,18 @@ export function SuccessBanner({
 }: Readonly<{ title: string; overviewLink?: boolean }>) {
   return (
     <div className="kern-alert kern-alert--success create-termin-created__banner">
-      <Icon name="success" size="x-large" />
+      <KernIcon name="success" size="x-large" />
       <div className="create-termin-created__banner-body">
         <h1 className="kern-heading-large">{title}</h1>
         <div className="create-termin-created__banner-actions">
           <a className="kern-btn kern-btn--primary" href="#naechste-schritte">
             <span className="kern-label">Nächste Schritte</span>
-            <Icon name="arrow-down" />
+            <KernIcon name="arrow-down" />
           </a>
           {overviewLink && (
             <Link className="kern-btn kern-btn--secondary" to="/overview">
               <span className="kern-label">Zu den Terminumfragen</span>
-              <Icon name="arrow-forward" />
+              <KernIcon name="arrow-forward" />
             </Link>
           )}
         </div>
@@ -110,7 +110,7 @@ export default function CreateTerminCreated() {
           <Step title="Teilen Sie den Link zur Terminumfrage mit allen Verfahrensbeteiligten.">
             <p className="kern-body">Erwähnen Sie, bis wann Sie sich eine Rückmeldung wünschen.</p>
             <p className="kern-body create-termin-created__url">
-              <Icon name="open-in-new" size="small" />
+              <KernIcon name="open-in-new" size="small" />
               <span>{surveyUrl}</span>
             </p>
             <CopyLinkButton url={surveyUrl} className="kern-btn--small" />
