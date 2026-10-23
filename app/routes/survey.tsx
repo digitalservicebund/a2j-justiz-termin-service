@@ -6,6 +6,7 @@ import { Button } from "~/components/shared/Button";
 import { ErrorMessage } from "~/components/shared/ErrorMessage";
 import { getDb } from "~/database/database";
 
+import { NoOption } from "./survey.result";
 import {
   groupWindows,
   MAX_NAME_LENGTH,
@@ -48,6 +49,8 @@ export async function loader({ request, params }: { request: Request } & Params)
 
 export async function action({ request, params }: { request: Request } & Params) {
   const { token, survey } = await loadSurvey({ params });
+  // Nothing can be answered without a window; the form page says so.
+  if (survey.slots.length === 0) return redirect(surveyPath(token));
   const values = readValues(await request.formData());
 
   const result = validateSurvey(values, {
@@ -65,6 +68,9 @@ export default function Survey() {
   // What the guest just submitted wins over the earlier answer.
   const values = result?.values ?? saved;
   const errors = result?.errors ?? {};
+
+  // Without any window left there is nothing to answer, so the guest hears that right away.
+  if (days.length === 0) return <NoOption />;
 
   return (
     <AppShell breadcrumbs={surveyBreadcrumbs}>
@@ -105,12 +111,6 @@ export default function Survey() {
             >
               <legend className="kern-sr-only">Verfügbarkeiten</legend>
               <div className="kern-fieldset__body survey__days">
-                {days.length === 0 && (
-                  <p className="kern-body">
-                    Es ist kein Zeitfenster mehr übrig, bei dem alle Verfahrensbeteiligten Zeit
-                    haben.
-                  </p>
-                )}
                 {days.map(({ key, label, windows }) => (
                   <div className="survey__day" key={key}>
                     <h2 className="kern-heading-medium survey__date">{label}</h2>

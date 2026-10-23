@@ -30,10 +30,11 @@ export async function loader({ request, params }: { request: Request } & Params)
 
 export default function SurveyResult() {
   const { days } = useLoaderData<typeof loader>();
+  if (days.length === 0) return <NoOption />;
   return (
     <AppShell breadcrumbs={surveyBreadcrumbs}>
       <div className="create-termin-created survey-result">
-        {days.length > 0 ? <Positive days={days} /> : <NoTimeWorks />}
+        <Positive days={days} />
       </div>
     </AppShell>
   );
@@ -66,6 +67,17 @@ function Positive({ days }: Readonly<{ days: ReturnType<typeof groupWindows> }>)
         <Step title="Sie erhalten die Ladung." />
       </NextSteps>
     </>
+  );
+}
+
+// Also shown right away when no window is left to answer.
+export function NoOption() {
+  return (
+    <AppShell breadcrumbs={surveyBreadcrumbs}>
+      <div className="create-termin-created survey-result">
+        <NoTimeWorks />
+      </div>
+    </AppShell>
   );
 }
 

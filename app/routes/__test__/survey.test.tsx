@@ -104,6 +104,20 @@ describe("survey route", () => {
     );
   });
 
+  it("does not continue to the review when no window is left", async () => {
+    vi.mocked(findSurvey).mockResolvedValue({ ...universal, slots: [] });
+
+    const response = (await action({
+      request: postRequest([
+        ["name", "Guest C"],
+        ["keines", "1"],
+      ]),
+      params,
+    })) as Response;
+
+    expect(response.headers.get("Location")).toBe("/umfrage/t1");
+  });
+
   it("continues to the review when no window fits", async () => {
     const response = (await action({
       request: postRequest([
@@ -207,17 +221,18 @@ describe("survey page", () => {
     expect(screen.queryByText("21. September 2026")).not.toBeInTheDocument();
   });
 
-  it("only offers the option that none fits when every window is ruled out", async () => {
+  it("shows the sorry page right away when every window is ruled out", async () => {
     vi.mocked(findSurvey).mockResolvedValue({ ...universal, slots: [] });
     renderSurvey();
 
     expect(
-      await screen.findByText(
-        "Es ist kein Zeitfenster mehr übrig, bei dem alle Verfahrensbeteiligten Zeit haben.",
-      ),
+      await screen.findByRole("heading", {
+        level: 1,
+        name: "Es gibt leider keine Terminoption, bei der alle Verfahrensbeteiligten Zeit haben.",
+      }),
     ).toBeVisible();
-    expect(screen.queryByRole("checkbox", { name: /^Verfügbar/ })).not.toBeInTheDocument();
-    expect(screen.getByRole("checkbox", { name: "Kein Zeitfenster passt" })).toBeVisible();
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Weiter" })).not.toBeInTheDocument();
   });
 
   it("keeps an earlier answer when the guest comes back from the review", async () => {

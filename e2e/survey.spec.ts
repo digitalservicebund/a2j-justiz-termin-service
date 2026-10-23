@@ -274,6 +274,39 @@ test("a window another participant has no time for is not offered", async ({ pag
   );
 });
 
+test("a guest sees the sorry page right away when every window is ruled out", async ({
+  page,
+  users,
+  db,
+}) => {
+  const judge = await users.create({ roles: ["richter"] });
+  const { id, token, slotIds } = await seedSurvey(db, judge.id);
+  const { id: other } = await db
+    .insertInto("participant")
+    .values({ appointment_id: id, name: "Guest E", type: "universal" })
+    .returning("id")
+    .executeTakeFirstOrThrow();
+  await db
+    .insertInto("participant_response")
+    .values(
+      slotIds.map((slotId) => ({ participant_id: other, slot_id: slotId, status: "no" as const })),
+    )
+    .execute();
+
+  await page.goto(`/umfrage/${token}`);
+
+  await expect(page).toHaveURL(new RegExp(`/umfrage/${token}$`));
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Es gibt leider keine Terminoption, bei der alle Verfahrensbeteiligten Zeit haben.",
+  );
+  await expect(page.getByRole("checkbox")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Weiter" })).toHaveCount(0);
+
+  // The review does not let anyone answer either.
+  await page.goto(`/umfrage/${token}/zusammenfassung?name=Guest+C&keines=1`);
+  await expect(page).toHaveURL(new RegExp(`/umfrage/${token}$`));
+});
+
 test("unknown, draft and closed surveys are not found", async ({ page, users, db }) => {
   const judge = await users.create({ roles: ["richter"] });
   const open = await seedSurvey(db, judge.id);

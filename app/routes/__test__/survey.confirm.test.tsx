@@ -104,6 +104,20 @@ describe("survey confirm route", () => {
     expect(result).toMatchObject({ name: "Guest D", needsName: false });
   });
 
+  it("sends the guest to the form, which says sorry, when no window is left", async () => {
+    vi.mocked(findSurvey).mockResolvedValue({ ...universal, slots: [] });
+
+    const thrown = (await loader({
+      request: new Request(`${url}?name=Guest+C&keines=1`),
+      params,
+    }).catch((error: Response) => error)) as Response;
+    expect(thrown.headers.get("Location")).toBe("/umfrage/t1");
+
+    const response = await action({ request: postRequest(finish), params });
+    expect(locationOf(response)).toBe("/umfrage/t1");
+    expect(saveAnswer).not.toHaveBeenCalled();
+  });
+
   it("sends an invalid answer back to the form", async () => {
     for (const search of [
       "",

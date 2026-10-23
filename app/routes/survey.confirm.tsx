@@ -28,6 +28,8 @@ async function loadSurvey({ params }: Params) {
 
 export async function loader({ request, params }: { request: Request } & Params) {
   const { token, survey } = await loadSurvey({ params });
+  // Nothing can be answered without a window; the form page says so.
+  if (survey.slots.length === 0) throw redirect(surveyPath(token));
   const values = readValues(new URL(request.url).searchParams);
   const needsName = !survey.participant;
   const days = groupWindows(survey.slots);
@@ -49,6 +51,7 @@ export async function loader({ request, params }: { request: Request } & Params)
 
 export async function action({ request, params }: { request: Request } & Params) {
   const { token, survey } = await loadSurvey({ params });
+  if (survey.slots.length === 0) return redirect(surveyPath(token));
   const form = await request.formData();
   const intent = form.get("intent");
   const values = readValues(form);
