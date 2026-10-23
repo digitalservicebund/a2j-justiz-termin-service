@@ -20,7 +20,7 @@ vi.mock("~/database/database", () => ({
 const user = {
   id: "user-1",
   name: "Test user",
-  email: "test@example.org",
+  email: "test@example.com",
   roles: ["klaeger"],
 };
 const request = new Request("http://localhost/home");

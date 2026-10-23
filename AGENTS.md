@@ -32,6 +32,14 @@ pnpm test:e2e e2e/overview.spec.ts
 - Unit and component tests live next to the code in `__test__/` folders. E2E specs live in `e2e/`.
 - Add or update tests for every behaviour change, including the failure cases.
 
+## Test and placeholder data
+
+Never use data that looks real in tests, seed data, fixtures, stories or placeholder text.
+
+- E-mail addresses must end in `example.com`, for example `person.a@example.com`.
+- Personal information such as names must be obviously fake: `Person A`, `Judge B`, `Guest C`. Do not use realistic names.
+- Courts are named `Court X`, `Court Y`, `Court Z` and so on, not real court names.
+
 ## Git hooks
 
 `lefthook.yml` defines pre-commit and pre-push hooks, but they are not installed automatically. Run `lefthook install` once per clone. Running `lefthook run` also installs the git hooks into `.git/hooks` as a side effect.

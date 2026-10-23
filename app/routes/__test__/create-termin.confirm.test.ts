@@ -16,8 +16,8 @@ vi.mock("~/database/database", () => ({ getDb: () => ({ db: true }) }));
 
 const judge: AuthUser = {
   id: "1",
-  name: "Muthig",
-  email: "muthig@justiz.example.org",
+  name: "Judge A",
+  email: "judge.a@example.com",
   roles: ["richter"],
 };
 

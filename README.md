@@ -306,7 +306,7 @@ valid sender address for the real mail server.
 There are no default accounts. After starting the local database:
 
 ```bash
-pnpm user:create-admin --email admin@example.org --name "Administrator"
+pnpm user:create-admin --email admin@example.com --name "Administrator"
 ```
 
 The command runs migrations and creates an administrator; it fails if the
@@ -317,7 +317,7 @@ In the deployed container, run the equivalent command using its mounted
 database credentials:
 
 ```bash
-node scripts/create-admin.ts --email admin@example.org --name "Administrator"
+node scripts/create-admin.ts --email admin@example.com --name "Administrator"
 ```
 
 Request a link on the welcome page (`/`), then open the email in

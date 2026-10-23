@@ -36,8 +36,8 @@ vi.mock("~/database/database", () => ({ getDb: () => ({}) }));
 vi.mock("~/adapters/session/session", () => ({
   requireRole: vi.fn().mockResolvedValue({
     id: "1",
-    name: "Muthig",
-    email: "muthig@justiz.example.org",
+    name: "Judge A",
+    email: "judge.a@example.com",
     roles: ["richter"],
   }),
 }));

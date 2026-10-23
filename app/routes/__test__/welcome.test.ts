@@ -28,14 +28,14 @@ describe("login action", () => {
 
   it("forwards normalized email and origin through the HTTP handler", async () => {
     handler.mockResolvedValue(Response.json({ status: true }));
-    expect(await action({ request: request({ email: " User@Example.org " }) })).toMatchObject({
+    expect(await action({ request: request({ email: " User@Example.com " }) })).toMatchObject({
       data: { sent: true },
     });
     const forwarded: Request = handler.mock.calls[0]![0];
     expect(forwarded.url).toBe("http://localhost/api/auth/sign-in/magic-link");
     expect(forwarded.headers.get("Origin")).toBe("http://localhost");
     expect(await forwarded.json()).toEqual({
-      email: "user@example.org",
+      email: "user@example.com",
       callbackURL: "/home",
       errorCallbackURL: "/",
     });
@@ -43,7 +43,7 @@ describe("login action", () => {
 
   it("reports delivery failures rather than confirming success", async () => {
     handler.mockResolvedValue(new Response("private SMTP diagnostic", { status: 500 }));
-    expect(await action({ request: request({ email: "user@example.org" }) })).toMatchObject({
+    expect(await action({ request: request({ email: "user@example.com" }) })).toMatchObject({
       init: { status: 500 },
       data: { error: expect.any(String) },
     });
