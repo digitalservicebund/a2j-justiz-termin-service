@@ -2,9 +2,24 @@
   display: grid;
   gap: var(--kern-metric-space-x-large);
   justify-items: start;
+  /* The Figma design keeps the list at 864px, narrower than the page. */
+  max-width: 54rem;
   padding-block: var(--kern-metric-space-x-large) var(--kern-metric-space-6x-large);
 }
 
 .overview__table {
   width: 100%;
+}
+
+/*
+ * Rows are 48px high in the design: a 32px badge between 8px of padding. The action cell
+ * needs none, its x-small button already has a 48px hit area.
+ */
+.overview__table .kern-table__cell:not(.kern-table__cell--action) {
+  padding-block: var(--kern-metric-space-small);
+  vertical-align: middle;
+}
+
+.overview__table .kern-table__cell--action {
+  vertical-align: middle;
 }

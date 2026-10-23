@@ -84,7 +84,7 @@ test("overview lists the user's termin surveys with their status, newest first",
   await expect(page.getByText("574 C 9/26")).toHaveCount(0);
 
   // A draft continues on its confirmation page.
-  await page.getByRole("link", { name: "574 C 5/26" }).click();
+  await page.getByRole("link", { name: "Terminumfrage 574 C 5/26 öffnen" }).click();
   await expect(page).toHaveURL(new RegExp(`/overview/${draftId}/confirm$`));
 });
 
@@ -125,7 +125,7 @@ test("a cancelled termin survey opens a detail page with its time windows", asyn
 
   await signIn(page, user);
   await page.goto("/overview");
-  await page.getByRole("link", { name: "574 C 65412/26" }).click();
+  await page.getByRole("link", { name: "Terminumfrage 574 C 65412/26 öffnen" }).click();
 
   await expect(page).toHaveURL(new RegExp(`/overview/${id}$`));
   await expect(page.getByText("Kein Zeitfenster passt")).toBeVisible();
@@ -170,7 +170,7 @@ test("a confirmed termin survey opens a detail page announcing the date", async 
 
   await signIn(page, user);
   await page.goto("/overview");
-  await page.getByRole("link", { name: "574 C 65412/26" }).click();
+  await page.getByRole("link", { name: "Terminumfrage 574 C 65412/26 öffnen" }).click();
 
   await expect(page).toHaveURL(new RegExp(`/overview/${id}$`));
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
@@ -203,7 +203,7 @@ test("an open termin survey opens a detail page with its survey link", async ({
 
   await signIn(page, user);
   await page.goto("/overview");
-  await page.getByRole("link", { name: "574 C 65412/26" }).click();
+  await page.getByRole("link", { name: "Terminumfrage 574 C 65412/26 öffnen" }).click();
 
   await expect(page).toHaveURL(new RegExp(`/overview/${id}$`));
   await expect(page.getByText("Offen für Rückmeldungen")).toBeVisible();
