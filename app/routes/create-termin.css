@@ -1,15 +1,6 @@
-.create-termin {
-  --flow-page-padding-start: var(--kern-metric-space-5x-large);
-  --flow-page-padding-end: calc(
-    var(--kern-metric-space-6x-large) * 2 + var(--kern-metric-space-default)
-  );
-}
-
 .create-termin__form {
   display: grid;
   gap: var(--kern-metric-space-x-large);
-  width: min(100%, var(--page-width-narrow));
-  margin-inline: auto;
 }
 
 .create-termin__section {

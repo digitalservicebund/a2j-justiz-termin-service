@@ -48,12 +48,3 @@
     grid-template-columns: 31rem minmax(0, 1fr);
   }
 }
-
-/* The review is wider than the survey forms in the design, and sits closer to the breadcrumb. */
-.overview-select-confirm.create-termin {
-  --flow-page-padding-start: var(--kern-metric-space-2x-large);
-}
-
-.overview-select-confirm .create-termin__form {
-  width: min(100%, var(--page-width-default));
-}

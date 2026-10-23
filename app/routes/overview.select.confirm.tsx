@@ -73,7 +73,7 @@ export default function OverviewSelectConfirm() {
   return (
     <AppShell user={user} breadcrumbs={selectBreadcrumbs}>
       <ReviewPage
-        className="overview-select-confirm"
+        wide
         sections={[
           {
             id: "verhandlungsdaten",

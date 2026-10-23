@@ -23,9 +23,14 @@ describe("FlowPage", () => {
     expect(container.firstChild).toContainElement(screen.getByLabelText("Feld"));
   });
 
-  it("adds the given class name", () => {
-    const { container } = render(<FlowPage className="custom">x</FlowPage>);
-    expect(container.firstChild).toHaveClass("flow-page", "custom");
+  it.each(["default", "form", "review"] as const)("applies the %s spacing", (spacing) => {
+    const { container } = render(<FlowPage spacing={spacing}>x</FlowPage>);
+    expect(container.firstChild).toHaveClass(`flow-page--${spacing}`);
+  });
+
+  it("uses the default spacing without a spacing", () => {
+    const { container } = render(<FlowPage>x</FlowPage>);
+    expect(container.firstChild).toHaveClass("flow-page--default");
   });
 
   it("centers the children at the default width without a width", () => {

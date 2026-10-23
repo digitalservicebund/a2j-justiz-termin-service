@@ -22,18 +22,4 @@ describe("DefaultPage", () => {
     const { container } = render(<DefaultPage width={width}>x</DefaultPage>);
     expect(container.firstChild).toHaveClass(`page-width--${width}`);
   });
-
-  it("adds the given class name", () => {
-    const { container } = render(<DefaultPage className="custom">x</DefaultPage>);
-    expect(container.firstChild).toHaveClass("page-width", "custom");
-  });
-
-  it("renders a section with the given attributes", () => {
-    render(
-      <DefaultPage as="section" aria-label="Abschnitt">
-        x
-      </DefaultPage>,
-    );
-    expect(screen.getByRole("region", { name: "Abschnitt" })).toHaveClass("page-width");
-  });
 });

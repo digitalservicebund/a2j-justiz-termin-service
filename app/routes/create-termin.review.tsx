@@ -103,11 +103,13 @@ function Section({
 export function ReviewPage({
   sections,
   submit,
-  className,
+  wide = false,
   children,
 }: Readonly<{
   sections: ReviewSectionProps[];
-  className?: string;
+  // The survey and overview reviews are wider than the create-termin review, and sit closer to
+  // the breadcrumb.
+  wide?: boolean;
   submit: { label: string; intent: string };
   // Hidden inputs the action needs.
   children?: ReactNode;
@@ -119,7 +121,7 @@ export function ReviewPage({
     setOpen(Object.fromEntries(sections.map(({ id }) => [id, value])));
 
   return (
-    <FlowPage className={["create-termin", className].filter(Boolean).join(" ")}>
+    <FlowPage width={wide ? "default" : "narrow"} spacing={wide ? "review" : "form"}>
       <Form method="post" className="create-termin__form">
         {children}
         <KernHeading size="large" level={1}>

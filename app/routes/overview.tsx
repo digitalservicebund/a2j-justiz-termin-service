@@ -61,55 +61,57 @@ export default function Overview() {
         { label: "Verhandlungstermin-Finder" },
       ]}
     >
-      <DefaultPage className="overview__content">
-        <h1 className="kern-sr-only">Übersicht</h1>
-        <KernLinkButton to="/overview/new">
-          <KernIcon name="add" />
-          <KernLabel>Terminumfrage erstellen</KernLabel>
-        </KernLinkButton>
+      <DefaultPage>
+        <div className="overview__content">
+          <h1 className="kern-sr-only">Übersicht</h1>
+          <KernLinkButton to="/overview/new">
+            <KernIcon name="add" />
+            <KernLabel>Terminumfrage erstellen</KernLabel>
+          </KernLinkButton>
 
-        {entries.length === 0 ? (
-          <KernBody>Sie haben noch keine Terminumfragen erstellt.</KernBody>
-        ) : (
-          <KernTable className="overview__table" caption="Terminumfragen" hideCaption striped>
-            <KernTableHead>
-              <KernRow>
-                <KernColumn>Aktenzeichen</KernColumn>
-                <KernColumn>Status</KernColumn>
-                <KernColumn variant="action">Aktionen</KernColumn>
-              </KernRow>
-            </KernTableHead>
-            <KernTableBody>
-              {entries.map(({ id, aktenzeichen, href, badge }) => {
-                const icon = statusIcons[badge.type];
-                return (
-                  <KernRow key={id}>
-                    <KernCell>{aktenzeichen}</KernCell>
-                    <KernCell>
-                      <KernBadge type={badge.type}>
-                        {icon && <KernIcon name={icon} />}
-                        <KernLabel>{badge.text}</KernLabel>
-                      </KernBadge>
-                    </KernCell>
-                    <KernCell variant="action">
-                      <KernLinkButton
-                        style="secondary"
-                        className="kern-btn--x-small"
-                        to={href}
-                        title="Öffnen"
-                      >
-                        <KernIcon name="arrow-forward" size="small" />
-                        <KernLabel className="kern-sr-only">
-                          {`Terminumfrage ${aktenzeichen} öffnen`}
-                        </KernLabel>
-                      </KernLinkButton>
-                    </KernCell>
-                  </KernRow>
-                );
-              })}
-            </KernTableBody>
-          </KernTable>
-        )}
+          {entries.length === 0 ? (
+            <KernBody>Sie haben noch keine Terminumfragen erstellt.</KernBody>
+          ) : (
+            <KernTable className="overview__table" caption="Terminumfragen" hideCaption striped>
+              <KernTableHead>
+                <KernRow>
+                  <KernColumn>Aktenzeichen</KernColumn>
+                  <KernColumn>Status</KernColumn>
+                  <KernColumn variant="action">Aktionen</KernColumn>
+                </KernRow>
+              </KernTableHead>
+              <KernTableBody>
+                {entries.map(({ id, aktenzeichen, href, badge }) => {
+                  const icon = statusIcons[badge.type];
+                  return (
+                    <KernRow key={id}>
+                      <KernCell>{aktenzeichen}</KernCell>
+                      <KernCell>
+                        <KernBadge type={badge.type}>
+                          {icon && <KernIcon name={icon} />}
+                          <KernLabel>{badge.text}</KernLabel>
+                        </KernBadge>
+                      </KernCell>
+                      <KernCell variant="action">
+                        <KernLinkButton
+                          style="secondary"
+                          className="kern-btn--x-small"
+                          to={href}
+                          title="Öffnen"
+                        >
+                          <KernIcon name="arrow-forward" size="small" />
+                          <KernLabel className="kern-sr-only">
+                            {`Terminumfrage ${aktenzeichen} öffnen`}
+                          </KernLabel>
+                        </KernLinkButton>
+                      </KernCell>
+                    </KernRow>
+                  );
+                })}
+              </KernTableBody>
+            </KernTable>
+          )}
+        </div>
       </DefaultPage>
     </AppShell>
   );

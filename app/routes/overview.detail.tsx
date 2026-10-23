@@ -119,35 +119,37 @@ export default function OverviewDetail() {
         { label: aktenzeichen },
       ]}
     >
-      <DefaultPage className="overview-detail">
-        <BackLink />
+      <DefaultPage>
+        <div className="overview-detail">
+          <BackLink />
 
-        {detail.state === "confirmed" ? (
-          <>
-            <header className="overview-detail__header">
-              <KernBadge type={detail.badge.type}>
-                {detail.badge.type === "success" && <KernIcon name="success" />}
-                <KernLabel>{detail.badge.text}</KernLabel>
-              </KernBadge>
-              <KernHeading size="large" level={1}>
-                {detail.past
-                  ? `Der Termin war am ${detail.termin}`
-                  : `Der Termin ist am ${detail.termin}.`}
-              </KernHeading>
-            </header>
-            <Verhandlungsdaten aktenzeichen={aktenzeichen} />
-            {detail.past && <Zeitfenster days={detail.days} />}
-          </>
-        ) : detail.state === "open" ? (
-          <OpenForReplies
-            aktenzeichen={aktenzeichen}
-            days={detail.days}
-            selectUrl={detail.selectUrl}
-            surveyUrl={detail.surveyUrl}
-          />
-        ) : (
-          <NoOptionWorks aktenzeichen={aktenzeichen} days={detail.days} />
-        )}
+          {detail.state === "confirmed" ? (
+            <>
+              <header className="overview-detail__header">
+                <KernBadge type={detail.badge.type}>
+                  {detail.badge.type === "success" && <KernIcon name="success" />}
+                  <KernLabel>{detail.badge.text}</KernLabel>
+                </KernBadge>
+                <KernHeading size="large" level={1}>
+                  {detail.past
+                    ? `Der Termin war am ${detail.termin}`
+                    : `Der Termin ist am ${detail.termin}.`}
+                </KernHeading>
+              </header>
+              <Verhandlungsdaten aktenzeichen={aktenzeichen} />
+              {detail.past && <Zeitfenster days={detail.days} />}
+            </>
+          ) : detail.state === "open" ? (
+            <OpenForReplies
+              aktenzeichen={aktenzeichen}
+              days={detail.days}
+              selectUrl={detail.selectUrl}
+              surveyUrl={detail.surveyUrl}
+            />
+          ) : (
+            <NoOptionWorks aktenzeichen={aktenzeichen} days={detail.days} />
+          )}
+        </div>
       </DefaultPage>
     </AppShell>
   );

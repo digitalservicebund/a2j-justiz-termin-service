@@ -77,15 +77,6 @@
   }
 }
 
-/* The review is wider than the survey form in the design, and sits closer to the breadcrumb. */
-.survey-confirm.create-termin {
-  --flow-page-padding-start: var(--kern-metric-space-2x-large);
-}
-
-.survey-confirm .create-termin__form {
-  width: min(100%, var(--page-width-default));
-}
-
 .survey-result__banner-body {
   gap: var(--kern-metric-space-small);
   /* The heading wraps after "alle" in the design. */

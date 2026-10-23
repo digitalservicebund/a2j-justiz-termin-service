@@ -62,26 +62,25 @@ export function SuccessBanner({
   overviewLink = true,
 }: Readonly<{ title: string; overviewLink?: boolean }>) {
   return (
-    <DefaultPage
-      width="wide"
-      className="kern-alert kern-alert--success create-termin-created__banner"
-    >
-      <KernIcon name="success" size="x-large" />
-      <div className="create-termin-created__banner-body">
-        <KernHeading size="large" level={1}>
-          {title}
-        </KernHeading>
-        <div className="create-termin-created__banner-actions">
-          <a className="kern-btn kern-btn--primary" href="#naechste-schritte">
-            <KernLabel>Nächste Schritte</KernLabel>
-            <KernIcon name="arrow-down" />
-          </a>
-          {overviewLink && (
-            <KernLinkButton style="secondary" to="/overview">
-              <KernLabel>Zu den Terminumfragen</KernLabel>
-              <KernIcon name="arrow-forward" />
-            </KernLinkButton>
-          )}
+    <DefaultPage width="wide">
+      <div className="kern-alert kern-alert--success create-termin-created__banner">
+        <KernIcon name="success" size="x-large" />
+        <div className="create-termin-created__banner-body">
+          <KernHeading size="large" level={1}>
+            {title}
+          </KernHeading>
+          <div className="create-termin-created__banner-actions">
+            <a className="kern-btn kern-btn--primary" href="#naechste-schritte">
+              <KernLabel>Nächste Schritte</KernLabel>
+              <KernIcon name="arrow-down" />
+            </a>
+            {overviewLink && (
+              <KernLinkButton style="secondary" to="/overview">
+                <KernLabel>Zu den Terminumfragen</KernLabel>
+                <KernIcon name="arrow-forward" />
+              </KernLinkButton>
+            )}
+          </div>
         </div>
       </div>
     </DefaultPage>
@@ -90,15 +89,13 @@ export function SuccessBanner({
 
 export function NextSteps({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <DefaultPage
-      as="section"
-      aria-labelledby="naechste-schritte"
-      className="create-termin-created__steps"
-    >
-      <KernHeading size="large" level={2} id="naechste-schritte">
-        Nächste Schritte
-      </KernHeading>
-      <ol className="create-termin-created__list">{children}</ol>
+    <DefaultPage>
+      <section className="create-termin-created__steps" aria-labelledby="naechste-schritte">
+        <KernHeading size="large" level={2} id="naechste-schritte">
+          Nächste Schritte
+        </KernHeading>
+        <ol className="create-termin-created__list">{children}</ol>
+      </section>
     </DefaultPage>
   );
 }

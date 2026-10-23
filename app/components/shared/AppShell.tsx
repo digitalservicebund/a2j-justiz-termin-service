@@ -139,11 +139,13 @@ export function AppShell({
         {children}
 
         {showReportProblem && (
-          <DefaultPage className="page-shell__report">
-            <KernButton type="button" style="secondary">
-              <KernIcon name="danger" />
-              <KernLabel>Problem mit dieser Seite melden</KernLabel>
-            </KernButton>
+          <DefaultPage>
+            <div className="page-shell__report">
+              <KernButton type="button" style="secondary">
+                <KernIcon name="danger" />
+                <KernLabel>Problem mit dieser Seite melden</KernLabel>
+              </KernButton>
+            </div>
           </DefaultPage>
         )}
       </main>
