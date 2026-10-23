@@ -6,7 +6,7 @@ import { formatDay } from "./overview.select.schema";
 
 export const surveyBreadcrumbs = [
   { label: "Startseite", href: "/", icon: "home" },
-  { label: "Verhandlungstermin-Finder", href: "/home" },
+  { label: "Verhandlungstermin-Finder", href: "/overview" },
   { label: "Beantworten der Terminumfrage" },
 ] satisfies BreadcrumbItem[];
 

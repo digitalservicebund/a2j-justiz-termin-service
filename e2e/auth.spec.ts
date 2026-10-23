@@ -52,7 +52,7 @@ test("landing-page login proves email ownership, creates a session, and logout r
   expect(
     await db.selectFrom("session").select("id").where("userId", "=", user.id).execute(),
   ).toEqual([]);
-  const staleCookie = await request.get("/home", {
+  const staleCookie = await request.get("/overview", {
     headers: { Cookie: cookies.map((cookie) => `${cookie.name}=${cookie.value}`).join("; ") },
     maxRedirects: 0,
   });

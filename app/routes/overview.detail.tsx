@@ -111,7 +111,7 @@ export default function OverviewDetail() {
       user={user}
       breadcrumbs={[
         { label: "Startseite", href: "/", icon: "home" },
-        { label: "Verhandlungstermin-Finder", href: "/home" },
+        { label: "Verhandlungstermin-Finder", href: "/overview" },
         { label: "Übersicht", href: "/overview" },
         { label: aktenzeichen },
       ]}

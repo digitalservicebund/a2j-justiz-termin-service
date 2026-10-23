@@ -11,8 +11,8 @@ import {
   ScrollRestoration,
 } from "react-router";
 
+import { AppShell } from "~/components/shared/AppShell";
 import { KernAlert } from "~/components/shared/kern/KernAlert";
-import { Shell } from "~/components/shared/SchedulingShared";
 
 import type { Route } from "./+types/root";
 
@@ -87,13 +87,13 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   }
 
   return (
-    <Shell title="Court Appointment Scheduling">
+    <AppShell>
       <KernAlert type="error" title={title} message={message} />
       {stack && (
         <pre className="app-error-stack">
           <code>{stack}</code>
         </pre>
       )}
-    </Shell>
+    </AppShell>
   );
 }

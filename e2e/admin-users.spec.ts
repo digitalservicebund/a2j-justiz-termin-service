@@ -10,7 +10,7 @@ test("an administrator can downgrade another CLI-provisioned administrator throu
   const actor = await users.createAdmin();
   const target = await users.createAdmin();
   await signIn(page, actor);
-  await page.getByRole("link", { name: "Benutzerverwaltung" }).click();
+  await page.goto("/admin/users");
   const entry = page.getByRole("region", { name: target.email, exact: true });
   await entry.getByRole("checkbox", { name: "Administratorrechte" }).uncheck();
   await entry.getByRole("checkbox", { name: "Kläger", exact: true }).check();
@@ -23,7 +23,7 @@ test("an administrator can downgrade another CLI-provisioned administrator throu
   await expect(page).toHaveURL(`${baseURL}/`);
   await signIn(page, { ...target, roles: ["klaeger"] });
   expect((await page.request.get("/admin/users")).status()).toBe(403);
-  expect((await page.request.get("/home")).status()).toBe(200);
+  expect((await page.request.get("/overview")).status()).toBe(200);
 });
 
 test("administrator can create, edit, grant/revoke admin rights and delete users through the UI", async ({
@@ -35,7 +35,7 @@ test("administrator can create, edit, grant/revoke admin rights and delete users
 }) => {
   const admin = await users.createAdmin();
   await signIn(page, admin);
-  await page.getByRole("link", { name: "Benutzerverwaltung" }).click();
+  await page.goto("/admin/users");
   const email = users.email();
   const newUser = page.getByRole("region", { name: "Benutzer hinzufügen", exact: true });
   await newUser.getByRole("textbox", { name: "Name", exact: true }).fill("Managed user");
@@ -141,7 +141,7 @@ test("management validates duplicates, blocks self-removal and rejects cross-ori
   const admin = await users.createAdmin();
   const user = await users.create();
   await signIn(page, admin);
-  await page.getByRole("link", { name: "Benutzerverwaltung" }).click();
+  await page.goto("/admin/users");
   const ownEntry = page.getByRole("region", { name: admin.email, exact: true });
   await expect(ownEntry.getByRole("checkbox", { name: "Administratorrechte" })).toBeDisabled();
   await expect(ownEntry.getByRole("button", { name: "Benutzer löschen" })).toHaveCount(0);
