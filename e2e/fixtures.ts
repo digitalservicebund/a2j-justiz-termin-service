@@ -20,7 +20,7 @@ class Users {
   readonly emails = new Set<string>();
 
   email() {
-    const email = `e2e-${randomUUID()}@example.org`;
+    const email = `e2e-${randomUUID()}@example.com`;
     this.emails.add(email);
     return email;
   }

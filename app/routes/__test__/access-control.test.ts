@@ -24,20 +24,20 @@ describe("protected route entry points", () => {
   it("normalizes provisioned addresses and rejects invalid roles", () => {
     expect(
       NewUserSchema.parse({
-        email: " ADMIN@example.org ",
+        email: " ADMIN@example.com ",
         name: " Admin ",
         roles: ["admin", "richter"],
       }),
-    ).toEqual({ email: "admin@example.org", name: "Admin", roles: ["admin", "richter"] });
+    ).toEqual({ email: "admin@example.com", name: "Admin", roles: ["admin", "richter"] });
     expect(
       NewUserSchema.safeParse({
-        email: "admin@example.org",
+        email: "admin@example.com",
         name: "Admin",
         roles: ["ADMIN"],
       }).success,
     ).toBe(false);
     for (const roles of [[], ["richter", "richter"]]) {
-      expect(NewUserSchema.safeParse({ email: "a@example.org", name: "A", roles }).success).toBe(
+      expect(NewUserSchema.safeParse({ email: "a@example.com", name: "A", roles }).success).toBe(
         false,
       );
     }
@@ -49,7 +49,7 @@ describe("protected route entry points", () => {
       const roles = available.filter((_, index) => mask & (1 << index));
       const user = {
         id: "test-user",
-        ...NewUserSchema.parse({ email: "test@example.org", name: "Test", roles }),
+        ...NewUserSchema.parse({ email: "test@example.com", name: "Test", roles }),
       };
       for (const role of available) {
         expect(hasRole(user, role)).toBe(roles.includes("admin") || roles.includes(role));

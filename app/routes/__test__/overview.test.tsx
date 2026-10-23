@@ -11,8 +11,8 @@ vi.mock("~/database/database", () => ({ getDb: () => ({ db: true }) }));
 vi.mock("~/adapters/session/session", () => ({
   requireUser: vi.fn().mockResolvedValue({
     id: "u1",
-    name: "Muthig",
-    email: "muthig@justiz.example.org",
+    name: "Judge A",
+    email: "judge.a@example.com",
     roles: ["richter"],
   }),
 }));

@@ -33,7 +33,7 @@ vi.mock("~/lib/smtp", () => ({
   createSmtpTransport: () => ({ sendMail, close }),
 }));
 vi.mock("~/lib/env", () => ({ requireEnv: vi.fn(() => "http://localhost:3000") }));
-vi.mock("~/lib/secrets", () => ({ requireSecret: () => "sender@example.org" }));
+vi.mock("~/lib/secrets", () => ({ requireSecret: () => "sender@example.com" }));
 vi.mock("~/lib/logging", () => ({ logError: vi.fn() }));
 
 getAuth();
@@ -59,7 +59,7 @@ describe("magic-link configuration", () => {
   it("never sends email to an address outside the user list", async () => {
     findUser.mockResolvedValue(undefined);
     await plugin.sendMagicLink({
-      email: "unknown@example.org",
+      email: "unknown@example.com",
       url: "http://localhost/link",
       token: "test",
     });
@@ -67,16 +67,16 @@ describe("magic-link configuration", () => {
   });
 
   it("normalizes the allowlist lookup and emails the maintained address", async () => {
-    findUser.mockResolvedValue({ email: "known@example.org" });
+    findUser.mockResolvedValue({ email: "known@example.com" });
     await plugin.sendMagicLink({
-      email: "Known@Example.org",
+      email: "Known@Example.com",
       url: "http://localhost/link",
       token: "test",
     });
-    expect(where).toHaveBeenCalledWith("email", "=", "known@example.org");
+    expect(where).toHaveBeenCalledWith("email", "=", "known@example.com");
     expect(sendMail).toHaveBeenCalledWith(
       expect.objectContaining({
-        to: "known@example.org",
+        to: "known@example.com",
         text: expect.stringContaining("http://localhost/link"),
       }),
     );
@@ -84,11 +84,11 @@ describe("magic-link configuration", () => {
   });
 
   it("surfaces mail delivery failures and closes the transport", async () => {
-    findUser.mockResolvedValue({ email: "known@example.org" });
+    findUser.mockResolvedValue({ email: "known@example.com" });
     sendMail.mockRejectedValue(new Error("SMTP unavailable"));
     await expect(
       plugin.sendMagicLink({
-        email: "known@example.org",
+        email: "known@example.com",
         url: "http://localhost/link",
         token: "test",
       }),
