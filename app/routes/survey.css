@@ -1,9 +1,3 @@
-/* The flow-page background spans the full width; the content sits in the page container. */
-.survey {
-  background-color: var(--kern-color-layout-background-hued);
-  padding-block: var(--kern-metric-space-large) calc(var(--kern-metric-space-6x-large) * 2);
-}
-
 .survey__layout {
   display: grid;
   gap: var(--kern-metric-space-x-large);
@@ -30,11 +24,6 @@
   border-left: var(--kern-metric-border-width-bold) solid
     var(--kern-color-feedback-danger-contextual);
   padding-left: var(--kern-metric-space-default);
-}
-
-/* Inputs sit on a white surface in the flow-page design. */
-.survey__form .kern-form-input__input {
-  background-color: var(--kern-color-layout-background-default);
 }
 
 .survey__name {
@@ -93,7 +82,7 @@
 
 /* The review is wider than the survey form in the design, and sits closer to the breadcrumb. */
 .survey-confirm.create-termin {
-  padding-block-start: var(--kern-metric-space-2x-large);
+  --flow-page-padding-start: var(--kern-metric-space-2x-large);
 }
 
 .survey-confirm .create-termin__form {

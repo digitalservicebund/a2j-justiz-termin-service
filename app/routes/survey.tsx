@@ -4,6 +4,7 @@ import { findSurvey } from "~/adapters/appointments/survey.server";
 import { AppShell } from "~/components/shared/AppShell";
 import { Button } from "~/components/shared/Button";
 import { ErrorMessage } from "~/components/shared/ErrorMessage";
+import { FlowPage } from "~/components/shared/FlowPage";
 import { getDb } from "~/database/database";
 
 import { NoOption } from "./survey.result";
@@ -74,7 +75,7 @@ export default function Survey() {
 
   return (
     <AppShell breadcrumbs={surveyBreadcrumbs}>
-      <div className="survey">
+      <FlowPage className="survey">
         <div className="survey__layout">
           <dl className="kern-description-list kern-description-list--col survey__facts">
             <div className="kern-description-list-item">
@@ -164,7 +165,7 @@ export default function Survey() {
             </div>
           </Form>
         </div>
-      </div>
+      </FlowPage>
     </AppShell>
   );
 }

@@ -3,6 +3,7 @@ import { Form, useNavigation } from "react-router";
 
 import type { BreadcrumbItem } from "~/components/shared/Breadcrumb";
 import { Button } from "~/components/shared/Button";
+import { FlowPage } from "~/components/shared/FlowPage";
 import { Icon } from "~/components/shared/Icon";
 
 import { isEmptySlot, type CreateTerminValues, type SlotInput } from "./create-termin.schema";
@@ -122,7 +123,7 @@ export function ReviewPage({
     setOpen(Object.fromEntries(sections.map(({ id }) => [id, value])));
 
   return (
-    <div className={["create-termin", className].filter(Boolean).join(" ")}>
+    <FlowPage className={["create-termin", className].filter(Boolean).join(" ")}>
       <div className="page-shell__content">
         <Form method="post" className="create-termin__form">
           {children}
@@ -161,7 +162,7 @@ export function ReviewPage({
           </div>
         </Form>
       </div>
-    </div>
+    </FlowPage>
   );
 }
 

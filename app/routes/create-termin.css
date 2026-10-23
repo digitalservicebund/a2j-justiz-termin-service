@@ -1,7 +1,8 @@
 .create-termin {
-  background-color: var(--kern-color-layout-background-hued);
-  padding-block: var(--kern-metric-space-5x-large)
-    calc(var(--kern-metric-space-6x-large) * 2 + var(--kern-metric-space-default));
+  --flow-page-padding-start: var(--kern-metric-space-5x-large);
+  --flow-page-padding-end: calc(
+    var(--kern-metric-space-6x-large) * 2 + var(--kern-metric-space-default)
+  );
 }
 
 .create-termin__form {
@@ -20,11 +21,6 @@
 
 .create-termin__aktenzeichen {
   width: min(100%, calc(var(--kern-metric-dimension-4x-large) * 5));
-}
-
-/* Inputs sit on a white surface in the flow-page design. */
-.create-termin__form .kern-form-input__input {
-  background-color: var(--kern-color-layout-background-default);
 }
 
 /* Rows, add button, hint and the window-level error share one group, as in the error sketch. */
