@@ -44,11 +44,17 @@ describe("Overview", () => {
     renderPage();
 
     const rows = (await screen.findAllByRole("row")).slice(1);
-    expect(rows.map((row) => row.textContent)).toEqual([
-      "574 C 1/26Entwurf",
-      "574 C 2/26Offen für Rückmeldungen",
-      expect.stringMatching(/^574 C 3\/26Termin ist \p{L}+, 9\. November 2099 um 15:30$/u),
-      "574 C 4/26Kein Zeitfenster passt",
+    const cells = rows.map((row) =>
+      within(row)
+        .getAllByRole("cell")
+        .slice(0, 2)
+        .map((cell) => cell.textContent),
+    );
+    expect(cells).toEqual([
+      ["574 C 1/26", "Entwurf"],
+      ["574 C 2/26", "Offen für Rückmeldungen"],
+      ["574 C 3/26", expect.stringMatching(/^Termin ist \p{L}+, 9\. November 2099 um 15:30$/u)],
+      ["574 C 4/26", "Kein Zeitfenster passt"],
     ]);
     expect(listAppointments).toHaveBeenCalledWith({ db: true }, "u1");
   });
@@ -63,26 +69,39 @@ describe("Overview", () => {
 
     renderPage();
 
-    const draftRow = (await screen.findByText("574 C 1/26")).closest("tr")!;
-    expect(within(draftRow).getByRole("link", { name: "574 C 1/26" })).toHaveAttribute(
-      "href",
-      "/overview/a/confirm",
+    const links = await screen.findAllByRole("link", { name: /öffnen$/ });
+    const hrefs = Object.fromEntries(
+      links.map((link) => [link.textContent, link.getAttribute("href")]),
     );
-    const openRow = screen.getByText("574 C 2/26").closest("tr")!;
-    expect(within(openRow).getByRole("link", { name: "574 C 2/26" })).toHaveAttribute(
-      "href",
-      "/overview/b",
+    expect(hrefs).toEqual({
+      "Terminumfrage 574 C 1/26 öffnen": "/overview/a/confirm",
+      "Terminumfrage 574 C 2/26 öffnen": "/overview/b",
+      "Terminumfrage 574 C 3/26 öffnen": "/overview/c",
+      "Terminumfrage 574 C 4/26 öffnen": "/overview/d",
+    });
+  });
+
+  it("renders a striped table with an action column and one open button per row", async () => {
+    vi.mocked(listAppointments).mockResolvedValue([
+      { id: "a", aktenzeichen: "574 C 1/26", status: "open", confirmedSlot: null },
+    ]);
+
+    renderPage();
+
+    const table = await screen.findByRole("table", { name: "Terminumfragen" });
+    expect(table).toHaveClass("kern-table--striped");
+    expect(
+      within(table)
+        .getAllByRole("columnheader")
+        .map((header) => header.textContent),
+    ).toEqual(["Aktenzeichen", "Status", "Aktionen"]);
+    const row = within(table).getByRole("cell", { name: "574 C 1/26" }).closest("tr")!;
+    expect(within(row).getByRole("link", { name: "Terminumfrage 574 C 1/26 öffnen" })).toHaveClass(
+      "kern-btn--secondary",
+      "kern-btn--x-small",
     );
-    const cancelledRow = screen.getByText("574 C 3/26").closest("tr")!;
-    expect(within(cancelledRow).getByRole("link", { name: "574 C 3/26" })).toHaveAttribute(
-      "href",
-      "/overview/c",
-    );
-    const confirmedRow = screen.getByText("574 C 4/26").closest("tr")!;
-    expect(within(confirmedRow).getByRole("link", { name: "574 C 4/26" })).toHaveAttribute(
-      "href",
-      "/overview/d",
-    );
+    // The Aktenzeichen itself is plain text, the button is the only way in.
+    expect(within(row).getAllByRole("link")).toHaveLength(1);
   });
 
   it("shows a message instead of an empty table when there are no appointments", async () => {

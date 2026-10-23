@@ -1,4 +1,4 @@
-import { Link, useLoaderData } from "react-router";
+import { useLoaderData } from "react-router";
 
 import { listAppointments } from "~/adapters/appointments/appointments.server";
 import { requireUser } from "~/adapters/session/session";
@@ -8,6 +8,14 @@ import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernIcon, type KernIconName } from "~/components/shared/kern/KernIcon";
 import { KernLabel } from "~/components/shared/kern/KernLabel";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
+import {
+  KernCell,
+  KernColumn,
+  KernRow,
+  KernTable,
+  KernTableBody,
+  KernTableHead,
+} from "~/components/shared/kern/KernTable";
 import { getDb } from "~/database/database";
 import type { AppointmentStatus } from "~/database/types";
 
@@ -62,38 +70,44 @@ export default function Overview() {
         {entries.length === 0 ? (
           <KernBody>Sie haben noch keine Terminumfragen erstellt.</KernBody>
         ) : (
-          <table className="kern-table overview__table">
-            <thead className="kern-table__header">
-              <tr className="kern-table__row">
-                <th className="kern-table__header" scope="col">
-                  Aktenzeichen
-                </th>
-                <th className="kern-table__header" scope="col">
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody className="kern-table__body">
+          <KernTable className="overview__table" caption="Terminumfragen" hideCaption striped>
+            <KernTableHead>
+              <KernRow>
+                <KernColumn>Aktenzeichen</KernColumn>
+                <KernColumn>Status</KernColumn>
+                <KernColumn variant="action">Aktionen</KernColumn>
+              </KernRow>
+            </KernTableHead>
+            <KernTableBody>
               {entries.map(({ id, aktenzeichen, href, badge }) => {
                 const icon = statusIcons[badge.type];
                 return (
-                  <tr className="kern-table__row" key={id}>
-                    <td className="kern-table__cell">
-                      <Link className="kern-link" to={href}>
-                        {aktenzeichen}
-                      </Link>
-                    </td>
-                    <td className="kern-table__cell">
+                  <KernRow key={id}>
+                    <KernCell>{aktenzeichen}</KernCell>
+                    <KernCell>
                       <KernBadge type={badge.type}>
                         {icon && <KernIcon name={icon} />}
                         <KernLabel>{badge.text}</KernLabel>
                       </KernBadge>
-                    </td>
-                  </tr>
+                    </KernCell>
+                    <KernCell variant="action">
+                      <KernLinkButton
+                        style="secondary"
+                        className="kern-btn--x-small"
+                        to={href}
+                        title="Öffnen"
+                      >
+                        <KernIcon name="arrow-forward" size="small" />
+                        <KernLabel className="kern-sr-only">
+                          {`Terminumfrage ${aktenzeichen} öffnen`}
+                        </KernLabel>
+                      </KernLinkButton>
+                    </KernCell>
+                  </KernRow>
                 );
               })}
-            </tbody>
-          </table>
+            </KernTableBody>
+          </KernTable>
         )}
       </div>
     </AppShell>
