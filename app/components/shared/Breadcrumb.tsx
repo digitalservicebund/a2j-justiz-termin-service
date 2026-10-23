@@ -1,11 +1,11 @@
-import { Icon, type IconName } from "./Icon";
+import { KernIcon, type KernIconName } from "./kern/KernIcon";
 
 import "./Breadcrumb.css";
 
 export type BreadcrumbItem = {
   label: string;
   href?: string;
-  icon?: IconName;
+  icon?: KernIconName;
 };
 
 type BreadcrumbProps = {
@@ -26,7 +26,7 @@ export function Breadcrumb({ items, className }: Readonly<BreadcrumbProps>) {
             <li key={label} className="breadcrumb__item">
               {index > 0 && (
                 <span className="breadcrumb__separator" aria-hidden="true">
-                  <Icon name="chevron-right" />
+                  <KernIcon name="chevron-right" />
                 </span>
               )}
               {href && !isCurrent ? (
@@ -35,7 +35,7 @@ export function Breadcrumb({ items, className }: Readonly<BreadcrumbProps>) {
                   href={href}
                   aria-label={icon ? label : undefined}
                 >
-                  {icon ? <Icon name={icon} /> : label}
+                  {icon ? <KernIcon name={icon} /> : label}
                 </a>
               ) : (
                 <span aria-current="page" className="kern-body kern-body--small">

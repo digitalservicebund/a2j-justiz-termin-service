@@ -1,6 +1,6 @@
 import { Form, Link } from "react-router";
 
-import { Button } from "~/components/shared/Button";
+import { KernButton } from "~/components/shared/kern/KernButton";
 import type { AuthUser } from "~/core/domain/user";
 
 export function AppNav({ user }: Readonly<{ user?: AuthUser }>) {
@@ -21,9 +21,9 @@ export function AppNav({ user }: Readonly<{ user?: AuthUser }>) {
           )}
           <Form method="post" action="/?index">
             <input type="hidden" name="intent" value="logout" />
-            <Button type="submit" style="secondary">
+            <KernButton type="submit" style="secondary">
               Abmelden
-            </Button>
+            </KernButton>
           </Form>
         </>
       ) : (

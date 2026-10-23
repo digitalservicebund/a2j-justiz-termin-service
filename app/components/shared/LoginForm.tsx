@@ -1,7 +1,7 @@
 import { Form, useNavigation } from "react-router";
 
-import { Button } from "./Button";
-import { Icon } from "./Icon";
+import { KernButton } from "./kern/KernButton";
+import { KernIcon } from "./kern/KernIcon";
 
 import "./LoginForm.css";
 
@@ -24,10 +24,10 @@ export function LoginForm() {
           required
         />
       </div>
-      <Button type="submit" disabled={pending}>
+      <KernButton type="submit" disabled={pending}>
         <span className="kern-label">{pending ? "Wird gesendet…" : "Anmelden"}</span>
-        <Icon name="arrow-forward" />
-      </Button>
+        <KernIcon name="arrow-forward" />
+      </KernButton>
     </Form>
   );
 }

@@ -7,7 +7,7 @@ type AlertProps = {
   children?: React.ReactNode;
 };
 
-export default function Alert({ type, title, message, children }: Readonly<AlertProps>) {
+export function KernAlert({ type, title, message, children }: Readonly<AlertProps>) {
   const typeClasses: Record<AlertType, string> = {
     success: "kern-alert--success",
     error: "kern-alert--danger",

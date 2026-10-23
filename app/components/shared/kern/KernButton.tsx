@@ -2,17 +2,17 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 type ButtonStyle = "primary" | "secondary" | "tertiary";
 
-export type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "style"> & {
+export type KernButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "style"> & {
   style?: ButtonStyle;
   children?: ReactNode;
 };
 
-export function Button({
+export function KernButton({
   style = "primary",
   className,
   children,
   ...buttonProps
-}: Readonly<ButtonProps>) {
+}: Readonly<KernButtonProps>) {
   const styleClassMap: Record<ButtonStyle, string> = {
     primary: "kern-btn--primary",
     secondary: "kern-btn--secondary",

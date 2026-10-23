@@ -2,7 +2,7 @@ import { data, redirect, useLoaderData } from "react-router";
 
 import { findSurvey, getSavedAnswer } from "~/adapters/appointments/survey.server";
 import { AppShell } from "~/components/shared/AppShell";
-import { Icon } from "~/components/shared/Icon";
+import { KernIcon } from "~/components/shared/kern/KernIcon";
 import { getDb } from "~/database/database";
 
 import { NextSteps, Step, SuccessBanner } from "./create-termin.created";
@@ -84,7 +84,7 @@ export function NoOption() {
 function NoTimeWorks() {
   return (
     <div className="kern-alert kern-alert--danger create-termin-created__banner">
-      <Icon name="danger" size="x-large" />
+      <KernIcon name="danger" size="x-large" />
       <div className="create-termin-created__banner-body survey-result__banner-body">
         <h1 className="kern-heading-large">
           Es gibt leider keine Terminoption, bei der alle Verfahrensbeteiligten Zeit haben.

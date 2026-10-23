@@ -3,8 +3,8 @@ import { Link, useLoaderData } from "react-router";
 import { listAppointments } from "~/adapters/appointments/appointments.server";
 import { requireUser } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
-import { Badge, type BadgeType } from "~/components/shared/Badge";
-import { Icon, type IconName } from "~/components/shared/Icon";
+import { KernBadge, type KernBadgeType } from "~/components/shared/kern/KernBadge";
+import { KernIcon, type KernIconName } from "~/components/shared/kern/KernIcon";
 import { getDb } from "~/database/database";
 import type { AppointmentStatus } from "~/database/types";
 
@@ -32,7 +32,7 @@ export async function loader({ request }: { request: Request }) {
   };
 }
 
-const statusIcons: Partial<Record<BadgeType, IconName>> = {
+const statusIcons: Partial<Record<KernBadgeType, KernIconName>> = {
   success: "success",
   danger: "danger",
   info: "info",
@@ -53,7 +53,7 @@ export default function Overview() {
       <div className="page-shell__content overview__content">
         <h1 className="kern-sr-only">Übersicht</h1>
         <Link className="kern-btn kern-btn--primary" to="/overview/new">
-          <Icon name="add" />
+          <KernIcon name="add" />
           <span className="kern-label">Terminumfrage erstellen</span>
         </Link>
 
@@ -82,10 +82,10 @@ export default function Overview() {
                       </Link>
                     </td>
                     <td className="kern-table__cell">
-                      <Badge type={badge.type}>
-                        {icon && <Icon name={icon} />}
+                      <KernBadge type={badge.type}>
+                        {icon && <KernIcon name={icon} />}
                         <span className="kern-label">{badge.text}</span>
-                      </Badge>
+                      </KernBadge>
                     </td>
                   </tr>
                 );

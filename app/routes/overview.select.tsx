@@ -11,9 +11,9 @@ import {
 import { getAppointment } from "~/adapters/appointments/appointments.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
-import { Button } from "~/components/shared/Button";
 import { ErrorMessage } from "~/components/shared/ErrorMessage";
 import { FlowPage } from "~/components/shared/FlowPage";
+import { KernButton } from "~/components/shared/kern/KernButton";
 import { getDb } from "~/database/database";
 
 import {
@@ -162,9 +162,9 @@ export default function OverviewSelect() {
               <Link className="kern-btn kern-btn--secondary" to="/overview">
                 <span className="kern-label">Abbrechen</span>
               </Link>
-              <Button type="submit" disabled={pending}>
+              <KernButton type="submit" disabled={pending}>
                 Weiter
-              </Button>
+              </KernButton>
             </div>
           </Form>
         </div>
