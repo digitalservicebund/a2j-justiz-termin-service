@@ -61,7 +61,7 @@ export function SuccessBanner({
   overviewLink = true,
 }: Readonly<{ title: string; overviewLink?: boolean }>) {
   return (
-    <div className="kern-alert kern-alert--success create-termin-created__banner">
+    <div className="kern-alert kern-alert--success page-width page-width--wide create-termin-created__banner">
       <KernIcon name="success" size="x-large" />
       <div className="create-termin-created__banner-body">
         <KernHeading size="large" level={1}>
@@ -86,7 +86,10 @@ export function SuccessBanner({
 
 export function NextSteps({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <section aria-labelledby="naechste-schritte" className="create-termin-created__steps">
+    <section
+      aria-labelledby="naechste-schritte"
+      className="page-width create-termin-created__steps"
+    >
       <KernHeading size="large" level={2} id="naechste-schritte">
         Nächste Schritte
       </KernHeading>

@@ -2,9 +2,6 @@
   display: grid;
   gap: var(--kern-metric-space-x-large);
   justify-items: start;
-  /* The flow-page text column is 864px wide in the design; KERN has no token for it. */
-  width: min(100%, 54rem);
-  margin-inline: auto;
   padding-block: var(--kern-metric-space-large) var(--kern-metric-space-6x-large);
 }
 

@@ -120,7 +120,7 @@ export function ReviewPage({
 
   return (
     <FlowPage className={["create-termin", className].filter(Boolean).join(" ")}>
-      <div className="page-shell__content">
+      <div className="page-width">
         <Form method="post" className="create-termin__form">
           {children}
           <KernHeading size="large" level={1}>

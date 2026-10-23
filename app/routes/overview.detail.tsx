@@ -118,7 +118,7 @@ export default function OverviewDetail() {
         { label: aktenzeichen },
       ]}
     >
-      <div className="overview-detail">
+      <div className="page-width overview-detail">
         <BackLink />
 
         {detail.state === "confirmed" ? (

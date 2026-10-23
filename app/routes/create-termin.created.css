@@ -9,8 +9,6 @@
   display: flex;
   align-items: flex-start;
   gap: var(--kern-metric-space-default);
-  width: min(100% - 2 * var(--kern-metric-space-default), 78rem);
-  margin-inline: auto;
   padding: var(--kern-metric-space-x-large) var(--kern-metric-space-default);
   border-radius: var(--kern-metric-border-radius-large);
 }
@@ -35,8 +33,6 @@
 .create-termin-created__steps {
   display: grid;
   gap: var(--kern-metric-space-default);
-  width: min(100% - 2 * var(--kern-metric-space-default), 62rem);
-  margin-inline: auto;
 }
 
 .create-termin-created__list {
@@ -84,7 +80,6 @@
 /* Date and times side by side without the date wrapping. */
 .create-termin-created__step-body .kern-description-list {
   width: 100%;
-  max-width: 54rem;
 }
 
 .create-termin-created__step-body .kern-description-list-item {

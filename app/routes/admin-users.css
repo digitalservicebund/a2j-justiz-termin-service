@@ -9,5 +9,5 @@
 .admin-users__form {
   display: grid;
   gap: var(--kern-metric-space-default);
-  max-width: 40rem;
+  max-width: var(--page-width-narrow);
 }

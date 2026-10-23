@@ -60,7 +60,7 @@ export default function Overview() {
         { label: "Verhandlungstermin-Finder" },
       ]}
     >
-      <div className="page-shell__content overview__content">
+      <div className="page-width overview__content">
         <h1 className="kern-sr-only">Übersicht</h1>
         <KernLinkButton to="/overview/new">
           <KernIcon name="add" />

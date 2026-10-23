@@ -83,7 +83,7 @@ export default function Welcome() {
       ]}
     >
       <section className="welcome__hero">
-        <div className="welcome__hero-content">
+        <div className="page-width welcome__hero-content">
           <KernHeading size="x-large" level={1}>
             Verhandlungstermin-Finder
           </KernHeading>
@@ -113,7 +113,7 @@ export default function Welcome() {
       </section>
 
       <section className="welcome__pilot">
-        <div className="welcome__content">
+        <div className="page-width">
           <details className="kern-details">
             <summary className="kern-details__header welcome__pilot-summary">
               Der Onlinedienst befindet sich in der Testphase (Pilotprojekt)
@@ -126,7 +126,7 @@ export default function Welcome() {
         </div>
       </section>
 
-      <div className="welcome__content welcome__sections">
+      <div className="page-width welcome__sections">
         <section aria-labelledby="welcome-ablauf">
           <KernHeading size="large" level={2} id="welcome-ablauf">
             Der Ablauf

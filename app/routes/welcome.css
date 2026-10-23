@@ -1,9 +1,3 @@
-.welcome__content,
-.welcome__hero-content {
-  width: min(100% - 2 * var(--kern-metric-space-default), 62rem);
-  margin-inline: auto;
-}
-
 .welcome__hero {
   background-color: var(--kern-color-neutral-050);
 }

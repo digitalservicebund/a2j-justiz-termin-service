@@ -2,15 +2,12 @@
   display: grid;
   gap: var(--kern-metric-space-x-large);
   align-items: start;
-  width: min(100% - 2 * var(--kern-metric-space-default), 94rem);
-  margin-inline: auto;
 }
 
 .survey__form {
   display: grid;
   gap: var(--kern-metric-space-x-large);
-  /* The flow-page form column is 864px wide in the design; KERN has no token for it. */
-  width: min(100%, 54rem);
+  width: min(100%, var(--page-width-default));
 }
 
 .survey__fieldset {
@@ -86,11 +83,11 @@
 }
 
 .survey-confirm .create-termin__form {
-  width: min(100%, 54rem);
+  width: min(100%, var(--page-width-default));
 }
 
 .survey-result__banner-body {
   gap: var(--kern-metric-space-small);
-  /* The heading wraps after "alle" in the design; KERN has no token for the column width. */
-  max-width: 46rem;
+  /* The heading wraps after "alle" in the design. */
+  max-width: var(--page-width-narrow);
 }

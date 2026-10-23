@@ -86,7 +86,7 @@ export function NoOption() {
 
 function NoTimeWorks() {
   return (
-    <div className="kern-alert kern-alert--danger create-termin-created__banner">
+    <div className="kern-alert kern-alert--danger page-width page-width--wide create-termin-created__banner">
       <KernIcon name="danger" size="x-large" />
       <div className="create-termin-created__banner-body survey-result__banner-body">
         <KernHeading size="large" level={1}>

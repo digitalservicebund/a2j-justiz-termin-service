@@ -138,7 +138,7 @@ export function AppShell({
         {children}
 
         {showReportProblem && (
-          <div className="page-shell__content page-shell__report">
+          <div className="page-width page-shell__report">
             <KernButton type="button" style="secondary">
               <KernIcon name="danger" />
               <KernLabel>Problem mit dieser Seite melden</KernLabel>

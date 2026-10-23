@@ -8,8 +8,7 @@
 .create-termin__form {
   display: grid;
   gap: var(--kern-metric-space-x-large);
-  /* KERN has no token for a form column width, so build it from dimension tokens. */
-  width: min(100%, calc(var(--kern-metric-dimension-4x-large) * 9));
+  width: min(100%, var(--page-width-narrow));
   margin-inline: auto;
 }
 

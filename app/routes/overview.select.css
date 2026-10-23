@@ -2,15 +2,12 @@
   display: grid;
   gap: var(--kern-metric-space-x-large);
   align-items: start;
-  width: min(100% - 2 * var(--kern-metric-space-default), 94rem);
-  margin-inline: auto;
 }
 
 .overview-select__form {
   display: grid;
   gap: var(--kern-metric-space-x-large);
-  /* The flow-page form column is 992px wide in the design; KERN has no token for it. */
-  width: min(100%, 62rem);
+  width: min(100%, var(--page-width-default));
 }
 
 .overview-select__fieldset {
@@ -58,5 +55,5 @@
 }
 
 .overview-select-confirm .create-termin__form {
-  width: min(100%, 54rem);
+  width: min(100%, var(--page-width-default));
 }

@@ -324,7 +324,7 @@ function CreateTerminForm({
   return (
     <>
       <FlowPage className="create-termin">
-        <div className="page-shell__content">
+        <div className="page-width">
           <h1 className="kern-sr-only">Erstellen der Terminumfrage</h1>
           <Form method="post" className="create-termin__form" noValidate>
             {draft && <input type="hidden" name="appointmentId" value={draft.id} />}
