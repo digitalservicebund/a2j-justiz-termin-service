@@ -3,9 +3,14 @@ import { data, redirect, useLoaderData } from "react-router";
 import { confirmAppointment, getAppointment } from "~/adapters/appointments/appointments.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
+import { KernBody } from "~/components/shared/kern/KernBody";
+import {
+  KernDescriptionList,
+  KernDescriptionListItem,
+} from "~/components/shared/kern/KernDescriptionList";
 import { getDb } from "~/database/database";
 
-import { ReviewItem, ReviewPage } from "./create-termin.review";
+import { ReviewPage } from "./create-termin.review";
 import {
   readValues,
   selectBreadcrumbs,
@@ -75,15 +80,17 @@ export default function OverviewSelectConfirm() {
             title: "Verhandlungsdaten",
             editable: false,
             children: (
-              <dl className="kern-description-list">
-                <ReviewItem label="Aktenzeichen">{aktenzeichen}</ReviewItem>
-              </dl>
+              <KernDescriptionList>
+                <KernDescriptionListItem label="Aktenzeichen">
+                  {aktenzeichen}
+                </KernDescriptionListItem>
+              </KernDescriptionList>
             ),
           },
           {
             id: "termin",
             title: "Ausgewählter Termin",
-            children: <p className="kern-body kern-body--bold">{termin}</p>,
+            children: <KernBody bold>{termin}</KernBody>,
           },
         ]}
         submit={{ label: "Termin bestätigen", intent: "confirm" }}

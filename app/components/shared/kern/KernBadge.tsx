@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { KernLabel } from "./KernLabel";
+
 import "./KernBadge.css";
 
 // "custom-grey" is not a standard KERN badge type; it is implemented in JTS (see KernBadge.css).
@@ -11,7 +13,7 @@ export function KernBadge({
 }: Readonly<{ type: KernBadgeType; children: ReactNode }>) {
   const content =
     typeof children === "string" || typeof children === "number" ? (
-      <span className="kern-label">{children}</span>
+      <KernLabel>{children}</KernLabel>
     ) : (
       children
     );

@@ -1,19 +1,19 @@
-import {
-  data,
-  Form,
-  Link,
-  redirect,
-  useActionData,
-  useLoaderData,
-  useNavigation,
-} from "react-router";
+import { data, Form, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
 
 import { getAppointment } from "~/adapters/appointments/appointments.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
-import { ErrorMessage } from "~/components/shared/ErrorMessage";
 import { FlowPage } from "~/components/shared/FlowPage";
 import { KernButton } from "~/components/shared/kern/KernButton";
+import {
+  KernDescriptionList,
+  KernDescriptionListItem,
+} from "~/components/shared/kern/KernDescriptionList";
+import { KernFieldset } from "~/components/shared/kern/KernFieldset";
+import { KernFormCheck } from "~/components/shared/kern/KernFormCheck";
+import { KernFormInput } from "~/components/shared/kern/KernFormInput";
+import { KernHeading } from "~/components/shared/kern/KernHeading";
+import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { getDb } from "~/database/database";
 
 import {
@@ -72,96 +72,76 @@ export default function OverviewSelect() {
     <AppShell user={user} breadcrumbs={selectBreadcrumbs}>
       <FlowPage className="overview-select">
         <div className="overview-select__layout">
-          <dl className="kern-description-list kern-description-list--col overview-select__facts">
-            <div className="kern-description-list-item">
-              <dt className="kern-description-list-item__key">Aktenzeichen</dt>
-              <dd className="kern-description-list-item__value">{aktenzeichen}</dd>
-            </div>
-          </dl>
+          <KernDescriptionList column className="overview-select__facts">
+            <KernDescriptionListItem label="Aktenzeichen">{aktenzeichen}</KernDescriptionListItem>
+          </KernDescriptionList>
 
           <Form method="post" className="overview-select__form" noValidate>
-            <h1 className="kern-heading-large">Wählen Sie ein Datum und eine Startzeit aus</h1>
+            <KernHeading size="large" level={1}>
+              Wählen Sie ein Datum und eine Startzeit aus
+            </KernHeading>
 
-            <fieldset
-              className={`kern-fieldset overview-select__fieldset${errors.slot ? " kern-fieldset--error" : ""}`}
-              aria-describedby={errors.slot ? "fenster-error" : undefined}
+            <KernFieldset
+              id="fenster"
+              legend="Zeitfenster"
+              className="overview-select__fieldset"
+              error={errors.slot}
             >
-              <legend className="kern-label">Zeitfenster</legend>
-              <div className="kern-fieldset__body">
-                {windows.map((label, index) => (
-                  <div className="kern-form-check" key={label}>
-                    <input
-                      className={`kern-form-check__radio${errors.slot ? " kern-form-check__radio--error" : ""}`}
-                      id={`fenster-${index}`}
-                      name="fenster"
-                      type="radio"
-                      value={String(index)}
-                      defaultChecked={values.slot === String(index)}
-                    />
-                    <label className="kern-label" htmlFor={`fenster-${index}`}>
-                      {label}
-                    </label>
-                  </div>
-                ))}
-              </div>
-              {errors.slot && <ErrorMessage id="fenster-error">{errors.slot}</ErrorMessage>}
-            </fieldset>
+              {windows.map((label, index) => (
+                <KernFormCheck
+                  key={label}
+                  id={`fenster-${index}`}
+                  type="radio"
+                  label={label}
+                  name="fenster"
+                  value={String(index)}
+                  defaultChecked={values.slot === String(index)}
+                  invalid={Boolean(errors.slot)}
+                />
+              ))}
+            </KernFieldset>
 
-            <fieldset
-              className={`kern-fieldset overview-select__fieldset${errors.start ? " kern-fieldset--error" : ""}`}
-              aria-describedby={errors.start ? "startzeit-error" : undefined}
+            <KernFieldset
+              id="startzeit"
+              legend="Startzeit"
+              className="overview-select__fieldset"
+              error={errors.start}
             >
-              <legend className="kern-label">Startzeit</legend>
-              <div className="kern-fieldset__body">
-                <div className="overview-select__time">
-                  <div className="kern-form-input">
-                    <label
-                      className="kern-label kern-label--small kern-label--subtle"
-                      htmlFor="stunde"
-                    >
-                      Stunde
-                    </label>
-                    <input
-                      className={`kern-form-input__input kern-form-input__input--width-2${errors.start ? " kern-form-input__input--error" : ""}`}
-                      id="stunde"
-                      name="stunde"
-                      inputMode="numeric"
-                      autoComplete="off"
-                      maxLength={2}
-                      defaultValue={values.hour}
-                      aria-invalid={Boolean(errors.start) || undefined}
-                    />
-                  </div>
-                  <span className="overview-select__colon" aria-hidden="true">
-                    :
-                  </span>
-                  <div className="kern-form-input">
-                    <label
-                      className="kern-label kern-label--small kern-label--subtle"
-                      htmlFor="minute"
-                    >
-                      Minute
-                    </label>
-                    <input
-                      className={`kern-form-input__input kern-form-input__input--width-2${errors.start ? " kern-form-input__input--error" : ""}`}
-                      id="minute"
-                      name="minute"
-                      inputMode="numeric"
-                      autoComplete="off"
-                      maxLength={2}
-                      defaultValue={values.minute}
-                      aria-invalid={Boolean(errors.start) || undefined}
-                    />
-                  </div>
-                </div>
+              <div className="overview-select__time">
+                <KernFormInput
+                  id="stunde"
+                  label="Stunde"
+                  compactLabel
+                  width={2}
+                  invalid={Boolean(errors.start)}
+                  name="stunde"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  maxLength={2}
+                  defaultValue={values.hour}
+                />
+                <span className="overview-select__colon" aria-hidden="true">
+                  :
+                </span>
+                <KernFormInput
+                  id="minute"
+                  label="Minute"
+                  compactLabel
+                  width={2}
+                  invalid={Boolean(errors.start)}
+                  name="minute"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  maxLength={2}
+                  defaultValue={values.minute}
+                />
               </div>
-              {errors.start && <ErrorMessage id="startzeit-error">{errors.start}</ErrorMessage>}
-            </fieldset>
+            </KernFieldset>
 
             <div className="overview-select__actions">
-              <Link className="kern-btn kern-btn--secondary" to="/overview">
-                <span className="kern-label">Abbrechen</span>
-              </Link>
+              <KernLinkButton style="secondary" to="/overview">
+                Abbrechen
+              </KernLinkButton>
               <KernButton type="submit" disabled={pending}>
                 Weiter
               </KernButton>

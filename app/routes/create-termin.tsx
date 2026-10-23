@@ -1,13 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import {
-  data,
-  Form,
-  Link,
-  redirect,
-  useActionData,
-  useLoaderData,
-  useNavigation,
-} from "react-router";
+import { data, Form, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
 
 import {
   createDraftAppointment,
@@ -19,7 +11,11 @@ import { AppShell } from "~/components/shared/AppShell";
 import { ErrorMessage } from "~/components/shared/ErrorMessage";
 import { FlowPage } from "~/components/shared/FlowPage";
 import { KernButton } from "~/components/shared/kern/KernButton";
+import { KernFormInput } from "~/components/shared/kern/KernFormInput";
+import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernIcon } from "~/components/shared/kern/KernIcon";
+import { KernLabel } from "~/components/shared/kern/KernLabel";
+import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { getDb } from "~/database/database";
 
 import { createTerminBreadcrumbs } from "./create-termin.review";
@@ -227,11 +223,13 @@ function Captions({ fields }: Readonly<{ fields: FieldConfig[] }>) {
           {separatorFor(field)}
         </span>
       )}
-      <span
-        className={`kern-label kern-label--small kern-label--subtle create-termin__caption create-termin__caption--${maxLength}`}
+      <KernLabel
+        size="small"
+        subtle
+        className={`create-termin__caption create-termin__caption--${maxLength}`}
       >
         {label}
-      </span>
+      </KernLabel>
     </Fragment>
   ));
 }
@@ -331,39 +329,25 @@ function CreateTerminForm({
           <Form method="post" className="create-termin__form" noValidate>
             {draft && <input type="hidden" name="appointmentId" value={draft.id} />}
             <section aria-labelledby="verhandlungsdaten" className="create-termin__section">
-              <h2 className="kern-heading-large" id="verhandlungsdaten">
+              <KernHeading size="large" level={2} id="verhandlungsdaten">
                 Verhandlungsdaten
-              </h2>
-              <div
-                className={`kern-form-input create-termin__aktenzeichen${
-                  shown.aktenzeichen ? " kern-form-input--error" : ""
-                }`}
-              >
-                <label className="kern-label" htmlFor="aktenzeichen">
-                  Aktenzeichen
-                </label>
-                <input
-                  className={`kern-form-input__input${
-                    shown.aktenzeichen ? " kern-form-input__input--error" : ""
-                  }`}
-                  id="aktenzeichen"
-                  name="aktenzeichen"
-                  value={aktenzeichen}
-                  onChange={(event) => setAktenzeichen(event.target.value)}
-                  aria-invalid={Boolean(shown.aktenzeichen) || undefined}
-                  aria-describedby={shown.aktenzeichen ? "aktenzeichen-error" : undefined}
-                  autoComplete="off"
-                />
-                {shown.aktenzeichen && (
-                  <ErrorMessage id="aktenzeichen-error">{shown.aktenzeichen}</ErrorMessage>
-                )}
-              </div>
+              </KernHeading>
+              <KernFormInput
+                id="aktenzeichen"
+                label="Aktenzeichen"
+                wrapperClassName="create-termin__aktenzeichen"
+                error={shown.aktenzeichen}
+                name="aktenzeichen"
+                value={aktenzeichen}
+                onChange={(event) => setAktenzeichen(event.target.value)}
+                autoComplete="off"
+              />
             </section>
 
             <section aria-labelledby="zeitfenster" className="create-termin__section">
-              <h2 className="kern-heading-large" id="zeitfenster">
+              <KernHeading size="large" level={2} id="zeitfenster">
                 Geben Sie Ihre verfügbaren Zeitfenster an
-              </h2>
+              </KernHeading>
 
               <fieldset
                 aria-labelledby="zeitfenster"
@@ -373,21 +357,21 @@ function CreateTerminForm({
                 <div className="create-termin__rows">
                   <div className="create-termin__row create-termin__row--head" aria-hidden="true">
                     <div className="create-termin__head">
-                      <span className="kern-label">Datum</span>
+                      <KernLabel>Datum</KernLabel>
                       <div className="create-termin__group create-termin__group--date">
                         <Captions fields={dateFields} />
                       </div>
                     </div>
                     <div className="create-termin__range">
                       <div className="create-termin__head">
-                        <span className="kern-label">Startzeit</span>
+                        <KernLabel>Startzeit</KernLabel>
                         <div className="create-termin__group create-termin__group--time">
                           <Captions fields={startFields} />
                         </div>
                       </div>
                       <span className="create-termin__dash">–</span>
                       <div className="create-termin__head">
-                        <span className="kern-label">Endzeit</span>
+                        <KernLabel>Endzeit</KernLabel>
                         <div className="create-termin__group create-termin__group--time">
                           <Captions fields={endFields} />
                         </div>
@@ -473,7 +457,7 @@ function CreateTerminForm({
                   onClick={addRow}
                 >
                   <KernIcon name="add" />
-                  <span className="kern-label">Zeitfenster hinzufügen</span>
+                  <KernLabel>Zeitfenster hinzufügen</KernLabel>
                 </KernButton>
                 {atLimit && (
                   <p className="kern-hint" id="add-hint">
@@ -485,9 +469,9 @@ function CreateTerminForm({
             </section>
 
             <div className="create-termin__actions">
-              <Link className="kern-btn kern-btn--secondary" to="/overview">
-                <span className="kern-label">Abbrechen</span>
-              </Link>
+              <KernLinkButton style="secondary" to="/overview">
+                <KernLabel>Abbrechen</KernLabel>
+              </KernLinkButton>
               <KernButton type="submit" disabled={pending}>
                 Weiter
               </KernButton>

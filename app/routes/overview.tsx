@@ -4,7 +4,10 @@ import { listAppointments } from "~/adapters/appointments/appointments.server";
 import { requireUser } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { KernBadge, type KernBadgeType } from "~/components/shared/kern/KernBadge";
+import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernIcon, type KernIconName } from "~/components/shared/kern/KernIcon";
+import { KernLabel } from "~/components/shared/kern/KernLabel";
+import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { getDb } from "~/database/database";
 import type { AppointmentStatus } from "~/database/types";
 
@@ -51,13 +54,13 @@ export default function Overview() {
     >
       <div className="page-shell__content overview__content">
         <h1 className="kern-sr-only">Übersicht</h1>
-        <Link className="kern-btn kern-btn--primary" to="/overview/new">
+        <KernLinkButton to="/overview/new">
           <KernIcon name="add" />
-          <span className="kern-label">Terminumfrage erstellen</span>
-        </Link>
+          <KernLabel>Terminumfrage erstellen</KernLabel>
+        </KernLinkButton>
 
         {entries.length === 0 ? (
-          <p className="kern-body">Sie haben noch keine Terminumfragen erstellt.</p>
+          <KernBody>Sie haben noch keine Terminumfragen erstellt.</KernBody>
         ) : (
           <table className="kern-table overview__table">
             <thead className="kern-table__header">
@@ -83,7 +86,7 @@ export default function Overview() {
                     <td className="kern-table__cell">
                       <KernBadge type={badge.type}>
                         {icon && <KernIcon name={icon} />}
-                        <span className="kern-label">{badge.text}</span>
+                        <KernLabel>{badge.text}</KernLabel>
                       </KernBadge>
                     </td>
                   </tr>
