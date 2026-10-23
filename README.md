@@ -150,7 +150,7 @@ app/
 ├── database/               # Kysely, connection pool, migrations (see "Database")
 ├── lib/                    # Env, secrets and logging helpers
 ├── components/             # Reusable UI components
-│   └── shared/             # Alert, AppNav, Badge, Button, Card, InputRadios
+│   └── shared/             # Alert, AppNav, Badge, Button, Card, FlowPage, InputRadios
 ├── app.css                 # KERN Native/font imports + global defaults
 ├── root.tsx                # Root layout
 └── bootstrap.ts            # Dependency injection root

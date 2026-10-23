@@ -13,6 +13,7 @@ import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { Button } from "~/components/shared/Button";
 import { ErrorMessage } from "~/components/shared/ErrorMessage";
+import { FlowPage } from "~/components/shared/FlowPage";
 import { getDb } from "~/database/database";
 
 import {
@@ -69,7 +70,7 @@ export default function OverviewSelect() {
 
   return (
     <AppShell user={user} breadcrumbs={selectBreadcrumbs}>
-      <div className="overview-select">
+      <FlowPage className="overview-select">
         <div className="overview-select__layout">
           <dl className="kern-description-list kern-description-list--col overview-select__facts">
             <div className="kern-description-list-item">
@@ -167,7 +168,7 @@ export default function OverviewSelect() {
             </div>
           </Form>
         </div>
-      </div>
+      </FlowPage>
     </AppShell>
   );
 }

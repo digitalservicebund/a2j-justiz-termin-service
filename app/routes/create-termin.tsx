@@ -18,6 +18,7 @@ import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { Button } from "~/components/shared/Button";
 import { ErrorMessage } from "~/components/shared/ErrorMessage";
+import { FlowPage } from "~/components/shared/FlowPage";
 import { Icon } from "~/components/shared/Icon";
 import { getDb } from "~/database/database";
 
@@ -324,7 +325,7 @@ function CreateTerminForm({
 
   return (
     <>
-      <div className="create-termin">
+      <FlowPage className="create-termin">
         <div className="page-shell__content">
           <h1 className="kern-sr-only">Erstellen der Terminumfrage</h1>
           <Form method="post" className="create-termin__form" noValidate>
@@ -493,7 +494,7 @@ function CreateTerminForm({
             </div>
           </Form>
         </div>
-      </div>
+      </FlowPage>
     </>
   );
 }

@@ -1,0 +1,10 @@
+.flow-page {
+  background-color: var(--kern-color-layout-background-hued);
+  padding-block: var(--flow-page-padding-start, var(--kern-metric-space-large))
+    var(--flow-page-padding-end, calc(var(--kern-metric-space-6x-large) * 2));
+}
+
+/* Inputs sit on a white surface in the flow-page design. */
+.flow-page .kern-form-input__input {
+  background-color: var(--kern-color-layout-background-default);
+}
