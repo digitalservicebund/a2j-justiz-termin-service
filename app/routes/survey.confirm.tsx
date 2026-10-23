@@ -89,7 +89,7 @@ export default function SurveyConfirm() {
   return (
     <AppShell breadcrumbs={surveyBreadcrumbs}>
       <ReviewPage
-        className="survey-confirm"
+        wide
         sections={[
           {
             id: "verhandlungsdaten",

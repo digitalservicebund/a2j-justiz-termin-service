@@ -1,7 +1,22 @@
 .flow-page {
   background-color: var(--kern-color-layout-background-hued);
-  padding-block: var(--flow-page-padding-start, var(--kern-metric-space-large))
-    var(--flow-page-padding-end, calc(var(--kern-metric-space-6x-large) * 2));
+  --flow-page-padding-start: var(--kern-metric-space-large);
+  --flow-page-padding-end: calc(var(--kern-metric-space-6x-large) * 2);
+  padding-block: var(--flow-page-padding-start) var(--flow-page-padding-end);
+}
+
+.flow-page--form {
+  --flow-page-padding-start: var(--kern-metric-space-5x-large);
+  --flow-page-padding-end: calc(
+    var(--kern-metric-space-6x-large) * 2 + var(--kern-metric-space-default)
+  );
+}
+
+.flow-page--review {
+  --flow-page-padding-start: var(--kern-metric-space-2x-large);
+  --flow-page-padding-end: calc(
+    var(--kern-metric-space-6x-large) * 2 + var(--kern-metric-space-default)
+  );
 }
 
 /* Inputs sit on a white surface in the flow-page design. */

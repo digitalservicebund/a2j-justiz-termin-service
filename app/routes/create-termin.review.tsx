@@ -103,11 +103,13 @@ function Section({
 export function ReviewPage({
   sections,
   submit,
-  className,
+  wide = false,
   children,
 }: Readonly<{
   sections: ReviewSectionProps[];
-  className?: string;
+  // The survey and overview reviews are wider than the create-termin review, and sit closer to
+  // the breadcrumb.
+  wide?: boolean;
   submit: { label: string; intent: string };
   // Hidden inputs the action needs.
   children?: ReactNode;
@@ -119,47 +121,45 @@ export function ReviewPage({
     setOpen(Object.fromEntries(sections.map(({ id }) => [id, value])));
 
   return (
-    <FlowPage className={["create-termin", className].filter(Boolean).join(" ")}>
-      <div className="page-shell__content">
-        <Form method="post" className="create-termin__form">
-          {children}
-          <KernHeading size="large" level={1}>
-            Bitte überprüfen Sie Ihre Angaben
-          </KernHeading>
+    <FlowPage width={wide ? "default" : "narrow"} spacing={wide ? "review" : "form"}>
+      <Form method="post" className="create-termin__form">
+        {children}
+        <KernHeading size="large" level={1}>
+          Bitte überprüfen Sie Ihre Angaben
+        </KernHeading>
 
-          <div className="create-termin-review__bulk">
-            <KernButton type="button" style="secondary" onClick={() => setAll(true)}>
-              Alle einblenden
-            </KernButton>
-            <KernButton type="button" style="secondary" onClick={() => setAll(false)}>
-              Alle ausblenden
-            </KernButton>
-          </div>
+        <div className="create-termin-review__bulk">
+          <KernButton type="button" style="secondary" onClick={() => setAll(true)}>
+            Alle einblenden
+          </KernButton>
+          <KernButton type="button" style="secondary" onClick={() => setAll(false)}>
+            Alle ausblenden
+          </KernButton>
+        </div>
 
-          <div>
-            {sections.map(({ id, children: content, ...section }) => (
-              <Section
-                key={id}
-                id={id}
-                {...section}
-                open={isOpen(id)}
-                onToggle={(value) => setOpen((current) => ({ ...current, [id]: value }))}
-              >
-                {content}
-              </Section>
-            ))}
-          </div>
+        <div>
+          {sections.map(({ id, children: content, ...section }) => (
+            <Section
+              key={id}
+              id={id}
+              {...section}
+              open={isOpen(id)}
+              onToggle={(value) => setOpen((current) => ({ ...current, [id]: value }))}
+            >
+              {content}
+            </Section>
+          ))}
+        </div>
 
-          <div className="create-termin__actions">
-            <KernButton type="submit" name="intent" value="back" style="secondary">
-              Zurück
-            </KernButton>
-            <KernButton type="submit" name="intent" value={submit.intent} disabled={pending}>
-              {submit.label}
-            </KernButton>
-          </div>
-        </Form>
-      </div>
+        <div className="create-termin__actions">
+          <KernButton type="submit" name="intent" value="back" style="secondary">
+            Zurück
+          </KernButton>
+          <KernButton type="submit" name="intent" value={submit.intent} disabled={pending}>
+            {submit.label}
+          </KernButton>
+        </div>
+      </Form>
     </FlowPage>
   );
 }

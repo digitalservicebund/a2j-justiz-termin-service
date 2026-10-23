@@ -2,13 +2,11 @@ import { data, redirect, useLoaderData } from "react-router";
 
 import { findSurvey, getSavedAnswer } from "~/adapters/appointments/survey.server";
 import { AppShell } from "~/components/shared/AppShell";
-import { KernBody } from "~/components/shared/kern/KernBody";
 import {
   KernDescriptionList,
   KernDescriptionListItem,
 } from "~/components/shared/kern/KernDescriptionList";
-import { KernHeading } from "~/components/shared/kern/KernHeading";
-import { KernIcon } from "~/components/shared/kern/KernIcon";
+import { ResultBanner } from "~/components/shared/ResultBanner";
 import { getDb } from "~/database/database";
 
 import { NextSteps, Step, SuccessBanner } from "./create-termin.created";
@@ -86,14 +84,10 @@ export function NoOption() {
 
 function NoTimeWorks() {
   return (
-    <div className="kern-alert kern-alert--danger create-termin-created__banner">
-      <KernIcon name="danger" size="x-large" />
-      <div className="create-termin-created__banner-body survey-result__banner-body">
-        <KernHeading size="large" level={1}>
-          Es gibt leider keine Terminoption, bei der alle Verfahrensbeteiligten Zeit haben.
-        </KernHeading>
-        <KernBody bold>Das Gericht wird wahrscheinlich eine neue Terminumfrage erstellen.</KernBody>
-      </div>
-    </div>
+    <ResultBanner
+      type="danger"
+      title="Es gibt leider keine Terminoption, bei der alle Verfahrensbeteiligten Zeit haben."
+      message="Das Gericht wird wahrscheinlich eine neue Terminumfrage erstellen."
+    />
   );
 }

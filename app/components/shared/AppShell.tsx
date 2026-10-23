@@ -5,6 +5,7 @@ import type { AuthUser } from "~/core/domain/user";
 
 import { BmjvLogo } from "./BmjvLogo";
 import { Breadcrumb, type BreadcrumbItem } from "./Breadcrumb";
+import { DefaultPage } from "./DefaultPage";
 import { KernBody } from "./kern/KernBody";
 import { KernButton } from "./kern/KernButton";
 import { KernHeading } from "./kern/KernHeading";
@@ -138,12 +139,14 @@ export function AppShell({
         {children}
 
         {showReportProblem && (
-          <div className="page-shell__content page-shell__report">
-            <KernButton type="button" style="secondary">
-              <KernIcon name="danger" />
-              <KernLabel>Problem mit dieser Seite melden</KernLabel>
-            </KernButton>
-          </div>
+          <DefaultPage>
+            <div className="page-shell__report">
+              <KernButton type="button" style="secondary">
+                <KernIcon name="danger" />
+                <KernLabel>Problem mit dieser Seite melden</KernLabel>
+              </KernButton>
+            </div>
+          </DefaultPage>
         )}
       </main>
 
