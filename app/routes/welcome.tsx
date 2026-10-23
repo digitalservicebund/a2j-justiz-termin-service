@@ -13,7 +13,7 @@ import { logError } from "~/lib/logging";
 import "./welcome.css";
 
 export async function loader({ request }: { request: Request }) {
-  if (await getSessionUser(request)) return redirect("/home");
+  if (await getSessionUser(request)) return redirect("/overview");
   return { invalidLink: new URL(request.url).searchParams.has("error") };
 }
 
@@ -44,7 +44,7 @@ export async function action({ request }: { request: Request }) {
       headers,
       body: JSON.stringify({
         email: result.data,
-        callbackURL: "/home",
+        callbackURL: "/overview",
         errorCallbackURL: "/",
       }),
     }),

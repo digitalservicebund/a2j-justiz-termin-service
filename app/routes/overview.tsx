@@ -46,8 +46,7 @@ export default function Overview() {
       user={user}
       breadcrumbs={[
         { label: "Startseite", href: "/", icon: "home" },
-        { label: "Verhandlungstermin-Finder", href: "/home" },
-        { label: "Übersicht" },
+        { label: "Verhandlungstermin-Finder" },
       ]}
     >
       <div className="page-shell__content overview__content">

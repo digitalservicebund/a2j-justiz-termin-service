@@ -22,7 +22,7 @@ const pad = (value: string) => value.padStart(2, "0");
 
 export const createTerminBreadcrumbs = [
   { label: "Startseite", href: "/", icon: "home" },
-  { label: "Verhandlungstermin-Finder", href: "/home" },
+  { label: "Verhandlungstermin-Finder", href: "/overview" },
   { label: "Erstellen der Terminumfrage" },
 ] satisfies BreadcrumbItem[];
 

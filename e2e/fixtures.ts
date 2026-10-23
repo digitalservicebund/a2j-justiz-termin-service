@@ -90,7 +90,7 @@ async function readMagicLink(request: APIRequestContext, email: string): Promise
 
 export async function issueMagicLink(request: APIRequestContext, email: string): Promise<string> {
   const response = await request.post("/api/auth/sign-in/magic-link", {
-    data: { email, callbackURL: "/home", errorCallbackURL: "/" },
+    data: { email, callbackURL: "/overview", errorCallbackURL: "/" },
   });
   expect(response.status()).toBe(200);
   return readMagicLink(request, email.toLowerCase());
@@ -107,8 +107,8 @@ export async function signIn(page: Page, user: AuthUser, options = { uppercase: 
   ).toBeVisible();
   const link = await readMagicLink(page.request, user.email);
   await page.goto(link);
-  await expect(page).toHaveURL(`${baseURL}/home`);
-  await expect(page.getByRole("navigation", { name: "Benutzerkonto" })).toContainText(user.name);
+  await expect(page).toHaveURL(`${baseURL}/overview`);
+  await expect(page.getByText(user.email)).toBeVisible();
   return link;
 }
 

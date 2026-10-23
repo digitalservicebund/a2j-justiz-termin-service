@@ -36,7 +36,7 @@ describe("login action", () => {
     expect(forwarded.headers.get("Origin")).toBe("http://localhost");
     expect(await forwarded.json()).toEqual({
       email: "user@example.com",
-      callbackURL: "/home",
+      callbackURL: "/overview",
       errorCallbackURL: "/",
     });
   });
