@@ -52,10 +52,25 @@ describe("overview detail route", () => {
     expect(getAppointment).toHaveBeenCalledWith({ db: true }, "1", "a1");
   });
 
+  it("answers 404 for an open appointment without a survey token", async () => {
+    vi.mocked(getAppointment).mockResolvedValue({
+      id: "a1",
+      status: "open",
+      universalToken: null,
+      aktenzeichen: "574 C 65412/26",
+      slots,
+    });
+
+    await expect(loader({ request: request(), params })).rejects.toMatchObject({
+      init: { status: 404 },
+    });
+  });
+
   it("returns the windows and the survey link of an open appointment", async () => {
     vi.mocked(getAppointment).mockResolvedValue({
       id: "a1",
       status: "open",
+      universalToken: "tok1",
       aktenzeichen: "574 C 65412/26",
       slots,
     });
@@ -65,7 +80,7 @@ describe("overview detail route", () => {
     expect(result).toMatchObject({
       state: "open",
       aktenzeichen: "574 C 65412/26",
-      surveyUrl: "http://localhost:3000/umfrage/a1",
+      surveyUrl: "http://localhost:3000/umfrage/tok1",
     });
     expect("days" in result && result.days).toHaveLength(2);
   });
@@ -209,6 +224,7 @@ describe("OverviewDetail", () => {
     vi.mocked(getAppointment).mockResolvedValue({
       id: "a1",
       status: "open",
+      universalToken: "tok1",
       aktenzeichen: "574 C 65412/26",
       slots,
     });

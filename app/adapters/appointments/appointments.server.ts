@@ -1,15 +1,19 @@
+import { randomBytes } from "node:crypto";
+
 import type { Kysely } from "kysely";
 
 import type { AppointmentStatus, Database } from "../../database/types.ts";
 import { logInfo } from "../../lib/logging.ts";
 
-type TimeRange = { start: Date; end: Date };
+export type TimeRange = { start: Date; end: Date };
 
 export type AppointmentDraft = { aktenzeichen: string; slots: TimeRange[] };
 
 export type Appointment = AppointmentDraft & {
   id: string;
   status: AppointmentStatus;
+  // The secret of the universal survey link. Drafts have none; it is set when they are published.
+  universalToken?: string | null;
   // The chosen window, once the appointment is confirmed. It lies within one of the slots.
   confirmedSlot?: TimeRange | null;
 };
@@ -81,6 +85,7 @@ export async function getAppointment(
       "id",
       "aktenzeichen",
       "status",
+      "universal_token",
       "confirmed_slot_id",
       "confirmed_start_time",
       "confirmed_end_time",
@@ -116,6 +121,7 @@ export async function getAppointment(
     id: appointment.id,
     aktenzeichen: appointment.aktenzeichen,
     status: appointment.status,
+    universalToken: appointment.universal_token,
     slots: slots.map(toRange),
     confirmedSlot: confirmedWindow ?? (confirmed ? toRange(confirmed) : null),
   };
@@ -162,6 +168,7 @@ export async function confirmAppointment(
   return confirmed;
 }
 
+// Publishing also issues the token of the universal survey link.
 // Returns false when the user has no draft with this id.
 export async function publishAppointment(
   db: Kysely<Database>,
@@ -170,7 +177,11 @@ export async function publishAppointment(
 ): Promise<boolean> {
   const published = await db
     .updateTable("appointment")
-    .set({ status: "open", updated_at: new Date() })
+    .set({
+      status: "open",
+      universal_token: randomBytes(24).toString("base64url"),
+      updated_at: new Date(),
+    })
     .where("id", "=", id)
     .where("user_id", "=", userId)
     .where("status", "=", "draft")

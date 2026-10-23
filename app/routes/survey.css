@@ -1,0 +1,107 @@
+/* The flow-page background spans the full width; the content sits in the page container. */
+.survey {
+  background-color: var(--kern-color-layout-background-hued);
+  padding-block: var(--kern-metric-space-large) calc(var(--kern-metric-space-6x-large) * 2);
+}
+
+.survey__layout {
+  display: grid;
+  gap: var(--kern-metric-space-x-large);
+  align-items: start;
+  width: min(100% - 2 * var(--kern-metric-space-default), 94rem);
+  margin-inline: auto;
+}
+
+.survey__form {
+  display: grid;
+  gap: var(--kern-metric-space-x-large);
+  /* The flow-page form column is 864px wide in the design; KERN has no token for it. */
+  width: min(100%, 54rem);
+}
+
+.survey__fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.survey__fieldset.kern-fieldset--error {
+  border-left: var(--kern-metric-border-width-bold) solid
+    var(--kern-color-feedback-danger-contextual);
+  padding-left: var(--kern-metric-space-default);
+}
+
+/* Inputs sit on a white surface in the flow-page design. */
+.survey__form .kern-form-input__input {
+  background-color: var(--kern-color-layout-background-default);
+}
+
+.survey__name {
+  width: min(100%, 27rem);
+}
+
+.survey__days {
+  display: grid;
+  gap: var(--kern-metric-space-3x-large);
+}
+
+/* Date and windows side by side, the date column being 240px wide in the design. */
+.survey__day {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kern-metric-space-default) var(--kern-metric-space-4x-large);
+  align-items: flex-start;
+}
+
+.survey__date {
+  flex: 0 0 15rem;
+  margin: 0;
+}
+
+.survey__windows {
+  display: grid;
+  flex: 1 1 15rem;
+  gap: var(--kern-metric-space-default);
+}
+
+.survey__window {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--kern-metric-space-large);
+  min-height: var(--kern-metric-dimension-3x-large);
+}
+
+.survey__time {
+  margin: 0;
+}
+
+.survey__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kern-metric-space-default);
+  padding-top: var(--kern-metric-space-default);
+}
+
+/* The Aktenzeichen takes a column of its own next to the form on wide screens. */
+@media (min-width: 64rem) {
+  .survey__layout {
+    grid-template-columns: 31rem minmax(0, 1fr);
+  }
+}
+
+/* The review is wider than the survey form in the design, and sits closer to the breadcrumb. */
+.survey-confirm.create-termin {
+  padding-block-start: var(--kern-metric-space-2x-large);
+}
+
+.survey-confirm .create-termin__form {
+  width: min(100%, 54rem);
+}
+
+.survey-result__banner-body {
+  gap: var(--kern-metric-space-small);
+  /* The heading wraps after "alle" in the design; KERN has no token for the column width. */
+  max-width: 46rem;
+}

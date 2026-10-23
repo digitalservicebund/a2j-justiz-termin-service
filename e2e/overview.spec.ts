@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import type { Kysely } from "kysely";
 
 import type { AppointmentStatus, Database } from "../app/database/types.ts";
@@ -12,7 +14,12 @@ async function seed(
 ) {
   const { id } = await db
     .insertInto("appointment")
-    .values({ user_id: userId, aktenzeichen, status })
+    .values({
+      user_id: userId,
+      aktenzeichen,
+      status,
+      universal_token: status === "draft" ? null : `token-${randomUUID()}`,
+    })
     .returning("id")
     .executeTakeFirstOrThrow();
   if (confirmed) {
@@ -210,7 +217,12 @@ test("an open termin survey opens a detail page with its survey link", async ({
   await page.getByRole("button", { name: "Link zur Terminumfrage kopieren" }).click();
   await expect(page.getByRole("button", { name: "Link kopiert" })).toBeVisible();
   const copied = await page.evaluate(() => navigator.clipboard.readText());
-  expect(copied).toMatch(new RegExp(`/umfrage/${id}$`));
+  const { universal_token } = await db
+    .selectFrom("appointment")
+    .select("universal_token")
+    .where("id", "=", id)
+    .executeTakeFirstOrThrow();
+  expect(copied).toMatch(new RegExp(`/umfrage/${universal_token}$`));
 });
 
 test("a past termin opens a detail page that looks back at it", async ({ page, users, db }) => {

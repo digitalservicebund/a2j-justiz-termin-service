@@ -41,6 +41,7 @@ export async function loader({ request, params }: { request: Request } & Params)
   }
 
   if (appointment.status === "open") {
+    if (!appointment.universalToken) throw data("Not found", { status: 404 });
     const { origin } = new URL(request.url);
     return {
       user,
@@ -48,7 +49,7 @@ export async function loader({ request, params }: { request: Request } & Params)
       state: "open" as const,
       selectUrl: `/overview/${encodeURIComponent(id)}/select`,
       days,
-      surveyUrl: `${origin}/umfrage/${encodeURIComponent(id)}`,
+      surveyUrl: `${origin}/umfrage/${encodeURIComponent(appointment.universalToken)}`,
     };
   }
 

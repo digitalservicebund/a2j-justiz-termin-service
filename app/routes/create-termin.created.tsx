@@ -22,11 +22,14 @@ export async function loader({ request, params }: { request: Request } & Params)
   // A draft has not been published yet, so there is nothing to share.
   if (appointment.status === "draft") throw redirect(`/overview/${encodeURIComponent(id)}/confirm`);
 
+  // Published appointments always have their token.
+  if (!appointment.universalToken) throw data("Not found", { status: 404 });
+
   const { origin } = new URL(request.url);
   return {
     user,
     days: groupSlotsByDay(appointment.slots.map(rangeToSlot)),
-    surveyUrl: `${origin}/umfrage/${encodeURIComponent(appointment.id)}`,
+    surveyUrl: `${origin}/umfrage/${encodeURIComponent(appointment.universalToken)}`,
   };
 }
 
@@ -42,7 +45,11 @@ export function Step({ title, children }: Readonly<{ title: string; children?: R
 }
 
 // Success banner and the numbered steps that follow, shared with the page after choosing a Termin.
-export function SuccessBanner({ title }: Readonly<{ title: string }>) {
+// The link back to the judge's overview is left out for guests, who have no overview.
+export function SuccessBanner({
+  title,
+  overviewLink = true,
+}: Readonly<{ title: string; overviewLink?: boolean }>) {
   return (
     <div className="kern-alert kern-alert--success create-termin-created__banner">
       <Icon name="success" size="x-large" />
@@ -53,10 +60,12 @@ export function SuccessBanner({ title }: Readonly<{ title: string }>) {
             <span className="kern-label">Nächste Schritte</span>
             <Icon name="arrow-down" />
           </a>
-          <Link className="kern-btn kern-btn--secondary" to="/overview">
-            <span className="kern-label">Zu den Terminumfragen</span>
-            <Icon name="arrow-forward" />
-          </Link>
+          {overviewLink && (
+            <Link className="kern-btn kern-btn--secondary" to="/overview">
+              <span className="kern-label">Zu den Terminumfragen</span>
+              <Icon name="arrow-forward" />
+            </Link>
+          )}
         </div>
       </div>
     </div>

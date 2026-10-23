@@ -11,6 +11,9 @@ export default [
   route("overview/:appointmentId/selected", "routes/overview.selected.tsx"),
   route("overview/:appointmentId/confirm", "routes/create-termin.confirm.tsx"),
   route("overview/:appointmentId/created", "routes/create-termin.created.tsx"),
+  route("umfrage/:token", "routes/survey.tsx"),
+  route("umfrage/:token/zusammenfassung", "routes/survey.confirm.tsx"),
+  route("umfrage/:token/naechste-schritte", "routes/survey.result.tsx"),
   route("admin/users", "routes/admin-users.tsx"),
   route("api/auth/*", "routes/auth.ts"),
 
