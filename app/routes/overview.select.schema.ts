@@ -30,6 +30,8 @@ const dateFormat = new Intl.DateTimeFormat("de-DE", {
   timeZone: "Europe/Berlin",
 });
 
+export const formatDay = (instant: Date) => dateFormat.format(instant);
+
 const pad = (value: string) => value.padStart(2, "0");
 
 const timeOf = (hour: string, minute: string) => `${pad(hour)}:${pad(minute)}`;
@@ -37,7 +39,7 @@ const timeOf = (hour: string, minute: string) => `${pad(hour)}:${pad(minute)}`;
 // "17. September 2026 von 15:30 bis 18:00"
 export function describeSlot(range: TimeRange): string {
   const { startHour, startMinute, endHour, endMinute } = rangeToSlot(range);
-  return `${dateFormat.format(range.start)} von ${timeOf(startHour, startMinute)} bis ${timeOf(endHour, endMinute)}`;
+  return `${formatDay(range.start)} von ${timeOf(startHour, startMinute)} bis ${timeOf(endHour, endMinute)}`;
 }
 
 const parts = (value: string, pattern: RegExp, max: number) =>
