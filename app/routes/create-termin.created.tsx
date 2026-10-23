@@ -4,6 +4,7 @@ import { getAppointment } from "~/adapters/appointments/appointments.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { CopyLinkButton } from "~/components/shared/CopyLinkButton";
+import { DefaultPage } from "~/components/shared/DefaultPage";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import {
   KernDescriptionList,
@@ -61,7 +62,10 @@ export function SuccessBanner({
   overviewLink = true,
 }: Readonly<{ title: string; overviewLink?: boolean }>) {
   return (
-    <div className="kern-alert kern-alert--success page-width page-width--wide create-termin-created__banner">
+    <DefaultPage
+      width="wide"
+      className="kern-alert kern-alert--success create-termin-created__banner"
+    >
       <KernIcon name="success" size="x-large" />
       <div className="create-termin-created__banner-body">
         <KernHeading size="large" level={1}>
@@ -80,21 +84,22 @@ export function SuccessBanner({
           )}
         </div>
       </div>
-    </div>
+    </DefaultPage>
   );
 }
 
 export function NextSteps({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <section
+    <DefaultPage
+      as="section"
       aria-labelledby="naechste-schritte"
-      className="page-width create-termin-created__steps"
+      className="create-termin-created__steps"
     >
       <KernHeading size="large" level={2} id="naechste-schritte">
         Nächste Schritte
       </KernHeading>
       <ol className="create-termin-created__list">{children}</ol>
-    </section>
+    </DefaultPage>
   );
 }
 

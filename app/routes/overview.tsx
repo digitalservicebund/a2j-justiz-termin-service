@@ -3,6 +3,7 @@ import { useLoaderData } from "react-router";
 import { listAppointments } from "~/adapters/appointments/appointments.server";
 import { requireUser } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
+import { DefaultPage } from "~/components/shared/DefaultPage";
 import { KernBadge, type KernBadgeType } from "~/components/shared/kern/KernBadge";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernIcon, type KernIconName } from "~/components/shared/kern/KernIcon";
@@ -60,7 +61,7 @@ export default function Overview() {
         { label: "Verhandlungstermin-Finder" },
       ]}
     >
-      <div className="page-width overview__content">
+      <DefaultPage className="overview__content">
         <h1 className="kern-sr-only">Übersicht</h1>
         <KernLinkButton to="/overview/new">
           <KernIcon name="add" />
@@ -109,7 +110,7 @@ export default function Overview() {
             </KernTableBody>
           </KernTable>
         )}
-      </div>
+      </DefaultPage>
     </AppShell>
   );
 }

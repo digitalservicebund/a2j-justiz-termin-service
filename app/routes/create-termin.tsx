@@ -324,160 +324,158 @@ function CreateTerminForm({
   return (
     <>
       <FlowPage className="create-termin">
-        <div className="page-width">
-          <h1 className="kern-sr-only">Erstellen der Terminumfrage</h1>
-          <Form method="post" className="create-termin__form" noValidate>
-            {draft && <input type="hidden" name="appointmentId" value={draft.id} />}
-            <section aria-labelledby="verhandlungsdaten" className="create-termin__section">
-              <KernHeading size="large" level={2} id="verhandlungsdaten">
-                Verhandlungsdaten
-              </KernHeading>
-              <KernFormInput
-                id="aktenzeichen"
-                label="Aktenzeichen"
-                wrapperClassName="create-termin__aktenzeichen"
-                error={shown.aktenzeichen}
-                name="aktenzeichen"
-                value={aktenzeichen}
-                onChange={(event) => setAktenzeichen(event.target.value)}
-                autoComplete="off"
-              />
-            </section>
+        <h1 className="kern-sr-only">Erstellen der Terminumfrage</h1>
+        <Form method="post" className="create-termin__form" noValidate>
+          {draft && <input type="hidden" name="appointmentId" value={draft.id} />}
+          <section aria-labelledby="verhandlungsdaten" className="create-termin__section">
+            <KernHeading size="large" level={2} id="verhandlungsdaten">
+              Verhandlungsdaten
+            </KernHeading>
+            <KernFormInput
+              id="aktenzeichen"
+              label="Aktenzeichen"
+              wrapperClassName="create-termin__aktenzeichen"
+              error={shown.aktenzeichen}
+              name="aktenzeichen"
+              value={aktenzeichen}
+              onChange={(event) => setAktenzeichen(event.target.value)}
+              autoComplete="off"
+            />
+          </section>
 
-            <section aria-labelledby="zeitfenster" className="create-termin__section">
-              <KernHeading size="large" level={2} id="zeitfenster">
-                Geben Sie Ihre verfügbaren Zeitfenster an
-              </KernHeading>
+          <section aria-labelledby="zeitfenster" className="create-termin__section">
+            <KernHeading size="large" level={2} id="zeitfenster">
+              Geben Sie Ihre verfügbaren Zeitfenster an
+            </KernHeading>
 
-              <fieldset
-                aria-labelledby="zeitfenster"
-                aria-describedby={shown.slots ? SLOTS_ERROR_ID : undefined}
-                className={`create-termin__windows${shown.slots ? " kern-fieldset--error" : ""}`}
-              >
-                <div className="create-termin__rows">
-                  <div className="create-termin__row create-termin__row--head" aria-hidden="true">
+            <fieldset
+              aria-labelledby="zeitfenster"
+              aria-describedby={shown.slots ? SLOTS_ERROR_ID : undefined}
+              className={`create-termin__windows${shown.slots ? " kern-fieldset--error" : ""}`}
+            >
+              <div className="create-termin__rows">
+                <div className="create-termin__row create-termin__row--head" aria-hidden="true">
+                  <div className="create-termin__head">
+                    <KernLabel>Datum</KernLabel>
+                    <div className="create-termin__group create-termin__group--date">
+                      <Captions fields={dateFields} />
+                    </div>
+                  </div>
+                  <div className="create-termin__range">
                     <div className="create-termin__head">
-                      <KernLabel>Datum</KernLabel>
-                      <div className="create-termin__group create-termin__group--date">
-                        <Captions fields={dateFields} />
+                      <KernLabel>Startzeit</KernLabel>
+                      <div className="create-termin__group create-termin__group--time">
+                        <Captions fields={startFields} />
                       </div>
                     </div>
-                    <div className="create-termin__range">
-                      <div className="create-termin__head">
-                        <KernLabel>Startzeit</KernLabel>
-                        <div className="create-termin__group create-termin__group--time">
-                          <Captions fields={startFields} />
-                        </div>
-                      </div>
-                      <span className="create-termin__dash">–</span>
-                      <div className="create-termin__head">
-                        <KernLabel>Endzeit</KernLabel>
-                        <div className="create-termin__group create-termin__group--time">
-                          <Captions fields={endFields} />
-                        </div>
+                    <span className="create-termin__dash">–</span>
+                    <div className="create-termin__head">
+                      <KernLabel>Endzeit</KernLabel>
+                      <div className="create-termin__group create-termin__group--time">
+                        <Captions fields={endFields} />
                       </div>
                     </div>
                   </div>
+                </div>
 
-                  {rows.map(({ id, slot }, index) => {
-                    const rowErrors = rowErrorsOf(id);
-                    const groups = Object.keys(rowErrors) as SlotErrorGroup[];
-                    const onChange = (field: SlotField, value: string) =>
-                      updateSlot(id, field, value);
-                    return (
-                      <fieldset
-                        className={`create-termin__row${groups.length ? " kern-fieldset--error" : ""}`}
-                        aria-describedby={
-                          groups.map((group) => rowErrorId(id, group)).join(" ") || undefined
-                        }
-                        key={id}
-                      >
-                        <legend className="kern-sr-only">{`Zeitfenster ${index + 1}`}</legend>
-                        <div className="create-termin__group create-termin__group--date">
+                {rows.map(({ id, slot }, index) => {
+                  const rowErrors = rowErrorsOf(id);
+                  const groups = Object.keys(rowErrors) as SlotErrorGroup[];
+                  const onChange = (field: SlotField, value: string) =>
+                    updateSlot(id, field, value);
+                  return (
+                    <fieldset
+                      className={`create-termin__row${groups.length ? " kern-fieldset--error" : ""}`}
+                      aria-describedby={
+                        groups.map((group) => rowErrorId(id, group)).join(" ") || undefined
+                      }
+                      key={id}
+                    >
+                      <legend className="kern-sr-only">{`Zeitfenster ${index + 1}`}</legend>
+                      <div className="create-termin__group create-termin__group--date">
+                        <SegmentedFields
+                          fields={dateFields}
+                          index={index}
+                          slot={slot}
+                          errors={rowErrors}
+                          onChange={onChange}
+                        />
+                      </div>
+                      <div className="create-termin__range">
+                        <div className="create-termin__group create-termin__group--time">
                           <SegmentedFields
-                            fields={dateFields}
+                            fields={startFields}
                             index={index}
                             slot={slot}
                             errors={rowErrors}
                             onChange={onChange}
                           />
                         </div>
-                        <div className="create-termin__range">
-                          <div className="create-termin__group create-termin__group--time">
-                            <SegmentedFields
-                              fields={startFields}
-                              index={index}
-                              slot={slot}
-                              errors={rowErrors}
-                              onChange={onChange}
-                            />
-                          </div>
-                          <span className="create-termin__dash" aria-hidden="true">
-                            –
-                          </span>
-                          <div className="create-termin__group create-termin__group--time">
-                            <SegmentedFields
-                              fields={endFields}
-                              index={index}
-                              slot={slot}
-                              errors={rowErrors}
-                              onChange={onChange}
-                            />
-                          </div>
-                          <KernButton
-                            type="button"
-                            style="tertiary"
-                            aria-label={`Zeitfenster ${index + 1} entfernen`}
-                            onClick={() => removeRow(id)}
-                          >
-                            <KernIcon name="delete" />
-                          </KernButton>
+                        <span className="create-termin__dash" aria-hidden="true">
+                          –
+                        </span>
+                        <div className="create-termin__group create-termin__group--time">
+                          <SegmentedFields
+                            fields={endFields}
+                            index={index}
+                            slot={slot}
+                            errors={rowErrors}
+                            onChange={onChange}
+                          />
                         </div>
-                        {groups.length > 0 && (
-                          <div className="create-termin__row-errors">
-                            {groups.map((group) => (
-                              <ErrorMessage id={rowErrorId(id, group)} key={group}>
-                                {rowErrors[group]}
-                              </ErrorMessage>
-                            ))}
-                          </div>
-                        )}
-                      </fieldset>
-                    );
-                  })}
-                </div>
+                        <KernButton
+                          type="button"
+                          style="tertiary"
+                          aria-label={`Zeitfenster ${index + 1} entfernen`}
+                          onClick={() => removeRow(id)}
+                        >
+                          <KernIcon name="delete" />
+                        </KernButton>
+                      </div>
+                      {groups.length > 0 && (
+                        <div className="create-termin__row-errors">
+                          {groups.map((group) => (
+                            <ErrorMessage id={rowErrorId(id, group)} key={group}>
+                              {rowErrors[group]}
+                            </ErrorMessage>
+                          ))}
+                        </div>
+                      )}
+                    </fieldset>
+                  );
+                })}
+              </div>
 
-                <KernButton
-                  id={ADD_BUTTON_ID}
-                  type="button"
-                  style="secondary"
-                  className="create-termin__add"
-                  disabled={atLimit}
-                  aria-describedby={atLimit ? "add-hint" : undefined}
-                  onClick={addRow}
-                >
-                  <KernIcon name="add" />
-                  <KernLabel>Zeitfenster hinzufügen</KernLabel>
-                </KernButton>
-                {atLimit && (
-                  <p className="kern-hint" id="add-hint">
-                    {`Sie können höchstens ${MAX_SLOTS} Zeitfenster angeben.`}
-                  </p>
-                )}
-                {shown.slots && <ErrorMessage id={SLOTS_ERROR_ID}>{shown.slots}</ErrorMessage>}
-              </fieldset>
-            </section>
-
-            <div className="create-termin__actions">
-              <KernLinkButton style="secondary" to="/overview">
-                <KernLabel>Abbrechen</KernLabel>
-              </KernLinkButton>
-              <KernButton type="submit" disabled={pending}>
-                Weiter
+              <KernButton
+                id={ADD_BUTTON_ID}
+                type="button"
+                style="secondary"
+                className="create-termin__add"
+                disabled={atLimit}
+                aria-describedby={atLimit ? "add-hint" : undefined}
+                onClick={addRow}
+              >
+                <KernIcon name="add" />
+                <KernLabel>Zeitfenster hinzufügen</KernLabel>
               </KernButton>
-            </div>
-          </Form>
-        </div>
+              {atLimit && (
+                <p className="kern-hint" id="add-hint">
+                  {`Sie können höchstens ${MAX_SLOTS} Zeitfenster angeben.`}
+                </p>
+              )}
+              {shown.slots && <ErrorMessage id={SLOTS_ERROR_ID}>{shown.slots}</ErrorMessage>}
+            </fieldset>
+          </section>
+
+          <div className="create-termin__actions">
+            <KernLinkButton style="secondary" to="/overview">
+              <KernLabel>Abbrechen</KernLabel>
+            </KernLinkButton>
+            <KernButton type="submit" disabled={pending}>
+              Weiter
+            </KernButton>
+          </div>
+        </Form>
       </FlowPage>
     </>
   );

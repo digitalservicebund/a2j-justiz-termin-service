@@ -120,46 +120,44 @@ export function ReviewPage({
 
   return (
     <FlowPage className={["create-termin", className].filter(Boolean).join(" ")}>
-      <div className="page-width">
-        <Form method="post" className="create-termin__form">
-          {children}
-          <KernHeading size="large" level={1}>
-            Bitte überprüfen Sie Ihre Angaben
-          </KernHeading>
+      <Form method="post" className="create-termin__form">
+        {children}
+        <KernHeading size="large" level={1}>
+          Bitte überprüfen Sie Ihre Angaben
+        </KernHeading>
 
-          <div className="create-termin-review__bulk">
-            <KernButton type="button" style="secondary" onClick={() => setAll(true)}>
-              Alle einblenden
-            </KernButton>
-            <KernButton type="button" style="secondary" onClick={() => setAll(false)}>
-              Alle ausblenden
-            </KernButton>
-          </div>
+        <div className="create-termin-review__bulk">
+          <KernButton type="button" style="secondary" onClick={() => setAll(true)}>
+            Alle einblenden
+          </KernButton>
+          <KernButton type="button" style="secondary" onClick={() => setAll(false)}>
+            Alle ausblenden
+          </KernButton>
+        </div>
 
-          <div>
-            {sections.map(({ id, children: content, ...section }) => (
-              <Section
-                key={id}
-                id={id}
-                {...section}
-                open={isOpen(id)}
-                onToggle={(value) => setOpen((current) => ({ ...current, [id]: value }))}
-              >
-                {content}
-              </Section>
-            ))}
-          </div>
+        <div>
+          {sections.map(({ id, children: content, ...section }) => (
+            <Section
+              key={id}
+              id={id}
+              {...section}
+              open={isOpen(id)}
+              onToggle={(value) => setOpen((current) => ({ ...current, [id]: value }))}
+            >
+              {content}
+            </Section>
+          ))}
+        </div>
 
-          <div className="create-termin__actions">
-            <KernButton type="submit" name="intent" value="back" style="secondary">
-              Zurück
-            </KernButton>
-            <KernButton type="submit" name="intent" value={submit.intent} disabled={pending}>
-              {submit.label}
-            </KernButton>
-          </div>
-        </Form>
-      </div>
+        <div className="create-termin__actions">
+          <KernButton type="submit" name="intent" value="back" style="secondary">
+            Zurück
+          </KernButton>
+          <KernButton type="submit" name="intent" value={submit.intent} disabled={pending}>
+            {submit.label}
+          </KernButton>
+        </div>
+      </Form>
     </FlowPage>
   );
 }

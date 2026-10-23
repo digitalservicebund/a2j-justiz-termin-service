@@ -2,6 +2,7 @@ import { data, redirect, useLoaderData } from "react-router";
 
 import { findSurvey, getSavedAnswer } from "~/adapters/appointments/survey.server";
 import { AppShell } from "~/components/shared/AppShell";
+import { DefaultPage } from "~/components/shared/DefaultPage";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import {
   KernDescriptionList,
@@ -86,7 +87,10 @@ export function NoOption() {
 
 function NoTimeWorks() {
   return (
-    <div className="kern-alert kern-alert--danger page-width page-width--wide create-termin-created__banner">
+    <DefaultPage
+      width="wide"
+      className="kern-alert kern-alert--danger create-termin-created__banner"
+    >
       <KernIcon name="danger" size="x-large" />
       <div className="create-termin-created__banner-body survey-result__banner-body">
         <KernHeading size="large" level={1}>
@@ -94,6 +98,6 @@ function NoTimeWorks() {
         </KernHeading>
         <KernBody bold>Das Gericht wird wahrscheinlich eine neue Terminumfrage erstellen.</KernBody>
       </div>
-    </div>
+    </DefaultPage>
   );
 }

@@ -27,4 +27,14 @@ describe("FlowPage", () => {
     const { container } = render(<FlowPage className="custom">x</FlowPage>);
     expect(container.firstChild).toHaveClass("flow-page", "custom");
   });
+
+  it("centers the children at the default width without a width", () => {
+    render(<FlowPage>x</FlowPage>);
+    expect(screen.getByText("x")).toHaveClass("page-width", "page-width--default");
+  });
+
+  it("centers the children at the given width", () => {
+    render(<FlowPage width="wide">x</FlowPage>);
+    expect(screen.getByText("x")).toHaveClass("page-width--wide");
+  });
 });

@@ -82,8 +82,8 @@ export default function Survey() {
 
   return (
     <AppShell breadcrumbs={surveyBreadcrumbs}>
-      <FlowPage className="survey">
-        <div className="page-width page-width--wide survey__layout">
+      <FlowPage width="wide" className="survey">
+        <div className="survey__layout">
           <KernDescriptionList column className="survey__facts">
             <KernDescriptionListItem label="Aktenzeichen">{aktenzeichen}</KernDescriptionListItem>
           </KernDescriptionList>

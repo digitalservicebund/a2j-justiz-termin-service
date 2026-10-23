@@ -4,6 +4,7 @@ import { getAppointment } from "~/adapters/appointments/appointments.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { CopyLinkButton } from "~/components/shared/CopyLinkButton";
+import { DefaultPage } from "~/components/shared/DefaultPage";
 import { KernBadge } from "~/components/shared/kern/KernBadge";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import {
@@ -118,7 +119,7 @@ export default function OverviewDetail() {
         { label: aktenzeichen },
       ]}
     >
-      <div className="page-width overview-detail">
+      <DefaultPage className="overview-detail">
         <BackLink />
 
         {detail.state === "confirmed" ? (
@@ -147,7 +148,7 @@ export default function OverviewDetail() {
         ) : (
           <NoOptionWorks aktenzeichen={aktenzeichen} days={detail.days} />
         )}
-      </div>
+      </DefaultPage>
     </AppShell>
   );
 }

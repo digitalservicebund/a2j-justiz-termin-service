@@ -5,21 +5,6 @@
   background-color: var(--kern-color-layout-background-default);
 }
 
-/* Centers a block at one of the page widths from app.css; the default width applies without a modifier. */
-.page-width {
-  --page-width: var(--page-width-default);
-  width: min(100% - 2 * var(--kern-metric-space-default), var(--page-width));
-  margin-inline: auto;
-}
-
-.page-width--narrow {
-  --page-width: var(--page-width-narrow);
-}
-
-.page-width--wide {
-  --page-width: var(--page-width-wide);
-}
-
 .page-shell__header {
   padding-block: var(--kern-metric-space-large);
   background-color: var(--kern-color-layout-background-default);

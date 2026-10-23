@@ -70,8 +70,8 @@ export default function OverviewSelect() {
 
   return (
     <AppShell user={user} breadcrumbs={selectBreadcrumbs}>
-      <FlowPage className="overview-select">
-        <div className="page-width page-width--wide overview-select__layout">
+      <FlowPage width="wide" className="overview-select">
+        <div className="overview-select__layout">
           <KernDescriptionList column className="overview-select__facts">
             <KernDescriptionListItem label="Aktenzeichen">{aktenzeichen}</KernDescriptionListItem>
           </KernDescriptionList>

@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { getSessionUser } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
+import { DefaultPage } from "~/components/shared/DefaultPage";
 import { KernAlert } from "~/components/shared/kern/KernAlert";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernButton } from "~/components/shared/kern/KernButton";
@@ -83,7 +84,7 @@ export default function Welcome() {
       ]}
     >
       <section className="welcome__hero">
-        <div className="page-width welcome__hero-content">
+        <DefaultPage className="welcome__hero-content">
           <KernHeading size="x-large" level={1}>
             Verhandlungstermin-Finder
           </KernHeading>
@@ -109,11 +110,11 @@ export default function Welcome() {
             />
           )}
           <LoginForm />
-        </div>
+        </DefaultPage>
       </section>
 
       <section className="welcome__pilot">
-        <div className="page-width">
+        <DefaultPage>
           <details className="kern-details">
             <summary className="kern-details__header welcome__pilot-summary">
               Der Onlinedienst befindet sich in der Testphase (Pilotprojekt)
@@ -123,10 +124,10 @@ export default function Welcome() {
               können sich noch ändern.
             </KernBody>
           </details>
-        </div>
+        </DefaultPage>
       </section>
 
-      <div className="page-width welcome__sections">
+      <DefaultPage className="welcome__sections">
         <section aria-labelledby="welcome-ablauf">
           <KernHeading size="large" level={2} id="welcome-ablauf">
             Der Ablauf
@@ -166,7 +167,7 @@ export default function Welcome() {
             </KernButton>
           </div>
         </section>
-      </div>
+      </DefaultPage>
     </AppShell>
   );
 }
