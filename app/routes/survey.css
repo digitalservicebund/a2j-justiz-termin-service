@@ -76,9 +76,3 @@
     grid-template-columns: 31rem minmax(0, 1fr);
   }
 }
-
-.survey-result__banner-body {
-  gap: var(--kern-metric-space-small);
-  /* The heading wraps after "alle" in the design. */
-  max-width: var(--page-width-narrow);
-}

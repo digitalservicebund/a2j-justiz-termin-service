@@ -14,6 +14,7 @@ import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernIcon } from "~/components/shared/kern/KernIcon";
 import { KernLabel } from "~/components/shared/kern/KernLabel";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
+import { ResultBanner } from "~/components/shared/ResultBanner";
 import { getDb } from "~/database/database";
 
 import { createTerminBreadcrumbs, groupSlotsByDay } from "./create-termin.review";
@@ -62,28 +63,24 @@ export function SuccessBanner({
   overviewLink = true,
 }: Readonly<{ title: string; overviewLink?: boolean }>) {
   return (
-    <DefaultPage width="wide">
-      <div className="kern-alert kern-alert--success create-termin-created__banner">
-        <KernIcon name="success" size="x-large" />
-        <div className="create-termin-created__banner-body">
-          <KernHeading size="large" level={1}>
-            {title}
-          </KernHeading>
-          <div className="create-termin-created__banner-actions">
-            <a className="kern-btn kern-btn--primary" href="#naechste-schritte">
-              <KernLabel>Nächste Schritte</KernLabel>
-              <KernIcon name="arrow-down" />
-            </a>
-            {overviewLink && (
-              <KernLinkButton style="secondary" to="/overview">
-                <KernLabel>Zu den Terminumfragen</KernLabel>
-                <KernIcon name="arrow-forward" />
-              </KernLinkButton>
-            )}
-          </div>
-        </div>
-      </div>
-    </DefaultPage>
+    <ResultBanner
+      type="success"
+      title={title}
+      actions={
+        <>
+          <a className="kern-btn kern-btn--primary" href="#naechste-schritte">
+            <KernLabel>Nächste Schritte</KernLabel>
+            <KernIcon name="arrow-down" />
+          </a>
+          {overviewLink && (
+            <KernLinkButton style="secondary" to="/overview">
+              <KernLabel>Zu den Terminumfragen</KernLabel>
+              <KernIcon name="arrow-forward" />
+            </KernLinkButton>
+          )}
+        </>
+      }
+    />
   );
 }
 
