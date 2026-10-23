@@ -1,10 +1,18 @@
-import { data, Link, redirect, useLoaderData } from "react-router";
+import { data, redirect, useLoaderData } from "react-router";
 
 import { getAppointment } from "~/adapters/appointments/appointments.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { CopyLinkButton } from "~/components/shared/CopyLinkButton";
+import { KernBody } from "~/components/shared/kern/KernBody";
+import {
+  KernDescriptionList,
+  KernDescriptionListItem,
+} from "~/components/shared/kern/KernDescriptionList";
+import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernIcon } from "~/components/shared/kern/KernIcon";
+import { KernLabel } from "~/components/shared/kern/KernLabel";
+import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { getDb } from "~/database/database";
 
 import { createTerminBreadcrumbs, groupSlotsByDay } from "./create-termin.review";
@@ -37,7 +45,9 @@ export function Step({ title, children }: Readonly<{ title: string; children?: R
   return (
     <li className="create-termin-created__step">
       <div className="create-termin-created__step-body">
-        <h3 className="kern-title create-termin-created__step-title">{title}</h3>
+        <KernHeading size="title" level={3} className="create-termin-created__step-title">
+          {title}
+        </KernHeading>
         {children}
       </div>
     </li>
@@ -54,17 +64,19 @@ export function SuccessBanner({
     <div className="kern-alert kern-alert--success create-termin-created__banner">
       <KernIcon name="success" size="x-large" />
       <div className="create-termin-created__banner-body">
-        <h1 className="kern-heading-large">{title}</h1>
+        <KernHeading size="large" level={1}>
+          {title}
+        </KernHeading>
         <div className="create-termin-created__banner-actions">
           <a className="kern-btn kern-btn--primary" href="#naechste-schritte">
-            <span className="kern-label">Nächste Schritte</span>
+            <KernLabel>Nächste Schritte</KernLabel>
             <KernIcon name="arrow-down" />
           </a>
           {overviewLink && (
-            <Link className="kern-btn kern-btn--secondary" to="/overview">
-              <span className="kern-label">Zu den Terminumfragen</span>
+            <KernLinkButton style="secondary" to="/overview">
+              <KernLabel>Zu den Terminumfragen</KernLabel>
               <KernIcon name="arrow-forward" />
-            </Link>
+            </KernLinkButton>
           )}
         </div>
       </div>
@@ -75,9 +87,9 @@ export function SuccessBanner({
 export function NextSteps({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <section aria-labelledby="naechste-schritte" className="create-termin-created__steps">
-      <h2 className="kern-heading-large" id="naechste-schritte">
+      <KernHeading size="large" level={2} id="naechste-schritte">
         Nächste Schritte
-      </h2>
+      </KernHeading>
       <ol className="create-termin-created__list">{children}</ol>
     </section>
   );
@@ -92,27 +104,24 @@ export default function CreateTerminCreated() {
 
         <NextSteps>
           <Step title="Halten Sie sich die vorgeschlagenen Zeitfenster frei.">
-            <dl className="kern-description-list">
+            <KernDescriptionList>
               {days.map(({ key, label, times }) => (
-                <div className="kern-description-list-item" key={key}>
-                  <dt className="kern-description-list-item__key">{label}</dt>
-                  <dd className="kern-description-list-item__value">
-                    <ul className="create-termin-review__times">
-                      {times.map((time) => (
-                        <li key={time}>{time}</li>
-                      ))}
-                    </ul>
-                  </dd>
-                </div>
+                <KernDescriptionListItem key={key} label={label}>
+                  <ul className="create-termin-review__times">
+                    {times.map((time) => (
+                      <li key={time}>{time}</li>
+                    ))}
+                  </ul>
+                </KernDescriptionListItem>
               ))}
-            </dl>
+            </KernDescriptionList>
           </Step>
           <Step title="Teilen Sie den Link zur Terminumfrage mit allen Verfahrensbeteiligten.">
-            <p className="kern-body">Erwähnen Sie, bis wann Sie sich eine Rückmeldung wünschen.</p>
-            <p className="kern-body create-termin-created__url">
+            <KernBody>Erwähnen Sie, bis wann Sie sich eine Rückmeldung wünschen.</KernBody>
+            <KernBody className="create-termin-created__url">
               <KernIcon name="open-in-new" size="small" />
               <span>{surveyUrl}</span>
-            </p>
+            </KernBody>
             <CopyLinkButton url={surveyUrl} className="kern-btn--small" />
           </Step>
           <Step title="Alle Verfahrensbeteiligten geben Ihre Verfügbarkeiten an." />

@@ -4,6 +4,11 @@ import { Form, useNavigation } from "react-router";
 import type { BreadcrumbItem } from "~/components/shared/Breadcrumb";
 import { FlowPage } from "~/components/shared/FlowPage";
 import { KernButton } from "~/components/shared/kern/KernButton";
+import {
+  KernDescriptionList,
+  KernDescriptionListItem,
+} from "~/components/shared/kern/KernDescriptionList";
+import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernIcon } from "~/components/shared/kern/KernIcon";
 
 import { isEmptySlot, type CreateTerminValues, type SlotInput } from "./create-termin.schema";
@@ -74,9 +79,9 @@ function Section({
       onToggle={(event) => onToggle(event.currentTarget.open)}
     >
       <summary className="kern-accordion__header">
-        <h2 className="kern-title" id={`review-${id}`}>
+        <KernHeading size="title" level={2} id={`review-${id}`}>
           {title}
-        </h2>
+        </KernHeading>
       </summary>
       <div className="kern-accordion__body">
         <div className="kern-summary__body create-termin-review__summary">
@@ -90,15 +95,6 @@ function Section({
         </div>
       </div>
     </details>
-  );
-}
-
-export function ReviewItem({ label, children }: Readonly<{ label: string; children: ReactNode }>) {
-  return (
-    <div className="kern-description-list-item">
-      <dt className="kern-description-list-item__key">{label}</dt>
-      <dd className="kern-description-list-item__value">{children}</dd>
-    </div>
   );
 }
 
@@ -127,7 +123,9 @@ export function ReviewPage({
       <div className="page-shell__content">
         <Form method="post" className="create-termin__form">
           {children}
-          <h1 className="kern-heading-large">Bitte überprüfen Sie Ihre Angaben</h1>
+          <KernHeading size="large" level={1}>
+            Bitte überprüfen Sie Ihre Angaben
+          </KernHeading>
 
           <div className="create-termin-review__bulk">
             <KernButton type="button" style="secondary" onClick={() => setAll(true)}>
@@ -174,26 +172,28 @@ export function CreateTerminReview({ values }: Readonly<{ values: CreateTerminVa
           id: "verhandlungsdaten",
           title: "Verhandlungsdaten",
           children: (
-            <dl className="kern-description-list">
-              <ReviewItem label="Aktenzeichen">{values.aktenzeichen}</ReviewItem>
-            </dl>
+            <KernDescriptionList>
+              <KernDescriptionListItem label="Aktenzeichen">
+                {values.aktenzeichen}
+              </KernDescriptionListItem>
+            </KernDescriptionList>
           ),
         },
         {
           id: "zeitfenster",
           title: "Zeitfenster",
           children: (
-            <dl className="kern-description-list">
+            <KernDescriptionList>
               {groupSlotsByDay(values.slots).map(({ key, label, times }) => (
-                <ReviewItem key={key} label={label}>
+                <KernDescriptionListItem key={key} label={label}>
                   <ul className="create-termin-review__times">
                     {times.map((time) => (
                       <li key={time}>{time}</li>
                     ))}
                   </ul>
-                </ReviewItem>
+                </KernDescriptionListItem>
               ))}
-            </dl>
+            </KernDescriptionList>
           ),
         },
       ]}

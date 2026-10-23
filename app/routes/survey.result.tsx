@@ -2,6 +2,12 @@ import { data, redirect, useLoaderData } from "react-router";
 
 import { findSurvey, getSavedAnswer } from "~/adapters/appointments/survey.server";
 import { AppShell } from "~/components/shared/AppShell";
+import { KernBody } from "~/components/shared/kern/KernBody";
+import {
+  KernDescriptionList,
+  KernDescriptionListItem,
+} from "~/components/shared/kern/KernDescriptionList";
+import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernIcon } from "~/components/shared/kern/KernIcon";
 import { getDb } from "~/database/database";
 
@@ -47,20 +53,17 @@ function Positive({ days }: Readonly<{ days: ReturnType<typeof groupWindows> }>)
 
       <NextSteps>
         <Step title="Halten Sie sich die angegebenen Zeitfenster frei, bis vom Gericht ein Termin festgelegt wurde.">
-          <dl className="kern-description-list">
+          <KernDescriptionList>
             {days.map(({ key, label, windows }) => (
-              <div className="kern-description-list-item" key={key}>
-                <dt className="kern-description-list-item__key">{label}</dt>
-                <dd className="kern-description-list-item__value">
-                  <ul className="create-termin-review__times">
-                    {windows.map(({ id, start }) => (
-                      <li key={id}>{start}</li>
-                    ))}
-                  </ul>
-                </dd>
-              </div>
+              <KernDescriptionListItem key={key} label={label}>
+                <ul className="create-termin-review__times">
+                  {windows.map(({ id, start }) => (
+                    <li key={id}>{start}</li>
+                  ))}
+                </ul>
+              </KernDescriptionListItem>
             ))}
-          </dl>
+          </KernDescriptionList>
         </Step>
         <Step title="Alle anderen Verfahrensbeteiligten geben Ihre Verfügbarkeiten an." />
         <Step title="Das Gericht legt einen passenden Termin fest." />
@@ -86,12 +89,10 @@ function NoTimeWorks() {
     <div className="kern-alert kern-alert--danger create-termin-created__banner">
       <KernIcon name="danger" size="x-large" />
       <div className="create-termin-created__banner-body survey-result__banner-body">
-        <h1 className="kern-heading-large">
+        <KernHeading size="large" level={1}>
           Es gibt leider keine Terminoption, bei der alle Verfahrensbeteiligten Zeit haben.
-        </h1>
-        <p className="kern-body kern-body--bold">
-          Das Gericht wird wahrscheinlich eine neue Terminumfrage erstellen.
-        </p>
+        </KernHeading>
+        <KernBody bold>Das Gericht wird wahrscheinlich eine neue Terminumfrage erstellen.</KernBody>
       </div>
     </div>
   );

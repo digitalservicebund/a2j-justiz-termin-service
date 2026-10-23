@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { KernButton } from "./kern/KernButton";
 import { KernIcon } from "./kern/KernIcon";
+import { KernLabel } from "./kern/KernLabel";
 
 export type CopyButtonProps = {
   text: string;
@@ -34,7 +35,7 @@ export function CopyButton({
     <>
       <KernButton type="button" style="secondary" className={className} onClick={copy}>
         <KernIcon name={copied ? "check" : "content-copy"} size={className ? "small" : "default"} />
-        <span className="kern-label">{copied ? copiedLabel : label}</span>
+        <KernLabel>{copied ? copiedLabel : label}</KernLabel>
       </KernButton>
       <output className="kern-sr-only">{copied ? announcement : ""}</output>
     </>

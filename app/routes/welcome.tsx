@@ -4,7 +4,9 @@ import { z } from "zod";
 import { getSessionUser } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { KernAlert } from "~/components/shared/kern/KernAlert";
+import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernButton } from "~/components/shared/kern/KernButton";
+import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernIcon, type KernIconName } from "~/components/shared/kern/KernIcon";
 import { LoginForm } from "~/components/shared/LoginForm";
 import { getAuth } from "~/lib/auth.server";
@@ -82,11 +84,13 @@ export default function Welcome() {
     >
       <section className="welcome__hero">
         <div className="welcome__hero-content">
-          <h1 className="kern-heading-x-large">Verhandlungstermin-Finder</h1>
-          <p className="kern-body kern-body--large kern-body--bold">
+          <KernHeading size="x-large" level={1}>
+            Verhandlungstermin-Finder
+          </KernHeading>
+          <KernBody size="large" bold>
             Der Verhandlungstermin-Finder vereinfacht die Terminkoordination zwischen Gericht und
             Verfahrensbeteiligten.
-          </p>
+          </KernBody>
           {invalidLink && (
             <KernAlert
               type="error"
@@ -114,19 +118,19 @@ export default function Welcome() {
             <summary className="kern-details__header welcome__pilot-summary">
               Der Onlinedienst befindet sich in der Testphase (Pilotprojekt)
             </summary>
-            <p className="kern-body">
+            <KernBody>
               Dieser Dienst wird derzeit gemeinsam mit Nutzenden erprobt. Funktionen und Inhalte
               können sich noch ändern.
-            </p>
+            </KernBody>
           </details>
         </div>
       </section>
 
       <div className="welcome__content welcome__sections">
         <section aria-labelledby="welcome-ablauf">
-          <h2 className="kern-heading-large" id="welcome-ablauf">
+          <KernHeading size="large" level={2} id="welcome-ablauf">
             Der Ablauf
-          </h2>
+          </KernHeading>
           <ol className="welcome__steps">
             {steps.map(({ icon, label }) => (
               <li key={label} className="welcome__step">
@@ -138,11 +142,11 @@ export default function Welcome() {
         </section>
 
         <KernAlert type="info" title="Gestalten Sie die digitalen Angebote der Justiz mit">
-          <p className="kern-body">
+          <KernBody>
             Wir wollen digitale Justiz-Angebote entwickeln, die für alle Menschen gut funktionieren.
             Ihre Hilfe ist dabei sehr wichtig. In kurzen Online-Gesprächen können Sie Ihre
             Erfahrungen mit uns teilen und neue Services testen.
-          </p>
+          </KernBody>
           <a className="kern-link" href={TODO_HREF}>
             <KernIcon name="arrow-forward" size="small" />
             Jetzt für die Teilnahme anmelden
@@ -150,9 +154,9 @@ export default function Welcome() {
         </KernAlert>
 
         <section aria-labelledby="welcome-feedback" className="welcome__feedback">
-          <h2 className="kern-title kern-title--small" id="welcome-feedback">
+          <KernHeading size="title-small" level={2} id="welcome-feedback">
             Hat Ihnen diese Seite geholfen?
-          </h2>
+          </KernHeading>
           <div className="welcome__feedback-actions">
             <KernButton type="button" style="secondary">
               Ja

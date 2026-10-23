@@ -2,9 +2,16 @@ import { data, Form, redirect, useActionData, useLoaderData, useNavigation } fro
 
 import { findSurvey } from "~/adapters/appointments/survey.server";
 import { AppShell } from "~/components/shared/AppShell";
-import { ErrorMessage } from "~/components/shared/ErrorMessage";
 import { FlowPage } from "~/components/shared/FlowPage";
 import { KernButton } from "~/components/shared/kern/KernButton";
+import {
+  KernDescriptionList,
+  KernDescriptionListItem,
+} from "~/components/shared/kern/KernDescriptionList";
+import { KernFieldset } from "~/components/shared/kern/KernFieldset";
+import { KernFormCheck } from "~/components/shared/kern/KernFormCheck";
+import { KernFormInput } from "~/components/shared/kern/KernFormInput";
+import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { getDb } from "~/database/database";
 
 import { NoOption } from "./survey.result";
@@ -77,86 +84,77 @@ export default function Survey() {
     <AppShell breadcrumbs={surveyBreadcrumbs}>
       <FlowPage className="survey">
         <div className="survey__layout">
-          <dl className="kern-description-list kern-description-list--col survey__facts">
-            <div className="kern-description-list-item">
-              <dt className="kern-description-list-item__key">Aktenzeichen</dt>
-              <dd className="kern-description-list-item__value">{aktenzeichen}</dd>
-            </div>
-          </dl>
+          <KernDescriptionList column className="survey__facts">
+            <KernDescriptionListItem label="Aktenzeichen">{aktenzeichen}</KernDescriptionListItem>
+          </KernDescriptionList>
 
           <Form method="post" className="survey__form" noValidate>
-            <h1 className="kern-heading-large">Geben Sie Ihre Verfügbarkeiten an</h1>
+            <KernHeading size="large" level={1}>
+              Geben Sie Ihre Verfügbarkeiten an
+            </KernHeading>
 
             {needsName && (
-              <div className={`kern-form-input${errors.name ? " kern-form-input--error" : ""}`}>
-                <label className="kern-label" htmlFor="name">
-                  Ihr Name
-                </label>
-                <input
-                  className={`kern-form-input__input survey__name${errors.name ? " kern-form-input__input--error" : ""}`}
-                  id="name"
-                  name="name"
-                  autoComplete="name"
-                  maxLength={MAX_NAME_LENGTH}
-                  defaultValue={values.name}
-                  aria-invalid={Boolean(errors.name) || undefined}
-                  aria-describedby={errors.name ? "name-error" : undefined}
-                />
-                {errors.name && <ErrorMessage id="name-error">{errors.name}</ErrorMessage>}
-              </div>
+              <KernFormInput
+                id="name"
+                label="Ihr Name"
+                className="survey__name"
+                error={errors.name}
+                name="name"
+                autoComplete="name"
+                maxLength={MAX_NAME_LENGTH}
+                defaultValue={values.name}
+              />
             )}
 
-            <fieldset
-              className={`kern-fieldset survey__fieldset${errors.slots ? " kern-fieldset--error" : ""}`}
-              aria-describedby={errors.slots ? "zeitfenster-error" : undefined}
+            <KernFieldset
+              id="zeitfenster"
+              legend="Verfügbarkeiten"
+              hideLegend
+              className="survey__fieldset"
+              bodyClassName="survey__days"
+              error={errors.slots}
             >
-              <legend className="kern-sr-only">Verfügbarkeiten</legend>
-              <div className="kern-fieldset__body survey__days">
-                {days.map(({ key, label, windows }) => (
-                  <div className="survey__day" key={key}>
-                    <h2 className="kern-heading-medium survey__date">{label}</h2>
-                    <div className="survey__windows">
-                      {windows.map(({ id, time }) => (
-                        <div className="survey__window" key={id}>
-                          <h3 className="kern-body kern-body--large kern-body--bold survey__time">
-                            {time}
-                          </h3>
-                          <div className="kern-form-check">
-                            <input
-                              className={`kern-form-check__checkbox${errors.slots ? " kern-form-check__checkbox--error" : ""}`}
-                              id={`fenster-${id}`}
-                              name="verfuegbar"
-                              type="checkbox"
-                              value={id}
-                              defaultChecked={values.available.includes(id)}
-                            />
-                            <label className="kern-label" htmlFor={`fenster-${id}`}>
+              {days.map(({ key, label, windows }) => (
+                <div className="survey__day" key={key}>
+                  <KernHeading size="medium" level={2} className="survey__date">
+                    {label}
+                  </KernHeading>
+                  <div className="survey__windows">
+                    {windows.map(({ id, time }) => (
+                      <div className="survey__window" key={id}>
+                        <h3 className="kern-body kern-body--large kern-body--bold survey__time">
+                          {time}
+                        </h3>
+                        <KernFormCheck
+                          id={`fenster-${id}`}
+                          type="checkbox"
+                          label={
+                            <>
                               Verfügbar
                               <span className="kern-sr-only">{` am ${label}, ${time}`}</span>
-                            </label>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                            </>
+                          }
+                          name="verfuegbar"
+                          value={id}
+                          defaultChecked={values.available.includes(id)}
+                          invalid={Boolean(errors.slots)}
+                        />
+                      </div>
+                    ))}
                   </div>
-                ))}
-
-                <div className="kern-form-check">
-                  <input
-                    className={`kern-form-check__checkbox${errors.slots ? " kern-form-check__checkbox--error" : ""}`}
-                    id="keines"
-                    name="keines"
-                    type="checkbox"
-                    value="1"
-                    defaultChecked={values.none}
-                  />
-                  <label className="kern-label" htmlFor="keines">
-                    Kein Zeitfenster passt
-                  </label>
                 </div>
-              </div>
-              {errors.slots && <ErrorMessage id="zeitfenster-error">{errors.slots}</ErrorMessage>}
-            </fieldset>
+              ))}
+
+              <KernFormCheck
+                id="keines"
+                type="checkbox"
+                label="Kein Zeitfenster passt"
+                name="keines"
+                value="1"
+                defaultChecked={values.none}
+                invalid={Boolean(errors.slots)}
+              />
+            </KernFieldset>
 
             <div className="survey__actions">
               <KernButton type="submit" disabled={pending}>

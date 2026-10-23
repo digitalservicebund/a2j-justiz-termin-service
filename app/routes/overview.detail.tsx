@@ -5,7 +5,15 @@ import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { CopyLinkButton } from "~/components/shared/CopyLinkButton";
 import { KernBadge } from "~/components/shared/kern/KernBadge";
+import { KernBody } from "~/components/shared/kern/KernBody";
+import {
+  KernDescriptionList,
+  KernDescriptionListItem,
+} from "~/components/shared/kern/KernDescriptionList";
+import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernIcon } from "~/components/shared/kern/KernIcon";
+import { KernLabel } from "~/components/shared/kern/KernLabel";
+import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { getDb } from "~/database/database";
 
 import { groupSlotsByDay, type DayWindows } from "./create-termin.review";
@@ -68,15 +76,12 @@ function BackLink() {
 function Verhandlungsdaten({ aktenzeichen }: Readonly<{ aktenzeichen: string }>) {
   return (
     <section aria-labelledby="detail-verhandlungsdaten" className="overview-detail__section">
-      <h2 className="kern-heading-medium" id="detail-verhandlungsdaten">
+      <KernHeading size="medium" level={2} id="detail-verhandlungsdaten">
         Verhandlungsdaten
-      </h2>
-      <dl className="kern-description-list kern-description-list--col">
-        <div className="kern-description-list-item">
-          <dt className="kern-description-list-item__key">Aktenzeichen</dt>
-          <dd className="kern-description-list-item__value">{aktenzeichen}</dd>
-        </div>
-      </dl>
+      </KernHeading>
+      <KernDescriptionList column>
+        <KernDescriptionListItem label="Aktenzeichen">{aktenzeichen}</KernDescriptionListItem>
+      </KernDescriptionList>
     </section>
   );
 }
@@ -84,21 +89,18 @@ function Verhandlungsdaten({ aktenzeichen }: Readonly<{ aktenzeichen: string }>)
 function Zeitfenster({ days }: Readonly<{ days: DayWindows[] }>) {
   return (
     <section aria-labelledby="detail-zeitfenster" className="overview-detail__section">
-      <h2 className="kern-heading-medium" id="detail-zeitfenster">
+      <KernHeading size="medium" level={2} id="detail-zeitfenster">
         Zeitfenster
-      </h2>
-      <dl className="kern-description-list overview-detail__windows">
+      </KernHeading>
+      <KernDescriptionList className="overview-detail__windows">
         {days.map(({ key, label, times }) => (
-          <div className="kern-description-list-item" key={key}>
-            <dt className="kern-description-list-item__key">{label}</dt>
-            <dd className="kern-description-list-item__value">
-              {times.map((time) => (
-                <div key={time}>{time}</div>
-              ))}
-            </dd>
-          </div>
+          <KernDescriptionListItem key={key} label={label}>
+            {times.map((time) => (
+              <div key={time}>{time}</div>
+            ))}
+          </KernDescriptionListItem>
         ))}
-      </dl>
+      </KernDescriptionList>
     </section>
   );
 }
@@ -124,13 +126,13 @@ export default function OverviewDetail() {
             <header className="overview-detail__header">
               <KernBadge type={detail.badge.type}>
                 {detail.badge.type === "success" && <KernIcon name="success" />}
-                <span className="kern-label">{detail.badge.text}</span>
+                <KernLabel>{detail.badge.text}</KernLabel>
               </KernBadge>
-              <h1 className="kern-heading-large">
+              <KernHeading size="large" level={1}>
                 {detail.past
                   ? `Der Termin war am ${detail.termin}`
                   : `Der Termin ist am ${detail.termin}.`}
-              </h1>
+              </KernHeading>
             </header>
             <Verhandlungsdaten aktenzeichen={aktenzeichen} />
             {detail.past && <Zeitfenster days={detail.days} />}
@@ -161,19 +163,19 @@ function OpenForReplies({
       <header className="overview-detail__header">
         <KernBadge type="info">
           <KernIcon name="info" />
-          <span className="kern-label">Offen für Rückmeldungen</span>
+          <KernLabel>Offen für Rückmeldungen</KernLabel>
         </KernBadge>
-        <h1 className="kern-heading-large">
+        <KernHeading size="large" level={1}>
           Die Terminumfrage ist aktiv und die Verfahrensbeteiligten können ihre Verfügbarkeiten
           teilen.
-        </h1>
+        </KernHeading>
       </header>
 
       <div className="overview-detail__actions">
-        <Link className="kern-btn kern-btn--primary" to={selectUrl}>
+        <KernLinkButton to={selectUrl}>
           <KernIcon name="check" />
-          <span className="kern-label">Termin auswählen</span>
-        </Link>
+          <KernLabel>Termin auswählen</KernLabel>
+        </KernLinkButton>
         <CopyLinkButton url={surveyUrl} />
       </div>
 
@@ -192,20 +194,20 @@ function NoOptionWorks({
       <header className="overview-detail__header">
         <KernBadge type="danger">
           <KernIcon name="danger" />
-          <span className="kern-label">Kein Zeitfenster passt</span>
+          <KernLabel>Kein Zeitfenster passt</KernLabel>
         </KernBadge>
         <div>
-          <h1 className="kern-heading-large">
+          <KernHeading size="large" level={1}>
             Es gibt leider keine Terminoption, bei der alle Verfahrensbeteiligten Zeit haben.
-          </h1>
-          <p className="kern-body">Starten Sie eine neue Terminumfrage.</p>
+          </KernHeading>
+          <KernBody>Starten Sie eine neue Terminumfrage.</KernBody>
         </div>
       </header>
 
-      <Link className="kern-btn kern-btn--primary" to="/overview/new">
+      <KernLinkButton to="/overview/new">
         <KernIcon name="add" />
-        <span className="kern-label">Terminumfrage erstellen</span>
-      </Link>
+        <KernLabel>Terminumfrage erstellen</KernLabel>
+      </KernLinkButton>
 
       <Verhandlungsdaten aktenzeichen={aktenzeichen} />
 

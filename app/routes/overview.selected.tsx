@@ -4,6 +4,7 @@ import { getAppointment } from "~/adapters/appointments/appointments.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { CopyButton } from "~/components/shared/CopyButton";
+import { KernBody } from "~/components/shared/kern/KernBody";
 import { getDb } from "~/database/database";
 
 import { NextSteps, Step, SuccessBanner } from "./create-termin.created";
@@ -40,7 +41,7 @@ export default function OverviewSelected() {
 
         <NextSteps>
           <Step title="Informieren Sie alle Verfahrensbeteiligten und Ihre Servicestelle über den Termin.">
-            <p className="kern-body">{termin}</p>
+            <KernBody>{termin}</KernBody>
             <CopyButton
               text={`Aktenzeichen: ${aktenzeichen}\nTermin: ${termin}`}
               label="Termindetails kopieren"

@@ -12,7 +12,12 @@ import {
 } from "~/adapters/users/users.server";
 import { AppShell } from "~/components/shared/AppShell";
 import { KernAlert } from "~/components/shared/kern/KernAlert";
+import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernButton } from "~/components/shared/kern/KernButton";
+import { KernFieldset } from "~/components/shared/kern/KernFieldset";
+import { KernFormCheck } from "~/components/shared/kern/KernFormCheck";
+import { KernFormInput } from "~/components/shared/kern/KernFormInput";
+import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { NewUserSchema, type AuthUser, type UserRole } from "~/core/domain/user";
 import { getDb } from "~/database/database";
 
@@ -71,53 +76,38 @@ function UserFields({
   const prefix = user?.id ?? "new";
   return (
     <>
-      <div className="kern-form-input">
-        <label className="kern-label" htmlFor={`${prefix}-name`}>
-          Name
-        </label>
-        <input
-          className="kern-form-input__input"
-          id={`${prefix}-name`}
-          name="name"
-          defaultValue={user?.name}
-          maxLength={200}
+      <KernFormInput
+        id={`${prefix}-name`}
+        label="Name"
+        name="name"
+        defaultValue={user?.name}
+        maxLength={200}
+        required
+      />
+      {!user && (
+        <KernFormInput
+          id={`${prefix}-email`}
+          label="E-Mail-Adresse"
+          name="email"
+          type="email"
           required
         />
-      </div>
-      {!user && (
-        <div className="kern-form-input">
-          <label className="kern-label" htmlFor={`${prefix}-email`}>
-            E-Mail-Adresse
-          </label>
-          <input
-            className="kern-form-input__input"
-            id={`${prefix}-email`}
-            name="email"
-            type="email"
-            required
-          />
-        </div>
       )}
-      <fieldset>
-        <legend className="kern-label">Rollen</legend>
+      <KernFieldset id={`${prefix}-roles`} legend="Rollen">
         {roles.map(({ value, label }) => (
-          <div className="kern-form-check" key={value}>
-            <input
-              className="kern-form-check__checkbox"
-              id={`${prefix}-${value}`}
-              name="roles"
-              type="checkbox"
-              value={value}
-              defaultChecked={user?.roles.includes(value) ?? value === "richter"}
-              disabled={ownAccount && value === "admin"}
-            />
-            <label className="kern-label" htmlFor={`${prefix}-${value}`}>
-              {label}
-            </label>
-          </div>
+          <KernFormCheck
+            key={value}
+            id={`${prefix}-${value}`}
+            type="checkbox"
+            label={label}
+            name="roles"
+            value={value}
+            defaultChecked={user?.roles.includes(value) ?? value === "richter"}
+            disabled={ownAccount && value === "admin"}
+          />
         ))}
         {ownAccount && <input type="hidden" name="roles" value="admin" />}
-      </fieldset>
+      </KernFieldset>
     </>
   );
 }
@@ -134,11 +124,11 @@ export default function AdminUsersRoute() {
       ]}
       user={user}
     >
-      <p className="kern-body">
+      <KernBody>
         Nur hinterlegte E-Mail-Adressen können sich anmelden. Änderungen beenden bestehende
         Sitzungen des betroffenen Benutzers. E-Mail-Adressen können nicht geändert werden: Löschen
         Sie den Benutzer und legen Sie ihn neu an.
-      </p>
+      </KernBody>
       {result && "error" in result && (
         <KernAlert type="error" title="Änderung nicht möglich" message={result.error} />
       )}
@@ -146,9 +136,9 @@ export default function AdminUsersRoute() {
         <KernAlert type="success" title="Gespeichert" message={result.success} />
       )}
       <section aria-labelledby="new-user-title" className="admin-users__section">
-        <h2 className="kern-heading-small" id="new-user-title">
+        <KernHeading size="small" level={2} id="new-user-title">
           Benutzer hinzufügen
-        </h2>
+        </KernHeading>
         <Form method="post" className="admin-users__form">
           <input type="hidden" name="intent" value="create" />
           <UserFields />
@@ -163,9 +153,9 @@ export default function AdminUsersRoute() {
           aria-labelledby={`${entry.id}-title`}
           className="admin-users__section"
         >
-          <h2 className="kern-heading-small" id={`${entry.id}-title`}>
+          <KernHeading size="small" level={2} id={`${entry.id}-title`}>
             {entry.email}
-          </h2>
+          </KernHeading>
           <Form method="post" className="admin-users__form">
             <input type="hidden" name="intent" value="update" />
             <input type="hidden" name="id" value={entry.id} />

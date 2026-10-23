@@ -2,9 +2,13 @@ import { data, redirect, useLoaderData } from "react-router";
 
 import { findSurvey, saveAnswer } from "~/adapters/appointments/survey.server";
 import { AppShell } from "~/components/shared/AppShell";
+import {
+  KernDescriptionList,
+  KernDescriptionListItem,
+} from "~/components/shared/kern/KernDescriptionList";
 import { getDb } from "~/database/database";
 
-import { ReviewItem, ReviewPage } from "./create-termin.review";
+import { ReviewPage } from "./create-termin.review";
 import {
   describeAnswers,
   groupWindows,
@@ -92,9 +96,11 @@ export default function SurveyConfirm() {
             title: "Verhandlungsdaten",
             editable: false,
             children: (
-              <dl className="kern-description-list">
-                <ReviewItem label="Aktenzeichen">{aktenzeichen}</ReviewItem>
-              </dl>
+              <KernDescriptionList>
+                <KernDescriptionListItem label="Aktenzeichen">
+                  {aktenzeichen}
+                </KernDescriptionListItem>
+              </KernDescriptionList>
             ),
           },
           {
@@ -103,26 +109,26 @@ export default function SurveyConfirm() {
             // A personal link already names the guest.
             editable: needsName,
             children: (
-              <dl className="kern-description-list">
-                <ReviewItem label="Name">{name}</ReviewItem>
-              </dl>
+              <KernDescriptionList>
+                <KernDescriptionListItem label="Name">{name}</KernDescriptionListItem>
+              </KernDescriptionList>
             ),
           },
           {
             id: "zeitfenster",
             title: "Zeitfenster",
             children: (
-              <dl className="kern-description-list">
+              <KernDescriptionList>
                 {answers.map(({ key, label, lines }) => (
-                  <ReviewItem key={key} label={label}>
+                  <KernDescriptionListItem key={key} label={label}>
                     <ul className="create-termin-review__times">
                       {lines.map((line) => (
                         <li key={line}>{line}</li>
                       ))}
                     </ul>
-                  </ReviewItem>
+                  </KernDescriptionListItem>
                 ))}
-              </dl>
+              </KernDescriptionList>
             ),
           },
         ]}

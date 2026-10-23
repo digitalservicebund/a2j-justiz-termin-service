@@ -5,9 +5,12 @@ import type { AuthUser } from "~/core/domain/user";
 
 import { BmjvLogo } from "./BmjvLogo";
 import { Breadcrumb, type BreadcrumbItem } from "./Breadcrumb";
+import { KernBody } from "./kern/KernBody";
 import { KernButton } from "./kern/KernButton";
+import { KernHeading } from "./kern/KernHeading";
 import { KernIcon } from "./kern/KernIcon";
 import { KernKopfZeile } from "./kern/KernKopfZeile";
+import { KernLabel } from "./kern/KernLabel";
 
 import "./AppShell.css";
 
@@ -101,14 +104,16 @@ export function AppShell({
 
       <header className="page-shell__header">
         <div className="kern-container page-shell__header-inner">
-          <p className="kern-heading-large page-shell__service-name">Justiz-Services</p>
+          <KernHeading size="large" className="page-shell__service-name">
+            Justiz-Services
+          </KernHeading>
           {user && (
             <div className="page-shell__user">
-              <p className="kern-body kern-body--muted page-shell__user-info">
+              <KernBody muted className="page-shell__user-info">
                 <KernIcon name="account-circle" />
                 <span>Angemeldet als:</span>
                 <span>{user.email}</span>
-              </p>
+              </KernBody>
               <Form method="post" action="/?index">
                 <input type="hidden" name="intent" value="logout" />
                 <button type="submit" className="kern-link kern-link--small page-shell__logout">
@@ -136,7 +141,7 @@ export function AppShell({
           <div className="page-shell__content page-shell__report">
             <KernButton type="button" style="secondary">
               <KernIcon name="danger" />
-              <span className="kern-label">Problem mit dieser Seite melden</span>
+              <KernLabel>Problem mit dieser Seite melden</KernLabel>
             </KernButton>
           </div>
         )}
@@ -145,8 +150,8 @@ export function AppShell({
       <footer className="page-shell__footer">
         <div className="kern-container page-shell__footer-grid">
           <div className="page-shell__footer-brand">
-            <p className="kern-heading-medium">Verhandlungstermin-Finder</p>
-            <p className="kern-body kern-body--muted">Onlinedienste der Justiz</p>
+            <KernHeading size="medium">Verhandlungstermin-Finder</KernHeading>
+            <KernBody muted>Onlinedienste der Justiz</KernBody>
           </div>
 
           <div className="page-shell__footer-logo">
@@ -154,26 +159,30 @@ export function AppShell({
           </div>
 
           <nav aria-labelledby="footer-legal" className="page-shell__footer-legal">
-            <h2 className="kern-title kern-title--small" id="footer-legal">
+            <KernHeading size="title-small" level={2} id="footer-legal">
               Rechtliche Hinweise
-            </h2>
+            </KernHeading>
             <LinkList links={legalLinks} />
           </nav>
 
           <nav aria-labelledby="footer-contact" className="page-shell__footer-contact">
-            <h2 className="kern-title kern-title--small" id="footer-contact">
+            <KernHeading size="title-small" level={2} id="footer-contact">
               Kontakt und Teilnahme
-            </h2>
+            </KernHeading>
             <LinkList links={contactLinks} />
           </nav>
 
           <div className="page-shell__footer-pilot">
-            <h2 className="kern-title kern-title--small">Ein Pilotprojekt des</h2>
+            <KernHeading size="title-small" level={2}>
+              Ein Pilotprojekt des
+            </KernHeading>
             <ExternalLinkList links={pilotLinks} />
           </div>
 
           <div className="page-shell__footer-operator">
-            <h2 className="kern-title kern-title--small">Umsetzung und Betrieb</h2>
+            <KernHeading size="title-small" level={2}>
+              Umsetzung und Betrieb
+            </KernHeading>
             <ExternalLinkList links={operatorLinks} />
           </div>
         </div>
