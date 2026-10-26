@@ -28,15 +28,18 @@ export async function insertUser(db: Kysely<Database>, input: z.infer<typeof New
   return result;
 }
 
-// Provisioned users and addresses on an allowed domain may request a login link.
-export async function canSignIn(db: Kysely<Database>, email: string) {
-  const normalized = email.trim().toLowerCase();
+export async function userExists(db: Kysely<Database>, email: string) {
   const user = await db
     .selectFrom("user")
     .select("id")
-    .where("email", "=", normalized)
+    .where("email", "=", email.trim().toLowerCase())
     .executeTakeFirst();
-  return user !== undefined || isEmailDomainAllowed(db, normalized);
+  return user !== undefined;
+}
+
+// Provisioned users and addresses on an allowed domain may request a login link.
+export async function canSignIn(db: Kysely<Database>, email: string) {
+  return (await userExists(db, email)) || isEmailDomainAllowed(db, email.trim().toLowerCase());
 }
 
 export function listUsers() {

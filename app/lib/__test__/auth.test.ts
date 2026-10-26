@@ -6,8 +6,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getAuth } from "../auth.server";
 import { requireEnv } from "../env";
 
-const { canSignIn, isEmailDomainAllowed, sendMail, close } = vi.hoisted(() => ({
+const { canSignIn, userExists, isEmailDomainAllowed, sendMail, close } = vi.hoisted(() => ({
   canSignIn: vi.fn(),
+  userExists: vi.fn(),
   isEmailDomainAllowed: vi.fn(),
   sendMail: vi.fn(),
   close: vi.fn(),
@@ -18,7 +19,7 @@ vi.mock("better-auth/plugins", () => ({
   magicLink: vi.fn(() => ({ id: "magic-link" })),
 }));
 vi.mock("~/database/database", () => ({ getDb: () => ({ name: "db" }) }));
-vi.mock("~/adapters/users/users.server", () => ({ canSignIn }));
+vi.mock("~/adapters/users/users.server", () => ({ canSignIn, userExists }));
 vi.mock("~/adapters/users/allowed-domains.server", () => ({ isEmailDomainAllowed }));
 vi.mock("~/lib/smtp", () => ({
   createSmtpTransport: () => ({ sendMail, close }),
@@ -59,6 +60,7 @@ describe("magic-link configuration", () => {
 
   it("normalizes the address and emails it when sign-in is allowed", async () => {
     canSignIn.mockResolvedValue(true);
+    userExists.mockResolvedValue(true);
     await plugin.sendMagicLink({
       email: "Known@Example.com",
       url: "http://localhost/link",
@@ -68,10 +70,26 @@ describe("magic-link configuration", () => {
     expect(sendMail).toHaveBeenCalledWith(
       expect.objectContaining({
         to: "known@example.com",
+        subject: "Anmelden beim Verhandlungstermin-Finder",
         text: expect.stringContaining("http://localhost/link"),
+        html: expect.stringContaining("http://localhost/link"),
+        attachments: [expect.objectContaining({ cid: expect.any(String) })],
       }),
     );
     expect(close).toHaveBeenCalledOnce();
+  });
+
+  it("sends the verification mail to an address without an account", async () => {
+    canSignIn.mockResolvedValue(true);
+    userExists.mockResolvedValue(false);
+    await plugin.sendMagicLink({
+      email: "new@example.com",
+      url: "http://localhost/link",
+      token: "test",
+    });
+    expect(sendMail).toHaveBeenCalledWith(
+      expect.objectContaining({ subject: "Verifizieren Sie Ihre E-Mail-Adresse" }),
+    );
   });
 
   it("surfaces mail delivery failures and closes the transport", async () => {
