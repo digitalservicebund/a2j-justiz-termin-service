@@ -6,9 +6,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getAuth } from "../auth.server";
 import { requireEnv } from "../env";
 
-const { findUser, where, sendMail, close } = vi.hoisted(() => ({
-  findUser: vi.fn(),
-  where: vi.fn(),
+const { canSignIn, isEmailDomainAllowed, sendMail, close } = vi.hoisted(() => ({
+  canSignIn: vi.fn(),
+  isEmailDomainAllowed: vi.fn(),
   sendMail: vi.fn(),
   close: vi.fn(),
 }));
@@ -17,18 +17,9 @@ vi.mock("better-auth", () => ({ betterAuth: vi.fn((options) => ({ options })) })
 vi.mock("better-auth/plugins", () => ({
   magicLink: vi.fn(() => ({ id: "magic-link" })),
 }));
-vi.mock("~/database/database", () => ({
-  getDb: () => ({
-    selectFrom: () => ({
-      select: () => ({
-        where: (...args: unknown[]) => {
-          where(...args);
-          return { executeTakeFirst: findUser };
-        },
-      }),
-    }),
-  }),
-}));
+vi.mock("~/database/database", () => ({ getDb: () => ({ name: "db" }) }));
+vi.mock("~/adapters/users/users.server", () => ({ canSignIn }));
+vi.mock("~/adapters/users/allowed-domains.server", () => ({ isEmailDomainAllowed }));
 vi.mock("~/lib/smtp", () => ({
   createSmtpTransport: () => ({ sendMail, close }),
 }));
@@ -49,15 +40,15 @@ describe("magic-link configuration", () => {
     expect(options.baseURL).toBe("http://localhost:3000");
   });
 
-  it("disables public sign-up and stores only hashed, short-lived tokens", () => {
-    expect(plugin).toMatchObject({ disableSignUp: true, storeToken: "hashed", expiresIn: 300 });
+  it("stores only hashed, short-lived tokens", () => {
+    expect(plugin).toMatchObject({ storeToken: "hashed", expiresIn: 300 });
     expect(options.user?.additionalFields?.roles).toMatchObject({ type: "string[]", input: false });
     expect(options.session?.cookieCache?.enabled).toBe(false);
     expect(options.rateLimit).toEqual({ enabled: false });
   });
 
-  it("never sends email to an address outside the user list", async () => {
-    findUser.mockResolvedValue(undefined);
+  it("never sends email to an address outside the user list and allowed domains", async () => {
+    canSignIn.mockResolvedValue(false);
     await plugin.sendMagicLink({
       email: "unknown@example.com",
       url: "http://localhost/link",
@@ -66,14 +57,14 @@ describe("magic-link configuration", () => {
     expect(sendMail).not.toHaveBeenCalled();
   });
 
-  it("normalizes the allowlist lookup and emails the maintained address", async () => {
-    findUser.mockResolvedValue({ email: "known@example.com" });
+  it("normalizes the address and emails it when sign-in is allowed", async () => {
+    canSignIn.mockResolvedValue(true);
     await plugin.sendMagicLink({
       email: "Known@Example.com",
       url: "http://localhost/link",
       token: "test",
     });
-    expect(where).toHaveBeenCalledWith("email", "=", "known@example.com");
+    expect(canSignIn).toHaveBeenCalledWith({ name: "db" }, "Known@Example.com");
     expect(sendMail).toHaveBeenCalledWith(
       expect.objectContaining({
         to: "known@example.com",
@@ -84,7 +75,7 @@ describe("magic-link configuration", () => {
   });
 
   it("surfaces mail delivery failures and closes the transport", async () => {
-    findUser.mockResolvedValue({ email: "known@example.com" });
+    canSignIn.mockResolvedValue(true);
     sendMail.mockRejectedValue(new Error("SMTP unavailable"));
     await expect(
       plugin.sendMagicLink({
@@ -94,5 +85,31 @@ describe("magic-link configuration", () => {
       }),
     ).rejects.toThrow("SMTP unavailable");
     expect(close).toHaveBeenCalledOnce();
+  });
+});
+
+describe("self sign-up", () => {
+  const before = options.databaseHooks!.user!.create!.before!;
+
+  beforeEach(() => vi.clearAllMocks());
+
+  it("creates an account with the self sign-up role for an allowed domain", async () => {
+    isEmailDomainAllowed.mockResolvedValue(true);
+    const result = await before({ email: " Person.A@Example.com ", name: "" } as never, null);
+    expect(isEmailDomainAllowed).toHaveBeenCalledWith({ name: "db" }, "person.a@example.com");
+    expect(result).toMatchObject({
+      data: { email: "person.a@example.com", name: "person.a", roles: "{richter}" },
+    });
+  });
+
+  it("keeps a name that was provided", async () => {
+    isEmailDomainAllowed.mockResolvedValue(true);
+    const result = await before({ email: "person@example.com", name: "Person A" } as never, null);
+    expect(result).toMatchObject({ data: { name: "Person A" } });
+  });
+
+  it("refuses to create an account for any other domain", async () => {
+    isEmailDomainAllowed.mockResolvedValue(false);
+    expect(await before({ email: "person@example.org", name: "" } as never, null)).toBe(false);
   });
 });

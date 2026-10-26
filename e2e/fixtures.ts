@@ -5,6 +5,7 @@ import { test as base, expect, type APIRequestContext, type Page } from "@playwr
 import { sql, type Kysely } from "kysely";
 import { z } from "zod";
 
+import { insertAllowedDomain } from "../app/adapters/users/allowed-domains.server.ts";
 import { insertUser } from "../app/adapters/users/users.server.ts";
 import type { AuthUser, NewUserSchema } from "../app/core/domain/user.ts";
 import { getDb } from "../app/database/database.ts";
@@ -18,11 +19,19 @@ type NewUser = z.infer<typeof NewUserSchema>;
 
 class Users {
   readonly emails = new Set<string>();
+  readonly domains = new Set<string>();
 
-  email() {
-    const email = `e2e-${randomUUID()}@example.com`;
+  email(domain = "example.com") {
+    const email = `e2e-${randomUUID()}@${domain}`;
     this.emails.add(email);
     return email;
+  }
+
+  // A unique domain on which addresses may sign in without being provisioned.
+  async allowedDomain() {
+    const { domain } = await insertAllowedDomain(getDb(), `e2e-${randomUUID()}.example.com`);
+    this.domains.add(domain);
+    return domain;
   }
 
   async create(input: Partial<NewUser> = {}): Promise<AuthUser> {
@@ -72,7 +81,7 @@ export async function messages(request: APIRequestContext, email: string) {
     .messages.filter((message) => message.To.some((recipient) => recipient.Address === email));
 }
 
-async function readMagicLink(request: APIRequestContext, email: string): Promise<string> {
+export async function readMagicLink(request: APIRequestContext, email: string): Promise<string> {
   await expect.poll(async () => (await messages(request, email)).length).toBeGreaterThan(0);
   const [message] = await messages(request, email);
   const response = await request.get(`${mailpitURL}/api/v1/message/${message!.ID}`, {
@@ -102,9 +111,7 @@ export async function signIn(page: Page, user: AuthUser, options = { uppercase: 
     .getByRole("textbox", { name: "E-Mail-Adresse" })
     .fill(options.uppercase ? user.email.toUpperCase() : user.email);
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
-  await expect(
-    page.getByRole("alert").filter({ hasText: "Bitte prüfen Sie Ihr Postfach" }),
-  ).toBeVisible();
+  await expect(page.getByRole("status")).toContainText("Ihr Anmelde-Link wurde versendet");
   const link = await readMagicLink(page.request, user.email);
   await page.goto(link);
   await expect(page).toHaveURL(`${baseURL}/overview`);
@@ -130,6 +137,12 @@ export const test = base.extend<{ users: Users }, { db: Kysely<Database> }>({
         await use(users);
       } finally {
         const emails = [...users.emails];
+        if (users.domains.size) {
+          await db
+            .deleteFrom("allowed_domain")
+            .where("domain", "in", [...users.domains])
+            .execute();
+        }
         if (emails.length) {
           await db.deleteFrom("user").where("email", "in", emails).execute();
           await db

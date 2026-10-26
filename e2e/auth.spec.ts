@@ -60,7 +60,7 @@ test("landing-page login proves email ownership, creates a session, and logout r
   expect(staleCookie.headers().location).toBe("/");
 });
 
-test("unknown addresses receive the same confirmation but no email or account", async ({
+test("unknown addresses are told they are not allowed and get no email or account", async ({
   page,
   request,
   users,
@@ -70,16 +70,49 @@ test("unknown addresses receive the same confirmation but no email or account", 
   await page.goto("/");
   await page.getByRole("textbox", { name: "E-Mail-Adresse" }).fill(email);
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
-  await expect(
-    page.getByRole("alert").filter({ hasText: "Wenn Ihre E-Mail-Adresse hinterlegt ist" }),
-  ).toBeVisible();
+  await expect(page.locator("#login-email-error")).toContainText("können nur ausgewählte Gerichte");
+  await expect(page.getByRole("link", { name: "a2j-jts@digitalservice.bund.de" })).toHaveAttribute(
+    "href",
+    "mailto:a2j-jts@digitalservice.bund.de",
+  );
+  await expect(page.getByRole("textbox", { name: "E-Mail-Adresse" })).toHaveValue(email);
+  await expect(page.getByRole("textbox", { name: "E-Mail-Adresse" })).toHaveAttribute(
+    "aria-invalid",
+    "true",
+  );
+  await expect(page.getByRole("status")).toHaveCount(0);
+  expect(await messages(request, email)).toEqual([]);
+  expect(await db.selectFrom("user").select("id").where("email", "=", email).execute()).toEqual([]);
+
+  // The public API keeps answering the same way for every address.
   const response = await request.post("/api/auth/sign-in/magic-link", { data: { email } });
   expect(response.status()).toBe(200);
   expect(await response.json()).toEqual({ status: true });
   expect(await messages(request, email)).toEqual([]);
   expect(await db.selectFrom("user").select("id").where("email", "=", email).execute()).toEqual([]);
+});
 
-  const invalidForms: Array<Record<string, string>> = [{ role: "RICHTER" }, { email: "invalid" }];
+test("invalid addresses are rejected with an error and keep what was typed", async ({
+  page,
+  request,
+}) => {
+  await page.goto("/");
+  await page.getByRole("textbox", { name: "E-Mail-Adresse" }).fill("person@host");
+  await page.getByRole("button", { name: "Anmelden", exact: true }).click();
+  await expect(page.locator("#login-email-error")).toHaveText(
+    "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+  );
+  await expect(page.getByRole("textbox", { name: "E-Mail-Adresse" })).toHaveValue("person@host");
+  await expect(page.getByRole("textbox", { name: "E-Mail-Adresse" })).toHaveAttribute(
+    "aria-invalid",
+    "true",
+  );
+
+  const invalidForms: Array<Record<string, string>> = [
+    { role: "RICHTER" },
+    { email: "" },
+    { email: "invalid" },
+  ];
   for (const form of invalidForms) {
     const invalid = await request.post("/?index", { form });
     expect(invalid.status()).toBe(400);
@@ -134,12 +167,14 @@ for (const entryPoint of ["API", "form"] as const) {
   test(`does not throttle ${entryPoint} login requests by IP`, async ({ request, users }) => {
     const email = users.email();
     const path = entryPoint === "API" ? "/api/auth/sign-in/magic-link" : "/?index";
+    // The form tells unknown addresses they are not allowed; the API always answers 200.
+    const expected = entryPoint === "API" ? 200 : 403;
     for (let attempt = 0; attempt < 7; attempt++) {
       const response = await request.post(
         path,
         entryPoint === "API" ? { data: { email } } : { form: { email } },
       );
-      expect(response.status()).toBe(200);
+      expect(response.status()).toBe(expected);
     }
     expect(await messages(request, email)).toEqual([]);
   });

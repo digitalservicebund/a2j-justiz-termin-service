@@ -1,6 +1,9 @@
 import { betterAuth } from "better-auth";
 import { magicLink } from "better-auth/plugins";
 
+import { isEmailDomainAllowed } from "../adapters/users/allowed-domains.server.ts";
+import { canSignIn } from "../adapters/users/users.server.ts";
+import { SELF_SIGNUP_ROLES } from "../core/domain/user.ts";
 import { getDb } from "../database/database.ts";
 import { getAuthSecret } from "./auth-secret.ts";
 import { requireEnv } from "./env.ts";
@@ -24,26 +27,43 @@ function createAuth() {
       cookieCache: { enabled: false },
     },
     rateLimit: { enabled: false },
+    databaseHooks: {
+      user: {
+        create: {
+          // Only reached when a verified magic link belongs to an address without an
+          // account; provisioned users are created by administrators directly.
+          async before(user) {
+            const email = user.email.trim().toLowerCase();
+            if (!(await isEmailDomainAllowed(getDb(), email))) return false;
+            return {
+              data: {
+                ...user,
+                email,
+                name: user.name || email.split("@")[0],
+                // Better Auth sends arrays as JSON, which a text[] column rejects, so pass
+                // the Postgres array literal. Role names need no escaping.
+                roles: `{${SELF_SIGNUP_ROLES.join(",")}}`,
+              },
+            };
+          },
+        },
+      },
+    },
     plugins: [
       magicLink({
-        disableSignUp: true,
         expiresIn: 300,
         storeToken: "hashed",
         async sendMagicLink({ email, url }) {
           // Check here too: callers of the public Better Auth endpoint must not
-          // be able to send login mail to addresses outside the maintained list.
-          const user = await getDb()
-            .selectFrom("user")
-            .select("email")
-            .where("email", "=", email.trim().toLowerCase())
-            .executeTakeFirst();
-          if (!user) return;
+          // be able to send login mail to addresses outside the user list and
+          // the allowed domains.
+          if (!(await canSignIn(getDb(), email))) return;
 
           const transport = createSmtpTransport();
           try {
             await transport.sendMail({
               from: requireSecret("smtp", "SMTP_USER"),
-              to: user.email,
+              to: email.trim().toLowerCase(),
               subject: "Anmelden beim Justiz Termin Service",
               text: `Mit diesem Link können Sie sich beim Justiz Termin Service anmelden:\n\n${url}\n\nDer Link ist 5 Minuten gültig und kann nur einmal verwendet werden.\nWenn Sie diese Anmeldung nicht angefordert haben, ignorieren Sie diese E-Mail.`,
             });

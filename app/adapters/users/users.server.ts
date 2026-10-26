@@ -7,6 +7,7 @@ import { NewUserSchema } from "../../core/domain/user.ts";
 import { getDb } from "../../database/database.ts";
 import type { Database } from "../../database/types.ts";
 import { logInfo } from "../../lib/logging.ts";
+import { isEmailDomainAllowed } from "./allowed-domains.server.ts";
 
 export class UserManagementError extends Error {}
 
@@ -25,6 +26,17 @@ export async function insertUser(db: Kysely<Database>, input: z.infer<typeof New
   if (!result) throw new UserManagementError("Diese E-Mail-Adresse ist bereits hinterlegt.");
   logInfo(`Created user ${result.id}`);
   return result;
+}
+
+// Provisioned users and addresses on an allowed domain may request a login link.
+export async function canSignIn(db: Kysely<Database>, email: string) {
+  const normalized = email.trim().toLowerCase();
+  const user = await db
+    .selectFrom("user")
+    .select("id")
+    .where("email", "=", normalized)
+    .executeTakeFirst();
+  return user !== undefined || isEmailDomainAllowed(db, normalized);
 }
 
 export function listUsers() {
