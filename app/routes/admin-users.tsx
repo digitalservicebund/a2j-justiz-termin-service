@@ -1,4 +1,4 @@
-import { data, Form, useActionData, useLoaderData, useNavigation } from "react-router";
+import { data, Form, Link, useActionData, useLoaderData, useNavigation } from "react-router";
 import { z } from "zod";
 
 import { requireAdmin } from "~/adapters/session/session";
@@ -125,9 +125,13 @@ export default function AdminUsersRoute() {
       user={user}
     >
       <KernBody>
-        Nur hinterlegte E-Mail-Adressen können sich anmelden. Änderungen beenden bestehende
-        Sitzungen des betroffenen Benutzers. E-Mail-Adressen können nicht geändert werden: Löschen
-        Sie den Benutzer und legen Sie ihn neu an.
+        Hinterlegte E-Mail-Adressen und Adressen{" "}
+        <Link className="kern-link" to="/admin/domains">
+          freigegebener Domains
+        </Link>{" "}
+        können sich anmelden. Änderungen beenden bestehende Sitzungen des betroffenen Benutzers.
+        E-Mail-Adressen können nicht geändert werden: Löschen Sie den Benutzer und legen Sie ihn neu
+        an.
       </KernBody>
       {result && "error" in result && (
         <KernAlert type="error" title="Änderung nicht möglich" message={result.error} />

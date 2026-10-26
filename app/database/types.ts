@@ -100,6 +100,10 @@ export type Database = {
     value: string;
     expiresAt: Date;
   };
+  allowed_domain: {
+    domain: string;
+    created_at: Generated<Date>;
+  };
   appointment: AppointmentsTable;
   time_slot: TimeSlotsTable;
   participant: ParticipantsTable;

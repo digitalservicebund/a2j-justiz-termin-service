@@ -2,6 +2,7 @@ import { data, redirect, useActionData, useLoaderData } from "react-router";
 import { z } from "zod";
 
 import { getSessionUser } from "~/adapters/session/session";
+import { canSignIn } from "~/adapters/users/users.server";
 import { AppShell } from "~/components/shared/AppShell";
 import { DefaultPage } from "~/components/shared/DefaultPage";
 import { KernAlert } from "~/components/shared/kern/KernAlert";
@@ -10,6 +11,7 @@ import { KernButton } from "~/components/shared/kern/KernButton";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernIcon, type KernIconName } from "~/components/shared/kern/KernIcon";
 import { LoginForm } from "~/components/shared/LoginForm";
+import { getDb } from "~/database/database";
 import { getAuth } from "~/lib/auth.server";
 import { logError } from "~/lib/logging";
 
@@ -34,9 +36,11 @@ export async function action({ request }: { request: Request }) {
     for (const cookie of response.headers.getSetCookie()) headers.append("Set-Cookie", cookie);
     return redirect("/", { headers });
   }
-  const result = z.string().trim().toLowerCase().pipe(z.email()).safeParse(formData.get("email"));
-  if (!result.success) {
-    return data({ error: "Bitte geben Sie eine gültige E-Mail-Adresse ein." }, { status: 400 });
+  const submitted = String(formData.get("email") ?? "");
+  const result = z.string().trim().toLowerCase().pipe(z.email()).safeParse(submitted);
+  if (!result.success) return data({ invalidEmail: true, email: submitted }, { status: 400 });
+  if (!(await canSignIn(getDb(), result.data))) {
+    return data({ notAllowed: true, email: submitted }, { status: 403 });
   }
   const headers = new Headers(request.headers);
   headers.set("Content-Type", "application/json");
@@ -55,11 +59,14 @@ export async function action({ request }: { request: Request }) {
   if (!response.ok) {
     logError(`Magic-link request failed with status ${response.status}`);
     return data(
-      { error: "Die Anmeldung ist derzeit nicht möglich. Bitte versuchen Sie es später erneut." },
+      {
+        error: "Die Anmeldung ist derzeit nicht möglich. Bitte versuchen Sie es später erneut.",
+        email: submitted,
+      },
       { status: response.status },
     );
   }
-  return data({ sent: true });
+  return data({ sent: true, email: submitted });
 }
 
 const steps: Array<{ icon: KernIconName; label: string }> = [
@@ -68,6 +75,8 @@ const steps: Array<{ icon: KernIconName; label: string }> = [
   { icon: "success", label: "Richterschaft wählt einen passenden Termin aus" },
   { icon: "mail", label: "Eine passende Ladung wird verschickt" },
 ];
+
+const CONTACT_EMAIL = "a2j-jts@digitalservice.bund.de";
 
 // Target for this link is not defined in the design yet.
 const TODO_HREF = "#";
@@ -103,14 +112,23 @@ export default function Welcome() {
             {result && "error" in result && (
               <KernAlert type="error" title="Anmeldung nicht möglich" message={result.error} />
             )}
-            {result && "sent" in result && (
-              <KernAlert
-                type="success"
-                title="Bitte prüfen Sie Ihr Postfach"
-                message="Wenn Ihre E-Mail-Adresse hinterlegt ist, erhalten Sie einen Anmeldelink. Er ist 5 Minuten gültig."
-              />
-            )}
-            <LoginForm />
+            <LoginForm
+              email={result?.email}
+              sent={result !== undefined && "sent" in result}
+              error={
+                result && "invalidEmail" in result ? (
+                  "Bitte geben Sie eine gültige E-Mail-Adresse ein."
+                ) : result && "notAllowed" in result ? (
+                  <>
+                    Während der Pilotierung können nur ausgewählte Gerichte den Onlinedienst nutzen.
+                    Melden Sie sich bei Interesse unter: <br />
+                    <a className="kern-link" href={`mailto:${CONTACT_EMAIL}`}>
+                      {CONTACT_EMAIL}
+                    </a>
+                  </>
+                ) : undefined
+              }
+            />
           </div>
         </DefaultPage>
       </section>

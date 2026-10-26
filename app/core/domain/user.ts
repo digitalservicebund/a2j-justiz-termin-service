@@ -22,6 +22,9 @@ export const AuthUserSchema = z.object({
 });
 export type AuthUser = z.infer<typeof AuthUserSchema>;
 
+// Roles of users who sign up themselves through an allowed domain.
+export const SELF_SIGNUP_ROLES: UserRole[] = ["richter"];
+
 export function hasRole(user: AuthUser, role: UserRole): boolean {
   return user.roles.includes("admin") || user.roles.includes(role);
 }

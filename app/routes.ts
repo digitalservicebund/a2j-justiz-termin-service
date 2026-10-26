@@ -14,6 +14,7 @@ export default [
   route("umfrage/:token/zusammenfassung", "routes/survey.confirm.tsx"),
   route("umfrage/:token/naechste-schritte", "routes/survey.result.tsx"),
   route("admin/users", "routes/admin-users.tsx"),
+  route("admin/domains", "routes/admin-domains.tsx"),
   route("api/auth/*", "routes/auth.ts"),
 
   route("health", "routes/health.ts"),

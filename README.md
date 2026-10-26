@@ -10,7 +10,7 @@ sensitive query parameters out of those logs.
 - **Beklagter** (defendant): accepts/rejects each proposed time slot
 
 Login uses a single-use magic link sent by email through Better Auth. Only users
-already provisioned in the database can sign in; public sign-up is disabled.
+already provisioned in the database and addresses on an allowed domain can sign in.
 
 ## Tech Stack
 
@@ -103,8 +103,11 @@ Tests in [`e2e/`](e2e/) cover:
 
 - Welcome-page email submission, mixed-case addresses, delivery
   to Mailpit, email verification, persisted sessions, and logout.
-- Unknown-address rejection without account enumeration or outgoing mail,
-  hashed tokens, token expiry/replay, invalid links, and unthrottled API/form requests.
+- Rejection of addresses that are neither provisioned nor on an allowed domain (no
+  outgoing mail, no account), invalid addresses, hashed tokens, token expiry/replay,
+  invalid links, and unthrottled API/form requests.
+- Self sign-up from allowed domains, domain management in the admin UI and the
+  `domain:add` CLI.
 - Anonymous access, each scheduling role, admin access, privilege escalation,
   profile updates, and cross-origin management requests.
 - CLI administrator provisioning, duplicate rejection, browser-driven user
@@ -260,8 +263,10 @@ and `SMTP_REQUIRE_TLS` settings in `.env.local`. Inject `SMTP_USER` and
 
 Better Auth stores users, sessions, accounts, and hashed magic-link tokens
 in PostgreSQL. The existing SMTP transport sends the links. The public
-`/api/auth/*` endpoint and the login form both enforce the maintained user list.
-Unknown addresses receive the same confirmation but no email. Links expire after
+`/api/auth/*` endpoint and the login form both only serve provisioned users and
+addresses on an allowed domain (see below). The login form tells other addresses
+that they are not allowed; the API answers every address the same way and sends
+no email. Links expire after
 5 minutes and can only be used once; sessions last 24 hours.
 IP-based rate limiting is explicitly disabled. Better Auth 1.7.10's magic-link
 plugin has no built-in per-email resend cooldown; email throttling is not
@@ -301,6 +306,24 @@ the application pods so their cached auth configuration picks it up. Rotating
 the signing secret invalidates existing session cookies.
 The SMTP credential is also used as the email's sender address, so configure a
 valid sender address for the real mail server.
+
+### Allowed domains
+
+Anyone with an address on an allowed domain can sign up themselves: the account is
+created with the `richter` role when they open their first magic link, so only
+owners of the address get an account. Domains are exact matches (subdomains need
+their own entry), stored in the `allowed_domain` table. Removing a domain keeps
+existing accounts and invalidates links that were not opened yet.
+
+Administrators manage the list at `/admin/domains`. To bootstrap the first domain
+without an administrator, run:
+
+```bash
+pnpm domain:add --domain example.com
+```
+
+In the deployed container, run `node scripts/add-domain.ts --domain example.com`.
+The command runs migrations and fails if the domain is already allowed.
 
 ### Provision the first administrator
 
