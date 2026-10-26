@@ -1,9 +1,10 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getAppointment } from "~/adapters/appointments/appointments.server";
+import { getAvailability } from "~/adapters/appointments/survey.server";
 import { requireRole } from "~/adapters/session/session";
 import type { AuthUser } from "~/core/domain/user";
 
@@ -11,6 +12,7 @@ import OverviewSelect, { action, loader } from "../overview.select";
 
 vi.mock("~/adapters/session/session", () => ({ requireRole: vi.fn() }));
 vi.mock("~/adapters/appointments/appointments.server", () => ({ getAppointment: vi.fn() }));
+vi.mock("~/adapters/appointments/survey.server", () => ({ getAvailability: vi.fn() }));
 vi.mock("~/database/database", () => ({ getDb: () => ({ db: true }) }));
 
 const judge: AuthUser = {
@@ -34,6 +36,8 @@ const open = {
   ],
 };
 
+const noAnswers = { slots: [], guests: [] };
+
 function postRequest(fields: Record<string, string>) {
   const form = new FormData();
   for (const [key, value] of Object.entries(fields)) form.set(key, value);
@@ -45,6 +49,7 @@ describe("overview select route", () => {
     vi.clearAllMocks();
     vi.mocked(requireRole).mockResolvedValue(judge);
     vi.mocked(getAppointment).mockResolvedValue(open);
+    vi.mocked(getAvailability).mockResolvedValue(noAnswers);
   });
 
   it("requires the richter role to load and to submit", async () => {
@@ -123,9 +128,12 @@ describe("overview select route", () => {
   });
 });
 
+let availability: Awaited<ReturnType<typeof getAvailability>> = noAnswers;
+
 function renderPage(initialEntry = "/overview/a1/select") {
   vi.mocked(requireRole).mockResolvedValue(judge);
   vi.mocked(getAppointment).mockResolvedValue(open);
+  vi.mocked(getAvailability).mockResolvedValue(availability);
   const Stub = createRoutesStub([
     { path: "/overview/:appointmentId/select", Component: OverviewSelect, loader, action },
     { path: "/overview/:appointmentId/select/confirm", Component: () => <h1>Prüfen</h1> },
@@ -208,5 +216,47 @@ describe("OverviewSelect", () => {
     await user.click(screen.getByRole("button", { name: "Weiter" }));
 
     expect(await screen.findByRole("heading", { name: "Prüfen" })).toBeVisible();
+  });
+
+  it("shows which guest is available for which window", async () => {
+    availability = {
+      slots: [],
+      guests: [
+        { id: "p1", name: "Guest A", answers: ["yes", "no"] },
+        { id: "p2", name: "Guest B", answers: ["yes", null] },
+      ],
+    };
+    renderPage();
+
+    const table = await screen.findByRole("table", { name: "Verfügbarkeiten je Zeitfenster" });
+    expect(within(table).getByRole("columnheader", { name: "Name" })).toBeVisible();
+    expect(
+      within(table).getByRole("columnheader", { name: "17. September 2026 15:30 bis 18:00" }),
+    ).toBeVisible();
+    const rows = within(table).getAllByRole("row");
+    expect(
+      within(rows[1]!)
+        .getAllByRole("cell")
+        .map((cell) => cell.textContent),
+    ).toEqual(["Verfügbar", "Nicht verfügbar"]);
+    expect(within(rows[2]!).getByRole("rowheader")).toHaveTextContent("Guest B");
+    expect(
+      within(rows[2]!)
+        .getAllByRole("cell")
+        .map((cell) => cell.textContent),
+    ).toEqual(["Verfügbar", "–Keine Antwort"]);
+    expect(
+      within(rows[3]!)
+        .getAllByRole("cell")
+        .map((cell) => cell.textContent),
+    ).toEqual(["2 von 2", "0 von 2"]);
+  });
+
+  it("says so when nobody has answered yet", async () => {
+    availability = noAnswers;
+    renderPage();
+
+    expect(await screen.findByText("Es hat noch niemand geantwortet.")).toBeVisible();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
   });
 });

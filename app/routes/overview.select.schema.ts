@@ -36,10 +36,15 @@ const pad = (value: string) => value.padStart(2, "0");
 
 const timeOf = (hour: string, minute: string) => `${pad(hour)}:${pad(minute)}`;
 
+// "15:30 bis 18:00"
+export function describeTimes(range: TimeRange): string {
+  const { startHour, startMinute, endHour, endMinute } = rangeToSlot(range);
+  return `${timeOf(startHour, startMinute)} bis ${timeOf(endHour, endMinute)}`;
+}
+
 // "17. September 2026 von 15:30 bis 18:00"
 export function describeSlot(range: TimeRange): string {
-  const { startHour, startMinute, endHour, endMinute } = rangeToSlot(range);
-  return `${formatDay(range.start)} von ${timeOf(startHour, startMinute)} bis ${timeOf(endHour, endMinute)}`;
+  return `${formatDay(range.start)} von ${describeTimes(range)}`;
 }
 
 const parts = (value: string, pattern: RegExp, max: number) =>

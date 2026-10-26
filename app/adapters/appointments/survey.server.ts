@@ -217,3 +217,65 @@ export async function getSavedAnswer(
     })),
   };
 }
+
+export type GuestAvailability = {
+  id: string;
+  name: string;
+  // One entry per slot, in the order of the slots. Null when the guest gave no answer for it.
+  answers: Array<"yes" | "no" | null>;
+};
+
+export type Availability = { slots: SurveySlot[]; guests: GuestAvailability[] };
+
+// Who answered what for every proposed window, for the judge to compare. Unlike the survey, this
+// lists all slots, including those a guest ruled out. Callers check that the appointment is theirs.
+export async function getAvailability(db: Executor, appointmentId: string): Promise<Availability> {
+  const [slotRows, guests, responses] = await Promise.all([
+    db
+      .selectFrom("time_slot")
+      .select(["id", "start_time", "end_time"])
+      .where("appointment_id", "=", appointmentId)
+      .orderBy("start_time")
+      .orderBy("id")
+      .execute(),
+    db
+      .selectFrom("participant")
+      .select(["id", "name"])
+      .where("appointment_id", "=", appointmentId)
+      .orderBy("created_at")
+      .orderBy("id")
+      .execute(),
+    db
+      .selectFrom("participant_response")
+      .innerJoin("participant", "participant.id", "participant_response.participant_id")
+      .select([
+        "participant_response.participant_id",
+        "participant_response.slot_id",
+        "participant_response.status",
+      ])
+      .where("participant.appointment_id", "=", appointmentId)
+      .execute(),
+  ]);
+
+  const statuses = new Map(
+    responses.map(({ participant_id, slot_id, status }) => [
+      `${participant_id}:${slot_id}`,
+      status,
+    ]),
+  );
+  return {
+    slots: slotRows.map(({ id, start_time, end_time }) => ({
+      id,
+      start: new Date(start_time),
+      end: new Date(end_time ?? start_time),
+    })),
+    guests: guests.map(({ id, name }) => ({
+      id,
+      name,
+      answers: slotRows.map(({ id: slotId }) => {
+        const status = statuses.get(`${id}:${slotId}`);
+        return status === "yes" || status === "no" ? status : null;
+      }),
+    })),
+  };
+}
