@@ -13,11 +13,11 @@
   width: min(100%, calc(var(--kern-metric-dimension-4x-large) * 5));
 }
 
-/* Rows, add button, hint and the window-level error share one group, as in the error sketch. */
+/* Add area, list and the window-level error share one group, as in the error sketch. */
 .create-termin__windows {
   display: grid;
-  gap: var(--kern-metric-space-default);
-  justify-items: start;
+  gap: var(--kern-metric-space-x-large);
+  justify-items: stretch;
   margin: 0;
   padding: 0;
   border: 0;
@@ -30,86 +30,187 @@
   padding-left: var(--kern-metric-space-default);
 }
 
+/* The add area is a white card on the grey page, so it reads as one tool. */
+.create-termin__add-area {
+  display: grid;
+  gap: var(--kern-metric-space-default);
+  justify-items: start;
+  padding: var(--kern-metric-space-large);
+  background-color: var(--kern-color-layout-background-default);
+  border: var(--kern-metric-border-width-default) solid var(--kern-color-layout-border);
+  border-radius: var(--kern-metric-border-radius-default);
+}
+
+.create-termin__add-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  gap: var(--kern-metric-space-default);
+}
+
+.create-termin__field--date {
+  width: calc(var(--kern-metric-dimension-4x-large) * 3);
+}
+
+.create-termin__field--time {
+  width: calc(var(--kern-metric-dimension-4x-large) * 1.75);
+}
+
+.create-termin__add-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kern-metric-space-default);
+}
+
+.create-termin__notice:empty {
+  display: none;
+}
+
+.create-termin__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kern-metric-space-small);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.create-termin__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kern-metric-space-x-small);
+  padding: var(--kern-metric-space-x-small) var(--kern-metric-space-x-small)
+    var(--kern-metric-space-x-small) var(--kern-metric-space-default);
+  background-color: var(--kern-color-layout-background-hued);
+  border: var(--kern-metric-border-width-default) solid var(--kern-color-layout-border);
+  border-radius: var(--kern-metric-border-radius-large);
+}
+
+.create-termin__chip-remove {
+  display: inline-flex;
+  padding: var(--kern-metric-space-x-small);
+  background: none;
+  border: 0;
+  border-radius: var(--kern-metric-border-radius-circle);
+  color: inherit;
+  cursor: pointer;
+}
+
+.create-termin__calendar {
+  display: grid;
+  gap: var(--kern-metric-space-small);
+  padding: var(--kern-metric-space-default);
+  border: var(--kern-metric-border-width-default) solid var(--kern-color-layout-border);
+  border-radius: var(--kern-metric-border-radius-default);
+}
+
+.create-termin__calendar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.create-termin__month {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: calc(var(--kern-metric-dimension-4x-large) * 5);
+  max-width: 100%;
+}
+
+.create-termin__month th {
+  padding-block: var(--kern-metric-space-x-small);
+  text-align: center;
+  font-weight: normal;
+  color: var(--kern-color-layout-text-muted);
+}
+
+.create-termin__month td {
+  padding: 0;
+  text-align: center;
+}
+
+.create-termin__day {
+  width: 100%;
+  aspect-ratio: 1;
+  background: none;
+  border: var(--kern-metric-border-width-default) solid transparent;
+  border-radius: var(--kern-metric-border-radius-default);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.create-termin__day:hover:not(:disabled) {
+  background-color: var(--kern-color-layout-background-hued);
+}
+
+.create-termin__day[aria-current="date"] {
+  border-color: var(--kern-color-layout-border);
+}
+
+.create-termin__day[aria-pressed="true"] {
+  background-color: var(--kern-color-action-default);
+  color: var(--kern-color-action-on-default);
+}
+
+.create-termin__day:disabled {
+  color: var(--kern-color-layout-text-muted);
+  opacity: var(--kern-color-action-state-opacity-disabled);
+  cursor: not-allowed;
+}
+
+.create-termin__list {
+  display: grid;
+  gap: var(--kern-metric-space-small);
+  justify-items: start;
+}
+
+.create-termin__list .create-termin__rows {
+  margin-top: var(--kern-metric-space-small);
+}
+
 .create-termin__rows {
   display: grid;
+  gap: var(--kern-metric-space-small);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-/* The column titles belong to the first row, so only data rows are spaced apart. */
-.create-termin__row:not(.create-termin__row--head) + .create-termin__row {
-  margin-top: var(--kern-metric-space-large);
-}
-
-.create-termin__row {
+/* One window is one line: weekday, date, times and the remove button. */
+.create-termin__window {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  column-gap: var(--kern-metric-space-4x-large);
-  /* A row's error message wraps onto its own line below the inputs. */
-  row-gap: var(--kern-metric-space-small);
+  gap: var(--kern-metric-space-default);
   margin: 0;
   padding: 0;
   border: 0;
   min-inline-size: 0;
 }
 
-.create-termin__row--head {
-  align-items: start;
+.create-termin__weekday {
+  width: var(--kern-metric-dimension-2x-large);
+  font-weight: bold;
+}
+
+.create-termin__input--date {
+  width: calc(var(--kern-metric-dimension-4x-large) * 3);
+}
+
+.create-termin__input--start,
+.create-termin__input--end {
+  width: calc(var(--kern-metric-dimension-4x-large) * 1.5);
 }
 
 .create-termin__range {
   display: flex;
   align-items: center;
-  gap: var(--kern-metric-space-default);
-}
-
-.create-termin__row--head .create-termin__range {
-  align-items: start;
-}
-
-.create-termin__head {
-  display: grid;
   gap: var(--kern-metric-space-small);
 }
 
-.create-termin__group {
-  display: flex;
-  align-items: center;
-  gap: var(--kern-metric-space-small);
-}
-
-.create-termin__row--head .create-termin__group {
-  align-items: start;
-  margin-bottom: var(--kern-metric-space-small);
-}
-
-/* Inputs are 48px tall; the colon and dash are centered on them, the dot sits on the baseline. */
-.create-termin__separator,
-.create-termin__dash {
-  padding-bottom: var(--kern-metric-space-x-small);
-}
-
-.create-termin__separator--dot {
-  align-self: end;
-  padding-bottom: var(--kern-metric-space-none);
-}
-
-/* In the header the separators only take up space so the captions line up with the inputs. */
-.create-termin__row--head .create-termin__separator,
-.create-termin__row--head .create-termin__dash {
-  padding-bottom: var(--kern-metric-space-none);
-  visibility: hidden;
-}
-
-.create-termin__caption--2 {
-  width: var(--kern-metric-dimension-2x-large);
-}
-
-.create-termin__caption--4 {
-  width: var(--kern-metric-dimension-4x-large);
-}
-
-/* A row with an error gets KERN's error border; hang it into the gutter so the columns stay aligned. */
-.create-termin__row.kern-fieldset--error {
+/* A row with an error gets KERN's error border; hang it into the gutter so the rows stay aligned. */
+.create-termin__window.kern-fieldset--error {
   border-left: var(--kern-metric-border-width-bold) solid
     var(--kern-color-feedback-danger-contextual);
   padding-left: var(--kern-metric-space-default);
@@ -120,10 +221,6 @@
   display: grid;
   flex-basis: 100%;
   gap: var(--kern-metric-space-small);
-}
-
-.create-termin__add {
-  margin-top: var(--kern-metric-space-default);
 }
 
 .create-termin__actions {
