@@ -19,10 +19,12 @@ import {
   parseTimeRange,
   summarizeAdd,
   weekdayShort,
+  type WindowRow,
   type WindowText,
 } from "./create-termin.entry";
 import { MonthGrid } from "./create-termin.month-grid";
 import { MAX_SLOTS, messages } from "./create-termin.schema";
+import { WeekView } from "./create-termin.week-view";
 
 export const ADD_DATE_ID = "add-date";
 const ADD_HINT_ID = "add-hint";
@@ -40,7 +42,12 @@ const completeTime = /^(\d{1,2}:\d{2}|\d{4})$/;
 export function AddWindows({
   existing,
   onAdd,
-}: Readonly<{ existing: WindowText[]; onAdd: (windows: WindowText[]) => void }>) {
+  onRemove,
+}: Readonly<{
+  existing: WindowRow[];
+  onAdd: (windows: WindowText[]) => void;
+  onRemove: (id: number) => void;
+}>) {
   const [dateText, setDateText] = useState("");
   const [dates, setDates] = useState<string[]>([]);
   const [start, setStart] = useState("");
@@ -48,6 +55,7 @@ export function AddWindows({
   const [errors, setErrors] = useState<AddErrors>({});
   const [notice, setNotice] = useState("");
   const [month, setMonth] = useState<string | null>(null);
+  const [weekOpen, setWeekOpen] = useState(false);
   const [refocus, setRefocus] = useState(0);
   const [advance, setAdvance] = useState(0);
 
@@ -142,6 +150,13 @@ export function AddWindows({
   const tidyEnd = () => {
     const minutes = parseEnd(end, parseTime(start));
     if (minutes !== null) setEnd(formatTime(minutes));
+  };
+
+  // A window dragged in the week view goes through the same checks as one typed above.
+  const createFromWeek = (day: string, range: { start: number; end: number }) => {
+    const result = addWindows(existing, [day], range, berlinToday());
+    onAdd(result.added);
+    setNotice(summarizeAdd(result));
   };
 
   const toggleDay = (day: string) => {
@@ -240,6 +255,15 @@ export function AddWindows({
         />
       )}
 
+      {weekOpen && (
+        <WeekView
+          windows={existing}
+          today={shownToday}
+          onCreate={createFromWeek}
+          onRemove={onRemove}
+        />
+      )}
+
       <div className="create-termin__add-actions">
         <KernButton
           type="button"
@@ -250,6 +274,16 @@ export function AddWindows({
         >
           <KernIcon name="calendar-today" />
           <KernLabel>{month === null ? "Kalender öffnen" : "Kalender schließen"}</KernLabel>
+        </KernButton>
+        <KernButton
+          type="button"
+          style="tertiary"
+          className="create-termin__week-toggle"
+          aria-expanded={weekOpen}
+          aria-controls={weekOpen ? "add-week" : undefined}
+          onClick={() => setWeekOpen(!weekOpen)}
+        >
+          <KernLabel>{weekOpen ? "Wochenansicht schließen" : "Wochenansicht öffnen"}</KernLabel>
         </KernButton>
         <KernButton type="button" style="secondary" disabled={atLimit} onClick={add}>
           <KernIcon name="add" />

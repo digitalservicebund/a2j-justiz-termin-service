@@ -3,8 +3,10 @@ import { describe, expect, it } from "vitest";
 import {
   addDays,
   addWindows,
+  dragRange,
   formatDate,
   formatTime,
+  mondayOf,
   nextWorkingDay,
   normalizeDate,
   normalizeTime,
@@ -339,5 +341,58 @@ describe("summarizeAdd", () => {
     expect(summarizeAdd({ added: [], ...none, duplicate: 1 })).toBe(
       "Kein Zeitfenster hinzugefügt, 1 übersprungen (bereits vorhanden)",
     );
+  });
+});
+
+describe("mondayOf", () => {
+  it.each([
+    ["2026-10-26", "2026-10-26"],
+    ["2026-10-27", "2026-10-26"],
+    ["2026-11-01", "2026-10-26"],
+    ["2027-01-01", "2026-12-28"],
+  ])("starts the week of %s on %s", (day, monday) => {
+    expect(mondayOf(day)).toBe(monday);
+  });
+});
+
+describe("dragRange", () => {
+  const nine = 9 * 60;
+  const ten = 10 * 60;
+  const taken = [{ start: nine, end: ten }];
+
+  it("makes a single cell from a click", () => {
+    expect(dragRange(8 * 60, 8 * 60, [])).toEqual({ start: 8 * 60, end: 8 * 60 + 15 });
+  });
+
+  it("covers both the first and the last cell of a drag, down or up", () => {
+    expect(dragRange(8 * 60, 9 * 60 + 30, [])).toEqual({ start: 8 * 60, end: 9 * 60 + 45 });
+    expect(dragRange(9 * 60 + 30, 8 * 60, [])).toEqual({ start: 8 * 60, end: 9 * 60 + 45 });
+  });
+
+  it("does not start on a taken cell", () => {
+    expect(dragRange(nine, ten, taken)).toBeNull();
+    expect(dragRange(nine + 30, nine, taken)).toBeNull();
+  });
+
+  it("starts right after or before a taken window", () => {
+    expect(dragRange(ten, ten, taken)).toEqual({ start: ten, end: ten + 15 });
+    expect(dragRange(nine - 15, nine - 15, taken)).toEqual({ start: nine - 15, end: nine });
+  });
+
+  it("stops at the next window when dragged down", () => {
+    expect(dragRange(8 * 60, 12 * 60, taken)).toEqual({ start: 8 * 60, end: nine });
+  });
+
+  it("stops at the previous window when dragged up", () => {
+    expect(dragRange(11 * 60, 8 * 60, taken)).toEqual({ start: ten, end: 11 * 60 + 15 });
+  });
+
+  it("is not stopped by a window behind the start", () => {
+    expect(dragRange(11 * 60, 12 * 60, taken)).toEqual({ start: 11 * 60, end: 12 * 60 + 15 });
+  });
+
+  it("stays within the hours of the grid", () => {
+    expect(dragRange(18 * 60, 23 * 60, [])).toEqual({ start: 18 * 60, end: 19 * 60 });
+    expect(dragRange(8 * 60, 0, [])).toEqual({ start: 7 * 60, end: 8 * 60 + 15 });
   });
 });

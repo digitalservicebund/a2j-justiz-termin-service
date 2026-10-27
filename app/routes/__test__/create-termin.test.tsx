@@ -387,6 +387,160 @@ describe("CreateTermin adding time windows", () => {
   });
 });
 
+// Without layout the grid measures rows of 14px from the top, starting at 07:00.
+const y = (hour: number, minute = 0) => ((hour * 60 + minute - 7 * 60) / 15) * 14 + 1;
+const column = (iso: string) => document.querySelector<HTMLElement>(`[data-date="${iso}"]`)!;
+const openWeek = () =>
+  userEvent.click(addArea().getByRole("button", { name: "Wochenansicht öffnen" }));
+
+const drag = (iso: string, from: number, to: number) => {
+  fireEvent.mouseDown(column(iso), { button: 0, clientY: from });
+  fireEvent.mouseMove(window, { clientY: to });
+  fireEvent.mouseUp(window, { clientY: to });
+};
+
+describe("CreateTermin week view", () => {
+  // A Thursday, so Monday to Wednesday of its week are past.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2099-01-15T10:00:00Z"));
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it("opens on the current week and closes again", async () => {
+    await renderForm();
+    expect(document.getElementById("add-week")).toBeNull();
+
+    await openWeek();
+
+    expect(screen.getByText("12.01.2099 – 16.01.2099")).toBeInTheDocument();
+    expect(addArea().getByRole("button", { name: "Wochenansicht schließen" })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    await userEvent.click(addArea().getByRole("button", { name: "Wochenansicht schließen" }));
+    expect(document.getElementById("add-week")).toBeNull();
+  });
+
+  it("moves between weeks, but not into the past, and can show the weekend", async () => {
+    await renderForm();
+    await openWeek();
+    expect(addArea().getByRole("button", { name: "Vorherige Woche" })).toBeDisabled();
+    expect(document.querySelectorAll("[data-date]")).toHaveLength(5);
+
+    await userEvent.click(addArea().getByRole("button", { name: "Nächste Woche" }));
+    expect(screen.getByText("19.01.2099 – 23.01.2099")).toBeInTheDocument();
+    expect(addArea().getByRole("button", { name: "Vorherige Woche" })).toBeEnabled();
+
+    await userEvent.click(screen.getByRole("checkbox", { name: "Wochenende anzeigen" }));
+    expect(document.querySelectorAll("[data-date]")).toHaveLength(7);
+    expect(screen.getByText("19.01.2099 – 25.01.2099")).toBeInTheDocument();
+  });
+
+  it("makes a window from a drag, snapped to quarter hours, and says so", async () => {
+    await renderForm();
+    await openWeek();
+
+    drag("2099-01-16", y(9), y(10, 30));
+
+    expect(rows().map(valuesOf)).toEqual([["16.01.2099", "09:00", "10:45"]]);
+    expect(screen.getByRole("status")).toHaveTextContent("1 Zeitfenster hinzugefügt");
+    expect(
+      screen.getByRole("button", { name: "Zeitfenster Fr 16.01.2099, 09:00–10:45" }),
+    ).toBeInTheDocument();
+  });
+
+  it("makes a window from a drag upwards", async () => {
+    await renderForm();
+    await openWeek();
+
+    drag("2099-01-16", y(11), y(9));
+
+    expect(rows().map(valuesOf)).toEqual([["16.01.2099", "09:00", "11:15"]]);
+  });
+
+  it("shows the window while it is dragged and drops it on Escape", async () => {
+    await renderForm();
+    await openWeek();
+
+    fireEvent.mouseDown(column("2099-01-16"), { button: 0, clientY: y(9) });
+    fireEvent.mouseMove(window, { clientY: y(10) });
+    expect(column("2099-01-16")).toHaveTextContent("09:00–10:15");
+
+    fireEvent.keyDown(window, { key: "Escape" });
+    fireEvent.mouseUp(window, { clientY: y(10) });
+
+    expect(column("2099-01-16")).not.toHaveTextContent("09:00–10:15");
+    expect(rows()).toHaveLength(0);
+  });
+
+  it("does not make windows on days that are past, or from other mouse buttons", async () => {
+    await renderForm();
+    await openWeek();
+
+    drag("2099-01-14", y(9), y(10));
+    fireEvent.mouseDown(column("2099-01-16"), { button: 2, clientY: y(9) });
+    fireEvent.mouseUp(window, { clientY: y(10) });
+
+    expect(rows()).toHaveLength(0);
+  });
+
+  it("stops a drag at an existing window and does not start on one", async () => {
+    await renderForm();
+    addWindows("16.1.2099", "9", "10");
+    await openWeek();
+
+    drag("2099-01-16", y(8), y(12));
+    expect(rows().map(valuesOf)).toEqual([
+      ["16.01.2099", "08:00", "09:00"],
+      ["16.01.2099", "09:00", "10:00"],
+    ]);
+
+    fireEvent.mouseDown(column("2099-01-16"), { button: 0, clientY: y(9, 30) });
+    fireEvent.mouseUp(window, { clientY: y(11) });
+    expect(rows()).toHaveLength(2);
+  });
+
+  it("selects a window by clicking it and removes it with the button", async () => {
+    await renderForm();
+    addWindows("16.1.2099, 19.1.2099");
+    await openWeek();
+    const remove = screen.getByRole("button", { name: "Ausgewähltes Zeitfenster entfernen" });
+    expect(remove).toBeDisabled();
+
+    const block = screen.getByRole("button", { name: "Zeitfenster Fr 16.01.2099, 09:00–10:00" });
+    await userEvent.click(block);
+    expect(block).toHaveAttribute("aria-pressed", "true");
+    await userEvent.click(remove);
+
+    expect(rows().map((row) => valuesOf(row)[0])).toEqual(["19.01.2099"]);
+    expect(remove).toBeDisabled();
+  });
+
+  it("removes a selected window with the Delete key", async () => {
+    await renderForm();
+    addWindows("16.1.2099");
+    await openWeek();
+
+    screen.getByRole("button", { name: "Zeitfenster Fr 16.01.2099, 09:00–10:00" }).focus();
+    await userEvent.keyboard("{Delete}");
+
+    expect(rows()).toHaveLength(0);
+  });
+
+  it("draws windows typed in the form and leaves out those it cannot read", async () => {
+    await renderForm();
+    await openWeek();
+
+    addWindows("16.1.2099", "13", "14:30");
+    fireEvent.change(field(rows()[0]!, "Ende"), { target: { value: "soon" } });
+
+    expect(
+      screen.queryByRole("button", { name: /^Zeitfenster Fr 16\.01\.2099/ }),
+    ).not.toBeInTheDocument();
+  });
+});
+
 describe("CreateTermin editing and removing time windows", () => {
   it("removes only the chosen window and moves focus to the one that took its place", async () => {
     await renderForm();

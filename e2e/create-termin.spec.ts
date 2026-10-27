@@ -288,6 +288,51 @@ test("days are picked in the calendar", async ({ page }) => {
   await expect(windowRow(page, 2).getByRole("textbox", { name: "Datum" })).toHaveValue(/^15\./);
 });
 
+test("a window is dragged in the week view and selected to remove it", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 1000 });
+  // The Wednesday of next week, which is always ahead and a weekday.
+  const wednesday = new Date();
+  wednesday.setDate(wednesday.getDate() - ((wednesday.getDay() + 6) % 7) + 7 + 2);
+  const iso = [wednesday.getFullYear(), wednesday.getMonth() + 1, wednesday.getDate()]
+    .map((part) => String(part).padStart(2, "0"))
+    .join("-");
+
+  await addArea(page).getByRole("button", { name: "Wochenansicht öffnen" }).click();
+  const column = page.locator(`[data-date="${iso}"]`);
+  // On a weekend the view already starts on next week.
+  if ((await column.count()) === 0) {
+    await addArea(page).getByRole("button", { name: "Nächste Woche" }).click();
+  }
+  await column.evaluate((element) => element.scrollIntoView({ block: "center" }));
+  // The page may scroll smoothly; measure once the column has stopped moving.
+  let previous = -1;
+  await expect
+    .poll(async () => {
+      const { y } = (await column.boundingBox())!;
+      const settled = y === previous;
+      previous = y;
+      return settled;
+    })
+    .toBe(true);
+  const box = (await column.boundingBox())!;
+  const slot = box.height / 48;
+  const x = box.x + box.width / 2;
+
+  // Cells are 15 minutes from 07:00: row 8 is 09:00, and row 15 is the one that ends at 11:00.
+  await page.mouse.move(x, box.y + slot * 8.5);
+  await page.mouse.down();
+  await page.mouse.move(x, box.y + slot * 15.5, { steps: 5 });
+  await page.mouse.up();
+
+  await expect(page.getByRole("group", { name: /^Zeitfenster \d+$/ })).toHaveCount(1);
+  await expect(windowRow(page, 1).getByRole("textbox", { name: "Beginn" })).toHaveValue("09:00");
+  await expect(windowRow(page, 1).getByRole("textbox", { name: "Ende" })).toHaveValue("11:00");
+
+  await column.getByRole("button", { name: /09:00–11:00$/ }).click();
+  await addArea(page).getByRole("button", { name: "Ausgewähltes Zeitfenster entfernen" }).click();
+  await expect(page.getByRole("group", { name: /^Zeitfenster \d+$/ })).toHaveCount(0);
+});
+
 test("what cannot be added is said, and an overlap is flagged right away", async ({ page }) => {
   await addWindows(page, inDays(7), "9", "10");
 

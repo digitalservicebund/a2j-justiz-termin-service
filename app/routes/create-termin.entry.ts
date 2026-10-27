@@ -265,3 +265,33 @@ export function summarizeAdd({ added, past, duplicate, overLimit }: AddResult): 
     : "Kein Zeitfenster hinzugefügt";
   return skipped ? `${done}, ${skipped} übersprungen (${reasons.join(", ")})` : done;
 }
+
+// A window with the id the form keeps it under.
+export type WindowRow = WindowText & { id: number };
+
+// The week view: what it shows and how finely a drag snaps.
+export const GRID_START = 7 * 60;
+export const GRID_END = 19 * 60;
+export const SLOT_MINUTES = 15;
+
+export function mondayOf(iso: string): string {
+  return addDays(iso, -((toUtc(iso).getUTCDay() + 6) % 7));
+}
+
+type Interval = { start: number; end: number };
+
+// The window a drag from one cell to another makes, or null if it starts on a taken cell. The
+// cells are SLOT_MINUTES long and both ends of the drag count. A drag stops at the next window
+// in the direction it goes, so it can never reach over one.
+export function dragRange(anchor: number, current: number, taken: Interval[]): Interval | null {
+  if (taken.some(({ start, end }) => anchor >= start && anchor < end)) return null;
+  const cell = (minutes: number) =>
+    Math.min(Math.max(minutes, GRID_START), GRID_END - SLOT_MINUTES);
+  const [from, to] = [cell(anchor), cell(current)];
+  if (to >= from) {
+    const ceiling = Math.min(GRID_END, ...taken.filter((t) => t.start > from).map((t) => t.start));
+    return { start: from, end: Math.min(to + SLOT_MINUTES, ceiling) };
+  }
+  const floor = Math.max(GRID_START, ...taken.filter((t) => t.end <= from).map((t) => t.end));
+  return { start: Math.max(to, floor), end: from + SLOT_MINUTES };
+}

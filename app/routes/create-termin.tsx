@@ -29,6 +29,7 @@ import {
   sortWindows,
   weekdayShort,
   windowToSlot,
+  type WindowRow,
   type WindowText,
 } from "./create-termin.entry";
 import { createTerminBreadcrumbs } from "./create-termin.review";
@@ -96,7 +97,7 @@ export async function action({ request }: { request: Request }) {
 
 // The windows are kept as the text of their fields. What is posted are hidden fields in the
 // shape the server validates, so the page works the same as when every part had its own input.
-type Row = WindowText & { id: number };
+type Row = WindowRow;
 type RowField = keyof WindowText;
 
 const slotFieldNames = [
@@ -289,7 +290,11 @@ function CreateTerminForm({
               aria-describedby={shown.slots ? SLOTS_ERROR_ID : undefined}
               className={`create-termin__windows${shown.slots ? " kern-fieldset--error" : ""}`}
             >
-              <AddWindows existing={rows} onAdd={addRows} />
+              <AddWindows
+                existing={rows}
+                onAdd={addRows}
+                onRemove={(id) => setRows((current) => current.filter((row) => row.id !== id))}
+              />
 
               <div className="create-termin__list">
                 <KernHeading size="medium" level={3} id="window-list-title">
