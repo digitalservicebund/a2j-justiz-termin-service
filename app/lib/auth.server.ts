@@ -2,10 +2,11 @@ import { betterAuth } from "better-auth";
 import { magicLink } from "better-auth/plugins";
 
 import { isEmailDomainAllowed } from "../adapters/users/allowed-domains.server.ts";
-import { canSignIn } from "../adapters/users/users.server.ts";
+import { canSignIn, userExists } from "../adapters/users/users.server.ts";
 import { SELF_SIGNUP_ROLES } from "../core/domain/user.ts";
 import { getDb } from "../database/database.ts";
 import { getAuthSecret } from "./auth-secret.ts";
+import { renderMagicLinkEmail } from "./email/magic-link-email.ts";
 import { requireEnv } from "./env.ts";
 import { logError } from "./logging.ts";
 import { requireSecret } from "./secrets.ts";
@@ -59,13 +60,19 @@ function createAuth() {
           // the allowed domains.
           if (!(await canSignIn(getDb(), email))) return;
 
+          // An address without an account is being verified for self sign-up.
+          const variant = (await userExists(getDb(), email)) ? "login" : "signup";
+          const { subject, text, html, attachments } = renderMagicLinkEmail(variant, url);
+
           const transport = createSmtpTransport();
           try {
             await transport.sendMail({
               from: requireSecret("smtp", "SMTP_USER"),
               to: email.trim().toLowerCase(),
-              subject: "Anmelden beim Justiz Termin Service",
-              text: `Mit diesem Link können Sie sich beim Justiz Termin Service anmelden:\n\n${url}\n\nDer Link ist 5 Minuten gültig und kann nur einmal verwendet werden.\nWenn Sie diese Anmeldung nicht angefordert haben, ignorieren Sie diese E-Mail.`,
+              subject,
+              text,
+              html,
+              attachments,
             });
           } catch (error) {
             logError("Failed to send magic-link email", error);

@@ -6,6 +6,7 @@ import type { AuthUser } from "~/core/domain/user";
 import { BmjvLogo } from "./BmjvLogo";
 import { Breadcrumb, type BreadcrumbItem } from "./Breadcrumb";
 import { DefaultPage } from "./DefaultPage";
+import { contactLinks, legalLinks, operatorLinks, pilotLinks, type Link } from "./footer-links";
 import { KernBody } from "./kern/KernBody";
 import { KernButton } from "./kern/KernButton";
 import { KernHeading } from "./kern/KernHeading";
@@ -14,44 +15,6 @@ import { KernKopfZeile } from "./kern/KernKopfZeile";
 import { KernLabel } from "./kern/KernLabel";
 
 import "./AppShell.css";
-
-// Targets for these links are not defined in the design yet.
-const TODO_HREF = "#";
-
-type Link = { href: string; label: string };
-
-const legalLinks: Link[] = [
-  { href: TODO_HREF, label: "Impressum" },
-  { href: TODO_HREF, label: "Barrierefreiheit" },
-  { href: TODO_HREF, label: "Datenschutz" },
-];
-
-const contactLinks: Link[] = [
-  { href: TODO_HREF, label: "Kontakt" },
-  {
-    href: "https://github.com/digitalservicebund/a2j-justiz-termin-service",
-    label: "Open Source Code",
-  },
-  { href: TODO_HREF, label: "An Befragungen teilnehmen" },
-];
-
-const pilotLinks: Link[] = [
-  {
-    href: "https://www.bmj.de",
-    label: "Bundesministeriums der Justiz und für Verbraucherschutz",
-  },
-];
-
-const operatorLinks: Link[] = [
-  {
-    href: "https://digitalservice.bund.de",
-    label: "DigitalService GmbH des Bundes",
-  },
-  {
-    href: "https://zugang-zum-recht-projekte.de",
-    label: "zugang-zum-recht-projekte.de",
-  },
-];
 
 function LinkList({ links }: Readonly<{ links: Link[] }>) {
   return (
