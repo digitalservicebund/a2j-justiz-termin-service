@@ -159,3 +159,41 @@ test("another judge cannot choose a Termin for someone else's survey", async ({
     expect(response?.status()).toBe(404);
   }
 });
+
+test("the judge sees which guest is available for which window", async ({ page, users, db }) => {
+  const user = await users.create({ roles: ["richter"] });
+  const id = await seedOpen(db, user.id);
+  const slots = await db
+    .selectFrom("time_slot")
+    .select("id")
+    .where("appointment_id", "=", id)
+    .orderBy("start_time")
+    .execute();
+  const { id: guestA } = await db
+    .insertInto("participant")
+    .values({ appointment_id: id, name: "Guest A", type: "universal" })
+    .returning("id")
+    .executeTakeFirstOrThrow();
+  const { id: guestB } = await db
+    .insertInto("participant")
+    .values({ appointment_id: id, name: "Guest B", type: "universal" })
+    .returning("id")
+    .executeTakeFirstOrThrow();
+  await db
+    .insertInto("participant_response")
+    .values([
+      { participant_id: guestA, slot_id: slots[0]!.id, status: "yes" },
+      { participant_id: guestA, slot_id: slots[1]!.id, status: "yes" },
+      { participant_id: guestB, slot_id: slots[0]!.id, status: "yes" },
+      { participant_id: guestB, slot_id: slots[1]!.id, status: "no" },
+    ])
+    .execute();
+
+  await signIn(page, user);
+  await page.goto(`/overview/${id}/select`);
+
+  const rowOf = (name: string) => page.getByRole("row", { name: new RegExp(`^${name}`) });
+  await expect(rowOf("Guest A")).toHaveText(/VerfügbarVerfügbar$/);
+  await expect(rowOf("Guest B")).toHaveText(/VerfügbarNicht verfügbar$/);
+  await expect(rowOf("Zusagen")).toHaveText(/2 von 21 von 2$/);
+});

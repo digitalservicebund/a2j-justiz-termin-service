@@ -10,6 +10,25 @@
   width: min(100%, var(--page-width-default));
 }
 
+.overview-select__availability {
+  display: grid;
+  gap: var(--kern-metric-space-small);
+  /* The table may be wider than the form, so it gets the whole column. */
+  min-width: 0;
+}
+
+.overview-select__scroll {
+  overflow-x: auto;
+}
+
+.overview-select__answer--yes {
+  color: var(--kern-color-feedback-success-contextual);
+}
+
+.overview-select__answer--no {
+  color: var(--kern-color-feedback-danger-contextual);
+}
+
 .overview-select__fieldset {
   margin: 0;
   padding: 0;
