@@ -4,6 +4,7 @@ import { getAppointment, publishAppointment } from "~/adapters/appointments/appo
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { getDb } from "~/database/database";
+import { sendTerminCreatedEmail } from "~/lib/email/send-termin-created-email";
 
 import { CreateTerminReview, createTerminBreadcrumbs } from "./create-termin.review";
 import { rangeToSlot } from "./create-termin.slots";
@@ -25,6 +26,18 @@ export async function loader({ request, params }: { request: Request } & Params)
   };
 }
 
+// Tells the judge that the Terminumfrage is open. The appointment is published either way.
+async function notifyJudge(userId: string, email: string, id: string) {
+  const appointment = await getAppointment(getDb(), userId, id);
+  if (!appointment) return;
+  await sendTerminCreatedEmail({
+    to: email,
+    appointmentId: appointment.id,
+    aktenzeichen: appointment.aktenzeichen,
+    slots: appointment.slots,
+  });
+}
+
 export async function action({ request, params }: { request: Request } & Params) {
   const user = await requireRole(request, "richter");
   const id = params.appointmentId ?? "";
@@ -35,6 +48,7 @@ export async function action({ request, params }: { request: Request } & Params)
   }
   if (intent === "create") {
     if (!(await publishAppointment(getDb(), user.id, id))) throw notFound();
+    await notifyJudge(user.id, user.email, id);
     return redirect(`/overview/${encodeURIComponent(id)}/created`);
   }
   throw data("Bad request", { status: 400 });

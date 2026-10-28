@@ -2,7 +2,7 @@ import type { Page } from "@playwright/test";
 import type { Kysely } from "kysely";
 
 import type { Database } from "../app/database/types.ts";
-import { expect, signIn, test } from "./fixtures.ts";
+import { expect, readMail, signIn, test } from "./fixtures.ts";
 
 const TOO_FEW = "Geben Sie mindestens zwei Zeitfenster an.";
 
@@ -28,6 +28,7 @@ const nextWeek: Window[] = [
 ];
 
 let judgeId: string;
+let judgeEmail: string;
 
 async function slotCount(db: Kysely<Database>, appointmentId: string) {
   const { count } = await db
@@ -43,6 +44,7 @@ const appointmentId = (page: Page) => new URL(page.url()).pathname.split("/")[2]
 test.beforeEach(async ({ page, users }) => {
   const judge = await users.create({ roles: ["richter"] });
   judgeId = judge.id;
+  judgeEmail = judge.email;
   await signIn(page, judge);
   await page.goto("/overview/new");
   await expect(page.getByRole("heading", { name: "Verhandlungsdaten" })).toBeVisible();
@@ -120,6 +122,19 @@ test("a richter creates a Terminumfrage with four time slots next week", async (
   expect(universal_token).toBeTruthy();
   await expect(page.getByText(`/umfrage/${universal_token}`)).toBeVisible();
   await expect(page.getByRole("button", { name: "Link zur Terminumfrage kopieren" })).toBeVisible();
+
+  // The judge is told by e-mail, with the windows as tentative calendar events and a link back.
+  const mail = await readMail(
+    page.request,
+    judgeEmail,
+    "Terminumfrage erstellt: Wir warten auf Rückmeldungen",
+  );
+  const terminUrl = new URL(`/overview/${id}`, page.url()).href;
+  expect(mail.text).toContain(terminUrl);
+  const calendar = mail.attachments["terminumfrage.ics"]!;
+  expect(calendar.match(/BEGIN:VEVENT/g)).toHaveLength(4);
+  expect(calendar).toContain("STATUS:TENTATIVE");
+  expect(calendar.replace(/\r\n /g, "")).toContain(terminUrl);
 
   await page.getByRole("link", { name: "Zu den Terminumfragen" }).click();
   await expect(page).toHaveURL(/\/overview$/);

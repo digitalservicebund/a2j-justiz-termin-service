@@ -67,6 +67,7 @@ const messageListSchema = z.object({
     z.object({
       ID: z.string(),
       To: z.array(z.object({ Address: z.string() })),
+      Subject: z.string(),
     }),
   ),
 });
@@ -95,6 +96,33 @@ export async function readMagicLink(request: APIRequestContext, email: string): 
   expect(url.origin).toBe(baseURL);
   expect(url.pathname).toBe("/api/auth/magic-link/verify");
   return url.href;
+}
+
+const attachmentSchema = z.object({ PartID: z.string(), FileName: z.string() });
+
+// The newest mail to the address with this subject, with its text and attachments' contents.
+export async function readMail(request: APIRequestContext, email: string, subject: string) {
+  const find = async () =>
+    (await messages(request, email)).find((message) => message.Subject === subject);
+  await expect.poll(find).toBeDefined();
+  const { ID } = (await find())!;
+  const response = await request.get(`${mailpitURL}/api/v1/message/${ID}`, {
+    headers: { Origin: mailpitURL },
+  });
+  expect(response.status()).toBe(200);
+  const mail = z
+    .object({ Text: z.string(), Attachments: z.array(attachmentSchema) })
+    .parse(await response.json());
+
+  const attachments: Record<string, string> = {};
+  for (const { PartID, FileName } of mail.Attachments) {
+    const part = await request.get(`${mailpitURL}/api/v1/message/${ID}/part/${PartID}`, {
+      headers: { Origin: mailpitURL },
+    });
+    expect(part.status()).toBe(200);
+    attachments[FileName] = await part.text();
+  }
+  return { text: mail.Text, attachments };
 }
 
 export async function issueMagicLink(request: APIRequestContext, email: string): Promise<string> {
