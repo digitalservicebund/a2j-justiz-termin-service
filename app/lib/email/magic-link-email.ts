@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 import {
   contactLinks,
   operatorLinks,
@@ -5,7 +8,6 @@ import {
   TODO_HREF,
   type Link,
 } from "../../components/shared/footer-links.ts";
-import LOGO_DATA_URI from "./bmjv-logo.png?inline";
 
 export type MagicLinkVariant = "signup" | "login";
 
@@ -14,6 +16,10 @@ const PRODUCT_TAGLINE = "Onlinedienste der Justiz";
 const LOGO_CID = "bmjv-logo@justiz-termin-service";
 // bmjv-logo.png is flattened onto white: clients that darken the page (Gmail, Outlook.com) leave
 // images alone, so the black lettering would otherwise vanish on a dark background.
+// Resolved from the working directory (the project root for the server, the Docker image, tests and
+// batch jobs), because import.meta.url points into build/server/ once the app is bundled.
+const LOGO_PATH = resolve("app/lib/email/bmjv-logo.png");
+let logoPng: Buffer | undefined;
 const LOGO_ALT = "Bundesministerium der Justiz und für Verbraucherschutz";
 const ADDRESS =
   "DigitalService GmbH des Bundes, Prinzessinnenstraße 8-14, 10969 Berlin, Berlin, Deutschland.";
@@ -186,7 +192,7 @@ export function renderMagicLinkEmail(variant: MagicLinkVariant, url: string) {
     attachments: [
       {
         filename: "bmjv-logo.png",
-        path: LOGO_DATA_URI,
+        content: (logoPng ??= readFileSync(LOGO_PATH)),
         contentType: "image/png",
         cid: LOGO_CID,
         contentDisposition: "inline" as const,

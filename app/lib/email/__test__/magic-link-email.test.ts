@@ -3,8 +3,6 @@ import { describe, expect, it } from "vitest";
 
 import { renderMagicLinkEmail } from "../magic-link-email";
 
-const logoBytes = (dataUri: string) => dataUri.replace(/^data:image\/png;base64,/, "");
-
 const url = "http://localhost:3000/api/auth/magic-link/verify?token=abc&callbackURL=%2Foverview";
 
 describe("renderMagicLinkEmail", () => {
@@ -67,7 +65,7 @@ describe("renderMagicLinkEmail", () => {
   it("ships the logo without an alpha channel", () => {
     const { attachments } = renderMagicLinkEmail("signup", url);
     // IHDR colour type 2 is RGB, so no transparent pixels can turn black on a dark background.
-    expect(Buffer.from(logoBytes(attachments[0]!.path), "base64").readUInt8(25)).toBe(2);
+    expect(attachments[0]!.content.readUInt8(25)).toBe(2);
   });
 
   it("embeds the logo inline with alt text and omits footer links without a target", () => {
@@ -76,7 +74,7 @@ describe("renderMagicLinkEmail", () => {
     expect(html).toContain(`src="cid:${logo!.cid}"`);
     expect(html).toContain('alt="Bundesministerium der Justiz und für Verbraucherschutz"');
     expect(logo).toMatchObject({ contentType: "image/png", contentDisposition: "inline" });
-    expect(Buffer.from(logoBytes(logo!.path), "base64").subarray(1, 4).toString()).toBe("PNG");
+    expect(logo!.content.subarray(1, 4).toString()).toBe("PNG");
     expect(html).not.toContain('href="#"');
     expect(text).not.toContain("An Befragungen teilnehmen");
     expect(html).toContain("Open Source Code");
