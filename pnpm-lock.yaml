@@ -26,6 +26,9 @@ importers:
       express:
         specifier: ^5.3.0
         version: 5.3.0
+      html-template-tag:
+        specifier: ^5.0.0
+        version: 5.0.0
       isbot:
         specifier: ^5.2.2
         version: 5.2.2
@@ -1839,12 +1842,21 @@ packages:
     resolution: {integrity: sha512-T2UbfbBEF32wiepXIsMlTW9+dDYC6wMh/t/vYA4tuOMKqWz/n3vr1NFSxQiyP+zk2mXsoMA/i/7qV6LKut1t1A==}
     engines: {node: '>= 0.4'}
 
+  html-element-attributes@3.5.0:
+    resolution: {integrity: sha512-rU2BFhp0kQla9sqPBI46C+zbP6PFOtD7z6XNAJ6as+cGecCDXLx0W3aIs6XdPLmBBG/Fy1meRi/n65Exofz4Qw==}
+
   html-encoding-sniffer@4.0.0:
     resolution: {integrity: sha512-Y22oTqIU4uuPgEemfz7NDJz6OeKf12Lsu+QC+s3BVpda64lTiMYCyGwg5ki4vFxkMwQdeZDl2adZoqUgdFuTgQ==}
     engines: {node: '>=18'}
 
+  html-es6cape@2.0.2:
+    resolution: {integrity: sha512-utzhH8rq2VABdW1LsPdv5tmxeMNOtP83If0jKCa79xPBgLWfcMvdf9K+EZoxJ5P7KioCxTs6WBnSDWLQHJ2lWA==}
+
   html-escaper@2.0.2:
     resolution: {integrity: sha512-H2iMtd0I4Mt5eYiapRdIDjp+XzelXQ0tFE4JS7YFwFevXXMmOp9myNrUvCg0D6ws8iqkRPBfKHgbwig1SmlLfg==}
+
+  html-template-tag@5.0.0:
+    resolution: {integrity: sha512-FwF3Fi+v5Dr6ygxqqyJwJWdHteQtDusRXF5ae1syxTKbbVRC8UPtlfIua5KWbgXGneRAc7zNc+Z6x9efFl0W/w==}
 
   http-errors@2.0.1:
     resolution: {integrity: sha512-4FbRdAX+bSdmo4AUFuS0WNiPz8NgFt+r8ThgNWmlrjQjt1Q7ZR9+zTlce2859x4KSXrwIsaeTqDoKQmtP8pLmQ==}
@@ -4187,11 +4199,20 @@ snapshots:
     dependencies:
       function-bind: 1.1.2
 
+  html-element-attributes@3.5.0: {}
+
   html-encoding-sniffer@4.0.0:
     dependencies:
       whatwg-encoding: 3.1.1
 
+  html-es6cape@2.0.2: {}
+
   html-escaper@2.0.2: {}
+
+  html-template-tag@5.0.0:
+    dependencies:
+      html-element-attributes: 3.5.0
+      html-es6cape: 2.0.2
 
   http-errors@2.0.1:
     dependencies:

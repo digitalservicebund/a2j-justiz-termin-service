@@ -3,6 +3,9 @@ import { describe, expect, it } from "vitest";
 
 import { renderMagicLinkEmail } from "../magic-link-email";
 
+// The formatter indents the templates and wraps long tags, which does not change how a mail renders.
+const squash = (html: string) => html.replace(/\s+/g, " ").replace(/\s+>/g, ">");
+
 const url = "http://localhost:3000/api/auth/magic-link/verify?token=abc&callbackURL=%2Foverview";
 
 describe("renderMagicLinkEmail", () => {
@@ -35,11 +38,19 @@ describe("renderMagicLinkEmail", () => {
     expect(text).toContain(hostile);
   });
 
+  it("does not escape its own markup twice", () => {
+    for (const variant of ["signup", "login"] as const) {
+      const html = squash(renderMagicLinkEmail(variant, url).html);
+      expect(html).not.toMatch(/&lt;|&gt;|&quot;/);
+      expect(html).toMatch(/<a href="https:\/\/github\.com\/[^"]+"[^>]*>Open Source Code/);
+    }
+  });
+
   it("builds a client-safe document", () => {
-    const { html } = renderMagicLinkEmail("signup", url);
+    const html = squash(renderMagicLinkEmail("signup", url).html);
     expect(html).toMatch(/^<!DOCTYPE html>/);
     expect(html).toContain('<html lang="de"');
-    expect(html).toContain('<meta name="color-scheme" content="light">');
+    expect(html).toMatch(/<meta name="color-scheme" content="light"\s*\/?>/);
     expect(html).not.toMatch(/<(link|script)\b/i);
     expect(html).not.toMatch(/var\(--/);
     expect(html).not.toMatch(/display:\s*(flex|grid)/);
