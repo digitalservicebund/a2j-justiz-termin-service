@@ -54,10 +54,7 @@ describe("createTerminCalendar", () => {
   });
 
   it("uses the id of the time slot as UID, so a moved slot updates its event", () => {
-    expect(uids(build())).toEqual([
-      "slot-1@justiz-termin-service.invalid",
-      "slot-2@justiz-termin-service.invalid",
-    ]);
+    expect(uids(build())).toEqual(["timeslot-slot-1", "timeslot-slot-2"]);
 
     const moved = createTerminCalendar({
       aktenzeichen: "574 C 65412/26",

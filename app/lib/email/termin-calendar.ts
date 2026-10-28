@@ -58,10 +58,11 @@ export function createTerminCalendar({
     `Termin öffnen, ändern oder bestätigen: ${terminUrl}`,
   ].join("\n");
 
-  // The UID is the id of the time slot, not its time, so a moved slot updates its event.
+  // The UID is the id of the time slot, not its time, so a moved slot updates its event. The prefix
+  // shows in the calendar data what the id belongs to.
   const events = slots.flatMap(({ id, start, end }) => [
     "BEGIN:VEVENT",
-    `UID:${id}@justiz-termin-service.invalid`,
+    `UID:timeslot-${id}`,
     `DTSTAMP:${stamp}`,
     `DTSTART:${toUtcStamp(start)}`,
     `DTEND:${toUtcStamp(end)}`,
