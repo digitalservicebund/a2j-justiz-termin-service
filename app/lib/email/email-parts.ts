@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 
 import html from "html-template-tag";
 
+import type { TimeRange } from "../../adapters/appointments/appointments.server.ts";
 import {
   contactLinks,
   operatorLinks,
@@ -271,4 +272,35 @@ export function logoAttachment() {
     cid: LOGO_CID,
     contentDisposition: "inline" as const,
   };
+}
+
+const dayFormat = new Intl.DateTimeFormat("de-DE", {
+  timeZone: "Europe/Berlin",
+  weekday: "long",
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+});
+const timeFormat = new Intl.DateTimeFormat("de-DE", {
+  timeZone: "Europe/Berlin",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
+export const describeSlot = ({ start, end }: TimeRange) =>
+  `${dayFormat.format(start)}, ${timeFormat.format(start)} – ${timeFormat.format(end)} Uhr`;
+
+export function Slots(slots: string[]) {
+  return html`<tr>
+    <td style="padding:0 0 16px 0;">
+      <ul style="margin:0;padding:0 0 0 24px;">
+        $${slots
+          .map(
+            (slot) =>
+              html`<li style="font-size:18px;line-height:24px;color:${COLOR.text};">${slot}</li>`,
+          )
+          .join("")}
+      </ul>
+    </td>
+  </tr>`;
 }

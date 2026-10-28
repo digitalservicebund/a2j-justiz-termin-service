@@ -1,7 +1,11 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getAppointment, publishAppointment } from "~/adapters/appointments/appointments.server";
+import {
+  getAppointment,
+  nextCalendarSequence,
+  publishAppointment,
+} from "~/adapters/appointments/appointments.server";
 import { requireRole } from "~/adapters/session/session";
 import type { AuthUser } from "~/core/domain/user";
 import { sendTerminCreatedEmail } from "~/lib/email/send-termin-created-email";
@@ -11,6 +15,7 @@ import { action, loader } from "../create-termin.confirm";
 vi.mock("~/adapters/session/session", () => ({ requireRole: vi.fn() }));
 vi.mock("~/adapters/appointments/appointments.server", () => ({
   getAppointment: vi.fn(),
+  nextCalendarSequence: vi.fn(),
   publishAppointment: vi.fn(),
 }));
 vi.mock("~/lib/email/send-termin-created-email", () => ({ sendTerminCreatedEmail: vi.fn() }));
@@ -47,6 +52,7 @@ describe("create-termin confirm route", () => {
     vi.mocked(requireRole).mockResolvedValue(judge);
     vi.mocked(publishAppointment).mockResolvedValue(true);
     vi.mocked(getAppointment).mockResolvedValue(published);
+    vi.mocked(nextCalendarSequence).mockResolvedValue(1);
   });
 
   describe("access control", () => {
@@ -144,7 +150,17 @@ describe("create-termin confirm route", () => {
         appointmentId: "d1",
         aktenzeichen: "574 C 65412/26",
         slots: published.slots,
+        sequence: 1,
       });
+    });
+
+    it("sends no e-mail when the appointment cannot be read after publishing", async () => {
+      vi.mocked(nextCalendarSequence).mockResolvedValue(undefined);
+
+      const response = (await action({ request: postRequest("create"), params })) as Response;
+
+      expect(response.headers.get("Location")).toBe("/overview/d1/created");
+      expect(sendTerminCreatedEmail).not.toHaveBeenCalled();
     });
 
     it("answers 404 and sends no e-mail when there is no draft to publish", async () => {

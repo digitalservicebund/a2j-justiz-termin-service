@@ -29,8 +29,10 @@ vi.mock("~/adapters/appointments/appointments.server", () => ({
     return true;
   }),
   getAppointment: vi.fn(async (_db, _userId, id) => appointments.get(id)),
+  nextCalendarSequence: vi.fn(async () => 1),
   publishAppointment: vi.fn(async () => true),
 }));
+vi.mock("~/lib/email/send-termin-created-email", () => ({ sendTerminCreatedEmail: vi.fn() }));
 vi.mock("~/database/database", () => ({ getDb: () => ({}) }));
 
 vi.mock("~/adapters/session/session", () => ({

@@ -7,6 +7,8 @@ const terminUrl = "http://localhost:3000/overview/a1";
 const email = {
   aktenzeichen: "574 C 65412/26",
   terminUrl,
+  sequence: 1,
+  organizerEmail: "sender@example.com",
   // 09:00 – 10:30 and 14:00 – 15:00 Berlin time in summer.
   slots: [
     {

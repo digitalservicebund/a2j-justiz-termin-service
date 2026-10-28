@@ -134,6 +134,8 @@ test("a richter creates a Terminumfrage with four time slots next week", async (
   const calendar = mail.attachments["terminumfrage.ics"]!;
   expect(calendar.match(/BEGIN:VEVENT/g)).toHaveLength(4);
   expect(calendar).toContain("STATUS:TENTATIVE");
+  expect(calendar).toContain("SEQUENCE:1");
+  expect(calendar).toContain('ORGANIZER;CN="Verhandlungstermin-Finder":mailto:jts@example.com');
   expect(calendar.replace(/\r\n /g, "")).toContain(terminUrl);
 
   await page.getByRole("link", { name: "Zu den Terminumfragen" }).click();

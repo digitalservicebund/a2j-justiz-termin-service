@@ -2,6 +2,7 @@ import type { Kysely } from "kysely";
 
 import type { Database } from "../../database/types.ts";
 import { logInfo } from "../../lib/logging.ts";
+import { nextCalendarSequence, type AppointmentSlot } from "./appointments.server.ts";
 
 export type SurveySlot = { id: string; start: Date; end: Date };
 
@@ -53,7 +54,8 @@ function visibleSlots(db: Executor, appointmentId: string, ownParticipantId?: st
 }
 
 // The token is either the secret of a personal link or the universal_token of the appointment.
-// Returns undefined unless the appointment is open for replies.
+// Returns undefined unless the appointment is open for replies, or cancelled: then every window is
+// ruled out, and guests are told so instead of finding nothing.
 export async function findSurvey(db: Executor, token: string): Promise<Survey | undefined> {
   const personal = await db
     .selectFrom("participant")
@@ -69,7 +71,7 @@ export async function findSurvey(db: Executor, token: string): Promise<Survey | 
         ? qb.where("id", "=", personal.appointment_id)
         : qb.where("universal_token", "=", token),
     )
-    .where("status", "=", "open")
+    .where("status", "in", ["open", "cancelled"])
     .executeTakeFirst();
   if (!appointment) return undefined;
 
@@ -162,6 +164,16 @@ export async function saveAnswer(db: Executor, answer: Answer): Promise<SaveResu
         )
         .execute();
     }
+
+    // Without a window anyone can still attend, the appointment is off.
+    if ((await visibleSlots(trx, answer.appointmentId)).length === 0) {
+      await trx
+        .updateTable("appointment")
+        .set({ status: "cancelled", updated_at: new Date() })
+        .where("id", "=", answer.appointmentId)
+        .execute();
+      logInfo(`Appointment ${answer.appointmentId} cancelled: no window is left`);
+    }
     return { saved: true, participantId };
   });
   if (result.saved) {
@@ -214,6 +226,89 @@ export async function getSavedAnswer(
       id,
       start: new Date(start_time),
       end: new Date(end_time ?? start_time),
+    })),
+  };
+}
+
+export type SlotResponse = { participantId: string; name: string; available: boolean };
+
+export type ResponseOverview = {
+  appointmentId: string;
+  aktenzeichen: string;
+  // The judge who created the appointment.
+  judgeEmail: string;
+  // The SEQUENCE for the calendar file that goes with this state.
+  calendarSequence: number;
+  // Every proposed window with the answers given for it. Windows a participant could no longer see
+  // when answering have no answer from that participant.
+  slots: Array<AppointmentSlot & { responses: SlotResponse[] }>;
+};
+
+// Where the appointment stands after the latest answer, for the calendar file that goes to the
+// judge. Takes the next SEQUENCE and reads the answers in one transaction: answers are saved under
+// a lock on the same row, so a higher SEQUENCE never carries older answers than a lower one.
+// Undefined for an unknown appointment.
+export function issueResponseOverview(
+  db: Executor,
+  appointmentId: string,
+): Promise<ResponseOverview | undefined> {
+  return db.transaction().execute(async (trx) => {
+    const calendarSequence = await nextCalendarSequence(trx, appointmentId);
+    if (calendarSequence === undefined) return undefined;
+    return readResponseOverview(trx, appointmentId, calendarSequence);
+  });
+}
+
+async function readResponseOverview(
+  db: Executor,
+  appointmentId: string,
+  calendarSequence: number,
+): Promise<ResponseOverview | undefined> {
+  const appointment = await db
+    .selectFrom("appointment")
+    .innerJoin("user", "user.id", "appointment.user_id")
+    .select(["appointment.id", "appointment.aktenzeichen", "user.email"])
+    .where("appointment.id", "=", appointmentId)
+    .executeTakeFirst();
+  if (!appointment) return undefined;
+
+  const slots = await db
+    .selectFrom("time_slot")
+    .select(["id", "start_time", "end_time"])
+    .where("appointment_id", "=", appointmentId)
+    .orderBy("start_time")
+    .execute();
+
+  const responses = await db
+    .selectFrom("participant_response")
+    .innerJoin("participant", "participant.id", "participant_response.participant_id")
+    .select([
+      "participant_response.slot_id",
+      "participant_response.status",
+      "participant.id as participantId",
+      "participant.name",
+    ])
+    .where("participant.appointment_id", "=", appointmentId)
+    .orderBy("participant.created_at")
+    .orderBy("participant.id")
+    .execute();
+
+  return {
+    appointmentId: appointment.id,
+    aktenzeichen: appointment.aktenzeichen,
+    judgeEmail: appointment.email,
+    calendarSequence,
+    slots: slots.map(({ id, start_time, end_time }) => ({
+      id,
+      start: new Date(start_time),
+      end: new Date(end_time ?? start_time),
+      responses: responses
+        .filter(({ slot_id }) => slot_id === id)
+        .map(({ participantId, name, status }) => ({
+          participantId,
+          name,
+          available: status === "yes",
+        })),
     })),
   };
 }

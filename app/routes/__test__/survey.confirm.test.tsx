@@ -3,14 +3,23 @@ import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { findSurvey, saveAnswer, type Survey } from "~/adapters/appointments/survey.server";
+import {
+  findSurvey,
+  issueResponseOverview,
+  saveAnswer,
+  type ResponseOverview,
+  type Survey,
+} from "~/adapters/appointments/survey.server";
+import { sendAnswerReceivedEmail } from "~/lib/email/send-answer-received-email";
 
 import SurveyConfirm, { action, loader } from "../survey.confirm";
 
 vi.mock("~/adapters/appointments/survey.server", () => ({
   findSurvey: vi.fn(),
+  issueResponseOverview: vi.fn(),
   saveAnswer: vi.fn(),
 }));
+vi.mock("~/lib/email/send-answer-received-email", () => ({ sendAnswerReceivedEmail: vi.fn() }));
 vi.mock("~/database/database", () => ({ getDb: () => ({ db: true }) }));
 
 const params = { token: "t1" };
@@ -32,6 +41,14 @@ const universal: Survey = {
 
 const personal: Survey = { ...universal, participant: { id: "p1", name: "Guest D" } };
 
+const overview: ResponseOverview = {
+  appointmentId: "a1",
+  aktenzeichen: "574 C 65412/26",
+  judgeEmail: "judge.a@example.com",
+  calendarSequence: 1,
+  slots: [],
+};
+
 const locationOf = (response: unknown) => (response as Response).headers.get("Location");
 
 function postRequest(fields: Array<[string, string]>) {
@@ -52,6 +69,7 @@ describe("survey confirm route", () => {
     vi.clearAllMocks();
     vi.mocked(findSurvey).mockResolvedValue(universal);
     vi.mocked(saveAnswer).mockResolvedValue({ saved: true, participantId: "p9" });
+    vi.mocked(issueResponseOverview).mockResolvedValue(overview);
   });
 
   it("answers 404 for an unknown or closed survey", async () => {
@@ -165,6 +183,31 @@ describe("survey confirm route", () => {
     expect(locationOf(response)).toBe("/umfrage/t1/naechste-schritte?teilnehmer=p9");
   });
 
+  it("tells the judge about the answer after it is stored, under the entered name", async () => {
+    await action({ request: postRequest(finish), params });
+
+    expect(issueResponseOverview).toHaveBeenCalledWith({ db: true }, "a1");
+    expect(sendAnswerReceivedEmail).toHaveBeenCalledWith(overview, { id: "p9", name: "Guest C" });
+  });
+
+  it("names the guest of a personal link in the e-mail to the judge", async () => {
+    vi.mocked(findSurvey).mockResolvedValue(personal);
+    vi.mocked(saveAnswer).mockResolvedValue({ saved: true, participantId: "p1" });
+
+    await action({ request: postRequest(finish), params });
+
+    expect(sendAnswerReceivedEmail).toHaveBeenCalledWith(overview, { id: "p1", name: "Guest D" });
+  });
+
+  it("sends nothing when the appointment is gone after saving", async () => {
+    vi.mocked(issueResponseOverview).mockResolvedValue(undefined);
+
+    const response = await action({ request: postRequest(finish), params });
+
+    expect(sendAnswerReceivedEmail).not.toHaveBeenCalled();
+    expect(locationOf(response)).toBe("/umfrage/t1/naechste-schritte?teilnehmer=p9");
+  });
+
   it("stores the answer of a personal link for its participant and ignores a submitted name", async () => {
     vi.mocked(findSurvey).mockResolvedValue(personal);
 
@@ -207,6 +250,7 @@ describe("survey confirm route", () => {
     });
 
     expect(saveAnswer).not.toHaveBeenCalled();
+    expect(sendAnswerReceivedEmail).not.toHaveBeenCalled();
     expect(locationOf(response)).toBe("/umfrage/t1?name=Guest+C");
   });
 
@@ -218,6 +262,7 @@ describe("survey confirm route", () => {
       const response = await action({ request: postRequest(finish), params });
 
       expect(locationOf(response)).toBe("/umfrage/t1?name=Guest+C&verfuegbar=s1&verfuegbar=s3");
+      expect(sendAnswerReceivedEmail).not.toHaveBeenCalled();
     },
   );
 });

@@ -195,6 +195,22 @@ export async function publishAppointment(
   return Boolean(published);
 }
 
+// Takes the SEQUENCE for the next calendar file of the appointment. One statement raises and reads
+// the counter, so concurrent mails never share a number; the row stays locked until the surrounding
+// transaction ends. Returns undefined for an unknown appointment.
+export async function nextCalendarSequence(
+  db: Kysely<Database>,
+  id: string,
+): Promise<number | undefined> {
+  const row = await db
+    .updateTable("appointment")
+    .set((eb) => ({ calendar_sequence: eb("calendar_sequence", "+", 1) }))
+    .where("id", "=", id)
+    .returning("calendar_sequence")
+    .executeTakeFirst();
+  return row?.calendar_sequence;
+}
+
 export type AppointmentSummary = {
   id: string;
   aktenzeichen: string;
