@@ -27,7 +27,9 @@ const published = {
   id: "d1",
   status: "open" as const,
   aktenzeichen: "574 C 65412/26",
-  slots: [{ start: new Date("2026-09-17T07:00:00Z"), end: new Date("2026-09-17T08:30:00Z") }],
+  slots: [
+    { id: "s1", start: new Date("2026-09-17T07:00:00Z"), end: new Date("2026-09-17T08:30:00Z") },
+  ],
 };
 
 const params = { appointmentId: "d1" };
@@ -66,7 +68,13 @@ describe("create-termin confirm route", () => {
         status: "draft",
         aktenzeichen: "574 C 65412/26",
         // 09:00 and 10:30 Berlin time in summer are 07:00 and 08:30 UTC.
-        slots: [{ start: new Date("2026-09-17T07:00:00Z"), end: new Date("2026-09-17T08:30:00Z") }],
+        slots: [
+          {
+            id: "s1",
+            start: new Date("2026-09-17T07:00:00Z"),
+            end: new Date("2026-09-17T08:30:00Z"),
+          },
+        ],
       });
 
       const result = await loader({ request: new Request(url), params });

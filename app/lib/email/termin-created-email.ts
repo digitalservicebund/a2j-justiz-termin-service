@@ -1,6 +1,9 @@
 import html from "html-template-tag";
 
-import type { TimeRange } from "../../adapters/appointments/appointments.server.ts";
+import type {
+  AppointmentSlot,
+  TimeRange,
+} from "../../adapters/appointments/appointments.server.ts";
 import {
   Button,
   COLOR,
@@ -39,9 +42,8 @@ const describeSlot = ({ start, end }: TimeRange) =>
   `${dayFormat.format(start)}, ${timeFormat.format(start)} – ${timeFormat.format(end)} Uhr`;
 
 export type TerminCreatedEmail = {
-  appointmentId: string;
   aktenzeichen: string;
-  slots: TimeRange[];
+  slots: AppointmentSlot[];
   terminUrl: string;
 };
 

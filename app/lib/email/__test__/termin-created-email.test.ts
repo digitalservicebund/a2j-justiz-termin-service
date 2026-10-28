@@ -5,13 +5,20 @@ import { renderTerminCreatedEmail } from "../termin-created-email";
 
 const terminUrl = "http://localhost:3000/overview/a1";
 const email = {
-  appointmentId: "a1",
   aktenzeichen: "574 C 65412/26",
   terminUrl,
   // 09:00 – 10:30 and 14:00 – 15:00 Berlin time in summer.
   slots: [
-    { start: new Date("2026-09-17T07:00:00Z"), end: new Date("2026-09-17T08:30:00Z") },
-    { start: new Date("2026-09-18T12:00:00Z"), end: new Date("2026-09-18T13:00:00Z") },
+    {
+      id: "slot-1",
+      start: new Date("2026-09-17T07:00:00Z"),
+      end: new Date("2026-09-17T08:30:00Z"),
+    },
+    {
+      id: "slot-2",
+      start: new Date("2026-09-18T12:00:00Z"),
+      end: new Date("2026-09-18T13:00:00Z"),
+    },
   ],
 };
 

@@ -16,7 +16,13 @@ const notification = {
   to: " Judge.A@Example.com ",
   appointmentId: "a 1",
   aktenzeichen: "574 C 65412/26",
-  slots: [{ start: new Date("2026-09-17T07:00:00Z"), end: new Date("2026-09-17T08:30:00Z") }],
+  slots: [
+    {
+      id: "slot-1",
+      start: new Date("2026-09-17T07:00:00Z"),
+      end: new Date("2026-09-17T08:30:00Z"),
+    },
+  ],
 };
 
 describe("sendTerminCreatedEmail", () => {

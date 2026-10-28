@@ -6,13 +6,12 @@ import { createTerminCalendar } from "../termin-calendar";
 
 const terminUrl = "http://localhost:3000/overview/a1";
 const slots = [
-  { start: new Date("2026-09-17T07:00:00Z"), end: new Date("2026-09-17T08:30:00Z") },
-  { start: new Date("2026-09-18T09:00:00Z"), end: new Date("2026-09-18T10:00:00Z") },
+  { id: "slot-1", start: new Date("2026-09-17T07:00:00Z"), end: new Date("2026-09-17T08:30:00Z") },
+  { id: "slot-2", start: new Date("2026-09-18T09:00:00Z"), end: new Date("2026-09-18T10:00:00Z") },
 ];
 
 function build(aktenzeichen = "574 C 65412/26") {
   return createTerminCalendar({
-    appointmentId: "a1",
     aktenzeichen,
     slots,
     terminUrl,
@@ -54,8 +53,25 @@ describe("createTerminCalendar", () => {
     }
   });
 
-  it("keeps the same UID for the same slot, so a re-issued calendar replaces the events", () => {
-    expect(uids(build())).toEqual(uids(build()));
+  it("uses the id of the time slot as UID, so a moved slot updates its event", () => {
+    expect(uids(build())).toEqual([
+      "slot-1@justiz-termin-service.invalid",
+      "slot-2@justiz-termin-service.invalid",
+    ]);
+
+    const moved = createTerminCalendar({
+      aktenzeichen: "574 C 65412/26",
+      slots: [
+        {
+          ...slots[0]!,
+          start: new Date("2026-09-19T07:00:00Z"),
+          end: new Date("2026-09-19T08:00:00Z"),
+        },
+        slots[1]!,
+      ],
+      terminUrl,
+    });
+    expect(uids(moved)).toEqual(uids(build()));
   });
 
   it("links to the Termin in the description and the URL property", () => {

@@ -4,14 +4,18 @@ import { requireSecret } from "../secrets.ts";
 import { createSmtpTransport } from "../smtp.ts";
 import { renderTerminCreatedEmail, type TerminCreatedEmail } from "./termin-created-email.ts";
 
-type Notification = Omit<TerminCreatedEmail, "terminUrl"> & { to: string };
+type Notification = Omit<TerminCreatedEmail, "terminUrl"> & { to: string; appointmentId: string };
 
 // Tells the judge that the Terminumfrage is open and attaches the tentative time slots.
 // A mail problem never undoes the published appointment, so failures are logged, not thrown.
-export async function sendTerminCreatedEmail({ to, ...termin }: Notification): Promise<boolean> {
+export async function sendTerminCreatedEmail({
+  to,
+  appointmentId,
+  ...termin
+}: Notification): Promise<boolean> {
   let transport: ReturnType<typeof createSmtpTransport> | undefined;
   try {
-    const terminUrl = `${requireEnv("BASE_URL")}/overview/${encodeURIComponent(termin.appointmentId)}`;
+    const terminUrl = `${requireEnv("BASE_URL")}/overview/${encodeURIComponent(appointmentId)}`;
     const { subject, text, html, attachments } = renderTerminCreatedEmail({
       ...termin,
       terminUrl,

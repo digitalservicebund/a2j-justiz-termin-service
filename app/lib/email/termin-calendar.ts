@@ -1,9 +1,8 @@
-import type { TimeRange } from "../../adapters/appointments/appointments.server.ts";
+import type { AppointmentSlot } from "../../adapters/appointments/appointments.server.ts";
 
 type TerminCalendar = {
-  appointmentId: string;
   aktenzeichen: string;
-  slots: TimeRange[];
+  slots: AppointmentSlot[];
   // Where the judge opens the Termin to make changes or confirm a slot.
   terminUrl: string;
   // Changes when the calendar is re-issued, so clients replace an earlier version.
@@ -46,7 +45,6 @@ export const TERMIN_CALENDAR_CONTENT_TYPE = "text/calendar; charset=utf-8; metho
 // One tentative event per proposed time slot, so the judge's calendar shows them as busy until a
 // slot is confirmed. Times are UTC, which spares the calendar a time zone definition.
 export function createTerminCalendar({
-  appointmentId,
   aktenzeichen,
   slots,
   terminUrl,
@@ -60,9 +58,10 @@ export function createTerminCalendar({
     `Termin öffnen, ändern oder bestätigen: ${terminUrl}`,
   ].join("\n");
 
-  const events = slots.flatMap(({ start, end }) => [
+  // The UID is the id of the time slot, not its time, so a moved slot updates its event.
+  const events = slots.flatMap(({ id, start, end }) => [
     "BEGIN:VEVENT",
-    `UID:${appointmentId}-${toUtcStamp(start)}@justiz-termin-service.invalid`,
+    `UID:${id}@justiz-termin-service.invalid`,
     `DTSTAMP:${stamp}`,
     `DTSTART:${toUtcStamp(start)}`,
     `DTEND:${toUtcStamp(end)}`,

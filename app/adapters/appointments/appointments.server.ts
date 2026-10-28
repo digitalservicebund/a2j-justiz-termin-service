@@ -9,8 +9,12 @@ export type TimeRange = { start: Date; end: Date };
 
 export type AppointmentDraft = { aktenzeichen: string; slots: TimeRange[] };
 
-export type Appointment = AppointmentDraft & {
+// A stored time slot. Its id stays the same as long as the slot is not replaced.
+export type AppointmentSlot = TimeRange & { id: string };
+
+export type Appointment = Omit<AppointmentDraft, "slots"> & {
   id: string;
+  slots: AppointmentSlot[];
   status: AppointmentStatus;
   // The secret of the universal survey link. Drafts have none; it is set when they are published.
   universalToken?: string | null;
@@ -122,7 +126,7 @@ export async function getAppointment(
     aktenzeichen: appointment.aktenzeichen,
     status: appointment.status,
     universalToken: appointment.universal_token,
-    slots: slots.map(toRange),
+    slots: slots.map((slot) => ({ id: slot.id, ...toRange(slot) })),
     confirmedSlot: confirmedWindow ?? (confirmed ? toRange(confirmed) : null),
   };
 }

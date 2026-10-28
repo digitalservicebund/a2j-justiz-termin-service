@@ -43,8 +43,16 @@ describe("create-termin created route", () => {
       aktenzeichen: "574 C 65412/26",
       // 10:00 and 14:00 Berlin time in summer are 08:00 and 12:00 UTC.
       slots: [
-        { start: new Date("2026-09-24T12:00:00Z"), end: new Date("2026-09-24T13:00:00Z") },
-        { start: new Date("2026-09-17T08:00:00Z"), end: new Date("2026-09-17T09:00:00Z") },
+        {
+          id: "s1",
+          start: new Date("2026-09-24T12:00:00Z"),
+          end: new Date("2026-09-24T13:00:00Z"),
+        },
+        {
+          id: "s2",
+          start: new Date("2026-09-17T08:00:00Z"),
+          end: new Date("2026-09-17T09:00:00Z"),
+        },
       ],
     });
 
