@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import type { Kysely } from "kysely";
 
 import type { AppointmentStatus, Database } from "../app/database/types.ts";
-import { expect, test } from "./fixtures.ts";
+import { expect, readMail, test } from "./fixtures.ts";
 
 // 15:30 to 18:00, 09:00 to 13:00 and 15:00 to 17:00 Berlin time in November are 14:30 to 17:00,
 // 08:00 to 12:00 and 14:00 to 16:00 UTC.
@@ -33,6 +33,12 @@ async function seedSurvey(
     .execute();
   return { id, token: universal_token!, slotIds: slots.map((slot) => slot.id) };
 }
+
+const ANSWER_SUBJECT = "Neue Antwort auf Ihre Terminumfrage";
+
+// The events of the calendar in a mail, with folded lines joined and the status of each.
+const eventStatuses = (calendar: string) =>
+  [...calendar.replace(/\r\n /g, "").matchAll(/^STATUS:(\w+)$/gm)].map(([, status]) => status);
 
 const FIRST = "Verfügbar am 9. November 2099, 15:30 bis 18:00";
 const SECOND = "Verfügbar am 13. November 2099, 09:00 bis 13:00";
@@ -111,6 +117,17 @@ test("a guest of the universal link gives a name and availabilities, reviews the
     .orderBy("time_slot.start_time")
     .execute();
   expect(responses.map((response) => response.status)).toEqual(["yes", "no", "yes"]);
+
+  // The judge is told who answered. The window Guest C is unavailable for is cancelled in the
+  // calendar; the others list Guest C as available.
+  const mail = await readMail(page.request, judge.email, ANSWER_SUBJECT);
+  expect(mail.text).toContain("Guest C hat auf Ihre Terminumfrage geantwortet.");
+  expect(mail.text).toContain("verfügbar: Guest C");
+  expect(mail.text).toContain("Diese Zeitfenster wurden abgesagt.");
+  const calendar = mail.attachments["terminumfrage.ics"]!;
+  expect(eventStatuses(calendar)).toEqual(["TENTATIVE", "CANCELLED", "TENTATIVE"]);
+  expect(calendar.replace(/\r\n /g, "")).toContain("Verfügbar: Guest C");
+  expect(calendar).toContain("SEQUENCE:1");
 });
 
 test("a guest who has no time at all is told that no option works", async ({ page, users, db }) => {
@@ -145,6 +162,94 @@ test("a guest who has no time at all is told that no option works", async ({ pag
     .where("participant.appointment_id", "=", id)
     .execute();
   expect(statuses.map((response) => response.status)).toEqual(["no", "no", "no"]);
+
+  // No window is left, so the appointment is cancelled and the judge is told.
+  const { status } = await db
+    .selectFrom("appointment")
+    .select("status")
+    .where("id", "=", id)
+    .executeTakeFirstOrThrow();
+  expect(status).toBe("cancelled");
+  const mail = await readMail(page.request, judge.email, ANSWER_SUBJECT);
+  expect(mail.text).toContain("Es ist kein Zeitfenster mehr möglich.");
+  expect(eventStatuses(mail.attachments["terminumfrage.ics"]!)).toEqual([
+    "CANCELLED",
+    "CANCELLED",
+    "CANCELLED",
+  ]);
+});
+
+test("every answer raises the calendar sequence, and the last window being ruled out cancels the appointment", async ({
+  page,
+  browser,
+  users,
+  db,
+}) => {
+  const judge = await users.create({ roles: ["richter"] });
+  const { id, token } = await seedSurvey(db, judge.id);
+  const sequence = async () =>
+    (
+      await db
+        .selectFrom("appointment")
+        .select(["calendar_sequence", "status"])
+        .where("id", "=", id)
+        .executeTakeFirstOrThrow()
+    ).calendar_sequence;
+
+  // Guest C can only attend the first window.
+  await page.goto(`/umfrage/${token}`);
+  await page.getByRole("textbox", { name: "Ihr Name" }).fill("Guest C");
+  await page.getByRole("checkbox", { name: FIRST }).check();
+  await page.getByRole("button", { name: "Weiter" }).click();
+  await page.getByRole("button", { name: "Terminumfrage abschließen" }).click();
+  await expect(page).toHaveURL(new RegExp(`/umfrage/${token}/naechste-schritte`));
+
+  const first = await readMail(page.request, judge.email, ANSWER_SUBJECT);
+  expect(first.attachments["terminumfrage.ics"]).toContain("SEQUENCE:1");
+  expect(eventStatuses(first.attachments["terminumfrage.ics"]!)).toEqual([
+    "TENTATIVE",
+    "CANCELLED",
+    "CANCELLED",
+  ]);
+  expect(await sequence()).toBe(1);
+
+  // Guest D is only offered the first window and cannot attend it either.
+  const guest = await browser.newPage();
+  await guest.goto(`/umfrage/${token}`);
+  await expect(guest.getByRole("checkbox", { name: /^Verfügbar/ })).toHaveCount(1);
+  await guest.getByRole("textbox", { name: "Ihr Name" }).fill("Guest D");
+  await guest.getByRole("checkbox", { name: "Kein Zeitfenster passt" }).check();
+  await guest.getByRole("button", { name: "Weiter" }).click();
+  await guest.getByRole("button", { name: "Terminumfrage abschließen" }).click();
+
+  // The guest who ruled out the last window still gets the sorry page, not a 404.
+  await expect(guest.getByRole("heading", { level: 1 })).toHaveText(
+    "Es gibt leider keine Terminoption, bei der alle Verfahrensbeteiligten Zeit haben.",
+  );
+  await guest.close();
+
+  await expect
+    .poll(async () => (await readMail(page.request, judge.email, ANSWER_SUBJECT)).attachments)
+    .toHaveProperty(["terminumfrage.ics"], expect.stringContaining("SEQUENCE:2"));
+  const second = await readMail(page.request, judge.email, ANSWER_SUBJECT);
+  expect(second.text).toContain("Guest D hat auf Ihre Terminumfrage geantwortet.");
+  expect(second.text).toContain("Es ist kein Zeitfenster mehr möglich.");
+  expect(eventStatuses(second.attachments["terminumfrage.ics"]!)).toEqual([
+    "CANCELLED",
+    "CANCELLED",
+    "CANCELLED",
+  ]);
+  expect(await sequence()).toBe(2);
+  expect(
+    (await db.selectFrom("appointment").select("status").where("id", "=", id).executeTakeFirst())
+      ?.status,
+  ).toBe("cancelled");
+
+  // The survey of a cancelled appointment keeps telling later guests the same.
+  await page.goto(`/umfrage/${token}`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Es gibt leider keine Terminoption, bei der alle Verfahrensbeteiligten Zeit haben.",
+  );
 });
 
 test("the form needs a name and an answer", async ({ page, users, db }) => {
@@ -272,6 +377,14 @@ test("a window another participant has no time for is not offered", async ({ pag
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Danke für das Angeben Ihrer Verfügbarkeiten.",
   );
+
+  // Guest E's earlier answer keeps the first window cancelled, Guest C cancels the second, and
+  // the third lists both guests.
+  const mail = await readMail(page.request, judge.email, ANSWER_SUBJECT);
+  const calendar = mail.attachments["terminumfrage.ics"]!;
+  expect(eventStatuses(calendar)).toEqual(["CANCELLED", "CANCELLED", "TENTATIVE"]);
+  expect(calendar.replace(/\r\n /g, "")).toContain("Verfügbar: Guest E\\, Guest C");
+  expect(calendar).toContain("SEQUENCE:1");
 });
 
 test("a guest sees the sorry page right away when every window is ruled out", async ({
@@ -336,7 +449,7 @@ test("answering a survey that closed in the meantime stores nothing", async ({
   await page.getByRole("button", { name: "Weiter" }).click();
   await expect(page).toHaveURL(new RegExp(`/umfrage/${token}/zusammenfassung`));
 
-  await db.updateTable("appointment").set({ status: "cancelled" }).where("id", "=", id).execute();
+  await db.updateTable("appointment").set({ status: "confirmed" }).where("id", "=", id).execute();
   await page.getByRole("button", { name: "Terminumfrage abschließen" }).click();
 
   await expect(page.getByText("404")).toBeVisible();

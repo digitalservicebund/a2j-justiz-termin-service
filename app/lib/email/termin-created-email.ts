@@ -1,9 +1,6 @@
 import html from "html-template-tag";
 
-import type {
-  AppointmentSlot,
-  TimeRange,
-} from "../../adapters/appointments/appointments.server.ts";
+import type { AppointmentSlot } from "../../adapters/appointments/appointments.server.ts";
 import {
   Button,
   COLOR,
@@ -11,7 +8,9 @@ import {
   Footer,
   Header,
   Layout,
+  Slots,
   TextRow,
+  describeSlot,
   logoAttachment,
   renderFooterText,
   renderHeaderText,
@@ -25,42 +24,14 @@ const CALENDAR_HINT =
   "Die vorgeschlagenen Zeitfenster sind als vorläufige Kalendereinträge angehängt, damit Sie sich diese Zeiten freihalten.";
 const CALENDAR_FILENAME = "terminumfrage.ics";
 
-const dayFormat = new Intl.DateTimeFormat("de-DE", {
-  timeZone: "Europe/Berlin",
-  weekday: "long",
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-});
-const timeFormat = new Intl.DateTimeFormat("de-DE", {
-  timeZone: "Europe/Berlin",
-  hour: "2-digit",
-  minute: "2-digit",
-});
-
-const describeSlot = ({ start, end }: TimeRange) =>
-  `${dayFormat.format(start)}, ${timeFormat.format(start)} – ${timeFormat.format(end)} Uhr`;
-
 export type TerminCreatedEmail = {
   aktenzeichen: string;
   slots: AppointmentSlot[];
   terminUrl: string;
+  // For the calendar file, see createTerminCalendar.
+  sequence: number;
+  organizerEmail: string;
 };
-
-function Slots(slots: string[]) {
-  return html`<tr>
-    <td style="padding:0 0 16px 0;">
-      <ul style="margin:0;padding:0 0 0 24px;">
-        $${slots
-          .map(
-            (slot) =>
-              html`<li style="font-size:18px;line-height:24px;color:${COLOR.text};">${slot}</li>`,
-          )
-          .join("")}
-      </ul>
-    </td>
-  </tr>`;
-}
 
 function Content({ aktenzeichen, terminUrl }: TerminCreatedEmail, slots: string[]) {
   return html`<tr>

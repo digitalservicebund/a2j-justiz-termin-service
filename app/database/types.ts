@@ -20,6 +20,8 @@ type AppointmentsTable = {
   // The confirmed window lies within the confirmed slot and may be shorter than it.
   confirmed_start_time: Date | string | null;
   confirmed_end_time: Date | string | null;
+  // Raised every time a calendar file is issued for the appointment.
+  calendar_sequence: Generated<number>;
   created_at: Generated<Date>;
   updated_at: Generated<Date>;
 };

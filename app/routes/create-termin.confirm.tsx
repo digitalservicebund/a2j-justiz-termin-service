@@ -1,6 +1,10 @@
 import { data, redirect, useLoaderData } from "react-router";
 
-import { getAppointment, publishAppointment } from "~/adapters/appointments/appointments.server";
+import {
+  getAppointment,
+  nextCalendarSequence,
+  publishAppointment,
+} from "~/adapters/appointments/appointments.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { getDb } from "~/database/database";
@@ -29,12 +33,14 @@ export async function loader({ request, params }: { request: Request } & Params)
 // Tells the judge that the Terminumfrage is open. The appointment is published either way.
 async function notifyJudge(userId: string, email: string, id: string) {
   const appointment = await getAppointment(getDb(), userId, id);
-  if (!appointment) return;
+  const sequence = await nextCalendarSequence(getDb(), id);
+  if (!appointment || sequence === undefined) return;
   await sendTerminCreatedEmail({
     to: email,
     appointmentId: appointment.id,
     aktenzeichen: appointment.aktenzeichen,
     slots: appointment.slots,
+    sequence,
   });
 }
 

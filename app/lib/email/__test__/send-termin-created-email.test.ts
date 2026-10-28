@@ -16,6 +16,7 @@ const notification = {
   to: " Judge.A@Example.com ",
   appointmentId: "a 1",
   aktenzeichen: "574 C 65412/26",
+  sequence: 4,
   slots: [
     {
       id: "slot-1",
@@ -42,6 +43,15 @@ describe("sendTerminCreatedEmail", () => {
       "terminumfrage.ics",
     );
     expect(close).toHaveBeenCalledOnce();
+
+    // The calendar names the sending address as organizer and carries the sequence it was given.
+    const calendar = message.attachments.find(
+      ({ filename }: { filename: string }) => filename === "terminumfrage.ics",
+    ).content;
+    expect(calendar).toContain(
+      'ORGANIZER;CN="Verhandlungstermin-Finder":mailto:sender@example.com',
+    );
+    expect(calendar).toContain("SEQUENCE:4");
   });
 
   it("logs a delivery failure instead of throwing, and still closes the transport", async () => {

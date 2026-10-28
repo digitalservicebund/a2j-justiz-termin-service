@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { createTerminCalendar } from "../termin-calendar";
 
 const terminUrl = "http://localhost:3000/overview/a1";
+const organizerEmail = "sender@example.com";
 const slots = [
   { id: "slot-1", start: new Date("2026-09-17T07:00:00Z"), end: new Date("2026-09-17T08:30:00Z") },
   { id: "slot-2", start: new Date("2026-09-18T09:00:00Z"), end: new Date("2026-09-18T10:00:00Z") },
@@ -15,11 +16,18 @@ function build(aktenzeichen = "574 C 65412/26") {
     aktenzeichen,
     slots,
     terminUrl,
+    sequence: 0,
+    organizerEmail,
     now: new Date("2026-09-01T12:00:00Z"),
   });
 }
 
 const parse = (body: string) => new ICAL.Component(ICAL.parse(body));
+
+const sequences = (body: string) =>
+  parse(body)
+    .getAllSubcomponents("vevent")
+    .map((event) => event.getFirstPropertyValue("sequence"));
 
 const uids = (body: string) =>
   parse(body)
@@ -58,6 +66,8 @@ describe("createTerminCalendar", () => {
 
     const moved = createTerminCalendar({
       aktenzeichen: "574 C 65412/26",
+      sequence: 0,
+      organizerEmail,
       slots: [
         {
           ...slots[0]!,
@@ -94,5 +104,73 @@ describe("createTerminCalendar", () => {
     expect(event!.getFirstPropertyValue("summary")).toBe(
       `Vorläufig: Verhandlung ${"ä".repeat(80)}`,
     );
+  });
+
+  it("starts at sequence 0 and takes the given sequence for a re-issued calendar", () => {
+    expect(sequences(build())).toEqual([0, 0]);
+    expect(
+      sequences(
+        createTerminCalendar({
+          aktenzeichen: "A 1",
+          slots,
+          terminUrl,
+          sequence: 3,
+          organizerEmail,
+        }),
+      ),
+    ).toEqual([3, 3]);
+  });
+
+  it("cancels a slot and lists who is available in the others", () => {
+    const body = createTerminCalendar({
+      aktenzeichen: "A 1",
+      terminUrl,
+      sequence: 1,
+      organizerEmail,
+      slots: [
+        { ...slots[0]!, availableNames: ["Guest A", "Guest B"] },
+        { ...slots[1]!, cancelled: true, availableNames: ["Guest A"] },
+      ],
+    });
+    const [open, cancelled] = parse(body).getAllSubcomponents("vevent");
+    expect(open!.getFirstPropertyValue("status")).toBe("TENTATIVE");
+    expect(open!.getFirstPropertyValue("description")).toContain("Verfügbar: Guest A, Guest B");
+    expect(cancelled!.getFirstPropertyValue("status")).toBe("CANCELLED");
+    expect(cancelled!.getFirstPropertyValue("description")).toMatch(/^Abgesagt: /);
+  });
+
+  it("shows a dash while nobody is available", () => {
+    const body = createTerminCalendar({
+      aktenzeichen: "A 1",
+      terminUrl,
+      sequence: 1,
+      organizerEmail,
+      slots: [{ ...slots[0]!, availableNames: [] }],
+    });
+    const [event] = parse(body).getAllSubcomponents("vevent");
+    expect(event!.getFirstPropertyValue("description")).toContain("Verfügbar: –");
+  });
+
+  it("names the service as organizer, with the sending address, on every event", () => {
+    const events = parse(build()).getAllSubcomponents("vevent");
+    for (const event of events) {
+      const organizer = event.getFirstProperty("organizer")!;
+      expect(organizer.getFirstValue()).toBe("mailto:sender@example.com");
+      expect(organizer.getParameter("cn")).toBe("Verhandlungstermin-Finder");
+      expect(event.getFirstProperty("attendee")).toBeNull();
+    }
+  });
+
+  it("marks open slots as tentative and cancelled ones as free for Outlook", () => {
+    const body = createTerminCalendar({
+      aktenzeichen: "A 1",
+      terminUrl,
+      sequence: 1,
+      organizerEmail,
+      slots: [slots[0]!, { ...slots[1]!, cancelled: true }],
+    });
+    const [open, cancelled] = parse(body).getAllSubcomponents("vevent");
+    expect(open!.getFirstPropertyValue("x-microsoft-cdo-busystatus")).toBe("TENTATIVE");
+    expect(cancelled!.getFirstPropertyValue("x-microsoft-cdo-busystatus")).toBe("FREE");
   });
 });

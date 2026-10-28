@@ -1,12 +1,17 @@
 import { data, redirect, useLoaderData } from "react-router";
 
-import { findSurvey, saveAnswer } from "~/adapters/appointments/survey.server";
+import {
+  findSurvey,
+  issueResponseOverview,
+  saveAnswer,
+} from "~/adapters/appointments/survey.server";
 import { AppShell } from "~/components/shared/AppShell";
 import {
   KernDescriptionList,
   KernDescriptionListItem,
 } from "~/components/shared/kern/KernDescriptionList";
 import { getDb } from "~/database/database";
+import { sendAnswerReceivedEmail } from "~/lib/email/send-answer-received-email";
 
 import { ReviewPage } from "./create-termin.review";
 import {
@@ -53,6 +58,13 @@ export async function loader({ request, params }: { request: Request } & Params)
   };
 }
 
+// Tells the judge about the answer and where the appointment stands now. The answer is saved
+// either way.
+async function notifyJudge(appointmentId: string, responder: { id: string; name: string }) {
+  const overview = await issueResponseOverview(getDb(), appointmentId);
+  if (overview) await sendAnswerReceivedEmail(overview, responder);
+}
+
 export async function action({ request, params }: { request: Request } & Params) {
   const { token, survey } = await loadSurvey({ params });
   if (survey.slots.length === 0) return redirect(surveyPath(token));
@@ -70,15 +82,17 @@ export async function action({ request, params }: { request: Request } & Params)
   });
   if (!result.success) return redirect(back);
 
+  const name = survey.participant?.name ?? result.name;
   const saved = await saveAnswer(getDb(), {
     appointmentId: survey.appointmentId,
-    name: survey.participant?.name ?? result.name,
+    name,
     participantId: survey.participant?.id,
     availableSlotIds: result.availableSlotIds,
   });
   // Another answer ruled a window out in the meantime, or the survey closed: the form shows
   // what is left, or the page is gone.
   if (!saved.saved) return redirect(back);
+  await notifyJudge(survey.appointmentId, { id: saved.participantId, name });
   return redirect(
     `${surveyPath(token, "/naechste-schritte")}?teilnehmer=${encodeURIComponent(saved.participantId)}`,
   );
