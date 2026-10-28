@@ -24,9 +24,9 @@ const request = () => new Request("http://localhost:3000/overview/a1");
 
 // 10:00 and 14:00 Berlin time in summer are 08:00 and 12:00 UTC.
 const slots = [
-  { start: new Date("2026-09-24T12:00:00Z"), end: new Date("2026-09-24T15:00:00Z") },
-  { start: new Date("2026-09-17T08:00:00Z"), end: new Date("2026-09-17T12:00:00Z") },
-  { start: new Date("2026-09-24T07:00:00Z"), end: new Date("2026-09-24T09:00:00Z") },
+  { id: "s1", start: new Date("2026-09-24T12:00:00Z"), end: new Date("2026-09-24T15:00:00Z") },
+  { id: "s2", start: new Date("2026-09-17T08:00:00Z"), end: new Date("2026-09-17T12:00:00Z") },
+  { id: "s3", start: new Date("2026-09-24T07:00:00Z"), end: new Date("2026-09-24T09:00:00Z") },
 ];
 
 describe("overview detail route", () => {

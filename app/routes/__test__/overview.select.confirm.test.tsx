@@ -32,7 +32,9 @@ const open = {
   id: "a1",
   status: "open" as const,
   aktenzeichen: "574 C 65412/26",
-  slots: [{ start: new Date("2026-11-09T14:30:00Z"), end: new Date("2026-11-09T17:00:00Z") }],
+  slots: [
+    { id: "s1", start: new Date("2026-11-09T14:30:00Z"), end: new Date("2026-11-09T17:00:00Z") },
+  ],
 };
 
 const locationOf = (response: unknown) => (response as Response).headers.get("Location");

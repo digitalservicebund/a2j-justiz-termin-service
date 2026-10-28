@@ -45,6 +45,8 @@ const range = (day: string) => ({
   end: new Date(`2099-01-${day.padStart(2, "0")}T09:00:00Z`),
 });
 
+const stored = (day: string) => ({ id: `s${day}`, ...range(day) });
+
 function postRequest(aktenzeichen: string, slots: SlotInput[], appointmentId?: string) {
   const form = new FormData();
   if (appointmentId) form.set("appointmentId", appointmentId);
@@ -100,7 +102,7 @@ describe("create-termin route", () => {
         id: "d1",
         status: "draft",
         aktenzeichen: "A 1",
-        slots: [range("5"), range("6")],
+        slots: [stored("5"), stored("6")],
       });
       const request = new Request("http://localhost/overview/new?entwurf=d1");
 
@@ -147,7 +149,7 @@ describe("create-termin route", () => {
         id: "d1",
         status: "open",
         aktenzeichen: "A 1",
-        slots: [range("5")],
+        slots: [stored("5")],
       });
       const request = new Request("http://localhost/overview/new?entwurf=d1");
 

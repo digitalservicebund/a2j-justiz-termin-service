@@ -29,8 +29,8 @@ const open = {
   status: "open" as const,
   aktenzeichen: "574 C 65412/26",
   slots: [
-    { start: new Date("2026-09-17T13:30:00Z"), end: new Date("2026-09-17T16:00:00Z") },
-    { start: new Date("2026-09-21T07:00:00Z"), end: new Date("2026-09-21T11:00:00Z") },
+    { id: "s1", start: new Date("2026-09-17T13:30:00Z"), end: new Date("2026-09-17T16:00:00Z") },
+    { id: "s2", start: new Date("2026-09-21T07:00:00Z"), end: new Date("2026-09-21T11:00:00Z") },
   ],
 };
 
