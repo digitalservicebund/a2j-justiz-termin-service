@@ -5,13 +5,15 @@ import {
   TODO_HREF,
   type Link,
 } from "../../components/shared/footer-links.ts";
-import { BMJV_LOGO_PNG_BASE64 } from "./bmjv-logo.ts";
+import LOGO_DATA_URI from "./bmjv-logo.png?inline";
 
 export type MagicLinkVariant = "signup" | "login";
 
 const PRODUCT_NAME = "Verhandlungstermin-Finder";
 const PRODUCT_TAGLINE = "Onlinedienste der Justiz";
 const LOGO_CID = "bmjv-logo@justiz-termin-service";
+// bmjv-logo.png is flattened onto white: clients that darken the page (Gmail, Outlook.com) leave
+// images alone, so the black lettering would otherwise vanish on a dark background.
 const LOGO_ALT = "Bundesministerium der Justiz und für Verbraucherschutz";
 const ADDRESS =
   "DigitalService GmbH des Bundes, Prinzessinnenstraße 8-14, 10969 Berlin, Berlin, Deutschland.";
@@ -91,9 +93,6 @@ function renderHtml(url: string, copy: (typeof COPY)[MagicLinkVariant]) {
 <noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
 <![endif]-->
 <style>
-  body { margin: 0; padding: 0; }
-  table { border-collapse: collapse; }
-  img { border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
   @media only screen and (max-width: 480px) {
     .stack { display: block !important; width: 100% !important; }
     .stack-logo { padding: 16px 0 0 0 !important; text-align: left !important; }
@@ -102,7 +101,7 @@ function renderHtml(url: string, copy: (typeof COPY)[MagicLinkVariant]) {
 </style>
 </head>
 <body style="margin:0;padding:0;background-color:${COLOR.white};">
-<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:${COLOR.white};">${escapeHtml(copy.heading)}${"&nbsp;&zwnj;".repeat(40)}</div>
+<div style="display:none;mso-hide:all;font-size:1px;line-height:1px;color:${COLOR.white};">${escapeHtml(copy.heading)}${"&nbsp;&zwnj;".repeat(40)}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${COLOR.white}" style="background-color:${COLOR.white};">
 <tr><td align="center" class="gutter" style="padding:24px 24px 24px 24px;">
 <!--[if mso]><table role="presentation" width="608" cellpadding="0" cellspacing="0" border="0" align="center"><tr><td><![endif]-->
@@ -115,7 +114,7 @@ function renderHtml(url: string, copy: (typeof COPY)[MagicLinkVariant]) {
 <p style="${textStyle(21, 32, COLOR.muted)}">${PRODUCT_TAGLINE}</p>
 </td>
 <td class="stack stack-logo" valign="top" align="right" width="181" style="padding:0 0 16px 0;">
-<img src="cid:${LOGO_CID}" width="181" height="99" alt="${escapeHtml(LOGO_ALT)}" style="display:block;width:181px;height:99px;font-family:${FONT};font-size:14px;line-height:18px;color:${COLOR.text};">
+<img src="cid:${LOGO_CID}" width="181" height="99" border="0" alt="${escapeHtml(LOGO_ALT)}" style="display:block;width:181px;height:99px;font-family:${FONT};font-size:14px;line-height:18px;color:${COLOR.text};">
 </td>
 </tr>
 </table>
@@ -127,7 +126,7 @@ function renderHtml(url: string, copy: (typeof COPY)[MagicLinkVariant]) {
 <tr><td style="padding:0 0 16px 0;">
 <table role="presentation" cellpadding="0" cellspacing="0" border="0">
 <tr><td align="center" bgcolor="${COLOR.action}" style="background-color:${COLOR.action};border-radius:4px;mso-padding-alt:12px 24px 12px 24px;">
-<a href="${href}" style="display:inline-block;padding:12px 24px 12px 24px;font-family:${FONT};font-size:18px;line-height:24px;font-weight:bold;color:${COLOR.white};text-decoration:none;border-radius:4px;">${escapeHtml(copy.button)}&nbsp;&nbsp;&rarr;</a>
+<a href="${href}" style="display:inline-block;padding:12px 24px 12px 24px;font-family:${FONT};font-size:18px;line-height:24px;font-weight:bold;color:${COLOR.white};text-decoration:none;">${escapeHtml(copy.button)}&nbsp;&nbsp;&rarr;</a>
 </td></tr>
 </table>
 </td></tr>
@@ -187,8 +186,7 @@ export function renderMagicLinkEmail(variant: MagicLinkVariant, url: string) {
     attachments: [
       {
         filename: "bmjv-logo.png",
-        content: BMJV_LOGO_PNG_BASE64,
-        encoding: "base64",
+        path: LOGO_DATA_URI,
         contentType: "image/png",
         cid: LOGO_CID,
         contentDisposition: "inline" as const,
