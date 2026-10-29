@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures.ts";
+import { baseURL, expect, test } from "./fixtures.ts";
 
 test("front page shows the login, the language links and the process steps", async ({ page }) => {
   await page.goto("/");
@@ -51,4 +51,30 @@ test("an unknown address is told about the pilot instead of receiving a link", a
   await expect(
     page.getByText("Während der Pilotierung können nur ausgewählte Gerichte"),
   ).toBeVisible();
+});
+
+test("front page has the meta tags for search engines and link previews", async ({
+  page,
+  request,
+}) => {
+  await page.goto("/");
+
+  await expect(page).toHaveTitle("Verhandlungstermin-Finder | Justiz-Services");
+  const description = page.locator('meta[name="description"]');
+  await expect(description).toHaveAttribute("content", /^Der Verhandlungstermin-Finder/);
+  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
+    "content",
+    "Verhandlungstermin-Finder | Justiz-Services",
+  );
+  await expect(page.locator('meta[property="og:description"]')).toHaveAttribute(
+    "content",
+    (await description.getAttribute("content")) ?? "",
+  );
+  await expect(page.locator('meta[property="og:type"]')).toHaveAttribute("content", "website");
+
+  const image = await page.locator('meta[property="og:image"]').getAttribute("content");
+  expect(image).toBe(`${baseURL}/og-image.png`);
+  const response = await request.get(image ?? "");
+  expect(response.status()).toBe(200);
+  expect(response.headers()["content-type"]).toBe("image/png");
 });

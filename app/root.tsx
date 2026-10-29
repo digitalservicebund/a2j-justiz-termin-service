@@ -14,11 +14,20 @@ import {
 import { AppShell } from "~/components/shared/AppShell";
 import { KernAlert } from "~/components/shared/kern/KernAlert";
 import { BASE_PATH } from "~/lib/base-path";
+import { requireEnv } from "~/lib/env";
+import { PAGE_TITLE, pageMeta } from "~/lib/page-meta";
 
 import type { Route } from "./+types/root";
 
 import "./app.css";
 import "./root.css";
+
+export function loader() {
+  return { baseUrl: requireEnv("BASE_URL") };
+}
+
+export const meta: Route.MetaFunction = ({ loaderData }) =>
+  loaderData ? pageMeta(loaderData.baseUrl) : [];
 
 export const links: Route.LinksFunction = () => [
   { rel: "icon", href: `${BASE_PATH}/favicon.ico`, sizes: "48x48" },
@@ -57,7 +66,7 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
-        <title>Justitz Termin Service</title>
+        <title>{PAGE_TITLE}</title>
       </head>
       <body>
         {children}
