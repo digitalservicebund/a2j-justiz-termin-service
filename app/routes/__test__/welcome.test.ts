@@ -62,12 +62,14 @@ describe("login action", () => {
       data: { sent: true, email: " User@Example.com " },
     });
     const forwarded: Request = handler.mock.calls[0]![0];
-    expect(forwarded.url).toBe("http://localhost/api/auth/sign-in/magic-link");
+    expect(forwarded.url).toBe(
+      "http://localhost/verhandlungstermin-finder/api/auth/sign-in/magic-link",
+    );
     expect(forwarded.headers.get("Origin")).toBe("http://localhost");
     expect(await forwarded.json()).toEqual({
       email: "user@example.com",
-      callbackURL: "/overview",
-      errorCallbackURL: "/",
+      callbackURL: "/verhandlungstermin-finder/overview",
+      errorCallbackURL: "/verhandlungstermin-finder/",
     });
   });
 
@@ -92,7 +94,7 @@ describe("login action", () => {
     expect(response.headers.get("Location")).toBe("/");
     expect(response.headers.getSetCookie()).toEqual(["session=; Max-Age=0; Path=/"]);
     const forwarded: Request = handler.mock.calls[0]![0];
-    expect(forwarded.url).toBe("http://localhost/api/auth/sign-out");
+    expect(forwarded.url).toBe("http://localhost/verhandlungstermin-finder/api/auth/sign-out");
     expect(forwarded.method).toBe("POST");
     expect(forwarded.headers.get("Origin")).toBe("http://localhost");
   });

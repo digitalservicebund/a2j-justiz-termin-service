@@ -40,7 +40,9 @@ describe("sendAnswerReceivedEmail", () => {
     const message = sendMail.mock.calls[0]![0];
     expect(message).toMatchObject({ from: "sender@example.com", to: "judge.a@example.com" });
     expect(message.text).toContain("Guest A hat auf Ihre Terminumfrage geantwortet.");
-    expect(message.text).toContain("http://localhost:3000/overview/a%201");
+    expect(message.text).toContain(
+      "http://localhost:3000/verhandlungstermin-finder/overview/a%201",
+    );
     expect(message.attachments.map(({ filename }: { filename: string }) => filename)).toContain(
       "terminumfrage.ics",
     );

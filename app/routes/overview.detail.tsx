@@ -16,6 +16,7 @@ import { KernIcon } from "~/components/shared/kern/KernIcon";
 import { KernLabel } from "~/components/shared/kern/KernLabel";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { getDb } from "~/database/database";
+import { BASE_PATH } from "~/lib/base-path";
 
 import { groupSlotsByDay, type DayWindows } from "./create-termin.review";
 import { rangeToSlot } from "./create-termin.slots";
@@ -58,7 +59,7 @@ export async function loader({ request, params }: { request: Request } & Params)
       state: "open" as const,
       selectUrl: `/overview/${encodeURIComponent(id)}/select`,
       days,
-      surveyUrl: `${origin}/umfrage/${encodeURIComponent(appointment.universalToken)}`,
+      surveyUrl: `${origin}${BASE_PATH}/umfrage/${encodeURIComponent(appointment.universalToken)}`,
     };
   }
 

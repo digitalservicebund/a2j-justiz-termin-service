@@ -16,6 +16,7 @@ import { KernLabel } from "~/components/shared/kern/KernLabel";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { ResultBanner } from "~/components/shared/ResultBanner";
 import { getDb } from "~/database/database";
+import { BASE_PATH } from "~/lib/base-path";
 
 import { createTerminBreadcrumbs, groupSlotsByDay } from "./create-termin.review";
 import { rangeToSlot } from "./create-termin.slots";
@@ -39,7 +40,7 @@ export async function loader({ request, params }: { request: Request } & Params)
   return {
     user,
     days: groupSlotsByDay(appointment.slots.map(rangeToSlot)),
-    surveyUrl: `${origin}/umfrage/${encodeURIComponent(appointment.universalToken)}`,
+    surveyUrl: `${origin}${BASE_PATH}/umfrage/${encodeURIComponent(appointment.universalToken)}`,
   };
 }
 

@@ -4,6 +4,7 @@ import { parseEnv } from "node:util";
 
 import { defineConfig, devices } from "@playwright/test";
 
+import { BASE_PATH } from "./app/lib/base-path.ts";
 import { requireEnv } from "./app/lib/env.ts";
 
 const environment = parseEnv(readFileSync(new URL("./.env.e2e", import.meta.url), "utf8"));
@@ -58,7 +59,7 @@ export default defineConfig({
   ],
   webServer: {
     command: "node server.js",
-    url: `${baseURL}/health`,
+    url: `${baseURL}${BASE_PATH}/health`,
     reuseExistingServer: false,
     timeout: 60_000,
     gracefulShutdown: { signal: "SIGTERM", timeout: 5_000 },

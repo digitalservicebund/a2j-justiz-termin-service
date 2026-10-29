@@ -1,5 +1,6 @@
 import type { Attachment } from "nodemailer/lib/mailer/index.js";
 
+import { BASE_PATH } from "../base-path.ts";
 import { requireEnv } from "../env.ts";
 import { logError } from "../logging.ts";
 import { requireSecret } from "../secrets.ts";
@@ -25,7 +26,7 @@ export async function deliverEmail({
 }: Delivery): Promise<boolean> {
   let transport: ReturnType<typeof createSmtpTransport> | undefined;
   try {
-    const terminUrl = `${requireEnv("BASE_URL")}/overview/${encodeURIComponent(appointmentId)}`;
+    const terminUrl = `${requireEnv("BASE_URL")}${BASE_PATH}/overview/${encodeURIComponent(appointmentId)}`;
     const from = requireSecret("smtp", "SMTP_USER");
     const { subject, text, html, attachments } = render({ terminUrl, from });
     transport = createSmtpTransport();

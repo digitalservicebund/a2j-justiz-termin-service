@@ -10,9 +10,14 @@ import { insertUser } from "../app/adapters/users/users.server.ts";
 import type { AuthUser, NewUserSchema } from "../app/core/domain/user.ts";
 import { getDb } from "../app/database/database.ts";
 import type { Database } from "../app/database/types.ts";
+import { AUTH_BASE_PATH, BASE_PATH } from "../app/lib/base-path.ts";
 import { requireEnv } from "../app/lib/env.ts";
 
-export const baseURL = requireEnv("BASE_URL");
+export { BASE_PATH };
+// Where the app is served, to compare with absolute URLs, e.g. `${baseURL}/overview`.
+export const baseURL = `${requireEnv("BASE_URL")}${BASE_PATH}`;
+// The start page, which the app reaches both with and without a trailing slash.
+export const startPageURL = new RegExp(`^${baseURL.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/?$`);
 const mailpitURL = requireEnv("MAILPIT_URL");
 
 type NewUser = z.infer<typeof NewUserSchema>;
@@ -93,8 +98,8 @@ export async function readMagicLink(request: APIRequestContext, email: string): 
   const link = mail.Text.match(/https?:\/\/[^\s]+/)?.[0];
   expect(link, "email contains a magic-link verification URL").toBeTruthy();
   const url = new URL(link!);
-  expect(url.origin).toBe(baseURL);
-  expect(url.pathname).toBe("/api/auth/magic-link/verify");
+  expect(url.origin).toBe(requireEnv("BASE_URL"));
+  expect(url.pathname).toBe(`${AUTH_BASE_PATH}/magic-link/verify`);
   return url.href;
 }
 
@@ -126,15 +131,15 @@ export async function readMail(request: APIRequestContext, email: string, subjec
 }
 
 export async function issueMagicLink(request: APIRequestContext, email: string): Promise<string> {
-  const response = await request.post("/api/auth/sign-in/magic-link", {
-    data: { email, callbackURL: "/overview", errorCallbackURL: "/" },
+  const response = await request.post(`${AUTH_BASE_PATH}/sign-in/magic-link`, {
+    data: { email, callbackURL: `${BASE_PATH}/overview`, errorCallbackURL: `${BASE_PATH}/` },
   });
   expect(response.status()).toBe(200);
   return readMagicLink(request, email.toLowerCase());
 }
 
 export async function signIn(page: Page, user: AuthUser, options = { uppercase: false }) {
-  await page.goto("/");
+  await page.goto(`${BASE_PATH}/`);
   await page
     .getByRole("textbox", { name: "E-Mail-Adresse" })
     .fill(options.uppercase ? user.email.toUpperCase() : user.email);

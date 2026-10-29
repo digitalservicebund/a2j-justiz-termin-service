@@ -80,7 +80,7 @@ describe("overview detail route", () => {
     expect(result).toMatchObject({
       state: "open",
       aktenzeichen: "574 C 65412/26",
-      surveyUrl: "http://localhost:3000/umfrage/tok1",
+      surveyUrl: "http://localhost:3000/verhandlungstermin-finder/umfrage/tok1",
     });
     expect("days" in result && result.days).toHaveLength(2);
   });

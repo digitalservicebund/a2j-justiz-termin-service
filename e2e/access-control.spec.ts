@@ -1,4 +1,4 @@
-import { expect, signIn, test } from "./fixtures.ts";
+import { BASE_PATH, expect, signIn, test } from "./fixtures.ts";
 
 test("anonymous users cannot read protected pages or invoke administration actions", async ({
   request,
@@ -6,12 +6,12 @@ test("anonymous users cannot read protected pages or invoke administration actio
   db,
 }) => {
   const user = await users.create();
-  for (const path of ["/admin/users", "/overview"]) {
+  for (const path of [`${BASE_PATH}/admin/users`, `${BASE_PATH}/overview`]) {
     const response = await request.get(path, { maxRedirects: 0 });
     expect(response.status()).toBe(302);
-    expect(response.headers().location).toBe("/");
+    expect(response.headers().location).toBe(BASE_PATH);
   }
-  const response = await request.post("/admin/users", {
+  const response = await request.post(`${BASE_PATH}/admin/users`, {
     form: { intent: "delete", id: user.id },
     maxRedirects: 0,
   });
@@ -29,20 +29,22 @@ for (const role of ["richter", "klaeger", "beklagter"] as const) {
   }) => {
     const user = await users.create({ roles: [role] });
     await signIn(page, user);
-    expect((await page.request.get("/admin/users")).status()).toBe(403);
+    expect((await page.request.get(`${BASE_PATH}/admin/users`)).status()).toBe(403);
     expect(
       (
-        await page.request.post("/admin/users", { form: { intent: "delete", id: user.id } })
+        await page.request.post(`${BASE_PATH}/admin/users`, {
+          form: { intent: "delete", id: user.id },
+        })
       ).status(),
     ).toBe(403);
-    const escalation = await page.request.post("/api/auth/update-user", {
+    const escalation = await page.request.post(`${BASE_PATH}/api/auth/update-user`, {
       data: { name: "Escalated", roles: ["admin"] },
     });
     expect(escalation.status()).toBe(400);
     expect(
       await db.selectFrom("user").select("roles").where("id", "=", user.id).executeTakeFirst(),
     ).toEqual({ roles: [role] });
-    const profileUpdate = await page.request.post("/api/auth/update-user", {
+    const profileUpdate = await page.request.post(`${BASE_PATH}/api/auth/update-user`, {
       data: { name: "Updated profile" },
     });
     expect(profileUpdate.status()).toBe(200);
@@ -55,5 +57,5 @@ for (const role of ["richter", "klaeger", "beklagter"] as const) {
 test("admin-only users can manage users", async ({ page, users }) => {
   const admin = await users.create({ roles: ["admin"] });
   await signIn(page, admin);
-  expect((await page.request.get("/admin/users")).status()).toBe(200);
+  expect((await page.request.get(`${BASE_PATH}/admin/users`)).status()).toBe(200);
 });

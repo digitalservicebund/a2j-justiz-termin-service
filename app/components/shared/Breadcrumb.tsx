@@ -1,3 +1,5 @@
+import { Link } from "react-router";
+
 import { KernIcon, type KernIconName } from "./kern/KernIcon";
 import { KernLink } from "./kern/KernLink";
 
@@ -32,9 +34,10 @@ export function Breadcrumb({ items, className }: Readonly<BreadcrumbProps>) {
               )}
               {href && !isCurrent ? (
                 <KernLink
+                  as={Link}
                   size="small"
                   className="kern-link--no-visited-state"
-                  href={href}
+                  to={href}
                   aria-label={icon ? label : undefined}
                 >
                   {icon ? <KernIcon name={icon} /> : label}

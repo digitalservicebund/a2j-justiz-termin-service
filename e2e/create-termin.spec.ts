@@ -2,7 +2,7 @@ import type { Page } from "@playwright/test";
 import type { Kysely } from "kysely";
 
 import type { Database } from "../app/database/types.ts";
-import { expect, readMail, signIn, test } from "./fixtures.ts";
+import { BASE_PATH, expect, readMail, signIn, test } from "./fixtures.ts";
 
 const TOO_FEW = "Geben Sie mindestens zwei Zeitfenster an.";
 
@@ -39,14 +39,14 @@ async function slotCount(db: Kysely<Database>, appointmentId: string) {
   return Number(count);
 }
 
-const appointmentId = (page: Page) => new URL(page.url()).pathname.split("/")[2]!;
+const appointmentId = (page: Page) => new URL(page.url()).pathname.split("/")[3]!;
 
 test.beforeEach(async ({ page, users }) => {
   const judge = await users.create({ roles: ["richter"] });
   judgeId = judge.id;
   judgeEmail = judge.email;
   await signIn(page, judge);
-  await page.goto("/overview/new");
+  await page.goto(`${BASE_PATH}/overview/new`);
   await expect(page.getByRole("heading", { name: "Verhandlungsdaten" })).toBeVisible();
 });
 
@@ -129,7 +129,7 @@ test("a richter creates a Terminumfrage with four time slots next week", async (
     judgeEmail,
     "Terminumfrage erstellt: Wir warten auf Rückmeldungen",
   );
-  const terminUrl = new URL(`/overview/${id}`, page.url()).href;
+  const terminUrl = new URL(`${BASE_PATH}/overview/${id}`, page.url()).href;
   expect(mail.text).toContain(terminUrl);
   const calendar = mail.attachments["terminumfrage.ics"]!;
   expect(calendar.match(/BEGIN:VEVENT/g)).toHaveLength(4);
@@ -261,7 +261,7 @@ test("only a richter can open the page", async ({ page, users }) => {
   await page.context().clearCookies();
   await signIn(page, await users.create({ roles: ["klaeger"] }));
 
-  const response = await page.goto("/overview/new");
+  const response = await page.goto(`${BASE_PATH}/overview/new`);
 
   expect(response?.status()).toBe(403);
 });
