@@ -83,6 +83,14 @@ test("unknown addresses are told they are not allowed and get no email or accoun
     "href",
     "mailto:a2j-jts@digitalservice.bund.de",
   );
+  // The contact link keeps the link color instead of inheriting the message text color.
+  const linkColor = await page
+    .getByRole("link", { name: "a2j-jts@digitalservice.bund.de" })
+    .evaluate((element) => getComputedStyle(element).color);
+  const textColor = await page
+    .locator("#login-email-error")
+    .evaluate((element) => getComputedStyle(element).color);
+  expect(linkColor).not.toBe(textColor);
   await expect(page.getByRole("textbox", { name: "E-Mail-Adresse" })).toHaveValue(email);
   await expect(page.getByRole("textbox", { name: "E-Mail-Adresse" })).toHaveAttribute(
     "aria-invalid",

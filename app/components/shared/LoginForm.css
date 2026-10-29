@@ -52,10 +52,6 @@
   cursor: pointer;
 }
 
-.login-form__message .kern-error a {
-  color: inherit;
-}
-
 .login-form__sent .kern-icon {
   background-color: var(--kern-color-feedback-success);
 }
