@@ -1,3 +1,5 @@
+import "./KernAlert.css";
+
 type AlertType = "success" | "error" | "warning" | "info";
 
 type AlertProps = {
@@ -28,7 +30,7 @@ export function KernAlert({ type, title, message, children }: Readonly<AlertProp
     <div className={`kern-alert ${typeClasses[type]}`} role="alert">
       <div className="kern-alert__header">
         <span className={`kern-icon ${iconClasses[type]}`} aria-hidden="true"></span>
-        <span className="kern-title">{title}</span>
+        <span className="kern-title kern-title--small">{title}</span>
       </div>
       {showBody && (
         <div className="kern-alert__body">

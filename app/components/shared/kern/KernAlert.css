@@ -1,0 +1,11 @@
+/* The Figma design shows the alert icon at the default icon size, smaller than KERN's alert default. */
+.kern-alert__header .kern-icon {
+  width: var(--kern-metric-dimension-default);
+  min-width: var(--kern-metric-dimension-default);
+  height: var(--kern-metric-dimension-default);
+  min-height: var(--kern-metric-dimension-default);
+}
+
+.kern-alert__header .kern-title {
+  padding-block: 0;
+}

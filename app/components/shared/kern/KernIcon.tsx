@@ -1,3 +1,7 @@
+import "./KernIcon.css";
+
+// "add-box", "checklist-rtl" and "event" are not standard KERN icons; they are implemented in JTS
+// (see KernIcon.css).
 export type KernIconName =
   | "home"
   | "arrow-up"
@@ -18,6 +22,9 @@ export type KernIconName =
   | "easy-language"
   | "autorenew"
   | "add"
+  | "add-box"
+  | "checklist-rtl"
+  | "event"
   | "close"
   | "delete"
   | "search"

@@ -7,7 +7,6 @@ import { AppShell } from "~/components/shared/AppShell";
 import { DefaultPage } from "~/components/shared/DefaultPage";
 import { KernAlert } from "~/components/shared/kern/KernAlert";
 import { KernBody } from "~/components/shared/kern/KernBody";
-import { KernButton } from "~/components/shared/kern/KernButton";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernIcon, type KernIconName } from "~/components/shared/kern/KernIcon";
 import { LoginForm } from "~/components/shared/LoginForm";
@@ -70,10 +69,10 @@ export async function action({ request }: { request: Request }) {
 }
 
 const steps: Array<{ icon: KernIconName; label: string }> = [
-  { icon: "calendar-today", label: "Richterschaft erstellt die Terminumfrage" },
-  { icon: "checklist", label: "Verfahrensbeteiligte teilen ihre Verfügbarkeit" },
-  { icon: "success", label: "Richterschaft wählt einen passenden Termin aus" },
-  { icon: "mail", label: "Eine passende Ladung wird verschickt" },
+  { icon: "add-box", label: "Das Gericht erstellt die Terminumfrage" },
+  { icon: "checklist-rtl", label: "Verfahrensbeteiligte teilen ihre Verfügbarkeit" },
+  { icon: "event", label: "Das Gericht wählt einen passenden Termin aus" },
+  { icon: "mail", label: "Die Servicestelle verschickt die Ladung" },
 ];
 
 const CONTACT_EMAIL = "a2j-jts@digitalservice.bund.de";
@@ -140,8 +139,10 @@ export default function Welcome() {
               Der Onlinedienst befindet sich in der Testphase (Pilotprojekt)
             </summary>
             <KernBody>
-              Dieser Dienst wird derzeit gemeinsam mit Nutzenden erprobt. Funktionen und Inhalte
-              können sich noch ändern.
+              Mit diesem Projekt wird ein Onlinedienst für die Terminabstimmung zwischen Gerichten
+              und Verfahrensbeteiligten erprobt. Die Erstellung einer Terminumfrage ist noch nicht
+              für alle Gerichte möglich. Verfahrensbeteiligte können den Onlinedienst aktuell nur
+              auf Einladung nutzen.
             </KernBody>
           </details>
         </DefaultPage>
@@ -174,20 +175,6 @@ export default function Welcome() {
               Jetzt für die Teilnahme anmelden
             </a>
           </KernAlert>
-
-          <section aria-labelledby="welcome-feedback" className="welcome__feedback">
-            <KernHeading size="title-small" level={2} id="welcome-feedback">
-              Hat Ihnen diese Seite geholfen?
-            </KernHeading>
-            <div className="welcome__feedback-actions">
-              <KernButton type="button" style="secondary">
-                Ja
-              </KernButton>
-              <KernButton type="button" style="secondary">
-                Nein
-              </KernButton>
-            </div>
-          </section>
         </div>
       </DefaultPage>
     </AppShell>

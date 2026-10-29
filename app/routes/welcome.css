@@ -5,7 +5,7 @@
 .welcome__hero-content {
   display: grid;
   gap: 0;
-  padding-block: var(--kern-metric-space-7x-large) var(--kern-metric-space-6x-large);
+  padding-block: var(--kern-metric-space-6x-large);
 }
 
 .welcome__hero-content h1,
@@ -15,7 +15,8 @@
 
 .welcome__pilot {
   background-color: var(--kern-color-feedback-warning-background);
-  padding-block: var(--kern-metric-space-large);
+  padding-block: calc(var(--kern-metric-space-large) + var(--kern-metric-space-x-small))
+    var(--kern-metric-space-x-large);
 }
 
 .welcome__pilot-summary {
@@ -27,44 +28,39 @@
   gap: var(--kern-metric-space-small);
 }
 
-.welcome__sections {
-  display: grid;
-  gap: var(--kern-metric-space-5x-large);
-  padding-top: var(--kern-metric-space-5x-large);
+/* Align the text with the summary text, which sits to the right of the toggle icon. */
+.welcome__pilot details > p {
+  padding-block: 0;
+  padding-inline-start: var(--kern-metric-space-x-large);
 }
 
-.welcome__sections > section:first-child {
-  margin-bottom: var(--kern-metric-space-5x-large);
+.welcome__sections {
+  display: grid;
+  gap: var(--kern-metric-space-6x-large);
+  padding-block: calc(var(--kern-metric-space-6x-large) + var(--kern-metric-space-2x-large));
 }
 
 .welcome__steps {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  gap: var(--kern-metric-space-large);
-  margin: var(--kern-metric-space-x-large) 0 0;
+  gap: var(--kern-metric-space-3x-large);
+  margin: var(--kern-metric-space-default) 0 0;
   padding: 0;
   list-style: none;
 }
 
 .welcome__step {
-  display: grid;
-  align-content: start;
-  gap: var(--kern-metric-space-small);
-}
-
-.welcome__feedback {
-  display: grid;
-  gap: var(--kern-metric-space-default);
-  padding: var(--kern-metric-space-default);
-  border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border-level-1);
-  border-radius: var(--kern-metric-border-radius-default);
-}
-
-.welcome__feedback h2 {
-  margin: 0;
-}
-
-.welcome__feedback-actions {
   display: flex;
+  align-items: center;
   gap: var(--kern-metric-space-default);
+}
+
+.welcome__step .kern-title {
+  padding-block: 0;
+}
+
+.welcome__step .kern-icon {
+  width: 2.5rem;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  min-height: 2.5rem;
 }
