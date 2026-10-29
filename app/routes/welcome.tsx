@@ -1,14 +1,16 @@
+import type { ReactNode } from "react";
 import { data, redirect, useActionData, useLoaderData } from "react-router";
 import { z } from "zod";
 
 import { getSessionUser } from "~/adapters/session/session";
 import { canSignIn } from "~/adapters/users/users.server";
+import { A2JIcon } from "~/components/shared/a2j/A2JIcon";
 import { AppShell } from "~/components/shared/AppShell";
 import { DefaultPage } from "~/components/shared/DefaultPage";
 import { KernAlert } from "~/components/shared/kern/KernAlert";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
-import { KernIcon, type KernIconName } from "~/components/shared/kern/KernIcon";
+import { KernIcon } from "~/components/shared/kern/KernIcon";
 import { LoginForm } from "~/components/shared/LoginForm";
 import { getDb } from "~/database/database";
 import { getAuth } from "~/lib/auth.server";
@@ -68,11 +70,23 @@ export async function action({ request }: { request: Request }) {
   return data({ sent: true, email: submitted });
 }
 
-const steps: Array<{ icon: KernIconName; label: string }> = [
-  { icon: "add-box", label: "Das Gericht erstellt die Terminumfrage" },
-  { icon: "checklist-rtl", label: "Verfahrensbeteiligte teilen ihre Verfügbarkeit" },
-  { icon: "event", label: "Das Gericht wählt einen passenden Termin aus" },
-  { icon: "mail", label: "Die Servicestelle verschickt die Ladung" },
+const steps: Array<{ icon: ReactNode; label: string }> = [
+  {
+    icon: <A2JIcon name="add-box" size="x-large" />,
+    label: "Das Gericht erstellt die Terminumfrage",
+  },
+  {
+    icon: <A2JIcon name="checklist-rtl" size="x-large" />,
+    label: "Verfahrensbeteiligte teilen ihre Verfügbarkeit",
+  },
+  {
+    icon: <A2JIcon name="event" size="x-large" />,
+    label: "Das Gericht wählt einen passenden Termin aus",
+  },
+  {
+    icon: <KernIcon name="mail" size="x-large" />,
+    label: "Die Servicestelle verschickt die Ladung",
+  },
 ];
 
 const CONTACT_EMAIL = "a2j-jts@digitalservice.bund.de";
@@ -157,7 +171,7 @@ export default function Welcome() {
             <ol className="welcome__steps">
               {steps.map(({ icon, label }) => (
                 <li key={label} className="welcome__step">
-                  <KernIcon name={icon} size="x-large" />
+                  {icon}
                   <span className="kern-title">{label}</span>
                 </li>
               ))}

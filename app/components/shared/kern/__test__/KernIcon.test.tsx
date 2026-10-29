@@ -9,11 +9,6 @@ describe("KernIcon", () => {
     expect(container.firstChild).toHaveClass("kern-icon--check");
   });
 
-  it("supports the non-standard add-box icon", () => {
-    const { container } = render(<KernIcon name="add-box" />);
-    expect(container.firstChild).toHaveClass("kern-icon--add-box");
-  });
-
   it("uses default size when none is provided", () => {
     const { container } = render(<KernIcon name="check" />);
     expect(container.firstChild).toHaveClass("kern-icon--default");
