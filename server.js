@@ -26,6 +26,13 @@ app.set("trust proxy", 1);
 app.use(compression());
 app.disable("x-powered-by");
 
+// We cannot serve a robots.txt at the host root, so keep search engines from indexing any response
+// (pages, assets, feeds) with a header instead. Crawlers can only honour it while they may fetch the page.
+app.use((_req, res, next) => {
+  res.set("X-Robots-Tag", "noindex, nofollow");
+  next();
+});
+
 // LEGACY: serves the old /health* URLs, see legacy-health.ts for how to remove it.
 app.use(rewriteLegacyHealthPath);
 // Convenience for visitors of the bare host. Everything else outside BASE_PATH is a 404.

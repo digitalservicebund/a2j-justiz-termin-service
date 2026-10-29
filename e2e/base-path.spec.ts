@@ -17,6 +17,19 @@ test("the bare host redirects to the app, everything else outside the base path 
   }
 });
 
+test("every response tells search engines not to index it", async ({ request }) => {
+  for (const path of [
+    "/",
+    `${BASE_PATH}/`,
+    `${BASE_PATH}/health`,
+    `${BASE_PATH}/favicon.svg`,
+    "/missing",
+  ]) {
+    const response = await request.get(path, { maxRedirects: 0 });
+    expect(response.headers()["x-robots-tag"], path).toBe("noindex, nofollow");
+  }
+});
+
 test("pages load their assets and icons from under the base path", async ({ page }) => {
   const failed: string[] = [];
   const assets: string[] = [];
