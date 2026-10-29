@@ -5,6 +5,8 @@ import morgan from "morgan";
 import { getDb } from "./app/database/database.ts";
 import { migrateToLatest } from "./app/database/migrate.ts";
 import { accessLogFormat } from "./app/lib/access-log.ts";
+import { BASE_PATH } from "./app/lib/base-path.ts";
+import { rewriteLegacyHealthPath } from "./app/lib/legacy-health.ts";
 
 // Short-circuit the type-checking of the built output.
 const BUILD_PATH = "./build/server/index.js";
@@ -23,6 +25,11 @@ const app = express();
 app.set("trust proxy", 1);
 app.use(compression());
 app.disable("x-powered-by");
+
+// LEGACY: serves the old /health* URLs, see legacy-health.ts for how to remove it.
+app.use(rewriteLegacyHealthPath);
+// Convenience for visitors of the bare host. Everything else outside BASE_PATH is a 404.
+app.get("/", (_req, res) => res.redirect(302, `${BASE_PATH}/`));
 
 if (DEVELOPMENT) {
   // console.log("Starting development server"); // TODO logging
@@ -45,9 +52,12 @@ if (DEVELOPMENT) {
   });
 } else {
   // console.log("Starting production server"); // TODO logging
-  app.use("/assets", express.static("build/client/assets", { immutable: true, maxAge: "1y" }));
+  app.use(
+    `${BASE_PATH}/assets`,
+    express.static("build/client/assets", { immutable: true, maxAge: "1y" }),
+  );
   app.use(morgan(accessLogFormat));
-  app.use(express.static("build/client", { maxAge: "1h" }));
+  app.use(BASE_PATH, express.static("build/client", { maxAge: "1h" }));
   app.use(await import(BUILD_PATH).then((mod) => mod.app));
 }
 

@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import type { Kysely } from "kysely";
 
 import type { Database } from "../app/database/types.ts";
-import { expect, signIn, test } from "./fixtures.ts";
+import { BASE_PATH, expect, signIn, test } from "./fixtures.ts";
 
 // 15:30 to 18:00 and 09:00 to 13:00 Berlin time in November are 14:30 to 17:00 and 08:00 to 12:00 UTC.
 async function seedOpen(db: Kysely<Database>, userId: string) {
@@ -38,7 +38,7 @@ test("a judge chooses a shorter window, reviews it and confirms the Termin", asy
   const id = await seedOpen(db, user.id);
 
   await signIn(page, user);
-  await page.goto(`/overview/${id}`);
+  await page.goto(`${BASE_PATH}/overview/${id}`);
   await page.getByRole("link", { name: "Termin auswählen" }).click();
 
   await expect(page).toHaveURL(new RegExp(`/overview/${id}/select$`));
@@ -99,7 +99,7 @@ test("a judge chooses a shorter window, reviews it and confirms the Termin", asy
   );
 
   // Once confirmed, the choice is closed.
-  await page.goto(`/overview/${id}/select`);
+  await page.goto(`${BASE_PATH}/overview/${id}/select`);
   await expect(page).toHaveURL(new RegExp(`/overview/${id}$`));
 });
 
@@ -108,7 +108,7 @@ test("choosing a Termin needs a window and a valid start time", async ({ page, u
   const id = await seedOpen(db, user.id);
 
   await signIn(page, user);
-  await page.goto(`/overview/${id}/select`);
+  await page.goto(`${BASE_PATH}/overview/${id}/select`);
 
   await page.getByRole("button", { name: "Weiter" }).click();
   await expect(page.getByText("Wählen Sie ein Zeitfenster aus.")).toBeVisible();
@@ -133,7 +133,7 @@ test("the review sends a made-up choice back to the selection", async ({ page, u
   const id = await seedOpen(db, user.id);
 
   await signIn(page, user);
-  await page.goto(`/overview/${id}/select/confirm?fenster=0&stunde=19&minute=0`);
+  await page.goto(`${BASE_PATH}/overview/${id}/select/confirm?fenster=0&stunde=19&minute=0`);
 
   await expect(page).toHaveURL(
     new RegExp(`/overview/${id}/select\\?fenster=0&stunde=19&minute=0$`),
@@ -155,7 +155,7 @@ test("another judge cannot choose a Termin for someone else's survey", async ({
   await signIn(page, other);
 
   for (const path of ["select", "select/confirm?fenster=0&stunde=16&minute=0", "selected"]) {
-    const response = await page.goto(`/overview/${id}/${path}`);
+    const response = await page.goto(`${BASE_PATH}/overview/${id}/${path}`);
     expect(response?.status()).toBe(404);
   }
 });

@@ -15,6 +15,7 @@ import { KernIcon } from "~/components/shared/kern/KernIcon";
 import { LoginForm } from "~/components/shared/LoginForm";
 import { getDb } from "~/database/database";
 import { getAuth } from "~/lib/auth.server";
+import { AUTH_BASE_PATH, BASE_PATH } from "~/lib/base-path";
 import { logError } from "~/lib/logging";
 
 import "./welcome.css";
@@ -28,7 +29,7 @@ export async function action({ request }: { request: Request }) {
   const formData = await request.formData();
   if (formData.get("intent") === "logout") {
     const response = await getAuth().handler(
-      new Request(new URL("/api/auth/sign-out", request.url), {
+      new Request(new URL(`${AUTH_BASE_PATH}/sign-out`, request.url), {
         method: "POST",
         headers: request.headers,
       }),
@@ -48,13 +49,13 @@ export async function action({ request }: { request: Request }) {
   headers.set("Content-Type", "application/json");
   headers.delete("Content-Length");
   const response = await getAuth().handler(
-    new Request(new URL("/api/auth/sign-in/magic-link", request.url), {
+    new Request(new URL(`${AUTH_BASE_PATH}/sign-in/magic-link`, request.url), {
       method: "POST",
       headers,
       body: JSON.stringify({
         email: result.data,
-        callbackURL: "/overview",
-        errorCallbackURL: "/",
+        callbackURL: `${BASE_PATH}/overview`,
+        errorCallbackURL: `${BASE_PATH}/`,
       }),
     }),
   );

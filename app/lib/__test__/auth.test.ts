@@ -41,6 +41,17 @@ describe("magic-link configuration", () => {
     expect(options.baseURL).toBe("http://localhost:3000");
   });
 
+  it("serves Better Auth under the base path", () => {
+    expect(options.basePath).toBe("/verhandlungstermin-finder/api/auth");
+  });
+
+  it("prefixes and scopes the cookies to this app", () => {
+    expect(options.advanced).toMatchObject({
+      cookiePrefix: "jts",
+      defaultCookieAttributes: { path: "/verhandlungstermin-finder" },
+    });
+  });
+
   it("stores only hashed, short-lived tokens", () => {
     expect(plugin).toMatchObject({ storeToken: "hashed", expiresIn: 300 });
     expect(options.user?.additionalFields?.roles).toMatchObject({ type: "string[]", input: false });

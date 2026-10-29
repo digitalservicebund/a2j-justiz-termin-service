@@ -10,7 +10,7 @@
     <title>Demo calendar subscription | Justiz Termin Service</title>
     <link rel="stylesheet" href="https://unpkg.com/@kern-ux/native/dist/kern.min.css" />
     <link rel="stylesheet" href="https://unpkg.com/@kern-ux/native/dist/fonts/fira-sans.css" />
-    <link rel="stylesheet" href="/calendar-subscription.css" />
+    <link rel="stylesheet" href="calendar-subscription.css" />
   </head>
   <body class="calendar-subscription">
     <header class="calendar-subscription__header">
@@ -136,7 +136,7 @@
               <a
                 class="kern-btn kern-btn--secondary"
                 data-webcal-link
-                href="webcal://localhost:3000/api/calendars/demo/feed.ics"
+                href="webcal://localhost:3000/verhandlungstermin-finder/api/calendars/demo/feed.ics"
               >
                 <span class="kern-label">Open calendar app</span>
               </a>
@@ -186,7 +186,7 @@
               <a
                 class="kern-btn kern-btn--secondary"
                 data-webcal-link
-                href="webcal://localhost:3000/api/calendars/demo/feed.ics"
+                href="webcal://localhost:3000/verhandlungstermin-finder/api/calendars/demo/feed.ics"
               >
                 <span class="kern-label">Open calendar app</span>
               </a>
@@ -532,7 +532,7 @@
       const warning = document.getElementById("local-warning");
       const platform = document.getElementById("platform");
       if (["http:", "https:"].includes(location.protocol)) {
-        feedInput.value = new URL("/api/calendars/demo/feed.ics", location.origin).href;
+        feedInput.value = new URL("api/calendars/demo/feed.ics", location.href).href;
       }
 
       function updateFeed() {

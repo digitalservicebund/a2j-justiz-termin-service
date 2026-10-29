@@ -1,6 +1,6 @@
 import { sql } from "kysely";
 
-import { baseURL, expect, issueMagicLink, messages, signIn, test } from "./fixtures.ts";
+import { BASE_PATH, baseURL, expect, issueMagicLink, messages, signIn, test } from "./fixtures.ts";
 
 test("landing-page login proves email ownership, creates a session, and logout revokes it", async ({
   page,
@@ -30,10 +30,10 @@ test("landing-page login proves email ownership, creates a session, and logout r
   const sessionCookie = cookies.find((cookie) => cookie.name.endsWith("session_token"));
   expect(sessionCookie).toMatchObject({ httpOnly: true, sameSite: "Lax" });
 
-  expect((await page.request.get("/?index&intent=logout")).status()).toBe(200);
+  expect((await page.request.get(`${BASE_PATH}/?index&intent=logout`)).status()).toBe(200);
   expect(
     (
-      await page.request.post("/?index", {
+      await page.request.post(`${BASE_PATH}/?index`, {
         form: { intent: "logout" },
         headers: { Origin: "https://untrusted.example" },
       })
@@ -48,16 +48,16 @@ test("landing-page login proves email ownership, creates a session, and logout r
   expect(replay.headers().location).toContain("error=INVALID_TOKEN");
 
   await page.getByRole("button", { name: "Abmelden" }).click();
-  await expect(page).toHaveURL(`${baseURL}/`);
+  await expect(page).toHaveURL(baseURL);
   expect(
     await db.selectFrom("session").select("id").where("userId", "=", user.id).execute(),
   ).toEqual([]);
-  const staleCookie = await request.get("/overview", {
+  const staleCookie = await request.get(`${BASE_PATH}/overview`, {
     headers: { Cookie: cookies.map((cookie) => `${cookie.name}=${cookie.value}`).join("; ") },
     maxRedirects: 0,
   });
   expect(staleCookie.status()).toBe(302);
-  expect(staleCookie.headers().location).toBe("/");
+  expect(staleCookie.headers().location).toBe(BASE_PATH);
 });
 
 test("unknown addresses are told they are not allowed and get no email or account", async ({
@@ -67,7 +67,7 @@ test("unknown addresses are told they are not allowed and get no email or accoun
   db,
 }) => {
   const email = users.email();
-  await page.goto("/");
+  await page.goto(`${BASE_PATH}/`);
   await page.getByRole("textbox", { name: "E-Mail-Adresse" }).fill(email);
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await expect(page.locator("#login-email-error")).toContainText("können nur ausgewählte Gerichte");
@@ -85,7 +85,9 @@ test("unknown addresses are told they are not allowed and get no email or accoun
   expect(await db.selectFrom("user").select("id").where("email", "=", email).execute()).toEqual([]);
 
   // The public API keeps answering the same way for every address.
-  const response = await request.post("/api/auth/sign-in/magic-link", { data: { email } });
+  const response = await request.post(`${BASE_PATH}/api/auth/sign-in/magic-link`, {
+    data: { email },
+  });
   expect(response.status()).toBe(200);
   expect(await response.json()).toEqual({ status: true });
   expect(await messages(request, email)).toEqual([]);
@@ -96,7 +98,7 @@ test("invalid addresses are rejected with an error and keep what was typed", asy
   page,
   request,
 }) => {
-  await page.goto("/");
+  await page.goto(`${BASE_PATH}/`);
   await page.getByRole("textbox", { name: "E-Mail-Adresse" }).fill("person@host");
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await expect(page.locator("#login-email-error")).toHaveText(
@@ -114,7 +116,7 @@ test("invalid addresses are rejected with an error and keep what was typed", asy
     { email: "invalid" },
   ];
   for (const form of invalidForms) {
-    const invalid = await request.post("/?index", { form });
+    const invalid = await request.post(`${BASE_PATH}/?index`, { form });
     expect(invalid.status()).toBe(400);
     expect(invalid.headers()["set-cookie"]).toBeUndefined();
   }
@@ -129,7 +131,7 @@ test("mixed-case email resolves to the provisioned address and tokens are hashed
   const user = await users.create();
   await signIn(page, user, { uppercase: true });
   await page.getByRole("button", { name: "Abmelden" }).click();
-  await expect(page).toHaveURL(`${baseURL}/`);
+  await expect(page).toHaveURL(baseURL);
   const link = await issueMagicLink(request, user.email);
   const token = new URL(link).searchParams.get("token");
   expect(token).toBeTruthy();
@@ -158,7 +160,9 @@ test("mixed-case email resolves to the provisioned address and tokens are hashed
     await db.selectFrom("session").select("id").where("userId", "=", user.id).execute(),
   ).toEqual([]);
 
-  await page.goto("/api/auth/magic-link/verify?token=invalid&errorCallbackURL=/");
+  await page.goto(
+    `${BASE_PATH}/api/auth/magic-link/verify?token=invalid&errorCallbackURL=${BASE_PATH}/`,
+  );
   await expect(page).toHaveURL(/\/\?error=INVALID_TOKEN/);
   await expect(page.getByRole("alert").filter({ hasText: "Ungültiger Anmeldelink" })).toBeVisible();
 });
@@ -166,7 +170,8 @@ test("mixed-case email resolves to the provisioned address and tokens are hashed
 for (const entryPoint of ["API", "form"] as const) {
   test(`does not throttle ${entryPoint} login requests by IP`, async ({ request, users }) => {
     const email = users.email();
-    const path = entryPoint === "API" ? "/api/auth/sign-in/magic-link" : "/?index";
+    const path =
+      entryPoint === "API" ? `${BASE_PATH}/api/auth/sign-in/magic-link` : `${BASE_PATH}/?index`;
     // The form tells unknown addresses they are not allowed; the API always answers 200.
     const expected = entryPoint === "API" ? 200 : 403;
     for (let attempt = 0; attempt < 7; attempt++) {

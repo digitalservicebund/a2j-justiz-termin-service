@@ -1,6 +1,6 @@
 import { sql } from "kysely";
 
-import { baseURL, expect, issueMagicLink, signIn, test } from "./fixtures.ts";
+import { BASE_PATH, baseURL, expect, issueMagicLink, signIn, test } from "./fixtures.ts";
 
 test("an administrator can downgrade another CLI-provisioned administrator through the UI", async ({
   page,
@@ -10,7 +10,7 @@ test("an administrator can downgrade another CLI-provisioned administrator throu
   const actor = await users.createAdmin();
   const target = await users.createAdmin();
   await signIn(page, actor);
-  await page.goto("/admin/users");
+  await page.goto(`${BASE_PATH}/admin/users`);
   const entry = page.getByRole("region", { name: target.email, exact: true });
   await entry.getByRole("checkbox", { name: "Administratorrechte" }).uncheck();
   await entry.getByRole("checkbox", { name: "Kläger", exact: true }).check();
@@ -20,10 +20,10 @@ test("an administrator can downgrade another CLI-provisioned administrator throu
     await db.selectFrom("user").select("roles").where("id", "=", target.id).executeTakeFirst(),
   ).toEqual({ roles: ["klaeger"] });
   await page.getByRole("button", { name: "Abmelden" }).click();
-  await expect(page).toHaveURL(`${baseURL}/`);
+  await expect(page).toHaveURL(baseURL);
   await signIn(page, { ...target, roles: ["klaeger"] });
-  expect((await page.request.get("/admin/users")).status()).toBe(403);
-  expect((await page.request.get("/overview")).status()).toBe(200);
+  expect((await page.request.get(`${BASE_PATH}/admin/users`)).status()).toBe(403);
+  expect((await page.request.get(`${BASE_PATH}/overview`)).status()).toBe(200);
 });
 
 test("administrator can create, edit, grant/revoke admin rights and delete users through the UI", async ({
@@ -35,7 +35,7 @@ test("administrator can create, edit, grant/revoke admin rights and delete users
 }) => {
   const admin = await users.createAdmin();
   await signIn(page, admin);
-  await page.goto("/admin/users");
+  await page.goto(`${BASE_PATH}/admin/users`);
   const email = users.email();
   const newUser = page.getByRole("region", { name: "Benutzer hinzufügen", exact: true });
   await newUser.getByRole("textbox", { name: "Name", exact: true }).fill("Managed user");
@@ -57,7 +57,7 @@ test("administrator can create, edit, grant/revoke admin rights and delete users
   try {
     const otherPage = await otherContext.newPage();
     await signIn(otherPage, stored);
-    expect((await otherPage.request.get("/admin/users")).status()).toBe(403);
+    expect((await otherPage.request.get(`${BASE_PATH}/admin/users`)).status()).toBe(403);
 
     await entry.getByRole("textbox", { name: "Name", exact: true }).fill("Updated managed user");
     await entry.getByRole("checkbox", { name: "Beklagter", exact: true }).uncheck();
@@ -78,13 +78,13 @@ test("administrator can create, edit, grant/revoke admin rights and delete users
       await db.selectFrom("session").select("id").where("userId", "=", stored.id).execute(),
     ).toEqual([]);
     await otherPage.reload();
-    await expect(otherPage).toHaveURL(`${baseURL}/`);
+    await expect(otherPage).toHaveURL(baseURL);
     await signIn(otherPage, {
       ...stored,
       name: "Updated managed user",
       roles: ["admin", "klaeger"],
     });
-    expect((await otherPage.request.get("/admin/users")).status()).toBe(200);
+    expect((await otherPage.request.get(`${BASE_PATH}/admin/users`)).status()).toBe(200);
 
     await entry.getByRole("checkbox", { name: "Administratorrechte" }).uncheck();
     await entry.getByRole("button", { name: "Speichern" }).click();
@@ -94,7 +94,9 @@ test("administrator can create, edit, grant/revoke admin rights and delete users
         db.selectFrom("user").select("roles").where("id", "=", stored.id).executeTakeFirst(),
       )
       .toEqual({ roles: ["klaeger"] });
-    expect((await otherPage.request.get("/admin/users", { maxRedirects: 0 })).status()).toBe(302);
+    expect(
+      (await otherPage.request.get(`${BASE_PATH}/admin/users`, { maxRedirects: 0 })).status(),
+    ).toBe(302);
 
     const pendingLink = await issueMagicLink(page.request, email);
     await entry.getByRole("button", { name: "Benutzer löschen" }).click();
@@ -141,7 +143,7 @@ test("management validates duplicates, blocks self-removal and rejects cross-ori
   const admin = await users.createAdmin();
   const user = await users.create();
   await signIn(page, admin);
-  await page.goto("/admin/users");
+  await page.goto(`${BASE_PATH}/admin/users`);
   const ownEntry = page.getByRole("region", { name: admin.email, exact: true });
   await expect(ownEntry.getByRole("checkbox", { name: "Administratorrechte" })).toBeDisabled();
   await expect(ownEntry.getByRole("button", { name: "Benutzer löschen" })).toHaveCount(0);
@@ -163,9 +165,9 @@ test("management validates duplicates, blocks self-removal and rejects cross-ori
     { intent: "create", name: "Invalid role", email: users.email(), roles: "ADMIN" },
   ];
   for (const form of invalidForms) {
-    expect((await page.request.post("/admin/users", { form })).status()).toBe(400);
+    expect((await page.request.post(`${BASE_PATH}/admin/users`, { form })).status()).toBe(400);
   }
-  const crossOrigin = await page.request.post("/admin/users", {
+  const crossOrigin = await page.request.post(`${BASE_PATH}/admin/users`, {
     form: { intent: "delete", id: user.id },
     headers: { Origin: "https://untrusted.example" },
   });

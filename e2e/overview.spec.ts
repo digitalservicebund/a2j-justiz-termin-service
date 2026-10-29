@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import type { Kysely } from "kysely";
 
 import type { AppointmentStatus, Database } from "../app/database/types.ts";
-import { expect, signIn, test } from "./fixtures.ts";
+import { BASE_PATH, expect, signIn, test } from "./fixtures.ts";
 
 async function seed(
   db: Kysely<Database>,
@@ -59,7 +59,7 @@ test("overview lists the user's termin surveys with their status, newest first",
   await seed(db, other.id, "574 C 9/26", "open");
 
   await signIn(page, user);
-  await page.goto("/overview");
+  await page.goto(`${BASE_PATH}/overview`);
 
   await expect(page.getByRole("heading", { name: "Übersicht" })).toBeAttached();
   await expect(page.getByRole("link", { name: "Terminumfrage erstellen" })).toBeVisible();
@@ -90,7 +90,7 @@ test("overview lists the user's termin surveys with their status, newest first",
 
 test("overview tells a user without appointments that there are none", async ({ page, users }) => {
   await signIn(page, await users.create());
-  await page.goto("/overview");
+  await page.goto(`${BASE_PATH}/overview`);
 
   await expect(page.getByText("Sie haben noch keine Terminumfragen erstellt.")).toBeVisible();
   await expect(page.locator("table")).toHaveCount(0);
@@ -98,7 +98,7 @@ test("overview tells a user without appointments that there are none", async ({ 
 
 test("a richter can open the create-termin page from the overview", async ({ page, users }) => {
   await signIn(page, await users.create({ roles: ["richter"] }));
-  await page.goto("/overview");
+  await page.goto(`${BASE_PATH}/overview`);
 
   await page.getByRole("link", { name: "Terminumfrage erstellen" }).click();
 
@@ -124,7 +124,7 @@ test("a cancelled termin survey opens a detail page with its time windows", asyn
     .execute();
 
   await signIn(page, user);
-  await page.goto("/overview");
+  await page.goto(`${BASE_PATH}/overview`);
   await page.getByRole("link", { name: "Terminumfrage 574 C 65412/26 öffnen" }).click();
 
   await expect(page).toHaveURL(new RegExp(`/overview/${id}$`));
@@ -151,7 +151,7 @@ test("another judge cannot open the detail page of a termin survey", async ({
   const id = await seed(db, owner.id, "574 C 7/26", "cancelled");
 
   await signIn(page, other);
-  const response = await page.goto(`/overview/${id}`);
+  const response = await page.goto(`${BASE_PATH}/overview/${id}`);
 
   expect(response?.status()).toBe(404);
 });
@@ -169,7 +169,7 @@ test("a confirmed termin survey opens a detail page announcing the date", async 
   });
 
   await signIn(page, user);
-  await page.goto("/overview");
+  await page.goto(`${BASE_PATH}/overview`);
   await page.getByRole("link", { name: "Terminumfrage 574 C 65412/26 öffnen" }).click();
 
   await expect(page).toHaveURL(new RegExp(`/overview/${id}$`));
@@ -202,7 +202,7 @@ test("an open termin survey opens a detail page with its survey link", async ({
     .execute();
 
   await signIn(page, user);
-  await page.goto("/overview");
+  await page.goto(`${BASE_PATH}/overview`);
   await page.getByRole("link", { name: "Terminumfrage 574 C 65412/26 öffnen" }).click();
 
   await expect(page).toHaveURL(new RegExp(`/overview/${id}$`));
@@ -242,7 +242,7 @@ test("a past termin opens a detail page that looks back at it", async ({ page, u
     .execute();
 
   await signIn(page, user);
-  await page.goto(`/overview/${id}`);
+  await page.goto(`${BASE_PATH}/overview/${id}`);
 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     /^Der Termin war am \p{L}+, 3\. August 2020 um 13:30$/u,

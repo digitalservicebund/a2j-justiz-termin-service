@@ -89,7 +89,7 @@ Keep this file compatible with both POSIX shell assignments and Node's env parse
 It contains public test-only dummy credentials, never real secrets.
 The runner starts the dedicated `jts-e2e` Compose project from
 the root [`docker-compose.yml`](docker-compose.yml), builds the production app,
-and lets Playwright start the server and wait for `/health`. It uses PostgreSQL
+and lets Playwright start the server and wait for `/verhandlungstermin-finder/health`. It uses PostgreSQL
 on **5544**, SMTP on **1026**, Mailpit on **8026**, and the app on **3109**.
 These ports must be free. Container names and the database volume are scoped to
 the `jts-e2e` project, separate from development. The runner overrides
@@ -186,6 +186,19 @@ docker compose down -v    # stop and delete the data volume (same as pnpm docker
 
 Postgres is published on host port **5433**, so it can run next to other projects' databases on 5432.
 
+### Base path
+
+The app is served under `/verhandlungstermin-finder`, locally and in every environment, for
+example `http://localhost:3000/verhandlungstermin-finder/`. The prefix is the constant
+`BASE_PATH` in `app/lib/base-path.ts`; routing, asset URLs, cookies and emailed links all derive
+from it, so changing it is a code change. Requests for `/` are redirected to the app, any other
+path outside the prefix is a 404. The session cookie is named `jts.session_token` and scoped to
+the prefix.
+
+The health checks also still answer at their old unprefixed URLs (`/health*`) so the Kubernetes
+probes can be switched without downtime. The steps to remove that are in
+`app/lib/legacy-health.ts`.
+
 ### Configuration
 
 [`.env.defaults`](.env.defaults) holds the local connection settings and matches `docker-compose.yml`. `pnpm dev`, `pnpm start` and `pnpm db:migrate` load it, plus an optional, git-ignored `.env.local` for overrides.
@@ -239,13 +252,13 @@ The migration files and `server.js` are run directly by Node's TypeScript suppor
 
 ### Verifying the connection
 
-`GET /health/database` runs `select now()` and returns `{"status":"ok","databaseTime":"..."}`, or `503` with `{"status":"error"}` if the query fails (details are only logged). It is deliberately separate from `GET /health`, which is the readiness probe and does not touch the database.
+`GET /verhandlungstermin-finder/health/database` runs `select now()` and returns `{"status":"ok","databaseTime":"..."}`, or `503` with `{"status":"error"}` if the query fails (details are only logged). It is deliberately separate from `GET /health`, which is the readiness probe and does not touch the database.
 
 ```bash
-curl localhost:3000/health/database
+curl localhost:3000/verhandlungstermin-finder/health/database
 ```
 
-`GET /health/smtp` connects to the SMTP server and authenticates (`verify()`), without sending any mail. It returns `{"status":"ok"}` or `503` with `{"status":"error"}`, and logs the details. Locally it checks the SMTP mock below.
+`GET /verhandlungstermin-finder/health/smtp` connects to the SMTP server and authenticates (`verify()`), without sending any mail. It returns `{"status":"ok"}` or `503` with `{"status":"error"}`, and logs the details. Locally it checks the SMTP mock below.
 
 ### Local SMTP mock
 
@@ -275,7 +288,7 @@ currently implemented.
 ### Configuration
 
 Set `BASE_URL` to the application's public origin in each environment, including
-`http://` or `https://` and without a trailing slash.
+`http://` or `https://` and without a trailing slash. Do not include the base path.
 It is used to generate emailed links and to validate trusted origins. For a
 different local port, override this non-secret setting accordingly.
 
@@ -363,7 +376,7 @@ login and development-secret cookie are no longer accepted.
 Subscribe from a calendar application using this URL when running locally:
 
 ```text
-http://localhost:3000/api/calendars/demo/feed.ics
+http://localhost:3000/verhandlungstermin-finder/api/calendars/demo/feed.ics
 ```
 
 The public `GET /api/calendars/:calendarId/feed.ics` endpoint requires no login.

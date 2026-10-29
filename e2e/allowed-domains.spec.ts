@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import type { Page } from "@playwright/test";
 
 import {
+  BASE_PATH,
   baseURL,
   expect,
   issueMagicLink,
@@ -20,7 +21,7 @@ function addDomain(value: string) {
 }
 
 async function requestLink(page: Page, email: string) {
-  await page.goto("/");
+  await page.goto(`${BASE_PATH}/`);
   await page.getByRole("textbox", { name: "E-Mail-Adresse" }).fill(email);
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
 }
@@ -56,7 +57,7 @@ test("an address on an allowed domain signs up with a verified magic link", asyn
     emailVerified: true,
     roles: ["richter"],
   });
-  expect((await page.request.get("/admin/users")).status()).toBe(403);
+  expect((await page.request.get(`${BASE_PATH}/admin/users`)).status()).toBe(403);
 });
 
 test("the API only sends links to provisioned users and allowed domains", async ({
@@ -66,7 +67,9 @@ test("the API only sends links to provisioned users and allowed domains", async 
   const allowed = users.email(await users.allowedDomain());
   const other = users.email();
   await issueMagicLink(request, allowed);
-  const response = await request.post("/api/auth/sign-in/magic-link", { data: { email: other } });
+  const response = await request.post(`${BASE_PATH}/api/auth/sign-in/magic-link`, {
+    data: { email: other },
+  });
   expect(response.status()).toBe(200);
   expect(await messages(request, other)).toEqual([]);
 });
@@ -105,7 +108,7 @@ test("an administrator can allow and remove domains through the UI", async ({
 }) => {
   const admin = await users.createAdmin();
   await signIn(page, admin);
-  await page.goto("/admin/domains");
+  await page.goto(`${BASE_PATH}/admin/domains`);
   const domain = `e2e-${randomUUID()}.example.com`;
   users.domains.add(domain);
   const stored = () =>
@@ -131,7 +134,7 @@ test("an administrator can allow and remove domains through the UI", async ({
   await expect(entry).toHaveCount(0);
   expect(await stored()).toEqual([]);
 
-  const crossOrigin = await page.request.post("/admin/domains", {
+  const crossOrigin = await page.request.post(`${BASE_PATH}/admin/domains`, {
     form: { intent: "create", domain },
     headers: { Origin: "https://untrusted.example" },
   });
@@ -140,11 +143,11 @@ test("an administrator can allow and remove domains through the UI", async ({
 });
 
 test("only administrators can manage domains", async ({ page, request, users }) => {
-  const anonymous = await request.get("/admin/domains", { maxRedirects: 0 });
+  const anonymous = await request.get(`${BASE_PATH}/admin/domains`, { maxRedirects: 0 });
   expect(anonymous.status()).toBe(302);
   await signIn(page, await users.create());
-  expect((await page.request.get("/admin/domains")).status()).toBe(403);
-  const create = await page.request.post("/admin/domains", {
+  expect((await page.request.get(`${BASE_PATH}/admin/domains`)).status()).toBe(403);
+  const create = await page.request.post(`${BASE_PATH}/admin/domains`, {
     form: { intent: "create", domain: "example.org" },
   });
   expect(create.status()).toBe(403);

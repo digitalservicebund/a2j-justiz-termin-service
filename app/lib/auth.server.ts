@@ -6,6 +6,7 @@ import { canSignIn, userExists } from "../adapters/users/users.server.ts";
 import { SELF_SIGNUP_ROLES } from "../core/domain/user.ts";
 import { getDb } from "../database/database.ts";
 import { getAuthSecret } from "./auth-secret.ts";
+import { AUTH_BASE_PATH, BASE_PATH } from "./base-path.ts";
 import { renderMagicLinkEmail } from "./email/magic-link-email.ts";
 import { requireEnv } from "./env.ts";
 import { logError } from "./logging.ts";
@@ -16,6 +17,12 @@ function createAuth() {
   return betterAuth({
     appName: "Justiz Termin Service",
     baseURL: requireEnv("BASE_URL"),
+    basePath: AUTH_BASE_PATH,
+    advanced: {
+      // Other apps may share the host, so name and scope the cookies to this one.
+      cookiePrefix: "jts",
+      defaultCookieAttributes: { path: BASE_PATH },
+    },
     secret: getAuthSecret(),
     database: { db: getDb(), type: "postgres" },
     user: {
