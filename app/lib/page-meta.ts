@@ -9,6 +9,8 @@ export const PAGE_DESCRIPTION =
 export function pageMeta(baseUrl: string) {
   return [
     { name: "description", content: PAGE_DESCRIPTION },
+    // Keep in line with the X-Robots-Tag header in server.js, which also covers non-HTML responses.
+    { name: "robots", content: "noindex, nofollow" },
     { property: "og:title", content: PAGE_TITLE },
     { property: "og:description", content: PAGE_DESCRIPTION },
     { property: "og:type", content: "website" },
