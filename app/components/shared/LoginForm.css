@@ -35,6 +35,7 @@
 }
 
 .login-form__sent {
+  margin-top: var(--kern-metric-space-default);
   display: flex;
   align-items: flex-start;
   gap: var(--kern-metric-space-small);
@@ -42,6 +43,8 @@
 
 .login-form__sent p {
   margin: 0;
+  /* Align the first line with the icon instead of the baseline padding of the body text. */
+  padding-block-start: 0;
 }
 
 .login-form__resend {
