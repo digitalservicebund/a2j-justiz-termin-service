@@ -16,14 +16,14 @@ import {
 
 export type MagicLinkVariant = "signup" | "login";
 
-const VALIDITY = "Der Link ist 5 Minuten gültig und kann nur einmal verwendet werden.";
+const VALIDITY = "Ihr Anmelde-Link ist 5 Minuten gültig und kann nur einmal verwendet werden.";
 
 const COPY = {
   signup: {
     subject: "Verifizieren Sie Ihre E-Mail-Adresse",
     heading: `Verifizieren Sie Ihre E-Mail-Adresse, um ein Konto beim ${PRODUCT_NAME} zu erstellen.`,
     button: "E-Mail-Adresse verifizieren",
-    ignore: "Wenn Sie diese E-Mail nicht angefordert haben, können Sie sie einfach ignorieren.",
+    ignore: "Wenn Sie diese E-Mail nicht angefordert haben, können Sie diese einfach ignorieren.",
   },
   login: {
     subject: `Anmelden beim ${PRODUCT_NAME}`,
@@ -42,7 +42,7 @@ function Content(url: string, copy: Copy) {
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
         $${TextRow({ children: html`${copy.heading}`, padding: "0 0 16px 0", size: 21, color: COLOR.text, bold: true })}
         $${Button(copy.button, url)}
-        $${TextRow({ children: html`${VALIDITY}`, padding: "0 0 8px 0", size: 18, color: COLOR.muted })}
+        $${TextRow({ children: html`${VALIDITY}`, padding: "0 0 16px 0", size: 18, color: COLOR.muted })}
         $${TextRow({ children: html`${copy.ignore}`, padding: "0 0 32px 0", size: 18, color: COLOR.muted })}
         $${Divider("0 0 24px 0")} $${Footer()}
       </table>

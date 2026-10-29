@@ -15,6 +15,15 @@ describe("renderMagicLinkEmail", () => {
     expect(mail.html).toContain("um ein Konto beim Verhandlungstermin-Finder zu erstellen.");
     expect(mail.html).toContain("E-Mail-Adresse verifizieren");
     expect(mail.text).toContain("E-Mail-Adresse verifizieren:");
+    expect(mail.html).toContain("können Sie diese einfach ignorieren.");
+  });
+
+  it("states the validity of the link in both variants and shows the button without an arrow", () => {
+    for (const variant of ["signup", "login"] as const) {
+      const { html } = renderMagicLinkEmail(variant, url);
+      expect(html).toContain("Ihr Anmelde-Link ist 5 Minuten gültig");
+      expect(html).not.toContain("&rarr;");
+    }
   });
 
   it("uses the login copy for an existing account", () => {
@@ -27,7 +36,9 @@ describe("renderMagicLinkEmail", () => {
   it("puts the raw link first in the plaintext version", () => {
     const { text } = renderMagicLinkEmail("signup", url);
     expect(text.match(/https?:\/\/\S+/)?.[0]).toBe(url);
-    expect(text).toContain("Der Link ist 5 Minuten gültig und kann nur einmal verwendet werden.");
+    expect(text).toContain(
+      "Ihr Anmelde-Link ist 5 Minuten gültig und kann nur einmal verwendet werden.",
+    );
   });
 
   it("escapes the link in the HTML version and keeps the plaintext raw", () => {
