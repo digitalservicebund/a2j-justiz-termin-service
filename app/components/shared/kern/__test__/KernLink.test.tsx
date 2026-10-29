@@ -27,6 +27,15 @@ describe("KernLink", () => {
     expect(screen.getByRole("link")).toHaveClass("kern-link", "kern-link--small", "custom");
   });
 
+  it("applies the no-visited-state modifier only when noVisitedState is set", () => {
+    const { unmount } = renderLink({ children: "Go" });
+    expect(screen.getByRole("link")).not.toHaveClass("kern-link--no-visited-state");
+    unmount();
+
+    renderLink({ noVisitedState: true, children: "Go" });
+    expect(screen.getByRole("link")).toHaveClass("kern-link", "kern-link--no-visited-state");
+  });
+
   it("renders an icon before or after the text", () => {
     renderLink({
       children: (

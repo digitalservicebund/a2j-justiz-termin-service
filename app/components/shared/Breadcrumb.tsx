@@ -35,8 +35,8 @@ export function Breadcrumb({ items, className }: Readonly<BreadcrumbProps>) {
               {href && !isCurrent ? (
                 <KernLink
                   as={Link}
-                  size="small"
-                  className="kern-link--no-visited-state"
+                  size={icon ? "default" : "small"}
+                  noVisitedState
                   to={href}
                   aria-label={icon ? label : undefined}
                 >
