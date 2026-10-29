@@ -1,15 +1,17 @@
+import type { ReactNode } from "react";
 import { data, redirect, useActionData, useLoaderData } from "react-router";
 import { z } from "zod";
 
 import { getSessionUser } from "~/adapters/session/session";
 import { canSignIn } from "~/adapters/users/users.server";
+import { A2JIcon } from "~/components/shared/a2j/A2JIcon";
+import { A2JInlineNotice } from "~/components/shared/a2j/A2JInlineNotice";
 import { AppShell } from "~/components/shared/AppShell";
 import { DefaultPage } from "~/components/shared/DefaultPage";
 import { KernAlert } from "~/components/shared/kern/KernAlert";
 import { KernBody } from "~/components/shared/kern/KernBody";
-import { KernButton } from "~/components/shared/kern/KernButton";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
-import { KernIcon, type KernIconName } from "~/components/shared/kern/KernIcon";
+import { KernIcon } from "~/components/shared/kern/KernIcon";
 import { LoginForm } from "~/components/shared/LoginForm";
 import { getDb } from "~/database/database";
 import { getAuth } from "~/lib/auth.server";
@@ -69,11 +71,23 @@ export async function action({ request }: { request: Request }) {
   return data({ sent: true, email: submitted });
 }
 
-const steps: Array<{ icon: KernIconName; label: string }> = [
-  { icon: "calendar-today", label: "Richterschaft erstellt die Terminumfrage" },
-  { icon: "checklist", label: "Verfahrensbeteiligte teilen ihre Verfügbarkeit" },
-  { icon: "success", label: "Richterschaft wählt einen passenden Termin aus" },
-  { icon: "mail", label: "Eine passende Ladung wird verschickt" },
+const steps: Array<{ icon: ReactNode; label: string }> = [
+  {
+    icon: <A2JIcon name="add-box" size="x-large" />,
+    label: "Das Gericht erstellt die Terminumfrage",
+  },
+  {
+    icon: <A2JIcon name="checklist-rtl" size="x-large" />,
+    label: "Verfahrensbeteiligte teilen ihre Verfügbarkeit",
+  },
+  {
+    icon: <A2JIcon name="event" size="x-large" />,
+    label: "Das Gericht wählt einen passenden Termin aus",
+  },
+  {
+    icon: <KernIcon name="mail" size="x-large" />,
+    label: "Die Servicestelle verschickt die Ladung",
+  },
 ];
 
 const CONTACT_EMAIL = "a2j-jts@digitalservice.bund.de";
@@ -140,8 +154,10 @@ export default function Welcome() {
               Der Onlinedienst befindet sich in der Testphase (Pilotprojekt)
             </summary>
             <KernBody>
-              Dieser Dienst wird derzeit gemeinsam mit Nutzenden erprobt. Funktionen und Inhalte
-              können sich noch ändern.
+              Mit diesem Projekt wird ein Onlinedienst für die Terminabstimmung zwischen Gerichten
+              und Verfahrensbeteiligten erprobt. Die Erstellung einer Terminumfrage ist noch nicht
+              für alle Gerichte möglich. Verfahrensbeteiligte können den Onlinedienst aktuell nur
+              auf Einladung nutzen.
             </KernBody>
           </details>
         </DefaultPage>
@@ -156,38 +172,22 @@ export default function Welcome() {
             <ol className="welcome__steps">
               {steps.map(({ icon, label }) => (
                 <li key={label} className="welcome__step">
-                  <KernIcon name={icon} size="x-large" />
+                  {icon}
                   <span className="kern-title">{label}</span>
                 </li>
               ))}
             </ol>
           </section>
 
-          <KernAlert type="info" title="Gestalten Sie die digitalen Angebote der Justiz mit">
-            <KernBody>
-              Wir wollen digitale Justiz-Angebote entwickeln, die für alle Menschen gut
-              funktionieren. Ihre Hilfe ist dabei sehr wichtig. In kurzen Online-Gesprächen können
-              Sie Ihre Erfahrungen mit uns teilen und neue Services testen.
-            </KernBody>
-            <a className="kern-link" href={TODO_HREF}>
-              <KernIcon name="arrow-forward" size="small" />
-              Jetzt für die Teilnahme anmelden
-            </a>
-          </KernAlert>
-
-          <section aria-labelledby="welcome-feedback" className="welcome__feedback">
-            <KernHeading size="title-small" level={2} id="welcome-feedback">
-              Hat Ihnen diese Seite geholfen?
-            </KernHeading>
-            <div className="welcome__feedback-actions">
-              <KernButton type="button" style="secondary">
-                Ja
-              </KernButton>
-              <KernButton type="button" style="secondary">
-                Nein
-              </KernButton>
-            </div>
-          </section>
+          <A2JInlineNotice
+            type="information"
+            title="Gestalten Sie die digitalen Angebote der Justiz mit"
+            link={{ href: TODO_HREF, label: "Jetzt für die Teilnahme anmelden" }}
+          >
+            Wir wollen digitale Justiz-Angebote entwickeln, die für alle Menschen gut funktionieren.
+            Ihre Hilfe ist dabei sehr wichtig. In kurzen Online-Gesprächen können Sie Ihre
+            Erfahrungen mit uns teilen und neue Services testen.
+          </A2JInlineNotice>
         </div>
       </DefaultPage>
     </AppShell>

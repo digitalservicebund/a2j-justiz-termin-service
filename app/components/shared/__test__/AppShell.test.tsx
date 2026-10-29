@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it } from "vitest";
 
@@ -40,6 +40,28 @@ describe("AppShell", () => {
     const form = logout.closest("form");
     expect(form).toHaveAttribute("method", "post");
     expect(container.querySelector('input[name="intent"]')).toHaveValue("logout");
+  });
+
+  it("links to the easy-language and sign-language pages, signed in or not", () => {
+    const expected = [
+      ["Leichte Sprache", "https://service.justiz.de/leichtesprache"],
+      ["Gebärdensprache", "https://service.justiz.de/gebaerdensprache"],
+    ];
+    for (const props of [{}, { user }]) {
+      const { unmount } = renderShell(props);
+      const nav = screen.getByRole("navigation", { name: "Sprachangebote" });
+      for (const [name, href] of expected) {
+        expect(within(nav).getByRole("link", { name })).toHaveAttribute("href", href);
+      }
+      unmount();
+    }
+  });
+
+  it("names the service in the footer like in the header", () => {
+    const { container } = renderShell();
+    const footer = container.querySelector("footer")!;
+    expect(within(footer).getByText("Justiz-Services")).toBeInTheDocument();
+    expect(within(footer).getByText("Onlinedienste der Justiz")).toBeInTheDocument();
   });
 
   it("renders breadcrumbs when provided", () => {

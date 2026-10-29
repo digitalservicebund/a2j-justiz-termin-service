@@ -10,11 +10,25 @@ import { contactLinks, legalLinks, operatorLinks, pilotLinks, type Link } from "
 import { KernBody } from "./kern/KernBody";
 import { KernButton } from "./kern/KernButton";
 import { KernHeading } from "./kern/KernHeading";
-import { KernIcon } from "./kern/KernIcon";
+import { KernIcon, type KernIconName } from "./kern/KernIcon";
 import { KernKopfZeile } from "./kern/KernKopfZeile";
 import { KernLabel } from "./kern/KernLabel";
+import { KernLink } from "./kern/KernLink";
 
 import "./AppShell.css";
+
+const languageLinks: Array<Link & { icon: KernIconName }> = [
+  {
+    href: "https://service.justiz.de/leichtesprache",
+    label: "Leichte Sprache",
+    icon: "easy-language",
+  },
+  {
+    href: "https://service.justiz.de/gebaerdensprache",
+    label: "Gebärdensprache",
+    icon: "sign-language",
+  },
+];
 
 function LinkList({ links }: Readonly<{ links: Link[] }>) {
   return (
@@ -71,22 +85,36 @@ export function AppShell({
           <KernHeading size="large" className="page-shell__service-name">
             Justiz-Services
           </KernHeading>
-          {user && (
-            <div className="page-shell__user">
-              <KernBody muted className="page-shell__user-info">
-                <KernIcon name="account-circle" />
-                <span>Angemeldet als:</span>
-                <span>{user.email}</span>
-              </KernBody>
-              <Form method="post" action="/?index">
-                <input type="hidden" name="intent" value="logout" />
-                <button type="submit" className="kern-link kern-link--small page-shell__logout">
-                  <KernIcon name="logout" />
-                  Abmelden
-                </button>
-              </Form>
-            </div>
-          )}
+          <div className="page-shell__header-actions">
+            <nav aria-label="Sprachangebote">
+              <ul className="page-shell__language-links">
+                {languageLinks.map(({ href, label, icon }) => (
+                  <li key={label}>
+                    <KernLink size="small" href={href}>
+                      <KernIcon name={icon} />
+                      {label}
+                    </KernLink>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+            {user && (
+              <div className="page-shell__user">
+                <KernBody muted className="page-shell__user-info">
+                  <KernIcon name="account-circle" />
+                  <span>Angemeldet als:</span>
+                  <span>{user.email}</span>
+                </KernBody>
+                <Form method="post" action="/?index">
+                  <input type="hidden" name="intent" value="logout" />
+                  <button type="submit" className="kern-link kern-link--small page-shell__logout">
+                    <KernIcon name="logout" />
+                    Abmelden
+                  </button>
+                </Form>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
@@ -116,7 +144,7 @@ export function AppShell({
       <footer className="page-shell__footer">
         <div className="kern-container page-shell__footer-grid">
           <div className="page-shell__footer-brand">
-            <KernHeading size="medium">Verhandlungstermin-Finder</KernHeading>
+            <KernHeading size="medium">Justiz-Services</KernHeading>
             <KernBody muted>Onlinedienste der Justiz</KernBody>
           </div>
 
