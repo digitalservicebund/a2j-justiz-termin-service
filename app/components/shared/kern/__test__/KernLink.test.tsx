@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { createMemoryRouter, Link, RouterProvider } from "react-router";
 import { describe, expect, it } from "vitest";
 
 import { KernIcon } from "~/components/shared/kern/KernIcon";
@@ -37,5 +38,25 @@ describe("KernLink", () => {
     });
     const link = screen.getByRole("link", { name: "Go" });
     expect(link.firstElementChild).toHaveClass("kern-icon--arrow-forward");
+  });
+
+  it("renders the given component instead of an anchor, e.g. the router Link", () => {
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/",
+          Component: () => (
+            <KernLink as={Link} to="/overview" size="small">
+              Go
+            </KernLink>
+          ),
+        },
+      ],
+      { basename: "/base", initialEntries: ["/base/"] },
+    );
+    render(<RouterProvider router={router} />);
+    const link = screen.getByRole("link", { name: "Go" });
+    expect(link).toHaveAttribute("href", "/base/overview");
+    expect(link).toHaveClass("kern-link", "kern-link--small");
   });
 });
