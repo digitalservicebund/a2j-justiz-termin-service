@@ -62,6 +62,7 @@ test("front page has the meta tags for search engines and link previews", async 
   await expect(page).toHaveTitle("Verhandlungstermin-Finder | Justiz-Services");
   const description = page.locator('meta[name="description"]');
   await expect(description).toHaveAttribute("content", /^Der Verhandlungstermin-Finder/);
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex, nofollow");
   await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
     "content",
     "Verhandlungstermin-Finder | Justiz-Services",

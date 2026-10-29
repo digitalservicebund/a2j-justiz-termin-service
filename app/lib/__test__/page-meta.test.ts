@@ -6,6 +6,7 @@ describe("pageMeta", () => {
   it("describes the page for search engines and link previews", () => {
     expect(pageMeta("https://app.example.com")).toEqual([
       { name: "description", content: PAGE_DESCRIPTION },
+      { name: "robots", content: "noindex, nofollow" },
       { property: "og:title", content: PAGE_TITLE },
       { property: "og:description", content: PAGE_DESCRIPTION },
       { property: "og:type", content: "website" },
