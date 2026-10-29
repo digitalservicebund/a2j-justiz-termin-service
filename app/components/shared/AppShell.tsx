@@ -105,7 +105,9 @@ export function AppShell({
                   <span>Angemeldet als:</span>
                   <span>{user.email}</span>
                 </KernBody>
-                <Form method="post" action="/?index">
+                {/* reloadDocument: with a basename React Router drops the `?index` of this action
+                    during a client-side submit and posts to the current route instead. */}
+                <Form method="post" action="/?index" reloadDocument>
                   <input type="hidden" name="intent" value="logout" />
                   <button type="submit" className="kern-link kern-link--small page-shell__logout">
                     <KernIcon name="logout" />

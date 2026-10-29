@@ -39,6 +39,7 @@ describe("AppShell", () => {
     expect(logout).toHaveAttribute("type", "submit");
     const form = logout.closest("form");
     expect(form).toHaveAttribute("method", "post");
+    expect(form).toHaveAttribute("action", "/?index");
     expect(container.querySelector('input[name="intent"]')).toHaveValue("logout");
   });
 
