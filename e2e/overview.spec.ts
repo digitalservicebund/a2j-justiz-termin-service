@@ -94,6 +94,7 @@ test("overview tells a user without appointments that there are none", async ({ 
 
   await expect(page.getByText("Sie haben noch keine Terminumfragen erstellt.")).toBeVisible();
   await expect(page.locator("table")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Problem mit dieser Seite melden" })).toBeVisible();
 });
 
 test("a richter can open the create-termin page from the overview", async ({ page, users }) => {

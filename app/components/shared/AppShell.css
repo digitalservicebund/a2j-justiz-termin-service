@@ -80,7 +80,7 @@
 .page-shell__report {
   display: flex;
   justify-content: flex-end;
-  padding-block: var(--kern-metric-space-6x-large) var(--kern-metric-space-10x-large);
+  padding-top: var(--kern-metric-space-3x-large);
 }
 
 .page-shell__footer {
