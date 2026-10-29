@@ -16,6 +16,8 @@ import { requireEnv } from "../app/lib/env.ts";
 export { BASE_PATH };
 // Where the app is served, to compare with absolute URLs, e.g. `${baseURL}/overview`.
 export const baseURL = `${requireEnv("BASE_URL")}${BASE_PATH}`;
+// The start page, which the app reaches both with and without a trailing slash.
+export const startPageURL = new RegExp(`^${baseURL.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/?$`);
 const mailpitURL = requireEnv("MAILPIT_URL");
 
 type NewUser = z.infer<typeof NewUserSchema>;

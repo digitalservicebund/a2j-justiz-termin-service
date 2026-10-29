@@ -1,6 +1,14 @@
 import { sql } from "kysely";
 
-import { BASE_PATH, baseURL, expect, issueMagicLink, messages, signIn, test } from "./fixtures.ts";
+import {
+  BASE_PATH,
+  expect,
+  issueMagicLink,
+  messages,
+  signIn,
+  startPageURL,
+  test,
+} from "./fixtures.ts";
 
 test("landing-page login proves email ownership, creates a session, and logout revokes it", async ({
   page,
@@ -48,7 +56,7 @@ test("landing-page login proves email ownership, creates a session, and logout r
   expect(replay.headers().location).toContain("error=INVALID_TOKEN");
 
   await page.getByRole("button", { name: "Abmelden" }).click();
-  await expect(page).toHaveURL(baseURL);
+  await expect(page).toHaveURL(startPageURL);
   expect(
     await db.selectFrom("session").select("id").where("userId", "=", user.id).execute(),
   ).toEqual([]);
@@ -131,7 +139,7 @@ test("mixed-case email resolves to the provisioned address and tokens are hashed
   const user = await users.create();
   await signIn(page, user, { uppercase: true });
   await page.getByRole("button", { name: "Abmelden" }).click();
-  await expect(page).toHaveURL(baseURL);
+  await expect(page).toHaveURL(startPageURL);
   const link = await issueMagicLink(request, user.email);
   const token = new URL(link).searchParams.get("token");
   expect(token).toBeTruthy();

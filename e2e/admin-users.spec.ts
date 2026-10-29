@@ -1,6 +1,6 @@
 import { sql } from "kysely";
 
-import { BASE_PATH, baseURL, expect, issueMagicLink, signIn, test } from "./fixtures.ts";
+import { BASE_PATH, expect, issueMagicLink, signIn, startPageURL, test } from "./fixtures.ts";
 
 test("an administrator can downgrade another CLI-provisioned administrator through the UI", async ({
   page,
@@ -20,7 +20,7 @@ test("an administrator can downgrade another CLI-provisioned administrator throu
     await db.selectFrom("user").select("roles").where("id", "=", target.id).executeTakeFirst(),
   ).toEqual({ roles: ["klaeger"] });
   await page.getByRole("button", { name: "Abmelden" }).click();
-  await expect(page).toHaveURL(baseURL);
+  await expect(page).toHaveURL(startPageURL);
   await signIn(page, { ...target, roles: ["klaeger"] });
   expect((await page.request.get(`${BASE_PATH}/admin/users`)).status()).toBe(403);
   expect((await page.request.get(`${BASE_PATH}/overview`)).status()).toBe(200);
@@ -78,7 +78,7 @@ test("administrator can create, edit, grant/revoke admin rights and delete users
       await db.selectFrom("session").select("id").where("userId", "=", stored.id).execute(),
     ).toEqual([]);
     await otherPage.reload();
-    await expect(otherPage).toHaveURL(baseURL);
+    await expect(otherPage).toHaveURL(startPageURL);
     await signIn(otherPage, {
       ...stored,
       name: "Updated managed user",

@@ -5,7 +5,7 @@ test("the bare host redirects to the app, everything else outside the base path 
 }) => {
   const root = await request.get("/", { maxRedirects: 0 });
   expect(root.status()).toBe(302);
-  expect(root.headers().location).toBe(BASE_PATH);
+  expect(root.headers().location).toBe(`${BASE_PATH}/`);
 
   for (const path of [
     "/overview",
