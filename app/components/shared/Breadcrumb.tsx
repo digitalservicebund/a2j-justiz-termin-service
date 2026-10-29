@@ -1,4 +1,5 @@
 import { KernIcon, type KernIconName } from "./kern/KernIcon";
+import { KernLink } from "./kern/KernLink";
 
 import "./Breadcrumb.css";
 
@@ -30,13 +31,14 @@ export function Breadcrumb({ items, className }: Readonly<BreadcrumbProps>) {
                 </span>
               )}
               {href && !isCurrent ? (
-                <a
-                  className="kern-link kern-link--no-visited-state"
+                <KernLink
+                  size="small"
+                  className="kern-link--no-visited-state"
                   href={href}
                   aria-label={icon ? label : undefined}
                 >
                   {icon ? <KernIcon name={icon} /> : label}
-                </a>
+                </KernLink>
               ) : (
                 <span aria-current="page" className="kern-body kern-body--small">
                   {label}
