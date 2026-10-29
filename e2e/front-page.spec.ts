@@ -31,6 +31,9 @@ test("front page shows the login, the language links and the process steps", asy
   ]);
 
   await expect(page.getByText("Hat Ihnen diese Seite geholfen?")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Problem mit dieser Seite melden" })).toHaveCount(
+    0,
+  );
 });
 
 test("the pilot notice is collapsed until opened", async ({ page }) => {

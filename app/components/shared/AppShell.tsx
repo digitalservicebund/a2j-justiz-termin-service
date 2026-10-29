@@ -71,7 +71,7 @@ export function AppShell({
   breadcrumbs,
   user,
   className,
-  showReportProblem = false,
+  showReportProblem = true,
   children,
 }: Readonly<AppShellProps>) {
   const classes = ["page-shell", className].filter(Boolean).join(" ");

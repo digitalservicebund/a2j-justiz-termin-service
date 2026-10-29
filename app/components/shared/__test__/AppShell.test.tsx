@@ -65,6 +65,23 @@ describe("AppShell", () => {
     expect(within(footer).getByText("Onlinedienste der Justiz")).toBeInTheDocument();
   });
 
+  it("shows the report-problem button by default, signed in or not", () => {
+    for (const props of [{}, { user }]) {
+      const { unmount } = renderShell(props);
+      expect(
+        screen.getByRole("button", { name: "Problem mit dieser Seite melden" }),
+      ).toHaveAttribute("type", "button");
+      unmount();
+    }
+  });
+
+  it("hides the report-problem button when showReportProblem is false", () => {
+    renderShell({ showReportProblem: false });
+    expect(
+      screen.queryByRole("button", { name: "Problem mit dieser Seite melden" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("renders breadcrumbs when provided", () => {
     renderShell({ breadcrumbs: [{ label: "Startseite", href: "/" }, { label: "Übersicht" }] });
     expect(screen.getByRole("navigation", { name: "Brotkrumen" })).toBeInTheDocument();

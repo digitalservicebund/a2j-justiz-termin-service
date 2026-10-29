@@ -102,6 +102,7 @@ export default function Welcome() {
   return (
     <AppShell
       className="welcome"
+      showReportProblem={false}
       breadcrumbs={[
         { label: "Startseite", href: "/", icon: "home" },
         { label: "Verhandlungstermin-Finder" },
