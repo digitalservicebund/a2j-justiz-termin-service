@@ -53,6 +53,16 @@ describe("Welcome", () => {
     ]);
   });
 
+  it("invites visitors to take part in the research, in an information notice", async () => {
+    await renderPage();
+    const title = screen.getByText("Gestalten Sie die digitalen Angebote der Justiz mit");
+    const notice = title.closest(".a2j-inline-notice")!;
+    expect(notice).toHaveClass("a2j-inline-notice--information");
+    expect(
+      within(notice as HTMLElement).getByRole("link", { name: "Jetzt für die Teilnahme anmelden" }),
+    ).toBeInTheDocument();
+  });
+
   it("has no feedback box", async () => {
     await renderPage();
     expect(screen.queryByText("Hat Ihnen diese Seite geholfen?")).not.toBeInTheDocument();

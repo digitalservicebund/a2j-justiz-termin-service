@@ -5,6 +5,7 @@ import { z } from "zod";
 import { getSessionUser } from "~/adapters/session/session";
 import { canSignIn } from "~/adapters/users/users.server";
 import { A2JIcon } from "~/components/shared/a2j/A2JIcon";
+import { A2JInlineNotice } from "~/components/shared/a2j/A2JInlineNotice";
 import { AppShell } from "~/components/shared/AppShell";
 import { DefaultPage } from "~/components/shared/DefaultPage";
 import { KernAlert } from "~/components/shared/kern/KernAlert";
@@ -178,17 +179,15 @@ export default function Welcome() {
             </ol>
           </section>
 
-          <KernAlert type="info" title="Gestalten Sie die digitalen Angebote der Justiz mit">
-            <KernBody>
-              Wir wollen digitale Justiz-Angebote entwickeln, die für alle Menschen gut
-              funktionieren. Ihre Hilfe ist dabei sehr wichtig. In kurzen Online-Gesprächen können
-              Sie Ihre Erfahrungen mit uns teilen und neue Services testen.
-            </KernBody>
-            <a className="kern-link" href={TODO_HREF}>
-              <KernIcon name="arrow-forward" size="small" />
-              Jetzt für die Teilnahme anmelden
-            </a>
-          </KernAlert>
+          <A2JInlineNotice
+            type="information"
+            title="Gestalten Sie die digitalen Angebote der Justiz mit"
+            link={{ href: TODO_HREF, label: "Jetzt für die Teilnahme anmelden" }}
+          >
+            Wir wollen digitale Justiz-Angebote entwickeln, die für alle Menschen gut funktionieren.
+            Ihre Hilfe ist dabei sehr wichtig. In kurzen Online-Gesprächen können Sie Ihre
+            Erfahrungen mit uns teilen und neue Services testen.
+          </A2JInlineNotice>
         </div>
       </DefaultPage>
     </AppShell>

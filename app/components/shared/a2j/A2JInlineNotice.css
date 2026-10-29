@@ -1,0 +1,79 @@
+.a2j-inline-notice {
+  --a2j-inline-notice-color: var(--kern-color-feedback-info-contextual);
+  --a2j-inline-notice-background: var(--kern-color-feedback-info-background-contextual);
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--kern-metric-border-radius-default);
+}
+
+/* As in the design, the border is drawn over the content instead of adding to the size. */
+.a2j-inline-notice::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: var(--kern-metric-border-width-default) solid var(--a2j-inline-notice-color);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.a2j-inline-notice--warning {
+  --a2j-inline-notice-color: var(--kern-color-feedback-warning-contextual);
+  --a2j-inline-notice-background: var(--kern-color-feedback-warning-background-contextual);
+}
+
+.a2j-inline-notice--success {
+  --a2j-inline-notice-color: var(--kern-color-feedback-success-contextual);
+  --a2j-inline-notice-background: var(--kern-color-feedback-success-background-contextual);
+}
+
+.a2j-inline-notice--error {
+  --a2j-inline-notice-color: var(--kern-color-feedback-danger-contextual);
+  --a2j-inline-notice-background: var(--kern-color-feedback-danger-background-contextual);
+}
+
+.a2j-inline-notice__header {
+  display: flex;
+  align-items: center;
+  padding: var(--kern-metric-space-small) var(--kern-metric-space-default);
+  background-color: var(--a2j-inline-notice-background);
+}
+
+.a2j-inline-notice__icon {
+  flex-shrink: 0;
+  background-color: var(--a2j-inline-notice-color);
+}
+
+.a2j-inline-notice__title {
+  flex: 1;
+  margin: 0;
+  /* Static baseline padding. The title-default tokens turn adaptive (8px) on wide screens. */
+  padding: var(--kern-5) var(--kern-metric-space-small) var(--kern-3);
+  overflow-wrap: break-word;
+  font-size: var(--kern-typography-font-size-medium-static, 18px);
+  font-weight: var(--kern-typography-font-weight-body-strong, 600);
+  line-height: var(--kern-typography-line-height-medium-static, 24px);
+  color: var(--kern-color-layout-text-default);
+}
+
+.a2j-inline-notice__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--kern-metric-space-small);
+  padding: var(--kern-metric-space-small) var(--kern-metric-space-large)
+    var(--kern-metric-space-default);
+  background-color: var(--kern-color-layout-background-default);
+}
+
+.a2j-inline-notice__description {
+  align-self: stretch;
+  margin: 0;
+}
+
+.a2j-inline-notice__link {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--kern-metric-space-x-small);
+  padding-block: var(--kern-metric-baseline-body-default-padding-top, 6px)
+    var(--kern-metric-baseline-body-default-padding-bottom, 2px);
+}
