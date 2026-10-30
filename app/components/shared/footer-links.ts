@@ -1,22 +1,20 @@
 // Shared by the page footer and the e-mail footer.
-// Targets for these links are not defined in the design yet.
-export const TODO_HREF = "#";
 
 export type Link = { href: string; label: string };
 
 export const legalLinks: Link[] = [
-  { href: TODO_HREF, label: "Impressum" },
-  { href: TODO_HREF, label: "Barrierefreiheit" },
-  { href: TODO_HREF, label: "Datenschutz" },
+  { href: "https://service.justiz.de/impressum", label: "Impressum" },
+  { href: "https://service.justiz.de/barrierefreiheit", label: "Barrierefreiheit" },
+  { href: "https://service.justiz.de/datenschutzerklaerung", label: "Datenschutz" },
 ];
 
 export const contactLinks: Link[] = [
-  { href: TODO_HREF, label: "Kontakt" },
+  { href: "https://service.justiz.de/kontakt", label: "Kontakt" },
   {
     href: "https://github.com/digitalservicebund/a2j-justiz-termin-service",
     label: "Open Source Code",
   },
-  { href: TODO_HREF, label: "An Befragungen teilnehmen" },
+  { href: "https://service.justiz.de/feedback", label: "An Befragungen teilnehmen" },
 ];
 
 export const pilotLinks: Link[] = [

@@ -9,7 +9,6 @@ import {
   legalLinks,
   operatorLinks,
   pilotLinks,
-  TODO_HREF,
   type Link,
 } from "../../components/shared/footer-links.ts";
 
@@ -37,9 +36,6 @@ export const COLOR = {
 
 // Mail clients without webfont support (Gmail, Outlook) would fall back to an arbitrary font.
 export const FONT = "Arial, Helvetica, sans-serif";
-
-// Links without a target yet (placeholders in the page footer) are useless in a mail.
-const hasTarget = ({ href }: Link) => href !== TODO_HREF;
 
 export const textStyle = (size: number, lineHeight: number, color: string, bold = false) =>
   `margin:0;font-family:${FONT};font-size:${size}px;line-height:${lineHeight}px;color:${color};${bold ? "font-weight:bold;" : ""}`;
@@ -155,14 +151,11 @@ function LinkGroup(title: string, links: Link[]) {
 }
 
 export function Footer() {
-  const contact = contactLinks.filter(hasTarget);
-  const legal = legalLinks.filter(hasTarget);
   const pilot = pilotLinks[0]!;
   const operator = operatorLinks[0]!;
   const muted = { color: COLOR.muted, size: 18 };
 
-  return html`$${contact.length === 0 ? "" : LinkGroup(CONTACT_TITLE, contact)}
-  $${legal.length === 0 ? "" : LinkGroup(LEGAL_TITLE, legal)}
+  return html`$${LinkGroup(CONTACT_TITLE, contactLinks)} $${LinkGroup(LEGAL_TITLE, legalLinks)}
   $${TextRow({ ...muted, padding: "0 0 8px 0", children: html`Ein Pilotprojekt des $${Anchor(pilot, 18)}.` })}
   $${TextRow({ ...muted, padding: "0 0 8px 0", children: html`Umsetzung und Betrieb durch $${Anchor(operator, 18)}.` })}
   $${TextRow({ children: html`${ADDRESS}`, padding: "0", size: 16, color: COLOR.muted })}`;
@@ -250,10 +243,7 @@ export function Layout(
 }
 
 function renderLinkGroupText(title: string, links: Link[]) {
-  const withTarget = links.filter(hasTarget);
-  return withTarget.length > 0
-    ? [title, ...withTarget.map(({ label, href }) => `${label}: ${href}`), ""]
-    : [];
+  return [title, ...links.map(({ label, href }) => `${label}: ${href}`), ""];
 }
 
 export function renderFooterText() {
