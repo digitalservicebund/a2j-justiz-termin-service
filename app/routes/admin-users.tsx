@@ -49,7 +49,7 @@ export async function action({ request }: { request: Request }) {
           ? z.object({ id: z.string().min(1) })
           : null;
   if (!schema || !schema.safeParse(raw).success) {
-    return data({ error: "Bitte prüfen Sie Name, E-Mail-Adresse und Rolle." }, { status: 400 });
+    return data({ error: "Bitte prüfen Sie Name, E‑Mail-Adresse und Rolle." }, { status: 400 });
   }
   try {
     const db = getDb();
@@ -87,7 +87,7 @@ function UserFields({
       {!user && (
         <KernFormInput
           id={`${prefix}-email`}
-          label="E-Mail-Adresse"
+          label="E‑Mail-Adresse"
           name="email"
           type="email"
           required
@@ -119,12 +119,12 @@ export default function AdminUsersRoute() {
   return (
     <AppShell breadcrumbs={[{ label: "Benutzerverwaltung", href: "#" }]} user={user}>
       <KernBody>
-        Hinterlegte E-Mail-Adressen und Adressen{" "}
+        Hinterlegte E‑Mail-Adressen und Adressen{" "}
         <Link className="kern-link" to="/admin/domains">
           freigegebener Domains
         </Link>{" "}
         können sich anmelden. Änderungen beenden bestehende Sitzungen des betroffenen Benutzers.
-        E-Mail-Adressen können nicht geändert werden: Löschen Sie den Benutzer und legen Sie ihn neu
+        E‑Mail-Adressen können nicht geändert werden: Löschen Sie den Benutzer und legen Sie ihn neu
         an.
       </KernBody>
       {result && "error" in result && (

@@ -27,7 +27,7 @@ describe("Welcome", () => {
 
   it("shows the login form and the breadcrumb without an Übersicht crumb", async () => {
     await renderPage();
-    expect(screen.getByLabelText("E-Mail-Adresse")).toBeInTheDocument();
+    expect(screen.getByLabelText("E‑Mail-Adresse")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Anmelden" })).toBeInTheDocument();
     const breadcrumb = screen.getByRole("navigation", { name: "Brotkrumen" });
     expect(within(breadcrumb).getByText("Verhandlungstermin-Finder")).toHaveAttribute(
@@ -97,7 +97,7 @@ describe("Welcome", () => {
         .find((link) => !breadcrumb.contains(link));
       expect(button).toHaveClass("kern-btn", "kern-btn--primary");
       expect(button).toHaveAttribute("href", "/overview");
-      expect(screen.queryByLabelText("E-Mail-Adresse")).not.toBeInTheDocument();
+      expect(screen.queryByLabelText("E‑Mail-Adresse")).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Anmelden" })).not.toBeInTheDocument();
     });
 

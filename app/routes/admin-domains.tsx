@@ -53,7 +53,7 @@ export default function AdminDomainsRoute() {
   return (
     <AppShell breadcrumbs={[{ label: "Freigegebene Domains", href: "#" }]} user={user}>
       <KernBody>
-        Wer sich mit einer E-Mail-Adresse dieser Domains anmeldet, erhält automatisch ein Konto mit
+        Wer sich mit einer E‑Mail-Adresse dieser Domains anmeldet, erhält automatisch ein Konto mit
         der Rolle Richter. Subdomains müssen einzeln freigegeben werden. Das Entfernen einer Domain
         löscht keine bestehenden Konten.
       </KernBody>

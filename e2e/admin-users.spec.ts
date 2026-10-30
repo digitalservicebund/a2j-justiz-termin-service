@@ -39,7 +39,7 @@ test("administrator can create, edit, grant/revoke admin rights and delete users
   const email = users.email();
   const newUser = page.getByRole("region", { name: "Benutzer hinzufügen", exact: true });
   await newUser.getByRole("textbox", { name: "Name", exact: true }).fill("Managed user");
-  await newUser.getByRole("textbox", { name: "E-Mail-Adresse" }).fill(email);
+  await newUser.getByRole("textbox", { name: "E‑Mail-Adresse" }).fill(email);
   await newUser.getByRole("checkbox", { name: "Richter", exact: true }).uncheck();
   await newUser.getByRole("checkbox", { name: "Beklagter", exact: true }).check();
   await newUser.getByRole("button", { name: "Hinzufügen" }).click();
@@ -116,7 +116,7 @@ test("administrator can create, edit, grant/revoke admin rights and delete users
     ).toEqual([]);
 
     await newUser.getByRole("textbox", { name: "Name", exact: true }).fill("Recreated user");
-    await newUser.getByRole("textbox", { name: "E-Mail-Adresse" }).fill(email);
+    await newUser.getByRole("textbox", { name: "E‑Mail-Adresse" }).fill(email);
     await newUser.getByRole("button", { name: "Hinzufügen" }).click();
     await expect(entry).toBeVisible();
     const recreated = await db
@@ -150,10 +150,10 @@ test("management validates duplicates, blocks self-removal and rejects cross-ori
 
   const newUser = page.getByRole("region", { name: "Benutzer hinzufügen", exact: true });
   await newUser.getByRole("textbox", { name: "Name", exact: true }).fill("Duplicate");
-  await newUser.getByRole("textbox", { name: "E-Mail-Adresse" }).fill(user.email);
+  await newUser.getByRole("textbox", { name: "E‑Mail-Adresse" }).fill(user.email);
   await newUser.getByRole("button", { name: "Hinzufügen" }).click();
   await expect(page.getByRole("alert")).toContainText(
-    "Diese E-Mail-Adresse ist bereits hinterlegt.",
+    "Diese E‑Mail-Adresse ist bereits hinterlegt.",
   );
   expect(
     await db.selectFrom("user").select("id").where("email", "=", user.email).execute(),

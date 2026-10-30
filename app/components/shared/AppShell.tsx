@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Form, Link as RouterLink } from "react-router";
+import { Form, Link as RouterLink, useRouteLoaderData } from "react-router";
 
 import type { AuthUser } from "~/core/domain/user";
 
@@ -72,12 +72,16 @@ type AppShellProps = {
 
 export function AppShell({
   breadcrumbs,
-  user,
+  user: userProp,
   className,
   showReportProblem = true,
   showLanguageLinks = false,
   children,
 }: Readonly<AppShellProps>) {
+  // Pages can pass the user themselves; otherwise it comes from the root loader. The root loader
+  // is missing when it failed, as on the error page.
+  const rootData = useRouteLoaderData<{ user: AuthUser | null }>("root");
+  const user = userProp ?? rootData?.user ?? undefined;
   const classes = ["page-shell", className].filter(Boolean).join(" ");
 
   return (

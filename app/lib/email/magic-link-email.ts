@@ -21,16 +21,16 @@ const VALIDITY = "Ihr Anmelde-Link ist 5 Minuten gültig und kann nur einmal ver
 const COPY = {
   signup: {
     subject: "Verifizieren Sie Ihre E-Mail-Adresse",
-    heading: `Verifizieren Sie Ihre E-Mail-Adresse, um ein Konto beim ${PRODUCT_NAME} zu erstellen.`,
-    button: "E-Mail-Adresse verifizieren",
-    ignore: "Wenn Sie diese E-Mail nicht angefordert haben, können Sie diese einfach ignorieren.",
+    heading: `Verifizieren Sie Ihre E‑Mail-Adresse, um ein Konto beim ${PRODUCT_NAME} zu erstellen.`,
+    button: "E‑Mail-Adresse verifizieren",
+    ignore: "Wenn Sie diese E‑Mail nicht angefordert haben, können Sie diese einfach ignorieren.",
   },
   login: {
     subject: `Anmelden beim ${PRODUCT_NAME}`,
     heading: `Melden Sie sich beim ${PRODUCT_NAME} an.`,
     button: "Anmelden",
     ignore:
-      "Wenn Sie diese Anmeldung nicht angefordert haben, können Sie diese E-Mail einfach ignorieren.",
+      "Wenn Sie diese Anmeldung nicht angefordert haben, können Sie diese E‑Mail einfach ignorieren.",
   },
 } satisfies Record<MagicLinkVariant, Record<string, string>>;
 

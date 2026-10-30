@@ -13,8 +13,8 @@ describe("renderMagicLinkEmail", () => {
     const mail = renderMagicLinkEmail("signup", url);
     expect(mail.subject).toBe("Verifizieren Sie Ihre E-Mail-Adresse");
     expect(mail.html).toContain("um ein Konto beim Verhandlungstermin-Finder zu erstellen.");
-    expect(mail.html).toContain("E-Mail-Adresse verifizieren");
-    expect(mail.text).toContain("E-Mail-Adresse verifizieren:");
+    expect(mail.html).toContain("E‑Mail-Adresse verifizieren");
+    expect(mail.text).toContain("E‑Mail-Adresse verifizieren:");
     expect(mail.html).toContain("können Sie diese einfach ignorieren.");
   });
 

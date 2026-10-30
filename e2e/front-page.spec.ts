@@ -6,7 +6,7 @@ test("front page shows the login, the language links and the process steps", asy
   await expect(
     page.getByRole("heading", { level: 1, name: "Verhandlungstermin-Finder" }),
   ).toBeVisible();
-  await expect(page.getByLabel("E-Mail-Adresse")).toBeVisible();
+  await expect(page.getByLabel("E‑Mail-Adresse")).toBeVisible();
 
   const languages = page.getByRole("navigation", { name: "Sprachangebote" });
   await expect(languages.getByRole("link", { name: "Leichte Sprache" })).toHaveAttribute(
@@ -48,7 +48,7 @@ test("the pilot notice is collapsed until opened", async ({ page }) => {
 test("an unknown address is told about the pilot instead of receiving a link", async ({ page }) => {
   await page.goto("/");
 
-  await page.getByLabel("E-Mail-Adresse").fill("person.z@example.com");
+  await page.getByLabel("E‑Mail-Adresse").fill("person.z@example.com");
   await page.getByRole("button", { name: "Anmelden" }).click();
 
   await expect(
@@ -97,7 +97,7 @@ test("a signed-in user sees a button to the overview instead of the login", asyn
   ).toBeVisible();
   await expect(page.getByText(user.email)).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Sprachangebote" })).toBeVisible();
-  await expect(page.getByLabel("E-Mail-Adresse")).toHaveCount(0);
+  await expect(page.getByLabel("E‑Mail-Adresse")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Anmelden" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Der Ablauf" })).toBeVisible();
 

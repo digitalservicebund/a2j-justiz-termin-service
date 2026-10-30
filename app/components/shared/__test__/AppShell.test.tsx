@@ -43,6 +43,34 @@ describe("AppShell", () => {
     expect(container.querySelector('input[name="intent"]')).toHaveValue("logout");
   });
 
+  it("shows the user from the root loader when the page passes none", async () => {
+    const Stub = createRoutesStub([
+      {
+        id: "root",
+        path: "/",
+        loader: () => ({ user }),
+        Component: () => <AppShell>Inhalt</AppShell>,
+      },
+    ]);
+    render(<Stub />);
+    expect(await screen.findByText(user.email)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Abmelden" })).toBeInTheDocument();
+  });
+
+  it("shows no user when the root loader has none", async () => {
+    const Stub = createRoutesStub([
+      {
+        id: "root",
+        path: "/",
+        loader: () => ({ user: null }),
+        Component: () => <AppShell>Inhalt</AppShell>,
+      },
+    ]);
+    render(<Stub />);
+    expect(await screen.findByText("Inhalt")).toBeInTheDocument();
+    expect(screen.queryByText("Angemeldet als:")).not.toBeInTheDocument();
+  });
+
   it("hides the language links by default", () => {
     renderShell();
     expect(screen.queryByRole("navigation", { name: "Sprachangebote" })).not.toBeInTheDocument();
