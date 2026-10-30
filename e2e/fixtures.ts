@@ -141,7 +141,7 @@ export async function issueMagicLink(request: APIRequestContext, email: string):
 export async function signIn(page: Page, user: AuthUser, options = { uppercase: false }) {
   await page.goto(`${BASE_PATH}/`);
   await page
-    .getByRole("textbox", { name: "E-Mail-Adresse" })
+    .getByRole("textbox", { name: "E‑Mail-Adresse" })
     .fill(options.uppercase ? user.email.toUpperCase() : user.email);
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await expect(page.getByRole("status")).toContainText("Ihr Anmelde-Link wurde versendet");

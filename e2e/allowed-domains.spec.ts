@@ -22,7 +22,7 @@ function addDomain(value: string) {
 
 async function requestLink(page: Page, email: string) {
   await page.goto(`${BASE_PATH}/`);
-  await page.getByRole("textbox", { name: "E-Mail-Adresse" }).fill(email);
+  await page.getByRole("textbox", { name: "E‑Mail-Adresse" }).fill(email);
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
 }
 
@@ -37,7 +37,7 @@ test("an address on an allowed domain signs up with a verified magic link", asyn
   await requestLink(page, email);
   await expect(page.getByRole("status")).toContainText("Ihr Anmelde-Link wurde versendet");
   await expect(page.getByRole("status")).toBeFocused();
-  await expect(page.getByRole("textbox", { name: "E-Mail-Adresse" })).toHaveValue(email);
+  await expect(page.getByRole("textbox", { name: "E‑Mail-Adresse" })).toHaveValue(email);
   // The account only exists once the link was opened.
   expect(await db.selectFrom("user").select("id").where("email", "=", email).execute()).toEqual([]);
 
