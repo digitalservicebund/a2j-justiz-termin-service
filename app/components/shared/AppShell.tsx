@@ -5,15 +5,14 @@ import type { AuthUser } from "~/core/domain/user";
 
 import { BmjvLogo } from "./BmjvLogo";
 import { Breadcrumb, type BreadcrumbItem } from "./Breadcrumb";
-import { DefaultPage, type PageWidth } from "./DefaultPage";
+import { DefaultPage } from "./DefaultPage";
 import { contactLinks, legalLinks, operatorLinks, pilotLinks, type Link } from "./footer-links";
 import { KernBody } from "./kern/KernBody";
-import { KernButton } from "./kern/KernButton";
 import { KernHeading } from "./kern/KernHeading";
 import { KernIcon, type KernIconName } from "./kern/KernIcon";
 import { KernKopfZeile } from "./kern/KernKopfZeile";
-import { KernLabel } from "./kern/KernLabel";
 import { KernLink } from "./kern/KernLink";
+import { ReportProblemButton } from "./ReportProblemButton";
 
 import "./AppShell.css";
 
@@ -64,9 +63,8 @@ type AppShellProps = {
   breadcrumbs?: BreadcrumbItem[];
   user?: AuthUser;
   className?: string;
+  // Pages that place the button inside their own layout turn this off.
   showReportProblem?: boolean;
-  // The width the report-problem button is aligned to, to match the page content above it.
-  reportProblemWidth?: PageWidth;
   // The easy-language and sign-language links are only shown on the front page.
   showLanguageLinks?: boolean;
   children: ReactNode;
@@ -77,7 +75,6 @@ export function AppShell({
   user: userProp,
   className,
   showReportProblem = true,
-  reportProblemWidth,
   showLanguageLinks = false,
   children,
 }: Readonly<AppShellProps>) {
@@ -147,12 +144,9 @@ export function AppShell({
         {children}
 
         {showReportProblem && (
-          <DefaultPage width={reportProblemWidth}>
+          <DefaultPage>
             <div className="page-shell__report">
-              <KernButton type="button" style="secondary">
-                <KernIcon name="danger" />
-                <KernLabel>Problem mit dieser Seite melden</KernLabel>
-              </KernButton>
+              <ReportProblemButton />
             </div>
           </DefaultPage>
         )}

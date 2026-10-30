@@ -199,4 +199,16 @@ describe("Overview", () => {
     ).toEqual(["Übersicht", "Abwesenheiten", "Kalender abonnieren", "Einstellungen"]);
     expect(within(nav).getAllByRole("link")).toHaveLength(1);
   });
+
+  it("shows the report-problem button once, inside the content column", async () => {
+    vi.mocked(listAppointments).mockResolvedValue([]);
+
+    const { container } = renderPage();
+
+    const button = await screen.findByRole("button", { name: "Problem mit dieser Seite melden" });
+    expect(screen.getAllByRole("button", { name: "Problem mit dieser Seite melden" })).toHaveLength(
+      1,
+    );
+    expect(container.querySelector(".overview__content")).toContainElement(button);
+  });
 });

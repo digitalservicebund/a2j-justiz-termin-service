@@ -1,7 +1,7 @@
 .overview {
   display: grid;
   gap: var(--kern-metric-space-x-large);
-  padding-block: var(--kern-metric-space-x-large) 2rem;
+  padding-block: var(--kern-metric-space-x-large) var(--kern-metric-space-6x-large);
 }
 
 /* The design's sidebar is 352px wide and the content column 864px, centred in the rest. */
@@ -69,9 +69,8 @@
   border-bottom: 0;
 }
 
-/* The report-problem button lines up with the right edge of the content column. */
-@media (min-width: 64rem) {
-  .overview-page .page-shell__report {
-    padding-right: 9rem;
-  }
+/* The report-problem button sits 80px below the table, at the right edge of the content column. */
+.overview__report {
+  justify-self: end;
+  margin-top: 3rem;
 }

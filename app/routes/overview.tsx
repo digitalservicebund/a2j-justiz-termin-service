@@ -18,6 +18,7 @@ import {
   KernTableBody,
   KernTableHead,
 } from "~/components/shared/kern/KernTable";
+import { ReportProblemButton } from "~/components/shared/ReportProblemButton";
 import { SideNav } from "~/components/shared/SideNav";
 import { getDb } from "~/database/database";
 import type { AppointmentStatus } from "~/database/types";
@@ -85,12 +86,7 @@ export default function Overview() {
     ? "Keine Terminumfragen für diesen Filter."
     : "Sie haben keine Terminumfrage.";
   return (
-    <AppShell
-      user={user}
-      className="overview-page"
-      breadcrumbs={[{ label: "Übersicht" }]}
-      reportProblemWidth="wide"
-    >
+    <AppShell user={user} breadcrumbs={[{ label: "Übersicht" }]} showReportProblem={false}>
       <DefaultPage width="wide">
         <div className="overview">
           <SideNav label="Bereiche" items={navItems} />
@@ -175,6 +171,10 @@ export default function Overview() {
                 )}
               </KernTableBody>
             </KernTable>
+
+            <div className="overview__report">
+              <ReportProblemButton />
+            </div>
           </div>
         </div>
       </DefaultPage>
