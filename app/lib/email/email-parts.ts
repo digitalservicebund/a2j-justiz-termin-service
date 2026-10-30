@@ -6,6 +6,7 @@ import html from "html-template-tag";
 import type { TimeRange } from "../../adapters/appointments/appointments.server.ts";
 import {
   contactLinks,
+  legalLinks,
   operatorLinks,
   pilotLinks,
   TODO_HREF,
@@ -132,7 +133,7 @@ export function Button(label: string, url: string) {
             <a
               href="$${escaped(url)}"
               style="display:inline-block;padding:12px 24px 12px 24px;font-family:${FONT};font-size:18px;line-height:24px;font-weight:bold;color:${COLOR.white};text-decoration:none;"
-              >${label}&nbsp;&nbsp;&rarr;</a
+              >${label}</a
             >
           </td>
         </tr>
@@ -141,8 +142,11 @@ export function Button(label: string, url: string) {
   </tr>`;
 }
 
-function ContactRows(links: Link[]) {
-  return html`$${TextRow({ children: "Kontakt und Teilnahme", padding: "0 0 4px 0", size: 18, color: COLOR.text, bold: true })}
+const CONTACT_TITLE = "Kontakt und Teilnahme";
+const LEGAL_TITLE = "Rechtliche Hinweise";
+
+function LinkGroup(title: string, links: Link[]) {
+  return html`$${TextRow({ children: html`${title}`, padding: "0 0 4px 0", size: 18, color: COLOR.text, bold: true })}
     <tr>
       <td style="padding:0 0 24px 0;">
         $${links.map((link) => Anchor(link, 18)).join("&nbsp;&nbsp;&nbsp; ")}
@@ -152,14 +156,15 @@ function ContactRows(links: Link[]) {
 
 export function Footer() {
   const contact = contactLinks.filter(hasTarget);
+  const legal = legalLinks.filter(hasTarget);
   const pilot = pilotLinks[0]!;
   const operator = operatorLinks[0]!;
   const muted = { color: COLOR.muted, size: 18 };
 
-  return html`$${contact.length === 0 ? "" : ContactRows(contact)}
-  $${TextRow({ children: "Impressum", padding: "0 0 4px 0", size: 18, color: COLOR.text, bold: true })}
-  $${TextRow({ ...muted, padding: "0 0 12px 0", children: html`Ein Pilotprojekt des $${Anchor(pilot, 18)}.` })}
-  $${TextRow({ ...muted, padding: "0 0 12px 0", children: html`Umsetzung und Betrieb durch $${Anchor(operator, 18)}.` })}
+  return html`$${contact.length === 0 ? "" : LinkGroup(CONTACT_TITLE, contact)}
+  $${legal.length === 0 ? "" : LinkGroup(LEGAL_TITLE, legal)}
+  $${TextRow({ ...muted, padding: "0 0 8px 0", children: html`Ein Pilotprojekt des $${Anchor(pilot, 18)}.` })}
+  $${TextRow({ ...muted, padding: "0 0 8px 0", children: html`Umsetzung und Betrieb durch $${Anchor(operator, 18)}.` })}
   $${TextRow({ children: html`${ADDRESS}`, padding: "0", size: 16, color: COLOR.muted })}`;
 }
 
@@ -244,16 +249,20 @@ export function Layout(
     </html>`;
 }
 
+function renderLinkGroupText(title: string, links: Link[]) {
+  const withTarget = links.filter(hasTarget);
+  return withTarget.length > 0
+    ? [title, ...withTarget.map(({ label, href }) => `${label}: ${href}`), ""]
+    : [];
+}
+
 export function renderFooterText() {
-  const contact = contactLinks.filter(hasTarget);
   const pilot = pilotLinks[0]!;
   const operator = operatorLinks[0]!;
 
   return [
-    ...(contact.length > 0
-      ? ["Kontakt und Teilnahme", ...contact.map(({ label, href }) => `${label}: ${href}`), ""]
-      : []),
-    "Impressum",
+    ...renderLinkGroupText(CONTACT_TITLE, contactLinks),
+    ...renderLinkGroupText(LEGAL_TITLE, legalLinks),
     `Ein Pilotprojekt des ${pilot.label} (${pilot.href}).`,
     `Umsetzung und Betrieb durch ${operator.label} (${operator.href}).`,
     ADDRESS,
