@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Form } from "react-router";
+import { Form, Link as RouterLink, useRouteLoaderData } from "react-router";
 
 import type { AuthUser } from "~/core/domain/user";
 
@@ -65,16 +65,23 @@ type AppShellProps = {
   user?: AuthUser;
   className?: string;
   showReportProblem?: boolean;
+  // The easy-language and sign-language links are only shown on the front page.
+  showLanguageLinks?: boolean;
   children: ReactNode;
 };
 
 export function AppShell({
   breadcrumbs,
-  user,
+  user: userProp,
   className,
   showReportProblem = true,
+  showLanguageLinks = false,
   children,
 }: Readonly<AppShellProps>) {
+  // Pages can pass the user themselves; otherwise it comes from the root loader. The root loader
+  // is missing when it failed, as on the error page.
+  const rootData = useRouteLoaderData<{ user: AuthUser | null }>("root");
+  const user = userProp ?? rootData?.user ?? undefined;
   const classes = ["page-shell", className].filter(Boolean).join(" ");
 
   return (
@@ -84,21 +91,25 @@ export function AppShell({
       <header className="page-shell__header">
         <div className="kern-container page-shell__header-inner">
           <KernHeading size="large" className="page-shell__service-name">
-            Justiz-Services
+            <RouterLink to="/" className="page-shell__service-link">
+              Justiz-Services
+            </RouterLink>
           </KernHeading>
           <div className="page-shell__header-actions">
-            <nav aria-label="Sprachangebote">
-              <ul className="page-shell__language-links">
-                {languageLinks.map(({ href, label, icon }) => (
-                  <li key={label}>
-                    <KernLink size="small" href={href}>
-                      <KernIcon name={icon} />
-                      {label}
-                    </KernLink>
-                  </li>
-                ))}
-              </ul>
-            </nav>
+            {showLanguageLinks && (
+              <nav aria-label="Sprachangebote">
+                <ul className="page-shell__language-links">
+                  {languageLinks.map(({ href, label, icon }) => (
+                    <li key={label}>
+                      <KernLink size="small" href={href}>
+                        <KernIcon name={icon} />
+                        {label}
+                      </KernLink>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            )}
             {user && (
               <div className="page-shell__user">
                 <KernBody muted className="page-shell__user-info">

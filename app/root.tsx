@@ -11,6 +11,7 @@ import {
   ScrollRestoration,
 } from "react-router";
 
+import { getSessionUser } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { KernAlert } from "~/components/shared/kern/KernAlert";
 import { BASE_PATH } from "~/lib/base-path";
@@ -22,8 +23,9 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import "./root.css";
 
-export function loader() {
-  return { baseUrl: requireEnv("BASE_URL") };
+// The user is loaded here so that the header shows it on every page while signed in.
+export async function loader({ request }: Route.LoaderArgs) {
+  return { baseUrl: requireEnv("BASE_URL"), user: await getSessionUser(request) };
 }
 
 export const meta: Route.MetaFunction = ({ loaderData }) =>

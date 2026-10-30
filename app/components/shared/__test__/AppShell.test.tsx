@@ -43,12 +43,47 @@ describe("AppShell", () => {
     expect(container.querySelector('input[name="intent"]')).toHaveValue("logout");
   });
 
+  it("shows the user from the root loader when the page passes none", async () => {
+    const Stub = createRoutesStub([
+      {
+        id: "root",
+        path: "/",
+        loader: () => ({ user }),
+        Component: () => <AppShell>Inhalt</AppShell>,
+      },
+    ]);
+    render(<Stub />);
+    expect(await screen.findByText(user.email)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Abmelden" })).toBeInTheDocument();
+  });
+
+  it("shows no user when the root loader has none", async () => {
+    const Stub = createRoutesStub([
+      {
+        id: "root",
+        path: "/",
+        loader: () => ({ user: null }),
+        Component: () => <AppShell>Inhalt</AppShell>,
+      },
+    ]);
+    render(<Stub />);
+    expect(await screen.findByText("Inhalt")).toBeInTheDocument();
+    expect(screen.queryByText("Angemeldet als:")).not.toBeInTheDocument();
+  });
+
+  it("hides the language links by default", () => {
+    renderShell();
+    expect(screen.queryByRole("navigation", { name: "Sprachangebote" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Leichte Sprache" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Gebärdensprache" })).not.toBeInTheDocument();
+  });
+
   it("links to the easy-language and sign-language pages, signed in or not", () => {
     const expected = [
       ["Leichte Sprache", "https://service.justiz.de/leichtesprache"],
       ["Gebärdensprache", "https://service.justiz.de/gebaerdensprache"],
     ];
-    for (const props of [{}, { user }]) {
+    for (const props of [{ showLanguageLinks: true }, { showLanguageLinks: true, user }]) {
       const { unmount } = renderShell(props);
       const nav = screen.getByRole("navigation", { name: "Sprachangebote" });
       for (const [name, href] of expected) {
@@ -56,6 +91,15 @@ describe("AppShell", () => {
       }
       unmount();
     }
+  });
+
+  it("links the service name in the header to the front page", () => {
+    const { container } = renderShell();
+    const header = container.querySelector("header")!;
+    expect(within(header).getByRole("link", { name: "Justiz-Services" })).toHaveAttribute(
+      "href",
+      "/",
+    );
   });
 
   it("names the service in the footer like in the header", () => {

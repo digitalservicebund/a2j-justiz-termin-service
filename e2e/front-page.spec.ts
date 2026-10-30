@@ -1,4 +1,4 @@
-import { baseURL, expect, signIn, test } from "./fixtures.ts";
+import { BASE_PATH, baseURL, expect, signIn, startPageURL, test } from "./fixtures.ts";
 
 test("front page shows the login, the language links and the process steps", async ({ page }) => {
   await page.goto("/");
@@ -96,6 +96,7 @@ test("a signed-in user sees a button to the overview instead of the login", asyn
     page.getByRole("heading", { level: 1, name: "Verhandlungstermin-Finder" }),
   ).toBeVisible();
   await expect(page.getByText(user.email)).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Sprachangebote" })).toBeVisible();
   await expect(page.getByLabel("E‑Mail-Adresse")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Anmelden" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Der Ablauf" })).toBeVisible();
@@ -106,4 +107,25 @@ test("a signed-in user sees a button to the overview instead of the login", asyn
     .first()
     .click();
   await expect(page).toHaveURL(`${baseURL}/overview`);
+});
+
+test("the language links are not shown on other pages", async ({ page, users }) => {
+  const user = await users.create();
+  await signIn(page, user);
+
+  await page.goto(`${BASE_PATH}/overview`);
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+
+  await expect(page.getByRole("navigation", { name: "Sprachangebote" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Leichte Sprache" })).toHaveCount(0);
+});
+
+test("the service name in the header links back to the front page", async ({ page, users }) => {
+  const user = await users.create();
+  await signIn(page, user);
+  await page.goto(`${BASE_PATH}/overview`);
+
+  await page.getByRole("banner").getByRole("link", { name: "Justiz-Services" }).click();
+
+  await expect(page).toHaveURL(startPageURL);
 });
