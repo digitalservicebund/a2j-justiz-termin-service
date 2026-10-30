@@ -23,7 +23,7 @@ export async function insertUser(db: Kysely<Database>, input: z.infer<typeof New
     .onConflict((conflict) => conflict.column("email").doNothing())
     .returning(["id", "name", "email", "roles"])
     .executeTakeFirst();
-  if (!result) throw new UserManagementError("Diese E-Mail-Adresse ist bereits hinterlegt.");
+  if (!result) throw new UserManagementError("Diese E‑Mail-Adresse ist bereits hinterlegt.");
   logInfo(`Created user ${result.id}`);
   return result;
 }

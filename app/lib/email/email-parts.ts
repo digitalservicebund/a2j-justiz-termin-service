@@ -48,7 +48,7 @@ export const escaped = (value: string) => html`${value}`;
 export function Anchor(link: Link, size: number) {
   return html`<a
     href="$${escaped(link.href)}"
-    style="color:${COLOR.action};text-decoration:underline;font-family:${FONT};font-size:${String(size)}px;line-height:24px;"
+    style="color:${COLOR.action};text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;font-family:${FONT};font-size:${String(size)}px;line-height:24px;"
     >${link.label}</a
   >`;
 }

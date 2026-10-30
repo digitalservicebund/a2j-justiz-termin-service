@@ -36,7 +36,7 @@ export function LoginForm({ email, error, sent = false }: Readonly<LoginFormProp
     >
       <KernFormInput
         id="login-email"
-        label="E-Mail-Adresse"
+        label="E‑Mail-Adresse"
         name="email"
         type="email"
         autoComplete="email"
@@ -59,7 +59,7 @@ export function LoginForm({ email, error, sent = false }: Readonly<LoginFormProp
           <KernIcon name="success" />
           <p className="kern-body">
             Ihr Anmelde-Link wurde versendet, ist 5 Minuten gültig und kann nur einmal verwendet
-            werden. Sie haben keine E-Mail erhalten?{" "}
+            werden. Sie haben keine E‑Mail erhalten?{" "}
             <button type="submit" className="kern-link login-form__resend" disabled={pending}>
               Anmelde-Link erneut senden.
             </button>

@@ -25,6 +25,15 @@ describe("e-mail footer", () => {
     expect(text).toContain("Impressum: https://service.justiz.de/impressum");
   });
 
+  it("styles every footer link like a KERN link", () => {
+    const html = squash(Footer());
+    const styles = [...html.matchAll(/<a href="[^"]*" style="([^"]*)"/g)].map(([, style]) => style);
+    expect(styles.length).toBeGreaterThan(1);
+    expect(new Set(styles).size).toBe(1);
+    expect(styles[0]).toContain("text-decoration:underline");
+    expect(styles[0]).toContain("text-underline-offset:3px");
+  });
+
   it("orders contact, legal notices, pilot, operator and address", () => {
     const text = renderFooterText().join("\n");
     const positions = [

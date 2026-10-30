@@ -142,7 +142,7 @@ export default function Welcome() {
                   sent={result !== undefined && "sent" in result}
                   error={
                     result && "invalidEmail" in result ? (
-                      "Bitte geben Sie eine gültige E-Mail-Adresse ein."
+                      "Bitte geben Sie eine gültige E‑Mail-Adresse ein."
                     ) : result && "notAllowed" in result ? (
                       <>
                         Während der Pilotierung können nur ausgewählte Gerichte den Onlinedienst

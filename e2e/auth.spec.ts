@@ -76,7 +76,7 @@ test("unknown addresses are told they are not allowed and get no email or accoun
 }) => {
   const email = users.email();
   await page.goto(`${BASE_PATH}/`);
-  await page.getByRole("textbox", { name: "E-Mail-Adresse" }).fill(email);
+  await page.getByRole("textbox", { name: "E‑Mail-Adresse" }).fill(email);
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await expect(page.locator("#login-email-error")).toContainText("können nur ausgewählte Gerichte");
   await expect(page.getByRole("link", { name: "a2j-jts@digitalservice.bund.de" })).toHaveAttribute(
@@ -91,8 +91,8 @@ test("unknown addresses are told they are not allowed and get no email or accoun
     .locator("#login-email-error")
     .evaluate((element) => getComputedStyle(element).color);
   expect(linkColor).not.toBe(textColor);
-  await expect(page.getByRole("textbox", { name: "E-Mail-Adresse" })).toHaveValue(email);
-  await expect(page.getByRole("textbox", { name: "E-Mail-Adresse" })).toHaveAttribute(
+  await expect(page.getByRole("textbox", { name: "E‑Mail-Adresse" })).toHaveValue(email);
+  await expect(page.getByRole("textbox", { name: "E‑Mail-Adresse" })).toHaveAttribute(
     "aria-invalid",
     "true",
   );
@@ -115,13 +115,13 @@ test("invalid addresses are rejected with an error and keep what was typed", asy
   request,
 }) => {
   await page.goto(`${BASE_PATH}/`);
-  await page.getByRole("textbox", { name: "E-Mail-Adresse" }).fill("person@host");
+  await page.getByRole("textbox", { name: "E‑Mail-Adresse" }).fill("person@host");
   await page.getByRole("button", { name: "Anmelden", exact: true }).click();
   await expect(page.locator("#login-email-error")).toHaveText(
-    "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+    "Bitte geben Sie eine gültige E‑Mail-Adresse ein.",
   );
-  await expect(page.getByRole("textbox", { name: "E-Mail-Adresse" })).toHaveValue("person@host");
-  await expect(page.getByRole("textbox", { name: "E-Mail-Adresse" })).toHaveAttribute(
+  await expect(page.getByRole("textbox", { name: "E‑Mail-Adresse" })).toHaveValue("person@host");
+  await expect(page.getByRole("textbox", { name: "E‑Mail-Adresse" })).toHaveAttribute(
     "aria-invalid",
     "true",
   );
