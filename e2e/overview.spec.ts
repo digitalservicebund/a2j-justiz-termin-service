@@ -132,7 +132,10 @@ test("overview ignores an invalid sort and filter", async ({ page, users, db }) 
   await expect(page.getByLabel("Filter")).toHaveValue("none");
 });
 
-test("overview shows the sidebar with only the overview linked", async ({ page, users }) => {
+test("overview shows the sidebar with the overview and the calendar subscription linked", async ({
+  page,
+  users,
+}) => {
   await signIn(page, await users.create());
   await page.goto(`${BASE_PATH}/overview`);
 
@@ -141,9 +144,9 @@ test("overview shows the sidebar with only the overview linked", async ({ page, 
     "aria-current",
     "page",
   );
-  await expect(nav.getByRole("link")).toHaveCount(1);
+  await expect(nav.getByRole("link", { name: "Kalender abonnieren" })).toBeVisible();
+  await expect(nav.getByRole("link")).toHaveCount(2);
   await expect(nav.getByText("Abwesenheiten")).toBeVisible();
-  await expect(nav.getByText("Kalender abonnieren")).toBeVisible();
   await expect(nav.getByText("Einstellungen")).toBeVisible();
 });
 

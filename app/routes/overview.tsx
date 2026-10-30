@@ -2,7 +2,6 @@ import { Form, useLoaderData, useSubmit } from "react-router";
 
 import { listAppointments } from "~/adapters/appointments/appointments.server";
 import { requireUser } from "~/adapters/session/session";
-import { A2JIcon } from "~/components/shared/a2j/A2JIcon";
 import { AppShell } from "~/components/shared/AppShell";
 import { DefaultPage, PageSection } from "~/components/shared/DefaultPage";
 import { KernBadge, type KernBadgeType } from "~/components/shared/kern/KernBadge";
@@ -18,7 +17,7 @@ import {
   KernTableBody,
   KernTableHead,
 } from "~/components/shared/kern/KernTable";
-import { SideNav } from "~/components/shared/SideNav";
+import { MainNav } from "~/components/shared/MainNav";
 import { getDb } from "~/database/database";
 import type { AppointmentStatus } from "~/database/types";
 
@@ -66,18 +65,6 @@ const statusIcons: Partial<Record<KernBadgeType, KernIconName>> = {
   warning: "warning",
 };
 
-const navItems = [
-  {
-    label: "Übersicht",
-    icon: <KernIcon name="home" size="large" />,
-    to: "/overview",
-    current: true,
-  },
-  { label: "Abwesenheiten", icon: <A2JIcon name="remove-circle" size="large" /> },
-  { label: "Kalender abonnieren", icon: <A2JIcon name="calendar-add" size="large" /> },
-  { label: "Einstellungen", icon: <A2JIcon name="settings" size="large" /> },
-];
-
 export default function Overview() {
   const { user, query, hasAppointments, entries } = useLoaderData<typeof loader>();
   const submit = useSubmit();
@@ -88,7 +75,7 @@ export default function Overview() {
     <AppShell user={user} breadcrumbs={[{ label: "Übersicht" }]}>
       <PageSection width="wide">
         <div className="overview">
-          <SideNav label="Bereiche" items={navItems} />
+          <MainNav current="overview" />
           <DefaultPage width="content">
             <div className="overview__content">
               <h1 className="kern-sr-only">Übersicht</h1>

@@ -2,7 +2,7 @@
 import ICAL from "ical.js";
 import { describe, expect, it } from "vitest";
 
-import { createTerminCalendar } from "../termin-calendar";
+import { createTerminCalendar, createTerminEvents, wrapCalendar } from "../termin-calendar";
 
 const terminUrl = "http://localhost:3000/overview/a1";
 const organizerEmail = "sender@example.com";
@@ -172,5 +172,35 @@ describe("createTerminCalendar", () => {
     const [open, cancelled] = parse(body).getAllSubcomponents("vevent");
     expect(open!.getFirstPropertyValue("x-microsoft-cdo-busystatus")).toBe("TENTATIVE");
     expect(cancelled!.getFirstPropertyValue("x-microsoft-cdo-busystatus")).toBe("FREE");
+  });
+});
+
+describe("createTerminEvents", () => {
+  it("leaves out the organizer and the synchronization line unless asked", () => {
+    const [event] = parse(
+      wrapCalendar(createTerminEvents({ aktenzeichen: "A 1", slots, terminUrl, sequence: 0 })),
+    ).getAllSubcomponents("vevent");
+    expect(event!.hasProperty("organizer")).toBe(false);
+    expect(event!.getFirstPropertyValue("description")).not.toContain("synchronisiert");
+  });
+
+  it("marks the confirmed slot as confirmed and busy", () => {
+    const [event] = parse(
+      wrapCalendar(
+        createTerminEvents({
+          aktenzeichen: "A 1",
+          slots: [{ ...slots[0]!, confirmed: true }],
+          terminUrl,
+          sequence: 0,
+          synchronizedAt: new Date("2026-01-15T11:00:00Z"),
+        }),
+      ),
+    ).getAllSubcomponents("vevent");
+    expect(event!.getFirstPropertyValue("status")).toBe("CONFIRMED");
+    expect(event!.getFirstPropertyValue("summary")).toBe("Bestätigt: Verhandlung A 1");
+    expect(event!.getFirstPropertyValue("description")).toMatch(
+      /^Bestätigter Termin für die Verhandlung A 1\.\n\n.*\n\nZuletzt synchronisiert: 15\. Januar 2026 um 12:00:00 MEZ$/,
+    );
+    expect(event!.getFirstPropertyValue("x-microsoft-cdo-busystatus")).toBe("BUSY");
   });
 });

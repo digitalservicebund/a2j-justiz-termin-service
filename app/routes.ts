@@ -3,6 +3,7 @@ import { type RouteConfig, index, route } from "@react-router/dev/routes";
 export default [
   index("routes/welcome.tsx"),
   route("overview", "routes/overview.tsx"),
+  route("kalender-abonnieren", "routes/calendar-subscribe.tsx"),
   route("overview/new", "routes/create-termin.tsx"),
   route("overview/:appointmentId", "routes/overview.detail.tsx"),
   route("overview/:appointmentId/select", "routes/overview.select.tsx"),
@@ -20,5 +21,5 @@ export default [
   route("health", "routes/health.ts"),
   route("health/database", "routes/database-health.ts"),
   route("health/smtp", "routes/smtp-health.ts"),
-  route("api/calendars/:calendarId/feed.ics", "routes/calendar.ts"),
+  route("api/calendars/:token/feed.ics", "routes/calendar.ts"),
 ] satisfies RouteConfig;
