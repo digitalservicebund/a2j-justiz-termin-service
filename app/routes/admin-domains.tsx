@@ -51,13 +51,7 @@ export default function AdminDomainsRoute() {
   const result = useActionData<typeof action>();
   const pending = useNavigation().state !== "idle";
   return (
-    <AppShell
-      breadcrumbs={[
-        { label: "Startseite", href: "/", icon: "home" },
-        { label: "Freigegebene Domains", href: "#" },
-      ]}
-      user={user}
-    >
+    <AppShell breadcrumbs={[{ label: "Freigegebene Domains", href: "#" }]} user={user}>
       <KernBody>
         Wer sich mit einer E-Mail-Adresse dieser Domains anmeldet, erhält automatisch ein Konto mit
         der Rolle Richter. Subdomains müssen einzeln freigegeben werden. Das Entfernen einer Domain

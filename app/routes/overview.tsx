@@ -54,13 +54,7 @@ const statusIcons: Partial<Record<KernBadgeType, KernIconName>> = {
 export default function Overview() {
   const { user, entries } = useLoaderData<typeof loader>();
   return (
-    <AppShell
-      user={user}
-      breadcrumbs={[
-        { label: "Startseite", href: "/", icon: "home" },
-        { label: "Verhandlungstermin-Finder" },
-      ]}
-    >
+    <AppShell user={user} breadcrumbs={[{ label: "Übersicht" }]}>
       <DefaultPage>
         <div className="overview__content">
           <h1 className="kern-sr-only">Übersicht</h1>
