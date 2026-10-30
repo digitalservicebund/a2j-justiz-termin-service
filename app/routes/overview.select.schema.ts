@@ -4,8 +4,6 @@ import type { BreadcrumbItem } from "~/components/shared/Breadcrumb";
 import { rangeToSlot, slotToRange } from "./create-termin.slots";
 
 export const selectBreadcrumbs = [
-  { label: "Startseite", href: "/", icon: "home" },
-  { label: "Verhandlungstermin-Finder", href: "/overview" },
   { label: "Übersicht", href: "/overview" },
   { label: "Auswahl des Termins" },
 ] satisfies BreadcrumbItem[];

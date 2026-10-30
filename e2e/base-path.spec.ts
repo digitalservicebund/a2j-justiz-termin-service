@@ -54,9 +54,21 @@ test("pages load their assets and icons from under the base path", async ({ page
   expect((await page.request.get(`${BASE_PATH}/icon-192.png`)).status()).toBe(200);
 });
 
-test("the breadcrumb start page link stays under the base path", async ({ page, users }) => {
+test("the breadcrumb links the service home and stays under the base path", async ({
+  page,
+  users,
+}) => {
   await signIn(page, await users.create());
-  await expect(page.getByRole("link", { name: "Startseite" })).toHaveAttribute("href", BASE_PATH);
+  await page.goto(`${BASE_PATH}/overview`);
+  const breadcrumb = page.getByRole("navigation", { name: "Brotkrumen" });
+  await expect(breadcrumb.getByRole("link", { name: "Startseite" })).toHaveAttribute(
+    "href",
+    "https://service.justiz.de/",
+  );
+  await expect(breadcrumb.getByRole("link", { name: "Verhandlungstermin-Finder" })).toHaveAttribute(
+    "href",
+    BASE_PATH,
+  );
 });
 
 test("the session cookie is named and scoped for this app", async ({ page, users }) => {

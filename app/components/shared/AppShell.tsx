@@ -60,6 +60,7 @@ function ExternalLinkList({ links }: Readonly<{ links: Link[] }>) {
 }
 
 type AppShellProps = {
+  // The crumbs below the fixed ones; an empty list on the front page. No breadcrumb if omitted.
   breadcrumbs?: BreadcrumbItem[];
   user?: AuthUser;
   className?: string;
@@ -121,7 +122,7 @@ export function AppShell({
       </header>
 
       <main>
-        {breadcrumbs && breadcrumbs.length > 0 && (
+        {breadcrumbs && (
           <div className="page-shell__breadcrumbs">
             <div className="kern-container">
               <Breadcrumb items={breadcrumbs} />

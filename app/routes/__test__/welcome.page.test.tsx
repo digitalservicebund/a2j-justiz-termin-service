@@ -107,21 +107,18 @@ describe("Welcome", () => {
       expect(screen.getByRole("button", { name: "Abmelden" })).toBeInTheDocument();
     });
 
-    it("adds the page to the breadcrumb below the linked service", async () => {
+    it("shows the same breadcrumb as for guests", async () => {
       await renderPage();
       const breadcrumb = screen.getByRole("navigation", { name: "Brotkrumen" });
       expect(
         within(breadcrumb)
           .getAllByRole("listitem")
           .map((item) => item.textContent),
-      ).toEqual(["", "Verhandlungstermin-Finder", "Verhandlungstermin-Finder"]);
+      ).toEqual(["", "Verhandlungstermin-Finder"]);
       expect(within(breadcrumb).getByRole("link", { name: "Startseite" })).toHaveAttribute(
         "href",
-        "/",
+        "https://service.justiz.de/",
       );
-      expect(
-        within(breadcrumb).getByRole("link", { name: "Verhandlungstermin-Finder" }),
-      ).toHaveAttribute("href", "/overview");
     });
 
     it("keeps the process steps and the pilot notice", async () => {

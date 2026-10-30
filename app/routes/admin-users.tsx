@@ -117,13 +117,7 @@ export default function AdminUsersRoute() {
   const result = useActionData<typeof action>();
   const pending = useNavigation().state !== "idle";
   return (
-    <AppShell
-      breadcrumbs={[
-        { label: "Startseite", href: "/", icon: "home" },
-        { label: "Benutzerverwaltung", href: "#" },
-      ]}
-      user={user}
-    >
+    <AppShell breadcrumbs={[{ label: "Benutzerverwaltung", href: "#" }]} user={user}>
       <KernBody>
         Hinterlegte E-Mail-Adressen und Adressen{" "}
         <Link className="kern-link" to="/admin/domains">

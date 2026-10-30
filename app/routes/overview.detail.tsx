@@ -113,12 +113,7 @@ export default function OverviewDetail() {
   return (
     <AppShell
       user={user}
-      breadcrumbs={[
-        { label: "Startseite", href: "/", icon: "home" },
-        { label: "Verhandlungstermin-Finder", href: "/overview" },
-        { label: "Übersicht", href: "/overview" },
-        { label: aktenzeichen },
-      ]}
+      breadcrumbs={[{ label: "Übersicht", href: "/overview" }, { label: aktenzeichen }]}
     >
       <DefaultPage>
         <div className="overview-detail">

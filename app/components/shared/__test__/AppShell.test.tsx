@@ -83,7 +83,7 @@ describe("AppShell", () => {
   });
 
   it("renders breadcrumbs when provided", () => {
-    renderShell({ breadcrumbs: [{ label: "Startseite", href: "/" }, { label: "Übersicht" }] });
+    renderShell({ breadcrumbs: [{ label: "Übersicht" }] });
     expect(screen.getByRole("navigation", { name: "Brotkrumen" })).toBeInTheDocument();
   });
 });

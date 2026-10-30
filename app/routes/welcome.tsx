@@ -106,18 +106,7 @@ export default function Welcome() {
       className="welcome"
       user={user ?? undefined}
       showReportProblem={false}
-      breadcrumbs={
-        user
-          ? [
-              { label: "Startseite", href: "/", icon: "home" },
-              { label: "Verhandlungstermin-Finder", href: "/overview" },
-              { label: "Verhandlungstermin-Finder" },
-            ]
-          : [
-              { label: "Startseite", href: "/", icon: "home" },
-              { label: "Verhandlungstermin-Finder" },
-            ]
-      }
+      breadcrumbs={[]}
     >
       <section className="welcome__hero">
         <DefaultPage>
