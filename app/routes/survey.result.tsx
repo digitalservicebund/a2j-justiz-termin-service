@@ -2,6 +2,7 @@ import { data, redirect, useLoaderData } from "react-router";
 
 import { findSurvey, getSavedAnswer } from "~/adapters/appointments/survey.server";
 import { AppShell } from "~/components/shared/AppShell";
+import { DefaultPage } from "~/components/shared/DefaultPage";
 import {
   KernDescriptionList,
   KernDescriptionListItem,
@@ -84,10 +85,14 @@ export function NoOption() {
 
 function NoTimeWorks() {
   return (
-    <ResultBanner
-      type="danger"
-      title="Es gibt leider keine Terminoption, bei der alle Verfahrensbeteiligten Zeit haben."
-      message="Das Gericht wird wahrscheinlich eine neue Terminumfrage erstellen."
-    />
+    <>
+      <ResultBanner
+        type="danger"
+        title="Es gibt leider keine Terminoption, bei der alle Verfahrensbeteiligten Zeit haben."
+        message="Das Gericht wird wahrscheinlich eine neue Terminumfrage erstellen."
+      />
+      {/* No steps follow; the page still ends with the report-problem button. */}
+      <DefaultPage />
+    </>
   );
 }

@@ -8,6 +8,7 @@ import {
   listAllowedDomains,
 } from "~/adapters/users/allowed-domains.server";
 import { AppShell } from "~/components/shared/AppShell";
+import { DefaultPage } from "~/components/shared/DefaultPage";
 import { KernAlert } from "~/components/shared/kern/KernAlert";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernButton } from "~/components/shared/kern/KernButton";
@@ -52,43 +53,45 @@ export default function AdminDomainsRoute() {
   const pending = useNavigation().state !== "idle";
   return (
     <AppShell breadcrumbs={[{ label: "Freigegebene Domains", href: "#" }]} user={user}>
-      <KernBody>
-        Wer sich mit einer E‑Mail-Adresse dieser Domains anmeldet, erhält automatisch ein Konto mit
-        der Rolle Richter. Subdomains müssen einzeln freigegeben werden. Das Entfernen einer Domain
-        löscht keine bestehenden Konten.
-      </KernBody>
-      {result && "error" in result && (
-        <KernAlert type="error" title="Änderung nicht möglich" message={result.error} />
-      )}
-      {result && "success" in result && (
-        <KernAlert type="success" title="Gespeichert" message={result.success} />
-      )}
-      <section aria-labelledby="new-domain-title" className="admin-users__section">
-        <KernHeading size="small" level={2} id="new-domain-title">
-          Domain hinzufügen
-        </KernHeading>
-        <Form method="post" className="admin-users__form">
-          <input type="hidden" name="intent" value="create" />
-          <KernFormInput id="new-domain" label="Domain" name="domain" required />
-          <KernButton type="submit" disabled={pending}>
-            Hinzufügen
-          </KernButton>
-        </Form>
-      </section>
-      {domains.map(({ domain }) => (
-        <section key={domain} aria-label={domain} className="admin-users__section">
-          <KernHeading size="small" level={2}>
-            {domain}
+      <DefaultPage>
+        <KernBody>
+          Wer sich mit einer E‑Mail-Adresse dieser Domains anmeldet, erhält automatisch ein Konto
+          mit der Rolle Richter. Subdomains müssen einzeln freigegeben werden. Das Entfernen einer
+          Domain löscht keine bestehenden Konten.
+        </KernBody>
+        {result && "error" in result && (
+          <KernAlert type="error" title="Änderung nicht möglich" message={result.error} />
+        )}
+        {result && "success" in result && (
+          <KernAlert type="success" title="Gespeichert" message={result.success} />
+        )}
+        <section aria-labelledby="new-domain-title" className="admin-users__section">
+          <KernHeading size="small" level={2} id="new-domain-title">
+            Domain hinzufügen
           </KernHeading>
-          <Form method="post">
-            <input type="hidden" name="intent" value="delete" />
-            <input type="hidden" name="domain" value={domain} />
-            <KernButton type="submit" style="secondary" disabled={pending}>
-              Domain entfernen
+          <Form method="post" className="admin-users__form">
+            <input type="hidden" name="intent" value="create" />
+            <KernFormInput id="new-domain" label="Domain" name="domain" required />
+            <KernButton type="submit" disabled={pending}>
+              Hinzufügen
             </KernButton>
           </Form>
         </section>
-      ))}
+        {domains.map(({ domain }) => (
+          <section key={domain} aria-label={domain} className="admin-users__section">
+            <KernHeading size="small" level={2}>
+              {domain}
+            </KernHeading>
+            <Form method="post">
+              <input type="hidden" name="intent" value="delete" />
+              <input type="hidden" name="domain" value={domain} />
+              <KernButton type="submit" style="secondary" disabled={pending}>
+                Domain entfernen
+              </KernButton>
+            </Form>
+          </section>
+        ))}
+      </DefaultPage>
     </AppShell>
   );
 }

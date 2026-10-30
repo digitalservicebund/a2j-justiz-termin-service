@@ -37,7 +37,7 @@ async function seed(
   return id;
 }
 
-test("overview lists the user's termin surveys with their status, newest first", async ({
+test("overview lists the user's termin surveys with their status, grouped by status", async ({
   page,
   users,
   db,
@@ -92,9 +92,59 @@ test("overview tells a user without appointments that there are none", async ({ 
   await signIn(page, await users.create());
   await page.goto(`${BASE_PATH}/overview`);
 
-  await expect(page.getByText("Sie haben noch keine Terminumfragen erstellt.")).toBeVisible();
-  await expect(page.locator("table")).toHaveCount(0);
+  await expect(page.getByText("Sie haben keine Terminumfrage.")).toBeVisible();
+  await expect(page.getByRole("columnheader")).toHaveCount(3);
   await expect(page.getByRole("button", { name: "Problem mit dieser Seite melden" })).toBeVisible();
+});
+
+test("overview sorts and filters the termin surveys", async ({ page, users, db }) => {
+  const user = await users.create({ roles: ["richter"] });
+  await seed(db, user.id, "574 C 10/26", "open");
+  await seed(db, user.id, "574 C 2/26", "open");
+  await seed(db, user.id, "574 C 3/26", "draft");
+
+  await signIn(page, user);
+  await page.goto(`${BASE_PATH}/overview`);
+  const aktenzeichen = page.locator("tbody tr td:first-child");
+  await expect(aktenzeichen).toHaveText(["574 C 3/26", "574 C 2/26", "574 C 10/26"]);
+
+  await page.getByLabel("Sortieren").selectOption("aktenzeichen");
+  await expect(page).toHaveURL(/sort=aktenzeichen/);
+  await expect(aktenzeichen).toHaveText(["574 C 2/26", "574 C 3/26", "574 C 10/26"]);
+
+  await page.getByLabel("Filter").selectOption("open");
+  await expect(page).toHaveURL(/filter=open/);
+  await expect(aktenzeichen).toHaveText(["574 C 2/26", "574 C 10/26"]);
+
+  await page.getByLabel("Filter").selectOption("cancelled");
+  await expect(page.getByText("Keine Terminumfragen für diesen Filter.")).toBeVisible();
+});
+
+test("overview ignores an invalid sort and filter", async ({ page, users, db }) => {
+  const user = await users.create({ roles: ["richter"] });
+  await seed(db, user.id, "574 C 1/26", "open");
+
+  await signIn(page, user);
+  await page.goto(`${BASE_PATH}/overview?sort=bogus&filter=bogus`);
+
+  await expect(page.getByRole("cell", { name: "574 C 1/26", exact: true })).toBeVisible();
+  await expect(page.getByLabel("Sortieren")).toHaveValue("status");
+  await expect(page.getByLabel("Filter")).toHaveValue("none");
+});
+
+test("overview shows the sidebar with only the overview linked", async ({ page, users }) => {
+  await signIn(page, await users.create());
+  await page.goto(`${BASE_PATH}/overview`);
+
+  const nav = page.getByRole("navigation", { name: "Bereiche" });
+  await expect(nav.getByRole("link", { name: "Übersicht" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await expect(nav.getByRole("link")).toHaveCount(1);
+  await expect(nav.getByText("Abwesenheiten")).toBeVisible();
+  await expect(nav.getByText("Kalender abonnieren")).toBeVisible();
+  await expect(nav.getByText("Einstellungen")).toBeVisible();
 });
 
 test("a richter can open the create-termin page from the overview", async ({ page, users }) => {

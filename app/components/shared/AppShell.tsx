@@ -5,14 +5,11 @@ import type { AuthUser } from "~/core/domain/user";
 
 import { BmjvLogo } from "./BmjvLogo";
 import { Breadcrumb, type BreadcrumbItem } from "./Breadcrumb";
-import { DefaultPage } from "./DefaultPage";
 import { contactLinks, legalLinks, operatorLinks, pilotLinks, type Link } from "./footer-links";
 import { KernBody } from "./kern/KernBody";
-import { KernButton } from "./kern/KernButton";
 import { KernHeading } from "./kern/KernHeading";
 import { KernIcon, type KernIconName } from "./kern/KernIcon";
 import { KernKopfZeile } from "./kern/KernKopfZeile";
-import { KernLabel } from "./kern/KernLabel";
 import { KernLink } from "./kern/KernLink";
 
 import "./AppShell.css";
@@ -64,7 +61,6 @@ type AppShellProps = {
   breadcrumbs?: BreadcrumbItem[];
   user?: AuthUser;
   className?: string;
-  showReportProblem?: boolean;
   // The easy-language and sign-language links are only shown on the front page.
   showLanguageLinks?: boolean;
   children: ReactNode;
@@ -74,7 +70,6 @@ export function AppShell({
   breadcrumbs,
   user: userProp,
   className,
-  showReportProblem = true,
   showLanguageLinks = false,
   children,
 }: Readonly<AppShellProps>) {
@@ -142,17 +137,6 @@ export function AppShell({
         )}
 
         {children}
-
-        {showReportProblem && (
-          <DefaultPage>
-            <div className="page-shell__report">
-              <KernButton type="button" style="secondary">
-                <KernIcon name="danger" />
-                <KernLabel>Problem mit dieser Seite melden</KernLabel>
-              </KernButton>
-            </div>
-          </DefaultPage>
-        )}
       </main>
 
       <footer className="page-shell__footer">

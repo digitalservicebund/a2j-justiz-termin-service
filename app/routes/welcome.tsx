@@ -7,7 +7,7 @@ import { canSignIn } from "~/adapters/users/users.server";
 import { A2JIcon } from "~/components/shared/a2j/A2JIcon";
 import { A2JInlineNotice } from "~/components/shared/a2j/A2JInlineNotice";
 import { AppShell } from "~/components/shared/AppShell";
-import { DefaultPage } from "~/components/shared/DefaultPage";
+import { PageSection } from "~/components/shared/DefaultPage";
 import { KernAlert } from "~/components/shared/kern/KernAlert";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
@@ -102,15 +102,9 @@ export default function Welcome() {
   const { user, invalidLink } = useLoaderData<typeof loader>();
   const result = useActionData<typeof action>();
   return (
-    <AppShell
-      className="welcome"
-      user={user ?? undefined}
-      showReportProblem={false}
-      showLanguageLinks
-      breadcrumbs={[]}
-    >
+    <AppShell className="welcome" user={user ?? undefined} showLanguageLinks breadcrumbs={[]}>
       <section className="welcome__hero">
-        <DefaultPage>
+        <PageSection>
           <div className="welcome__hero-content">
             <KernHeading size="x-large" level={1}>
               Verhandlungstermin-Finder
@@ -158,11 +152,11 @@ export default function Welcome() {
               </>
             )}
           </div>
-        </DefaultPage>
+        </PageSection>
       </section>
 
       <section className="welcome__pilot">
-        <DefaultPage>
+        <PageSection>
           <details className="kern-details">
             <summary className="kern-details__header welcome__pilot-summary">
               Der Onlinedienst befindet sich in der Testphase (Pilotprojekt)
@@ -174,11 +168,11 @@ export default function Welcome() {
               auf Einladung nutzen.
             </KernBody>
           </details>
-        </DefaultPage>
+        </PageSection>
       </section>
 
       <section className="welcome__flow" aria-labelledby="welcome-ablauf">
-        <DefaultPage>
+        <PageSection>
           <KernHeading size="large" level={2} id="welcome-ablauf">
             Der Ablauf
           </KernHeading>
@@ -190,11 +184,11 @@ export default function Welcome() {
               </li>
             ))}
           </ol>
-        </DefaultPage>
+        </PageSection>
       </section>
 
       <section className="welcome__participation">
-        <DefaultPage>
+        <PageSection>
           <A2JInlineNotice
             type="information"
             title="Gestalten Sie die digitalen Angebote der Justiz mit"
@@ -204,7 +198,7 @@ export default function Welcome() {
             Ihre Hilfe ist dabei sehr wichtig. In kurzen Online-Gesprächen können Sie Ihre
             Erfahrungen mit uns teilen und neue Services testen.
           </A2JInlineNotice>
-        </DefaultPage>
+        </PageSection>
       </section>
     </AppShell>
   );

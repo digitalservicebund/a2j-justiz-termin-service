@@ -1,23 +1,69 @@
+.overview {
+  display: grid;
+  gap: var(--kern-metric-space-x-large);
+  padding-block: var(--kern-metric-space-x-large) var(--kern-metric-space-6x-large);
+}
+
+/* The design's sidebar is 352px wide; the content column (864px) is centred in the rest. */
+@media (min-width: 64rem) {
+  .overview {
+    grid-template-columns: 22rem minmax(0, 1fr);
+    column-gap: 0;
+    align-items: start;
+  }
+}
+
 .overview__content {
   display: grid;
   gap: var(--kern-metric-space-x-large);
   justify-items: start;
-  padding-block: var(--kern-metric-space-x-large) var(--kern-metric-space-6x-large);
+  /* With the button's own spacing above it, the button sits 80px below the table. */
+  padding-bottom: 3rem;
+}
+
+.overview__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--kern-metric-space-large);
+}
+
+.overview__controls .kern-form-input__select {
+  field-sizing: content;
 }
 
 .overview__table {
   width: 100%;
 }
 
+/* The Status column starts 158px into the table in the design, the action column hugs its button. */
+.overview__table .kern-table__header:first-child {
+  width: 9.6rem;
+}
+
+.overview__table .kern-table__header--action {
+  width: 1%;
+}
+
 /*
  * Rows are 48px high in the design: a 32px badge between 8px of padding. The action cell
  * needs none, its x-small button already has a 48px hit area.
  */
-.overview__table .kern-table__cell:not(.kern-table__cell--action) {
+.overview__table .kern-table__cell:not(.kern-table__cell--action, .overview__empty) {
   padding-block: var(--kern-metric-space-small);
   vertical-align: middle;
 }
 
 .overview__table .kern-table__cell--action {
   vertical-align: middle;
+}
+
+/* The message row of an empty list is a grey, centred block of 144px. */
+.overview__table .overview__empty {
+  height: 9rem;
+  background-color: var(--kern-color-layout-background-hued);
+  text-align: center;
+  vertical-align: middle;
+  color: var(--kern-color-layout-text-muted);
+  border-bottom: 0;
 }

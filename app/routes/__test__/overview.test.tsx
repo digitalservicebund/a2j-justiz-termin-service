@@ -1,4 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -17,13 +18,13 @@ vi.mock("~/adapters/session/session", () => ({
   }),
 }));
 
-function renderPage() {
+function renderPage(url = "/overview") {
   const Stub = createRoutesStub([
     { path: "/overview", Component: Overview, loader },
     { path: "/overview/:appointmentId/confirm", Component: () => <h1>Bestätigung</h1> },
     { path: "/overview/new", Component: () => <h1>Neu</h1> },
   ]);
-  return render(<Stub initialEntries={["/overview"]} />);
+  return render(<Stub initialEntries={[url]} />);
 }
 
 const slot = { start: new Date("2099-11-09T14:30:00Z"), end: new Date("2099-11-09T15:30:00Z") };
@@ -104,13 +105,111 @@ describe("Overview", () => {
     expect(within(row).getAllByRole("link")).toHaveLength(1);
   });
 
-  it("shows a message instead of an empty table when there are no appointments", async () => {
+  it("keeps the table header and shows a message row when there are no appointments", async () => {
     vi.mocked(listAppointments).mockResolvedValue([]);
 
     renderPage();
 
-    expect(await screen.findByText("Sie haben noch keine Terminumfragen erstellt.")).toBeVisible();
-    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole("cell", { name: "Sie haben keine Terminumfrage." }),
+    ).toHaveAttribute("colspan", "3");
+    expect(screen.getAllByRole("columnheader")).toHaveLength(3);
     expect(screen.getByRole("link", { name: "Terminumfrage erstellen" })).toBeVisible();
+  });
+
+  it("shows a different message when the filter matches nothing", async () => {
+    vi.mocked(listAppointments).mockResolvedValue([
+      { id: "a", aktenzeichen: "574 C 1/26", status: "open", confirmedSlot: null },
+    ]);
+
+    renderPage("/overview?filter=draft");
+
+    expect(
+      await screen.findByRole("cell", { name: "Keine Terminumfragen für diesen Filter." }),
+    ).toBeVisible();
+    expect(screen.queryByRole("cell", { name: "574 C 1/26" })).not.toBeInTheDocument();
+  });
+
+  it("sorts by status by default", async () => {
+    vi.mocked(listAppointments).mockResolvedValue([
+      { id: "a", aktenzeichen: "574 C 9/26", status: "cancelled", confirmedSlot: null },
+      { id: "b", aktenzeichen: "574 C 2/26", status: "draft", confirmedSlot: null },
+    ]);
+
+    renderPage();
+    const byStatus = await screen.findAllByRole("cell", { name: /^574 C/ });
+    expect(byStatus.map((cell) => cell.textContent)).toEqual(["574 C 2/26", "574 C 9/26"]);
+    expect(screen.getByLabelText("Sortieren")).toHaveValue("status");
+  });
+
+  it("reads the sort and filter from the URL and shows them in the selects", async () => {
+    vi.mocked(listAppointments).mockResolvedValue([
+      { id: "a", aktenzeichen: "574 C 10/26", status: "open", confirmedSlot: null },
+      { id: "b", aktenzeichen: "574 C 2/26", status: "open", confirmedSlot: null },
+      { id: "c", aktenzeichen: "574 C 1/26", status: "draft", confirmedSlot: null },
+    ]);
+
+    renderPage("/overview?sort=aktenzeichen&filter=open");
+
+    const cells = await screen.findAllByRole("cell", { name: /^574 C/ });
+    expect(cells.map((cell) => cell.textContent)).toEqual(["574 C 2/26", "574 C 10/26"]);
+    expect(screen.getByLabelText("Sortieren")).toHaveValue("aktenzeichen");
+    expect(screen.getByLabelText("Filter")).toHaveValue("open");
+  });
+
+  it("ignores unknown sort and filter values", async () => {
+    vi.mocked(listAppointments).mockResolvedValue([
+      { id: "a", aktenzeichen: "574 C 1/26", status: "open", confirmedSlot: null },
+    ]);
+
+    renderPage("/overview?sort=bogus&filter=bogus");
+
+    expect(await screen.findByRole("cell", { name: "574 C 1/26" })).toBeVisible();
+    expect(screen.getByLabelText("Sortieren")).toHaveValue("status");
+    expect(screen.getByLabelText("Filter")).toHaveValue("none");
+  });
+
+  it("applies a changed select right away", async () => {
+    vi.mocked(listAppointments).mockResolvedValue([
+      { id: "a", aktenzeichen: "574 C 1/26", status: "open", confirmedSlot: null },
+      { id: "b", aktenzeichen: "574 C 2/26", status: "draft", confirmedSlot: null },
+    ]);
+
+    renderPage();
+    await userEvent.selectOptions(await screen.findByLabelText("Filter"), "draft");
+
+    expect(await screen.findByRole("cell", { name: "574 C 2/26" })).toBeVisible();
+    expect(screen.queryByRole("cell", { name: "574 C 1/26" })).not.toBeInTheDocument();
+  });
+
+  it("offers the sidebar with only the overview linked", async () => {
+    vi.mocked(listAppointments).mockResolvedValue([]);
+
+    renderPage();
+
+    const nav = await screen.findByRole("navigation", { name: "Bereiche" });
+    expect(within(nav).getByRole("link", { name: "Übersicht" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(
+      within(nav)
+        .getAllByRole("listitem")
+        .map((item) => item.textContent),
+    ).toEqual(["Übersicht", "Abwesenheiten", "Kalender abonnieren", "Einstellungen"]);
+    expect(within(nav).getAllByRole("link")).toHaveLength(1);
+  });
+
+  it("shows the report-problem button once, at the width of the content column", async () => {
+    vi.mocked(listAppointments).mockResolvedValue([]);
+
+    const { container } = renderPage();
+
+    const button = await screen.findByRole("button", { name: "Problem mit dieser Seite melden" });
+    expect(screen.getAllByRole("button", { name: "Problem mit dieser Seite melden" })).toHaveLength(
+      1,
+    );
+    expect(button.closest(".page-width")).toHaveClass("page-width--content");
+    expect(container.querySelector(".overview__content")).not.toContainElement(button);
   });
 });
