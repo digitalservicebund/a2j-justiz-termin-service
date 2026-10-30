@@ -1,4 +1,4 @@
-import { baseURL, expect, signIn, test } from "./fixtures.ts";
+import { BASE_PATH, baseURL, expect, signIn, startPageURL, test } from "./fixtures.ts";
 
 test("front page shows the login, the language links and the process steps", async ({ page }) => {
   await page.goto("/");
@@ -113,7 +113,8 @@ test("the language links are not shown on other pages", async ({ page, users }) 
   const user = await users.create();
   await signIn(page, user);
 
-  await page.goto("/overview");
+  await page.goto(`${BASE_PATH}/overview`);
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
   await expect(page.getByRole("navigation", { name: "Sprachangebote" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Leichte Sprache" })).toHaveCount(0);
@@ -122,9 +123,9 @@ test("the language links are not shown on other pages", async ({ page, users }) 
 test("the service name in the header links back to the front page", async ({ page, users }) => {
   const user = await users.create();
   await signIn(page, user);
-  await page.goto("/overview");
+  await page.goto(`${BASE_PATH}/overview`);
 
   await page.getByRole("banner").getByRole("link", { name: "Justiz-Services" }).click();
 
-  await expect(page).toHaveURL(`${baseURL}/`);
+  await expect(page).toHaveURL(startPageURL);
 });
