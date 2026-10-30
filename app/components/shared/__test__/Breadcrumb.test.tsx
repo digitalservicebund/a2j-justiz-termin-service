@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { Breadcrumb } from "../Breadcrumb";
 
@@ -33,5 +33,25 @@ describe("Breadcrumb", () => {
     expect(overview).toHaveAttribute("href", "/base/overview");
     expect(overview).toHaveClass("kern-link", "kern-link--small");
     expect(screen.getByText("Detail")).toHaveAttribute("aria-current", "page");
+  });
+
+  it("renders items that share a label without key collisions", () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/",
+          Component: () => (
+            <Breadcrumb items={[{ label: "Dienst", href: "/overview" }, { label: "Dienst" }]} />
+          ),
+        },
+      ],
+      { initialEntries: ["/"] },
+    );
+    render(<RouterProvider router={router} />);
+
+    expect(screen.getAllByText("Dienst")).toHaveLength(2);
+    expect(error).not.toHaveBeenCalled();
+    error.mockRestore();
   });
 });

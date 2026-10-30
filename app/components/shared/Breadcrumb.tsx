@@ -26,7 +26,7 @@ export function Breadcrumb({ items, className }: Readonly<BreadcrumbProps>) {
           const isCurrent = index === items.length - 1;
 
           return (
-            <li key={label} className="breadcrumb__item">
+            <li key={`${index}-${label}`} className="breadcrumb__item">
               {index > 0 && (
                 <span className="breadcrumb__separator" aria-hidden="true">
                   <KernIcon name="chevron-right" />
