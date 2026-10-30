@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Form } from "react-router";
+import { Form, Link as RouterLink } from "react-router";
 
 import type { AuthUser } from "~/core/domain/user";
 
@@ -87,7 +87,9 @@ export function AppShell({
       <header className="page-shell__header">
         <div className="kern-container page-shell__header-inner">
           <KernHeading size="large" className="page-shell__service-name">
-            Justiz-Services
+            <RouterLink to="/" className="page-shell__service-link">
+              Justiz-Services
+            </RouterLink>
           </KernHeading>
           <div className="page-shell__header-actions">
             {showLanguageLinks && (

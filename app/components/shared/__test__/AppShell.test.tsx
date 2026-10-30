@@ -65,6 +65,15 @@ describe("AppShell", () => {
     }
   });
 
+  it("links the service name in the header to the front page", () => {
+    const { container } = renderShell();
+    const header = container.querySelector("header")!;
+    expect(within(header).getByRole("link", { name: "Justiz-Services" })).toHaveAttribute(
+      "href",
+      "/",
+    );
+  });
+
   it("names the service in the footer like in the header", () => {
     const { container } = renderShell();
     const footer = container.querySelector("footer")!;

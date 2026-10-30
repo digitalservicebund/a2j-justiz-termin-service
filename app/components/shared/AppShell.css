@@ -24,6 +24,11 @@
   line-height: var(--kern-metric-dimension-large);
 }
 
+.page-shell__service-link {
+  color: inherit;
+  text-decoration: none;
+}
+
 .page-shell__header-actions {
   display: flex;
   flex-wrap: wrap;
