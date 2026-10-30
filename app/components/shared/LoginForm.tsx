@@ -58,10 +58,8 @@ export function LoginForm({ email, error, sent = false }: Readonly<LoginFormProp
         <output ref={sentRef} className="login-form__message login-form__sent" tabIndex={-1}>
           <KernIcon name="success" />
           <p className="kern-body">
-            Ihr Anmelde-Link wurde versendet und ist 5 Minuten gültig und kann nur einmal verwendet
-            werden.
-            <br />
-            Sie haben keine E-Mail erhalten?{" "}
+            Ihr Anmelde-Link wurde versendet, ist 5 Minuten gültig und kann nur einmal verwendet
+            werden. Sie haben keine E-Mail erhalten?{" "}
             <button type="submit" className="kern-link login-form__resend" disabled={pending}>
               Anmelde-Link erneut senden.
             </button>

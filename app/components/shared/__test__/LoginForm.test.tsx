@@ -39,8 +39,9 @@ describe("LoginForm", () => {
     renderForm({ email: "person.a@example.com", sent: true });
     const status = screen.getByRole("status");
     expect(status).toHaveTextContent(
-      "Ihr Anmelde-Link wurde versendet und ist 5 Minuten gültig und kann nur einmal verwendet werden.",
+      "Ihr Anmelde-Link wurde versendet, ist 5 Minuten gültig und kann nur einmal verwendet werden. Sie haben keine E-Mail erhalten?",
     );
+    expect(status.querySelector("br")).toBeNull();
     expect(status).toHaveFocus();
     expect(screen.getByRole("textbox", { name: "E-Mail-Adresse" })).not.toBeInvalid();
     expect(screen.getByRole("button", { name: "Anmelde-Link erneut senden." })).toHaveAttribute(
