@@ -1,3 +1,7 @@
+.page-shell.welcome {
+  background-color: var(--kern-color-layout-background-default-surface);
+}
+
 .welcome__hero {
   background-color: var(--kern-color-neutral-050);
 }
@@ -13,10 +17,13 @@
   margin: 0;
 }
 
+.welcome__hero-action {
+  margin-top: var(--kern-metric-space-x-large);
+}
+
 .welcome__pilot {
   background-color: var(--kern-color-feedback-warning-background);
-  padding-block: calc(var(--kern-metric-space-large) + var(--kern-metric-space-x-small))
-    var(--kern-metric-space-x-large);
+  padding-block: var(--kern-metric-space-large);
 }
 
 .welcome__pilot-summary {
@@ -34,10 +41,15 @@
   padding-inline-start: var(--kern-metric-space-x-large);
 }
 
-.welcome__sections {
-  display: grid;
-  gap: var(--kern-metric-space-6x-large);
-  padding-block: calc(var(--kern-metric-space-6x-large) + var(--kern-metric-space-2x-large));
+.welcome__flow {
+  padding-block: calc(var(--kern-metric-space-2x-large) + var(--kern-metric-space-large));
+}
+
+/* The page background shows between this section and the footer. */
+.welcome__participation {
+  margin-bottom: var(--kern-metric-space-6x-large);
+  padding-block: var(--kern-metric-space-2x-large);
+  background-color: var(--kern-color-layout-background-default);
 }
 
 .welcome__steps {
