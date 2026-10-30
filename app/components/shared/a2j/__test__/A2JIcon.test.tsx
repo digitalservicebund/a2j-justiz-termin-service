@@ -14,6 +14,13 @@ describe("A2JIcon", () => {
     expect(container.firstChild).toHaveClass("kern-icon--default");
   });
 
+  it("applies the icon class of every icon", () => {
+    for (const name of ["calendar-add", "remove-circle", "settings"] as const) {
+      const { container } = render(<A2JIcon name={name} />);
+      expect(container.firstChild).toHaveClass(`a2j-icon--${name}`);
+    }
+  });
+
   it("applies a custom size class", () => {
     const { container } = render(<A2JIcon name="checklist-rtl" size="x-large" />);
     expect(container.firstChild).toHaveClass("kern-icon--x-large");

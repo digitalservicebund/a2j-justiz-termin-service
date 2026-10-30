@@ -5,7 +5,7 @@ import type { AuthUser } from "~/core/domain/user";
 
 import { BmjvLogo } from "./BmjvLogo";
 import { Breadcrumb, type BreadcrumbItem } from "./Breadcrumb";
-import { DefaultPage } from "./DefaultPage";
+import { DefaultPage, type PageWidth } from "./DefaultPage";
 import { contactLinks, legalLinks, operatorLinks, pilotLinks, type Link } from "./footer-links";
 import { KernBody } from "./kern/KernBody";
 import { KernButton } from "./kern/KernButton";
@@ -65,6 +65,8 @@ type AppShellProps = {
   user?: AuthUser;
   className?: string;
   showReportProblem?: boolean;
+  // The width the report-problem button is aligned to, to match the page content above it.
+  reportProblemWidth?: PageWidth;
   // The easy-language and sign-language links are only shown on the front page.
   showLanguageLinks?: boolean;
   children: ReactNode;
@@ -75,6 +77,7 @@ export function AppShell({
   user: userProp,
   className,
   showReportProblem = true,
+  reportProblemWidth,
   showLanguageLinks = false,
   children,
 }: Readonly<AppShellProps>) {
@@ -144,7 +147,7 @@ export function AppShell({
         {children}
 
         {showReportProblem && (
-          <DefaultPage>
+          <DefaultPage width={reportProblemWidth}>
             <div className="page-shell__report">
               <KernButton type="button" style="secondary">
                 <KernIcon name="danger" />

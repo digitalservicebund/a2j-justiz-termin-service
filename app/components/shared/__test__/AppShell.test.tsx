@@ -119,6 +119,12 @@ describe("AppShell", () => {
     }
   });
 
+  it("aligns the report-problem button to the given page width", () => {
+    renderShell({ reportProblemWidth: "wide" });
+    const button = screen.getByRole("button", { name: "Problem mit dieser Seite melden" });
+    expect(button.closest(".page-width")).toHaveClass("page-width--wide");
+  });
+
   it("hides the report-problem button when showReportProblem is false", () => {
     renderShell({ showReportProblem: false });
     expect(

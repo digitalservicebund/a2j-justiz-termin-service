@@ -1,0 +1,20 @@
+.side-nav__list {
+  display: grid;
+  gap: var(--kern-metric-space-small);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.side-nav__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kern-metric-space-small);
+  color: var(--kern-color-action-default);
+  font-size: var(--kern-typography-font-size-large-static);
+  line-height: var(--kern-metric-dimension-x-large);
+}
+
+.side-nav__item .kern-icon {
+  background-color: currentColor;
+}

@@ -1,7 +1,13 @@
 import "./A2JIcon.css";
 
 // Icons from the Figma design that KERN does not have. Like KernIcon, but for A2J's own icons.
-export type A2JIconName = "add-box" | "checklist-rtl" | "event";
+export type A2JIconName =
+  | "add-box"
+  | "calendar-add"
+  | "checklist-rtl"
+  | "event"
+  | "remove-circle"
+  | "settings";
 
 type IconSize = "small" | "default" | "large" | "x-large";
 
