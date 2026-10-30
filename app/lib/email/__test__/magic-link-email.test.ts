@@ -90,7 +90,7 @@ describe("renderMagicLinkEmail", () => {
     expect(attachments[0]!.content.readUInt8(25)).toBe(2);
   });
 
-  it("embeds the logo inline with alt text and omits footer links without a target", () => {
+  it("embeds the logo inline with alt text and lists every footer link with a target", () => {
     const { html, text, attachments } = renderMagicLinkEmail("signup", url);
     const [logo] = attachments;
     expect(html).toContain(`src="cid:${logo!.cid}"`);
@@ -98,7 +98,7 @@ describe("renderMagicLinkEmail", () => {
     expect(logo).toMatchObject({ contentType: "image/png", contentDisposition: "inline" });
     expect(logo!.content.subarray(1, 4).toString()).toBe("PNG");
     expect(html).not.toContain('href="#"');
-    expect(text).not.toContain("An Befragungen teilnehmen");
+    expect(text).toContain("An Befragungen teilnehmen: https://service.justiz.de/feedback");
     expect(html).toContain("Open Source Code");
   });
 });
