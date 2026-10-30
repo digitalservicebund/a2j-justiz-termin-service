@@ -1,0 +1,49 @@
+.calendar-subscribe {
+  display: grid;
+  gap: var(--kern-metric-space-x-large);
+  padding-block: var(--kern-metric-space-x-large) var(--kern-metric-space-6x-large);
+}
+
+/* Same grid as the overview, so the sidebar does not move between the pages. */
+@media (min-width: 64rem) {
+  .calendar-subscribe {
+    grid-template-columns: 22rem minmax(0, 1fr);
+    column-gap: 0;
+    align-items: start;
+  }
+}
+
+.calendar-subscribe__content {
+  display: grid;
+  gap: var(--kern-metric-space-x-large);
+  justify-items: start;
+  padding-bottom: 3rem;
+}
+
+.calendar-subscribe__section {
+  display: grid;
+  gap: var(--kern-metric-space-default);
+  justify-items: start;
+  width: 100%;
+}
+
+.calendar-subscribe__field {
+  width: 100%;
+}
+
+.calendar-subscribe__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--kern-metric-space-large);
+}
+
+.calendar-subscribe__section .kern-accordion {
+  width: 100%;
+}
+
+.calendar-subscribe__actions .kern-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kern-metric-space-2x-small);
+}

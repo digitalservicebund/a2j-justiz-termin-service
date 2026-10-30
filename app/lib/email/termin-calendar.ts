@@ -1,7 +1,8 @@
 import type { AppointmentSlot } from "../../adapters/appointments/appointments.server.ts";
+import type { SlotResponse } from "../../adapters/appointments/survey.server.ts";
 import { PRODUCT_NAME } from "./email-parts.ts";
 
-type TerminCalendar = {
+type TerminEvents = {
   aktenzeichen: string;
   slots: CalendarSlot[];
   // Where the judge opens the Termin to make changes or confirm a slot.
@@ -9,14 +10,21 @@ type TerminCalendar = {
   // Raised with every re-issue, so clients replace an earlier version of the events.
   sequence: number;
   // Who the events come from: the address the mail is sent from. Outlook only shows the organizer
-  // and accepts later updates from an organizer it can identify by e-mail address.
-  organizerEmail: string;
+  // and accepts later updates from an organizer it can identify by e-mail address. Feeds leave it
+  // out.
+  organizerEmail?: string;
   now?: Date;
+  // Adds the time the calendar was last synchronized to the descriptions. Only feeds have one.
+  synchronizedAt?: Date;
 };
+
+type TerminCalendar = TerminEvents & { organizerEmail: string };
 
 export type CalendarSlot = AppointmentSlot & {
   // A slot someone cannot attend. Its event is cancelled.
   cancelled?: boolean;
+  // The slot the Termin was confirmed for: its event is confirmed and covers the chosen window.
+  confirmed?: boolean;
   // Who said they are available. Left out while nobody has answered yet.
   availableNames?: string[];
 };
@@ -52,21 +60,53 @@ function fold(line: string): string[] {
   return lines;
 }
 
+// A window one participant cannot attend is off the table for everyone.
+export const isCancelled = ({ responses }: { responses: SlotResponse[] }) =>
+  responses.some(({ available }) => !available);
+
+export const availableNames = ({ responses }: { responses: SlotResponse[] }) =>
+  responses.filter(({ available }) => available).map(({ name }) => name);
+
+const synchronizedFormat = new Intl.DateTimeFormat("de-DE", {
+  timeZone: "Europe/Berlin",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hourCycle: "h23",
+  timeZoneName: "short",
+});
+
 export const TERMIN_CALENDAR_CONTENT_TYPE = "text/calendar; charset=utf-8; method=PUBLISH";
 
 // One tentative event per proposed time slot, so the judge's calendar shows them as busy until a
 // slot is confirmed. Times are UTC, which spares the calendar a time zone definition.
 function describe(
-  { cancelled, availableNames }: CalendarSlot,
+  { cancelled, confirmed, availableNames }: CalendarSlot,
   aktenzeichen: string,
   terminUrl: string,
+  synchronizedAt?: Date,
 ) {
   const link = `Termin öffnen, ändern oder bestätigen: ${terminUrl}`;
+  const synchronized = synchronizedAt
+    ? ["", `Zuletzt synchronisiert: ${synchronizedFormat.format(synchronizedAt)}`]
+    : [];
   if (cancelled) {
     return [
       `Abgesagt: Mindestens ein Verfahrensbeteiligter ist für die Verhandlung ${aktenzeichen} in diesem Zeitraum nicht verfügbar.`,
       "",
       link,
+      ...synchronized,
+    ].join("\n");
+  }
+  if (confirmed) {
+    return [
+      `Bestätigter Termin für die Verhandlung ${aktenzeichen}.`,
+      "",
+      link,
+      ...synchronized,
     ].join("\n");
   }
   return [
@@ -77,54 +117,66 @@ function describe(
     "Wir warten auf die Rückmeldungen der Verfahrensbeteiligten.",
     "",
     link,
+    ...synchronized,
   ].join("\n");
 }
 
 // One event per proposed time slot. Open slots are tentative, so the judge's calendar shows them as
-// busy until a slot is confirmed; slots someone cannot attend are cancelled. Times are UTC, which
-// spares the calendar a time zone definition.
-export function createTerminCalendar({
+// busy until a slot is confirmed; slots someone cannot attend are cancelled and the confirmed slot
+// is confirmed. Times are UTC, which spares the calendar a time zone definition.
+export function createTerminEvents({
   aktenzeichen,
   slots,
   terminUrl,
   sequence,
   organizerEmail,
   now = new Date(),
-}: TerminCalendar): string {
+  synchronizedAt,
+}: TerminEvents): string[] {
   const stamp = toUtcStamp(now);
-  const organizer = `ORGANIZER;CN="${PRODUCT_NAME}":mailto:${organizerEmail}`;
 
   // The UID is the id of the time slot, not its time, so a moved slot updates its event. The prefix
   // shows in the calendar data what the id belongs to.
-  const events = slots.flatMap((slot) => [
-    "BEGIN:VEVENT",
-    `UID:timeslot-${slot.id}`,
-    `SEQUENCE:${sequence}`,
-    `DTSTAMP:${stamp}`,
-    `DTSTART:${toUtcStamp(slot.start)}`,
-    `DTEND:${toUtcStamp(slot.end)}`,
-    `SUMMARY:${escapeText(`${slot.cancelled ? "Abgesagt" : "Vorläufig"}: Verhandlung ${aktenzeichen}`)}`,
-    `DESCRIPTION:${escapeText(describe(slot, aktenzeichen, terminUrl))}`,
-    organizer,
-    `URL:${terminUrl}`,
-    `STATUS:${slot.cancelled ? "CANCELLED" : "TENTATIVE"}`,
-    // A cancelled slot no longer blocks the judge's calendar. Outlook shows availability from its
-    // own property, not from TRANSP.
-    `TRANSP:${slot.cancelled ? "TRANSPARENT" : "OPAQUE"}`,
-    `X-MICROSOFT-CDO-BUSYSTATUS:${slot.cancelled ? "FREE" : "TENTATIVE"}`,
-    "END:VEVENT",
-  ]);
+  return slots.flatMap((slot) => {
+    const label = slot.cancelled ? "Abgesagt" : slot.confirmed ? "Bestätigt" : "Vorläufig";
+    return [
+      "BEGIN:VEVENT",
+      `UID:timeslot-${slot.id}`,
+      `SEQUENCE:${sequence}`,
+      `DTSTAMP:${stamp}`,
+      `DTSTART:${toUtcStamp(slot.start)}`,
+      `DTEND:${toUtcStamp(slot.end)}`,
+      `SUMMARY:${escapeText(`${label}: Verhandlung ${aktenzeichen}`)}`,
+      `DESCRIPTION:${escapeText(describe(slot, aktenzeichen, terminUrl, synchronizedAt))}`,
+      ...(organizerEmail ? [`ORGANIZER;CN="${PRODUCT_NAME}":mailto:${organizerEmail}`] : []),
+      `URL:${terminUrl}`,
+      `STATUS:${slot.cancelled ? "CANCELLED" : slot.confirmed ? "CONFIRMED" : "TENTATIVE"}`,
+      // A cancelled slot no longer blocks the judge's calendar. Outlook shows availability from its
+      // own property, not from TRANSP.
+      `TRANSP:${slot.cancelled ? "TRANSPARENT" : "OPAQUE"}`,
+      `X-MICROSOFT-CDO-BUSYSTATUS:${slot.cancelled ? "FREE" : slot.confirmed ? "BUSY" : "TENTATIVE"}`,
+      "END:VEVENT",
+    ];
+  });
+}
 
+// Wraps events into a calendar file. `header` adds properties of the whole calendar.
+export function wrapCalendar(events: string[], header: string[] = []): string {
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
     "PRODID:-//Justiz Termin Service//Terminumfrage//DE",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
+    ...header,
     ...events,
     "END:VCALENDAR",
   ]
     .flatMap(fold)
     .concat("")
     .join("\r\n");
+}
+
+export function createTerminCalendar(calendar: TerminCalendar): string {
+  return wrapCalendar(createTerminEvents(calendar));
 }

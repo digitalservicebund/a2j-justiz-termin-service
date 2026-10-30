@@ -15,7 +15,12 @@ import {
   renderFooterText,
   renderHeaderText,
 } from "./email-parts.ts";
-import { createTerminCalendar, TERMIN_CALENDAR_CONTENT_TYPE } from "./termin-calendar.ts";
+import {
+  availableNames,
+  createTerminCalendar,
+  isCancelled,
+  TERMIN_CALENDAR_CONTENT_TYPE,
+} from "./termin-calendar.ts";
 
 const SUBJECT = "Neue Antwort auf Ihre Terminumfrage";
 const BUTTON = "Termin öffnen";
@@ -29,13 +34,6 @@ export type AnswerReceivedEmail = {
   terminUrl: string;
   organizerEmail: string;
 };
-
-type Slot = ResponseOverview["slots"][number];
-
-// A window one participant cannot attend is off the table for everyone.
-const isCancelled = ({ responses }: Slot) => responses.some(({ available }) => !available);
-const availableNames = ({ responses }: Slot) =>
-  responses.filter(({ available }) => available).map(({ name }) => name);
 
 // What the mail says, apart from layout: kept as plain strings so the text and HTML versions agree.
 function summarize({ overview, responder }: AnswerReceivedEmail) {

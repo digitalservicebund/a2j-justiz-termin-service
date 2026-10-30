@@ -71,6 +71,8 @@ type UserTable = DefaultTimestamps & {
   emailVerified: boolean;
   image: string | null;
   roles: UserRole[];
+  // The secret in the URL of the user's calendar feed. The database generates it.
+  calendar_token: Generated<string>;
 };
 
 export type Database = {
