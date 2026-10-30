@@ -1,4 +1,5 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type FocusEvent } from "react";
+import { flushSync } from "react-dom";
 import { data, Form, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
 
 import {
@@ -18,12 +19,23 @@ import { KernLabel } from "~/components/shared/kern/KernLabel";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { getDb } from "~/database/database";
 
+import { AddWindows, ADD_DATE_ID } from "./create-termin.add-windows";
+import {
+  normalizeDate,
+  normalizeTime,
+  berlinToday,
+  parseDate,
+  slotToWindow,
+  sortWindows,
+  weekdayShort,
+  windowToSlot,
+  type WindowRow,
+  type WindowText,
+} from "./create-termin.entry";
 import { createTerminBreadcrumbs } from "./create-termin.review";
 import {
-  emptySlot,
   isEmptySlot,
   MAX_SLOTS,
-  messages,
   MIN_SLOTS,
   parseCreateTerminForm,
   validateCreateTermin,
@@ -36,8 +48,6 @@ import {
 import { rangeToSlot, slotToRange } from "./create-termin.slots";
 
 import "./create-termin.css";
-
-const INITIAL_ROWS = 3;
 
 export async function loader({ request }: { request: Request }) {
   const user = await requireRole(request, "richter");
@@ -85,58 +95,35 @@ export async function action({ request }: { request: Request }) {
   return redirect(`/overview/${id}/confirm`);
 }
 
-type Row = { id: number; slot: SlotInput };
+// The windows are kept as the text of their fields. What is posted are hidden fields in the
+// shape the server validates, so the page works the same as when every part had its own input.
+type Row = WindowRow;
+type RowField = keyof WindowText;
 
-// KERN only offers input width modifiers for 2 and 4 characters, which is all we need.
-type FieldConfig = { field: SlotField; label: string; maxLength: 2 | 4 };
+const slotFieldNames = [
+  "day",
+  "month",
+  "year",
+  "startHour",
+  "startMinute",
+  "endHour",
+  "endMinute",
+] as const satisfies SlotField[];
 
-const dateFields: FieldConfig[] = [
-  { field: "day", label: "Tag", maxLength: 2 },
-  { field: "month", label: "Monat", maxLength: 2 },
-  { field: "year", label: "Jahr", maxLength: 4 },
-];
-
-const startFields: FieldConfig[] = [
-  { field: "startHour", label: "Stunde", maxLength: 2 },
-  { field: "startMinute", label: "Minute", maxLength: 2 },
-];
-
-const endFields: FieldConfig[] = [
-  { field: "endHour", label: "Stunde", maxLength: 2 },
-  { field: "endMinute", label: "Minute", maxLength: 2 },
-];
-
-const separatorFor = (field: SlotField) =>
-  field === "startMinute" || field === "endMinute" ? ":" : ".";
-
-const groupOfField: Record<SlotField, SlotErrorGroup> = {
-  day: "date",
-  month: "date",
-  year: "date",
-  startHour: "start",
-  startMinute: "start",
-  endHour: "end",
-  endMinute: "end",
+const fieldOfGroup: Record<SlotErrorGroup, RowField> = {
+  date: "date",
+  start: "start",
+  end: "end",
+  range: "end",
+  overlap: "date",
 };
 
-const firstFieldOfGroup: Record<SlotErrorGroup, SlotField> = {
-  date: "day",
-  start: "startHour",
-  end: "endHour",
-  range: "endHour",
-  overlap: "day",
-};
-
-const fieldId = (index: number, field: SlotField) => `slots-${index}-${field}`;
-const ADD_BUTTON_ID = "add-zeitfenster";
+const fieldId = (index: number, field: RowField) => `slots-${index}-${field}`;
 const SLOTS_ERROR_ID = "slots-error";
 const rowErrorId = (id: number, group: SlotErrorGroup) => `row-${id}-${group}-error`;
 
 function initialRows(values?: SlotInput[]): Row[] {
-  const slots = values?.length
-    ? values
-    : Array.from({ length: INITIAL_ROWS }, () => ({ ...emptySlot }));
-  return slots.map((slot, id) => ({ id, slot }));
+  return (values ?? []).map((slot, id) => ({ id, ...slotToWindow(slot) }));
 }
 
 // Errors are keyed by row id, not index, so they follow a row when others are removed.
@@ -164,74 +151,9 @@ function firstErrorTarget(errors: CreateTerminErrors): string | null {
     .sort((a, b) => a - b);
   if (index !== undefined) {
     const [group] = Object.keys(errors.rows[index]!) as SlotErrorGroup[];
-    return fieldId(index, firstFieldOfGroup[group!]);
+    return fieldId(index, fieldOfGroup[group!]);
   }
-  return errors.slots ? ADD_BUTTON_ID : null;
-}
-
-function SegmentedFields({
-  fields,
-  index,
-  slot,
-  errors,
-  onChange,
-}: Readonly<{
-  fields: FieldConfig[];
-  index: number;
-  slot: SlotInput;
-  errors: Partial<Record<SlotErrorGroup, string>>;
-  onChange: (field: SlotField, value: string) => void;
-}>) {
-  return fields.map(({ field, label, maxLength }, position) => {
-    const group = groupOfField[field];
-    const invalid = Boolean(errors[group] || (group === "end" && errors.range));
-    return (
-      <Fragment key={field}>
-        {position > 0 && (
-          <span
-            className={`create-termin__separator create-termin__separator--${separatorFor(field) === "." ? "dot" : "colon"}`}
-            aria-hidden="true"
-          >
-            {separatorFor(field)}
-          </span>
-        )}
-        <input
-          className={`kern-form-input__input kern-form-input__input--width-${maxLength}${
-            invalid ? " kern-form-input__input--error" : ""
-          }`}
-          id={fieldId(index, field)}
-          name={`slots.${index}.${field}`}
-          aria-label={label}
-          aria-invalid={invalid || undefined}
-          inputMode="numeric"
-          autoComplete="off"
-          maxLength={maxLength}
-          value={slot[field]}
-          onChange={(event) => onChange(field, event.target.value)}
-        />
-      </Fragment>
-    );
-  });
-}
-
-// Column captions reuse the input layout, with invisible separators, so they stay aligned.
-function Captions({ fields }: Readonly<{ fields: FieldConfig[] }>) {
-  return fields.map(({ field, label, maxLength }, position) => (
-    <Fragment key={field}>
-      {position > 0 && (
-        <span className="create-termin__separator" aria-hidden="true">
-          {separatorFor(field)}
-        </span>
-      )}
-      <KernLabel
-        size="small"
-        subtle
-        className={`create-termin__caption create-termin__caption--${maxLength}`}
-      >
-        {label}
-      </KernLabel>
-    </Fragment>
-  ));
+  return errors.slots ? ADD_DATE_ID : null;
 }
 
 type Result = { values: CreateTerminValues; errors: CreateTerminErrors };
@@ -252,14 +174,14 @@ function CreateTerminForm({
   result,
 }: Readonly<{ draft: { id: string; values: CreateTerminValues } | null; result?: Result }>) {
   const pending = useNavigation().state !== "idle";
+  // Only used to read what is typed, so the day it was when the page opened is good enough.
+  const [today] = useState(berlinToday);
 
   // What the user just submitted wins over the saved draft.
   const initial = result?.values ?? draft?.values;
-  const nextId = useRef(Math.max(INITIAL_ROWS, initial?.slots.length ?? 0));
+  const nextId = useRef(initial?.slots.length ?? 0);
   const [aktenzeichen, setAktenzeichen] = useState(initial?.aktenzeichen ?? "");
   const [rows, setRows] = useState<Row[]>(() => initialRows(initial?.slots));
-  // Set when the user tries to remove a row while only the minimum number is left.
-  const [removeBlocked, setRemoveBlocked] = useState(false);
 
   // Errors only appear for what the server flagged on submit, then clear live once fixed.
   const [flagged, setFlagged] = useState<Set<ErrorKey>>(
@@ -279,16 +201,17 @@ function CreateTerminForm({
     if (target) document.getElementById(target)?.focus();
   }, [result, rows]);
 
+  const slots = useMemo(() => rows.map((row) => windowToSlot(row, today)), [rows, today]);
   const live = useMemo(() => {
-    const validation = validateCreateTermin({ aktenzeichen, slots: rows.map((row) => row.slot) });
+    const validation = validateCreateTermin({ aktenzeichen, slots });
     return validation.success ? {} : keyErrors(validation.errors, rows);
-  }, [aktenzeichen, rows]);
+  }, [aktenzeichen, slots, rows]);
 
+  // An overlap is shown as soon as it exists, so adding dates tells right away what clashes.
   const shown: KeyedErrors = {};
-  for (const key of flagged) {
-    if (live[key]) shown[key] = live[key];
+  for (const key of Object.keys(live) as ErrorKey[]) {
+    if (flagged.has(key) || key.endsWith(":overlap")) shown[key] = live[key];
   }
-  if (removeBlocked) shown.slots = messages.tooFewSlots;
 
   const rowErrorsOf = (id: number) => {
     const errors: Partial<Record<SlotErrorGroup, string>> = {};
@@ -299,27 +222,41 @@ function CreateTerminForm({
     return errors;
   };
 
-  const updateSlot = (id: number, field: SlotField, value: string) => {
-    setRemoveBlocked(false);
+  const updateRow = (id: number, field: RowField, value: string) =>
+    setRows((current) => current.map((row) => (row.id === id ? { ...row, [field]: value } : row)));
+  // A field is tidied when it loses focus. A window moves to its place only when focus leaves the
+  // whole window, so it does not jump while it is edited.
+  const leaveWindow = (event: FocusEvent<HTMLElement>, tidy?: { id: number; field: RowField }) => {
+    const staysInWindow = event.currentTarget.closest("fieldset")?.contains(event.relatedTarget);
+    setRows((current) => {
+      const tidied = tidy
+        ? current.map((row) => {
+            if (row.id !== tidy.id) return row;
+            const { field } = tidy;
+            const value =
+              field === "date" ? normalizeDate(row.date, today) : normalizeTime(row[field]);
+            return { ...row, [field]: value };
+          })
+        : current;
+      return staysInWindow ? tidied : sortWindows(tidied, today);
+    });
+  };
+  const addRows = (windows: WindowText[]) =>
     setRows((current) =>
-      current.map((row) =>
-        row.id === id ? { ...row, slot: { ...row.slot, [field]: value } } : row,
+      sortWindows(
+        [...current, ...windows.map((window) => ({ id: nextId.current++, ...window }))],
+        today,
       ),
     );
-  };
-  const addRow = () => {
-    setRemoveBlocked(false);
-    setRows((current) => [...current, { id: nextId.current++, slot: { ...emptySlot } }]);
-  };
   const removeRow = (id: number) => {
-    if (rows.length <= MIN_SLOTS) {
-      setRemoveBlocked(true);
-      return;
-    }
-    setRows((current) => current.filter((row) => row.id !== id));
+    const index = rows.findIndex((row) => row.id === id);
+    const remaining = rows.length - 1;
+    flushSync(() => setRows((current) => current.filter((row) => row.id !== id)));
+    // The removed window had focus, so it moves to a neighbour or, if none is left, the add area.
+    document
+      .getElementById(remaining ? fieldId(Math.min(index, remaining - 1), "date") : ADD_DATE_ID)
+      ?.focus();
   };
-
-  const atLimit = rows.length >= MAX_SLOTS;
 
   return (
     <>
@@ -353,117 +290,96 @@ function CreateTerminForm({
               aria-describedby={shown.slots ? SLOTS_ERROR_ID : undefined}
               className={`create-termin__windows${shown.slots ? " kern-fieldset--error" : ""}`}
             >
-              <div className="create-termin__rows">
-                <div className="create-termin__row create-termin__row--head" aria-hidden="true">
-                  <div className="create-termin__head">
-                    <KernLabel>Datum</KernLabel>
-                    <div className="create-termin__group create-termin__group--date">
-                      <Captions fields={dateFields} />
-                    </div>
-                  </div>
-                  <div className="create-termin__range">
-                    <div className="create-termin__head">
-                      <KernLabel>Startzeit</KernLabel>
-                      <div className="create-termin__group create-termin__group--time">
-                        <Captions fields={startFields} />
-                      </div>
-                    </div>
-                    <span className="create-termin__dash">–</span>
-                    <div className="create-termin__head">
-                      <KernLabel>Endzeit</KernLabel>
-                      <div className="create-termin__group create-termin__group--time">
-                        <Captions fields={endFields} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <AddWindows
+                existing={rows}
+                onAdd={addRows}
+                onRemove={(id) => setRows((current) => current.filter((row) => row.id !== id))}
+              />
 
-                {rows.map(({ id, slot }, index) => {
-                  const rowErrors = rowErrorsOf(id);
-                  const groups = Object.keys(rowErrors) as SlotErrorGroup[];
-                  const onChange = (field: SlotField, value: string) =>
-                    updateSlot(id, field, value);
-                  return (
-                    <fieldset
-                      className={`create-termin__row${groups.length ? " kern-fieldset--error" : ""}`}
-                      aria-describedby={
-                        groups.map((group) => rowErrorId(id, group)).join(" ") || undefined
-                      }
-                      key={id}
-                    >
-                      <legend className="kern-sr-only">{`Zeitfenster ${index + 1}`}</legend>
-                      <div className="create-termin__group create-termin__group--date">
-                        <SegmentedFields
-                          fields={dateFields}
-                          index={index}
-                          slot={slot}
-                          errors={rowErrors}
-                          onChange={onChange}
+              <div className="create-termin__list">
+                <KernHeading size="medium" level={3} id="window-list-title">
+                  {`Ihre Zeitfenster (${rows.length})`}
+                </KernHeading>
+                <p className="kern-hint">{`Mindestens ${MIN_SLOTS}, höchstens ${MAX_SLOTS} Zeitfenster.`}</p>
+
+                {rows.length === 0 ? (
+                  <p className="kern-body">Noch keine Zeitfenster hinzugefügt.</p>
+                ) : (
+                  <ul className="create-termin__rows" aria-labelledby="window-list-title">
+                    {rows.map((row, index) => {
+                      const rowErrors = rowErrorsOf(row.id);
+                      const groups = Object.keys(rowErrors) as SlotErrorGroup[];
+                      const iso = parseDate(row.date, today);
+                      const input = (field: RowField, label: string, invalid: boolean) => (
+                        <input
+                          className={`kern-form-input__input create-termin__input create-termin__input--${field}${
+                            invalid ? " kern-form-input__input--error" : ""
+                          }`}
+                          id={fieldId(index, field)}
+                          aria-label={label}
+                          aria-invalid={invalid || undefined}
+                          inputMode={field === "date" ? undefined : "numeric"}
+                          autoComplete="off"
+                          value={row[field]}
+                          onChange={(event) => updateRow(row.id, field, event.target.value)}
+                          onBlur={(event) => leaveWindow(event, { id: row.id, field })}
                         />
-                      </div>
-                      <div className="create-termin__range">
-                        <div className="create-termin__group create-termin__group--time">
-                          <SegmentedFields
-                            fields={startFields}
-                            index={index}
-                            slot={slot}
-                            errors={rowErrors}
-                            onChange={onChange}
-                          />
-                        </div>
-                        <span className="create-termin__dash" aria-hidden="true">
-                          –
-                        </span>
-                        <div className="create-termin__group create-termin__group--time">
-                          <SegmentedFields
-                            fields={endFields}
-                            index={index}
-                            slot={slot}
-                            errors={rowErrors}
-                            onChange={onChange}
-                          />
-                        </div>
-                        <KernButton
-                          type="button"
-                          style="tertiary"
-                          aria-label={`Zeitfenster ${index + 1} entfernen`}
-                          onClick={() => removeRow(id)}
-                        >
-                          <KernIcon name="delete" />
-                        </KernButton>
-                      </div>
-                      {groups.length > 0 && (
-                        <div className="create-termin__row-errors">
-                          {groups.map((group) => (
-                            <ErrorMessage id={rowErrorId(id, group)} key={group}>
-                              {rowErrors[group]}
-                            </ErrorMessage>
-                          ))}
-                        </div>
-                      )}
-                    </fieldset>
-                  );
-                })}
+                      );
+                      return (
+                        <li key={row.id}>
+                          <fieldset
+                            className={`create-termin__window${groups.length ? " kern-fieldset--error" : ""}`}
+                            aria-describedby={
+                              groups.map((group) => rowErrorId(row.id, group)).join(" ") ||
+                              undefined
+                            }
+                          >
+                            <legend className="kern-sr-only">{`Zeitfenster ${index + 1}`}</legend>
+                            {slotFieldNames.map((name) => (
+                              <input
+                                type="hidden"
+                                key={name}
+                                name={`slots.${index}.${name}`}
+                                value={slots[index]![name]}
+                              />
+                            ))}
+                            <span className="create-termin__weekday">
+                              {iso ? weekdayShort(iso) : ""}
+                            </span>
+                            {input("date", "Datum", Boolean(rowErrors.date))}
+                            <div className="create-termin__range">
+                              {input("start", "Beginn", Boolean(rowErrors.start))}
+                              <span className="create-termin__dash" aria-hidden="true">
+                                –
+                              </span>
+                              {input("end", "Ende", Boolean(rowErrors.end || rowErrors.range))}
+                            </div>
+                            <KernButton
+                              type="button"
+                              style="tertiary"
+                              aria-label={`Zeitfenster ${index + 1} entfernen`}
+                              onBlur={leaveWindow}
+                              onClick={() => removeRow(row.id)}
+                            >
+                              <KernIcon name="delete" />
+                            </KernButton>
+                            {groups.length > 0 && (
+                              <div className="create-termin__row-errors">
+                                {groups.map((group) => (
+                                  <ErrorMessage id={rowErrorId(row.id, group)} key={group}>
+                                    {rowErrors[group]}
+                                  </ErrorMessage>
+                                ))}
+                              </div>
+                            )}
+                          </fieldset>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+                {shown.slots && <ErrorMessage id={SLOTS_ERROR_ID}>{shown.slots}</ErrorMessage>}
               </div>
-
-              <KernButton
-                id={ADD_BUTTON_ID}
-                type="button"
-                style="secondary"
-                className="create-termin__add"
-                disabled={atLimit}
-                aria-describedby={atLimit ? "add-hint" : undefined}
-                onClick={addRow}
-              >
-                <KernIcon name="add" />
-                <KernLabel>Zeitfenster hinzufügen</KernLabel>
-              </KernButton>
-              {atLimit && (
-                <p className="kern-hint" id="add-hint">
-                  {`Sie können höchstens ${MAX_SLOTS} Zeitfenster angeben.`}
-                </p>
-              )}
-              {shown.slots && <ErrorMessage id={SLOTS_ERROR_ID}>{shown.slots}</ErrorMessage>}
             </fieldset>
           </section>
 

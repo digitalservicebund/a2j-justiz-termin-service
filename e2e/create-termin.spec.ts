@@ -10,21 +10,17 @@ const TOO_FEW = "Geben Sie mindestens zwei Zeitfenster an.";
 function inDays(days: number) {
   const date = new Date();
   date.setDate(date.getDate() + days);
-  return {
-    day: String(date.getDate()),
-    month: String(date.getMonth() + 1),
-    year: String(date.getFullYear()),
-  };
+  return `${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear()}`;
 }
 
-type Window = { daysFromToday: number; start: [string, string]; end: [string, string] };
+type Window = { daysFromToday: number; start: string; end: string };
 
 // Four different windows spread over next week.
 const nextWeek: Window[] = [
-  { daysFromToday: 7, start: ["9", "0"], end: ["10", "30"] },
-  { daysFromToday: 8, start: ["11", "0"], end: ["12", "0"] },
-  { daysFromToday: 9, start: ["13", "30"], end: ["15", "0"] },
-  { daysFromToday: 10, start: ["16", "0"], end: ["17", "15"] },
+  { daysFromToday: 7, start: "9:00", end: "10:30" },
+  { daysFromToday: 8, start: "11:00", end: "12:00" },
+  { daysFromToday: 9, start: "13:30", end: "15:00" },
+  { daysFromToday: 10, start: "16:00", end: "17:15" },
 ];
 
 let judgeId: string;
@@ -54,29 +50,28 @@ function windowRow(page: Page, number: number) {
   return page.getByRole("group", { name: `Zeitfenster ${number}`, exact: true });
 }
 
-async function fillWindow(page: Page, number: number, window: Window) {
-  const row = windowRow(page, number);
-  const { day, month, year } = inDays(window.daysFromToday);
-  await row.getByRole("textbox", { name: "Tag" }).fill(day);
-  await row.getByRole("textbox", { name: "Monat" }).fill(month);
-  await row.getByRole("textbox", { name: "Jahr" }).fill(year);
-  await row.getByRole("textbox", { name: "Stunde" }).first().fill(window.start[0]);
-  await row.getByRole("textbox", { name: "Minute" }).first().fill(window.start[1]);
-  await row.getByRole("textbox", { name: "Stunde" }).last().fill(window.end[0]);
-  await row.getByRole("textbox", { name: "Minute" }).last().fill(window.end[1]);
+const addArea = (page: Page) => page.getByRole("region", { name: "Zeitfenster hinzufügen" });
+
+// Adds windows through the add area: the dates, typed as the user would, and one time range.
+async function addWindows(page: Page, dates: string, start: string, end: string) {
+  const area = addArea(page);
+  await area.getByRole("textbox", { name: "Datum" }).fill(dates);
+  await area.getByRole("textbox", { name: "Beginn" }).fill(start);
+  await area.getByRole("textbox", { name: "Ende" }).fill(end);
+  await area.getByRole("button", { name: "Zeitfenster hinzufügen" }).click();
 }
+
+const addWindow = (page: Page, window: Window) =>
+  addWindows(page, inDays(window.daysFromToday), window.start, window.end);
 
 test("a richter creates a Terminumfrage with four time slots next week", async ({ page, db }) => {
   await page.getByRole("textbox", { name: "Aktenzeichen" }).fill("574 C 65412/26");
 
-  // The page starts with three rows; add a fourth.
-  await expect(page.getByRole("group", { name: /^Zeitfenster \d+$/ })).toHaveCount(3);
-  await page.getByRole("button", { name: "Zeitfenster hinzufügen" }).click();
-  await expect(page.getByRole("group", { name: /^Zeitfenster \d+$/ })).toHaveCount(4);
+  // The page starts without any window.
+  await expect(page.getByRole("group", { name: /^Zeitfenster \d+$/ })).toHaveCount(0);
 
-  for (const [index, window] of nextWeek.entries()) {
-    await fillWindow(page, index + 1, window);
-  }
+  for (const window of nextWeek) await addWindow(page, window);
+  await expect(page.getByRole("group", { name: /^Zeitfenster \d+$/ })).toHaveCount(4);
   await page.getByRole("button", { name: "Weiter" }).click();
 
   // The appointment is in the database as a draft, and its id is in the URL of the review.
@@ -154,8 +149,8 @@ test("going back from the review keeps what was entered and updates the same dra
   db,
 }) => {
   await page.getByRole("textbox", { name: "Aktenzeichen" }).fill("574 C 65412/26");
-  await fillWindow(page, 1, nextWeek[0]!);
-  await fillWindow(page, 2, nextWeek[1]!);
+  await addWindow(page, nextWeek[0]!);
+  await addWindow(page, nextWeek[1]!);
   await page.getByRole("button", { name: "Weiter" }).click();
   await expect(
     page.getByRole("heading", { name: "Bitte überprüfen Sie Ihre Angaben" }),
@@ -166,9 +161,7 @@ test("going back from the review keeps what was entered and updates the same dra
 
   await expect(page).toHaveURL(new RegExp(`/overview/new\\?entwurf=${id}$`));
   await expect(page.getByRole("textbox", { name: "Aktenzeichen" })).toHaveValue("574 C 65412/26");
-  await expect(windowRow(page, 2).getByRole("textbox", { name: "Stunde" }).first()).toHaveValue(
-    "11",
-  );
+  await expect(windowRow(page, 2).getByRole("textbox", { name: "Beginn" })).toHaveValue("11:00");
   await expect(page.getByRole("alert")).toHaveCount(0);
 
   // Changing the Aktenzeichen and saving again edits the draft instead of creating a second one.
@@ -188,8 +181,8 @@ test("going back from the review keeps what was entered and updates the same dra
 
 test("a draft is only visible to the richter who created it", async ({ page, users }) => {
   await page.getByRole("textbox", { name: "Aktenzeichen" }).fill("574 C 65412/26");
-  await fillWindow(page, 1, nextWeek[0]!);
-  await fillWindow(page, 2, nextWeek[1]!);
+  await addWindow(page, nextWeek[0]!);
+  await addWindow(page, nextWeek[1]!);
   await page.getByRole("button", { name: "Weiter" }).click();
   await expect(page).toHaveURL(/\/overview\/[^/]+\/confirm$/);
   const confirmPath = new URL(page.url()).pathname;
@@ -218,22 +211,23 @@ test("the form shows what is missing and keeps what was typed", async ({ page })
 
 test("one time slot is not enough", async ({ page }) => {
   await page.getByRole("textbox", { name: "Aktenzeichen" }).fill("574 C 65412/26");
-  await fillWindow(page, 1, nextWeek[0]!);
+  await addWindow(page, nextWeek[0]!);
 
   await page.getByRole("button", { name: "Weiter" }).click();
 
   await expect(page.getByText(TOO_FEW)).toBeVisible();
-  await expect(page.getByRole("button", { name: "Zeitfenster hinzufügen" })).toBeFocused();
+  await expect(addArea(page).getByRole("textbox", { name: "Datum" })).toBeFocused();
 
   // A second valid window resolves the error without another submit.
-  await fillWindow(page, 2, nextWeek[1]!);
+  await addWindow(page, nextWeek[1]!);
   await expect(page.getByText(TOO_FEW)).toBeHidden();
 });
 
 test("a window with a problem is flagged in place", async ({ page }) => {
   await page.getByRole("textbox", { name: "Aktenzeichen" }).fill("574 C 65412/26");
-  await fillWindow(page, 1, nextWeek[0]!);
-  await fillWindow(page, 2, { ...nextWeek[1]!, end: ["10", "0"] });
+  await addWindow(page, nextWeek[0]!);
+  await addWindow(page, nextWeek[1]!);
+  await windowRow(page, 2).getByRole("textbox", { name: "Ende" }).fill("10:00");
 
   await page.getByRole("button", { name: "Weiter" }).click();
 
@@ -244,17 +238,131 @@ test("a window with a problem is flagged in place", async ({ page }) => {
   await expect(page).toHaveURL(/\/overview\/new$/);
 });
 
-test("rows cannot be removed below two", async ({ page }) => {
-  const rows = page.getByRole("group", { name: /^Zeitfenster \d+$/ });
-  await expect(rows).toHaveCount(3);
+test("windows can be removed, and the form still asks for two", async ({ page }) => {
+  const windows = page.getByRole("group", { name: /^Zeitfenster \d+$/ });
+  await addWindows(page, `${inDays(7)}, ${inDays(8)}, ${inDays(9)}`, "9", "10");
+  await expect(windows).toHaveCount(3);
 
   await page.getByRole("button", { name: "Zeitfenster 1 entfernen" }).click();
-  await expect(rows).toHaveCount(2);
-  await expect(page.getByText(TOO_FEW)).toBeHidden();
+  await expect(windows).toHaveCount(2);
+  await expect(windowRow(page, 1).getByRole("textbox", { name: "Datum" })).toBeFocused();
 
   await page.getByRole("button", { name: "Zeitfenster 1 entfernen" }).click();
-  await expect(rows).toHaveCount(2);
+  await expect(windows).toHaveCount(1);
+
+  await page.getByRole("textbox", { name: "Aktenzeichen" }).fill("574 C 65412/26");
+  await page.getByRole("button", { name: "Weiter" }).click();
   await expect(page.getByText(TOO_FEW)).toBeVisible();
+});
+
+test("one time range for several dates, entered with the keyboard only", async ({ page }) => {
+  const area = addArea(page);
+  await area.getByRole("textbox", { name: "Beginn" }).fill("9-11");
+  await area.getByRole("textbox", { name: "Datum" }).click();
+  // Leaving the start field read the range into both times.
+  await expect(area.getByRole("textbox", { name: "Ende" })).toHaveValue("11:00");
+
+  await page.keyboard.type(`${inDays(7)},${inDays(8)},`);
+  await expect(
+    page.getByRole("list", { name: "Ausgewählte Daten" }).getByRole("listitem"),
+  ).toHaveCount(2);
+  // Enter with nothing left to type adds the windows; it does not submit the form.
+  await page.keyboard.press("Enter");
+
+  const windows = page.getByRole("group", { name: /^Zeitfenster \d+$/ });
+  await expect(windows).toHaveCount(2);
+  await expect(windowRow(page, 1).getByRole("textbox", { name: "Beginn" })).toHaveValue("09:00");
+  await expect(windowRow(page, 2).getByRole("textbox", { name: "Ende" })).toHaveValue("11:00");
+  await expect(page).toHaveURL(/\/overview\/new$/);
+  await expect(page.getByRole("status")).toHaveText("2 Zeitfenster hinzugefügt");
+  // The next working day is offered, selected, so the next round can start typing right away.
+  await expect(area.getByRole("textbox", { name: "Datum" })).toBeFocused();
+  await expect(area.getByRole("textbox", { name: "Datum" })).not.toHaveValue("");
+});
+
+test("the end can be given as a length", async ({ page }) => {
+  await addWindows(page, inDays(7), "13:30", "+90min");
+
+  await expect(windowRow(page, 1).getByRole("textbox", { name: "Ende" })).toHaveValue("15:00");
+});
+
+test("days are picked in the calendar", async ({ page }) => {
+  const area = addArea(page);
+  await area.getByRole("button", { name: "Kalender öffnen" }).click();
+  await area.getByRole("button", { name: "Nächster Monat" }).click();
+  await area.getByRole("button", { name: /, 14\. / }).click();
+  await area.getByRole("button", { name: /, 15\. / }).click();
+  await expect(
+    page.getByRole("list", { name: "Ausgewählte Daten" }).getByRole("listitem"),
+  ).toHaveCount(2);
+
+  await area.getByRole("textbox", { name: "Beginn" }).fill("9");
+  await area.getByRole("textbox", { name: "Ende" }).fill("10");
+  await area.getByRole("button", { name: "Zeitfenster hinzufügen" }).click();
+
+  await expect(page.getByRole("group", { name: /^Zeitfenster \d+$/ })).toHaveCount(2);
+  await expect(windowRow(page, 1).getByRole("textbox", { name: "Datum" })).toHaveValue(/^14\./);
+  await expect(windowRow(page, 2).getByRole("textbox", { name: "Datum" })).toHaveValue(/^15\./);
+});
+
+test("a window is dragged in the week view and selected to remove it", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 1000 });
+  // The Wednesday of next week, which is always ahead and a weekday.
+  const wednesday = new Date();
+  wednesday.setDate(wednesday.getDate() - ((wednesday.getDay() + 6) % 7) + 7 + 2);
+  const iso = [wednesday.getFullYear(), wednesday.getMonth() + 1, wednesday.getDate()]
+    .map((part) => String(part).padStart(2, "0"))
+    .join("-");
+
+  await addArea(page).getByRole("button", { name: "Wochenansicht öffnen" }).click();
+  const column = page.locator(`[data-date="${iso}"]`);
+  // On a weekend the view already starts on next week.
+  if ((await column.count()) === 0) {
+    await addArea(page).getByRole("button", { name: "Nächste Woche" }).click();
+  }
+  await column.evaluate((element) => element.scrollIntoView({ block: "center" }));
+  // The page may scroll smoothly; measure once the column has stopped moving.
+  let previous = -1;
+  await expect
+    .poll(async () => {
+      const { y } = (await column.boundingBox())!;
+      const settled = y === previous;
+      previous = y;
+      return settled;
+    })
+    .toBe(true);
+  const box = (await column.boundingBox())!;
+  const slot = box.height / 48;
+  const x = box.x + box.width / 2;
+
+  // Cells are 15 minutes from 07:00: row 8 is 09:00, and row 15 is the one that ends at 11:00.
+  await page.mouse.move(x, box.y + slot * 8.5);
+  await page.mouse.down();
+  await page.mouse.move(x, box.y + slot * 15.5, { steps: 5 });
+  await page.mouse.up();
+
+  await expect(page.getByRole("group", { name: /^Zeitfenster \d+$/ })).toHaveCount(1);
+  await expect(windowRow(page, 1).getByRole("textbox", { name: "Beginn" })).toHaveValue("09:00");
+  await expect(windowRow(page, 1).getByRole("textbox", { name: "Ende" })).toHaveValue("11:00");
+
+  await column.getByRole("button", { name: /09:00–11:00$/ }).click();
+  await addArea(page).getByRole("button", { name: "Ausgewähltes Zeitfenster entfernen" }).click();
+  await expect(page.getByRole("group", { name: /^Zeitfenster \d+$/ })).toHaveCount(0);
+});
+
+test("what cannot be added is said, and an overlap is flagged right away", async ({ page }) => {
+  await addWindows(page, inDays(7), "9", "10");
+
+  await addWindows(page, `${inDays(7)}, 1.1.2020`, "9", "10");
+  await expect(page.getByRole("status")).toHaveText(
+    "Kein Zeitfenster hinzugefügt, 2 übersprungen (Datum in der Vergangenheit, bereits vorhanden)",
+  );
+
+  await addWindows(page, inDays(7), "9:30", "10:30");
+  await expect(
+    windowRow(page, 2).getByText("Dieses Zeitfenster überschneidet sich mit Zeitfenster 1."),
+  ).toBeVisible();
+  await expect(windowRow(page, 1).getByRole("alert")).toHaveCount(0);
 });
 
 test("only a richter can open the page", async ({ page, users }) => {

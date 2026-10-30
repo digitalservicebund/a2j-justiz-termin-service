@@ -14,6 +14,7 @@ export const messages = {
   range: "Die Endzeit muss nach der Startzeit liegen.",
   overlap: (otherRow: number) =>
     `Dieses Zeitfenster überschneidet sich mit Zeitfenster ${otherRow}.`,
+  noDates: "Geben Sie mindestens ein Datum an.",
   tooFewSlots: "Geben Sie mindestens zwei Zeitfenster an.",
   tooManySlots: `Geben Sie höchstens ${MAX_SLOTS} Zeitfenster an.`,
 };
@@ -62,7 +63,7 @@ function toNumber(value: string, pattern: RegExp): number | null {
   return pattern.test(value) ? Number(value) : null;
 }
 
-function todayInBerlin(now: Date): string {
+export function todayInBerlin(now: Date): string {
   // sv-SE formats as YYYY-MM-DD, which compares correctly as a string.
   return new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(now);
 }
