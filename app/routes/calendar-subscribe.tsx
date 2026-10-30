@@ -9,7 +9,6 @@ import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernFormInput } from "~/components/shared/kern/KernFormInput";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernIcon } from "~/components/shared/kern/KernIcon";
-import { KernLabel } from "~/components/shared/kern/KernLabel";
 import { KernLink } from "~/components/shared/kern/KernLink";
 import { MainNav } from "~/components/shared/MainNav";
 import { getDb } from "~/database/database";
@@ -96,7 +95,7 @@ export default function CalendarSubscribe() {
                   />
                   <KernLink href={webcalUrl}>
                     <KernIcon name="open-in-new" size="small" />
-                    <KernLabel>In Kalender-App öffnen</KernLabel>
+                    In Kalender-App öffnen
                   </KernLink>
                 </div>
               </section>
