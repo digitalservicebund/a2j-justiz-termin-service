@@ -12,6 +12,8 @@ import { KernAlert } from "~/components/shared/kern/KernAlert";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernIcon } from "~/components/shared/kern/KernIcon";
+import { KernLabel } from "~/components/shared/kern/KernLabel";
+import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { LoginForm } from "~/components/shared/LoginForm";
 import { getDb } from "~/database/database";
 import { getAuth } from "~/lib/auth.server";
@@ -21,8 +23,8 @@ import { logError } from "~/lib/logging";
 import "./welcome.css";
 
 export async function loader({ request }: { request: Request }) {
-  if (await getSessionUser(request)) return redirect("/overview");
-  return { invalidLink: new URL(request.url).searchParams.has("error") };
+  const user = await getSessionUser(request);
+  return { user, invalidLink: new URL(request.url).searchParams.has("error") };
 }
 
 export async function action({ request }: { request: Request }) {
@@ -97,16 +99,25 @@ const CONTACT_EMAIL = "a2j-jts@digitalservice.bund.de";
 const TODO_HREF = "#";
 
 export default function Welcome() {
-  const { invalidLink } = useLoaderData<typeof loader>();
+  const { user, invalidLink } = useLoaderData<typeof loader>();
   const result = useActionData<typeof action>();
   return (
     <AppShell
       className="welcome"
+      user={user ?? undefined}
       showReportProblem={false}
-      breadcrumbs={[
-        { label: "Startseite", href: "/", icon: "home" },
-        { label: "Verhandlungstermin-Finder" },
-      ]}
+      breadcrumbs={
+        user
+          ? [
+              { label: "Startseite", href: "/", icon: "home" },
+              { label: "Verhandlungstermin-Finder", href: "/overview" },
+              { label: "Verhandlungstermin-Finder" },
+            ]
+          : [
+              { label: "Startseite", href: "/", icon: "home" },
+              { label: "Verhandlungstermin-Finder" },
+            ]
+      }
     >
       <section className="welcome__hero">
         <DefaultPage>
@@ -118,33 +129,44 @@ export default function Welcome() {
               Der Verhandlungstermin-Finder vereinfacht die Terminkoordination zwischen Gericht und
               Verfahrensbeteiligten.
             </KernBody>
-            {invalidLink && (
-              <KernAlert
-                type="error"
-                title="Ungültiger Anmeldelink"
-                message="Der Link ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen Link an."
-              />
+            {user ? (
+              <div>
+                <KernLinkButton to="/overview">
+                  <KernLabel>Verhandlungstermin-Finder</KernLabel>
+                  <KernIcon name="arrow-forward" />
+                </KernLinkButton>
+              </div>
+            ) : (
+              <>
+                {invalidLink && (
+                  <KernAlert
+                    type="error"
+                    title="Ungültiger Anmeldelink"
+                    message="Der Link ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen Link an."
+                  />
+                )}
+                {result && "error" in result && (
+                  <KernAlert type="error" title="Anmeldung nicht möglich" message={result.error} />
+                )}
+                <LoginForm
+                  email={result?.email}
+                  sent={result !== undefined && "sent" in result}
+                  error={
+                    result && "invalidEmail" in result ? (
+                      "Bitte geben Sie eine gültige E-Mail-Adresse ein."
+                    ) : result && "notAllowed" in result ? (
+                      <>
+                        Während der Pilotierung können nur ausgewählte Gerichte den Onlinedienst
+                        nutzen. Melden Sie sich bei Interesse unter: <br />
+                        <a className="kern-link" href={`mailto:${CONTACT_EMAIL}`}>
+                          {CONTACT_EMAIL}
+                        </a>
+                      </>
+                    ) : undefined
+                  }
+                />
+              </>
             )}
-            {result && "error" in result && (
-              <KernAlert type="error" title="Anmeldung nicht möglich" message={result.error} />
-            )}
-            <LoginForm
-              email={result?.email}
-              sent={result !== undefined && "sent" in result}
-              error={
-                result && "invalidEmail" in result ? (
-                  "Bitte geben Sie eine gültige E-Mail-Adresse ein."
-                ) : result && "notAllowed" in result ? (
-                  <>
-                    Während der Pilotierung können nur ausgewählte Gerichte den Onlinedienst nutzen.
-                    Melden Sie sich bei Interesse unter: <br />
-                    <a className="kern-link" href={`mailto:${CONTACT_EMAIL}`}>
-                      {CONTACT_EMAIL}
-                    </a>
-                  </>
-                ) : undefined
-              }
-            />
           </div>
         </DefaultPage>
       </section>

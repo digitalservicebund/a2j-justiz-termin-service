@@ -1,10 +1,12 @@
 import { render, screen, within } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { getSessionUser } from "~/adapters/session/session";
 
 import Welcome, { loader } from "../welcome";
 
-vi.mock("~/adapters/session/session", () => ({ getSessionUser: vi.fn().mockResolvedValue(null) }));
+vi.mock("~/adapters/session/session", () => ({ getSessionUser: vi.fn() }));
 vi.mock("~/adapters/users/users.server", () => ({ canSignIn: vi.fn() }));
 vi.mock("~/database/database", () => ({ getDb: () => ({}) }));
 vi.mock("~/lib/auth.server", () => ({ getAuth: () => ({ handler: vi.fn() }) }));
@@ -16,7 +18,13 @@ async function renderPage(url = "/") {
   await screen.findByRole("heading", { level: 1, name: "Verhandlungstermin-Finder" });
 }
 
+const user = { id: "user-a", name: "Person A", email: "person.a@example.com", roles: ["klaeger"] };
+
 describe("Welcome", () => {
+  beforeEach(() => {
+    vi.mocked(getSessionUser).mockResolvedValue(null);
+  });
+
   it("shows the login form and the breadcrumb without an Übersicht crumb", async () => {
     await renderPage();
     expect(screen.getByLabelText("E-Mail-Adresse")).toBeInTheDocument();
@@ -73,5 +81,60 @@ describe("Welcome", () => {
   it("shows an alert for an invalid sign-in link", async () => {
     await renderPage("/?error=INVALID_TOKEN");
     expect(screen.getByText("Ungültiger Anmeldelink")).toBeInTheDocument();
+  });
+
+  describe("for a signed-in user", () => {
+    beforeEach(() => {
+      vi.mocked(getSessionUser).mockResolvedValue(user as never);
+    });
+
+    it("shows a button to the overview instead of the login form", async () => {
+      await renderPage();
+      const main = screen.getByRole("main");
+      const breadcrumb = within(main).getByRole("navigation", { name: "Brotkrumen" });
+      const button = within(main)
+        .getAllByRole("link", { name: "Verhandlungstermin-Finder" })
+        .find((link) => !breadcrumb.contains(link));
+      expect(button).toHaveClass("kern-btn", "kern-btn--primary");
+      expect(button).toHaveAttribute("href", "/overview");
+      expect(screen.queryByLabelText("E-Mail-Adresse")).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Anmelden" })).not.toBeInTheDocument();
+    });
+
+    it("shows who is signed in with a logout button", async () => {
+      await renderPage();
+      expect(screen.getByText("person.a@example.com")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Abmelden" })).toBeInTheDocument();
+    });
+
+    it("adds the page to the breadcrumb below the linked service", async () => {
+      await renderPage();
+      const breadcrumb = screen.getByRole("navigation", { name: "Brotkrumen" });
+      expect(
+        within(breadcrumb)
+          .getAllByRole("listitem")
+          .map((item) => item.textContent),
+      ).toEqual(["", "Verhandlungstermin-Finder", "Verhandlungstermin-Finder"]);
+      expect(within(breadcrumb).getByRole("link", { name: "Startseite" })).toHaveAttribute(
+        "href",
+        "/",
+      );
+      expect(
+        within(breadcrumb).getByRole("link", { name: "Verhandlungstermin-Finder" }),
+      ).toHaveAttribute("href", "/overview");
+    });
+
+    it("keeps the process steps and the pilot notice", async () => {
+      await renderPage();
+      expect(screen.getByRole("heading", { name: "Der Ablauf" })).toBeInTheDocument();
+      expect(
+        screen.getByText("Der Onlinedienst befindet sich in der Testphase (Pilotprojekt)"),
+      ).toBeInTheDocument();
+    });
+
+    it("does not show the invalid-link alert", async () => {
+      await renderPage("/?error=INVALID_TOKEN");
+      expect(screen.queryByText("Ungültiger Anmeldelink")).not.toBeInTheDocument();
+    });
   });
 });

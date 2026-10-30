@@ -1,4 +1,4 @@
-import { baseURL, expect, test } from "./fixtures.ts";
+import { baseURL, expect, signIn, test } from "./fixtures.ts";
 
 test("front page shows the login, the language links and the process steps", async ({ page }) => {
   await page.goto("/");
@@ -81,4 +81,29 @@ test("front page has the meta tags for search engines and link previews", async 
   const response = await request.get(image ?? "");
   expect(response.status()).toBe(200);
   expect(response.headers()["content-type"]).toBe("image/png");
+});
+
+test("a signed-in user sees a button to the overview instead of the login", async ({
+  page,
+  users,
+}) => {
+  const user = await users.create();
+  await signIn(page, user);
+
+  await page.goto("/");
+
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Verhandlungstermin-Finder" }),
+  ).toBeVisible();
+  await expect(page.getByText(user.email)).toBeVisible();
+  await expect(page.getByLabel("E-Mail-Adresse")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Anmelden" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Der Ablauf" })).toBeVisible();
+
+  await page
+    .getByRole("main")
+    .getByRole("link", { name: "Verhandlungstermin-Finder" })
+    .first()
+    .click();
+  await expect(page).toHaveURL(`${baseURL}/overview`);
 });
