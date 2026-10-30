@@ -200,7 +200,7 @@ describe("Overview", () => {
     expect(within(nav).getAllByRole("link")).toHaveLength(1);
   });
 
-  it("shows the report-problem button once, inside the content column", async () => {
+  it("shows the report-problem button once, at the width of the content column", async () => {
     vi.mocked(listAppointments).mockResolvedValue([]);
 
     const { container } = renderPage();
@@ -209,6 +209,7 @@ describe("Overview", () => {
     expect(screen.getAllByRole("button", { name: "Problem mit dieser Seite melden" })).toHaveLength(
       1,
     );
-    expect(container.querySelector(".overview__content")).toContainElement(button);
+    expect(button.closest(".page-width")).toHaveClass("page-width--content");
+    expect(container.querySelector(".overview__content")).not.toContainElement(button);
   });
 });

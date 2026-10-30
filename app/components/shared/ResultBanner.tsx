@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { DefaultPage } from "./DefaultPage";
+import { PageSection } from "./DefaultPage";
 import { KernBody } from "./kern/KernBody";
 import { KernHeading } from "./kern/KernHeading";
 import { KernIcon } from "./kern/KernIcon";
@@ -18,7 +18,7 @@ type ResultBannerProps = {
 // the actions that follow from it.
 export function ResultBanner({ type, title, message, actions }: Readonly<ResultBannerProps>) {
   return (
-    <DefaultPage width="wide">
+    <PageSection width="wide">
       <div className={`kern-alert kern-alert--${type} result-banner`}>
         <KernIcon name={type} size="x-large" />
         <div className="result-banner__body">
@@ -31,6 +31,6 @@ export function ResultBanner({ type, title, message, actions }: Readonly<ResultB
           {actions && <div className="result-banner__actions">{actions}</div>}
         </div>
       </div>
-    </DefaultPage>
+    </PageSection>
   );
 }

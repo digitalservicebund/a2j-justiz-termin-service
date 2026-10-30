@@ -2,13 +2,17 @@ import { KernButton } from "./kern/KernButton";
 import { KernIcon } from "./kern/KernIcon";
 import { KernLabel } from "./kern/KernLabel";
 
-// Does nothing yet. The page around it decides where it sits: AppShell places it below the page
-// content, pages with their own layout place it inside their content column.
+import "./ReportProblemButton.css";
+
+// Does nothing yet. Only the page layouts (DefaultPage, FlowPage) render it, at the right edge
+// of their content, so it always lines up with what is above it.
 export function ReportProblemButton() {
   return (
-    <KernButton type="button" style="secondary">
-      <KernIcon name="danger" />
-      <KernLabel>Problem mit dieser Seite melden</KernLabel>
-    </KernButton>
+    <div className="report-problem">
+      <KernButton type="button" style="secondary">
+        <KernIcon name="danger" />
+        <KernLabel>Problem mit dieser Seite melden</KernLabel>
+      </KernButton>
+    </div>
   );
 }

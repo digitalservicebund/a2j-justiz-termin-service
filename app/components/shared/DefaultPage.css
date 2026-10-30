@@ -9,6 +9,10 @@
   --page-width: var(--page-width-narrow);
 }
 
+.page-width--content {
+  --page-width: var(--page-width-content);
+}
+
 .page-width--wide {
   --page-width: var(--page-width-wide);
 }

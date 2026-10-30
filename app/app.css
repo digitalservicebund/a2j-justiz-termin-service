@@ -6,6 +6,7 @@
 
   /* The page widths. KERN has no tokens for them; use these instead of ad-hoc rem values. */
   --page-width-narrow: 45rem; /* single forms and short text blocks */
+  --page-width-content: 54rem; /* the main column next to a sidebar */
   --page-width-default: 62rem; /* most content */
   --page-width-wide: 94rem; /* two-column layouts and banners */
 }

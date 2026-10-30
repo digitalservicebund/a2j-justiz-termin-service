@@ -82,12 +82,6 @@
     calc(var(--kern-metric-space-default) + 2px);
 }
 
-.page-shell__report {
-  display: flex;
-  justify-content: flex-end;
-  padding-top: var(--kern-metric-space-3x-large);
-}
-
 .page-shell__footer {
   margin-top: auto;
   background-color: var(--kern-color-layout-background-default);

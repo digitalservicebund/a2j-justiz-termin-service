@@ -11,6 +11,7 @@ import {
   UserManagementError,
 } from "~/adapters/users/users.server";
 import { AppShell } from "~/components/shared/AppShell";
+import { DefaultPage } from "~/components/shared/DefaultPage";
 import { KernAlert } from "~/components/shared/kern/KernAlert";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernButton } from "~/components/shared/kern/KernButton";
@@ -118,65 +119,67 @@ export default function AdminUsersRoute() {
   const pending = useNavigation().state !== "idle";
   return (
     <AppShell breadcrumbs={[{ label: "Benutzerverwaltung", href: "#" }]} user={user}>
-      <KernBody>
-        Hinterlegte E‑Mail-Adressen und Adressen{" "}
-        <Link className="kern-link" to="/admin/domains">
-          freigegebener Domains
-        </Link>{" "}
-        können sich anmelden. Änderungen beenden bestehende Sitzungen des betroffenen Benutzers.
-        E‑Mail-Adressen können nicht geändert werden: Löschen Sie den Benutzer und legen Sie ihn neu
-        an.
-      </KernBody>
-      {result && "error" in result && (
-        <KernAlert type="error" title="Änderung nicht möglich" message={result.error} />
-      )}
-      {result && "success" in result && (
-        <KernAlert type="success" title="Gespeichert" message={result.success} />
-      )}
-      <section aria-labelledby="new-user-title" className="admin-users__section">
-        <KernHeading size="small" level={2} id="new-user-title">
-          Benutzer hinzufügen
-        </KernHeading>
-        <Form method="post" className="admin-users__form">
-          <input type="hidden" name="intent" value="create" />
-          <UserFields />
-          <KernButton type="submit" disabled={pending}>
-            Hinzufügen
-          </KernButton>
-        </Form>
-      </section>
-      {users.map((entry) => (
-        <section
-          key={entry.id}
-          aria-labelledby={`${entry.id}-title`}
-          className="admin-users__section"
-        >
-          <KernHeading size="small" level={2} id={`${entry.id}-title`}>
-            {entry.email}
+      <DefaultPage>
+        <KernBody>
+          Hinterlegte E‑Mail-Adressen und Adressen{" "}
+          <Link className="kern-link" to="/admin/domains">
+            freigegebener Domains
+          </Link>{" "}
+          können sich anmelden. Änderungen beenden bestehende Sitzungen des betroffenen Benutzers.
+          E‑Mail-Adressen können nicht geändert werden: Löschen Sie den Benutzer und legen Sie ihn
+          neu an.
+        </KernBody>
+        {result && "error" in result && (
+          <KernAlert type="error" title="Änderung nicht möglich" message={result.error} />
+        )}
+        {result && "success" in result && (
+          <KernAlert type="success" title="Gespeichert" message={result.success} />
+        )}
+        <section aria-labelledby="new-user-title" className="admin-users__section">
+          <KernHeading size="small" level={2} id="new-user-title">
+            Benutzer hinzufügen
           </KernHeading>
           <Form method="post" className="admin-users__form">
-            <input type="hidden" name="intent" value="update" />
-            <input type="hidden" name="id" value={entry.id} />
-            <UserFields
-              key={`${entry.name}-${entry.roles.join("-")}`}
-              user={entry}
-              ownAccount={entry.id === user.id}
-            />
+            <input type="hidden" name="intent" value="create" />
+            <UserFields />
             <KernButton type="submit" disabled={pending}>
-              Speichern
+              Hinzufügen
             </KernButton>
           </Form>
-          {entry.id !== user.id && (
-            <Form method="post">
-              <input type="hidden" name="intent" value="delete" />
+        </section>
+        {users.map((entry) => (
+          <section
+            key={entry.id}
+            aria-labelledby={`${entry.id}-title`}
+            className="admin-users__section"
+          >
+            <KernHeading size="small" level={2} id={`${entry.id}-title`}>
+              {entry.email}
+            </KernHeading>
+            <Form method="post" className="admin-users__form">
+              <input type="hidden" name="intent" value="update" />
               <input type="hidden" name="id" value={entry.id} />
-              <KernButton type="submit" style="secondary" disabled={pending}>
-                Benutzer löschen
+              <UserFields
+                key={`${entry.name}-${entry.roles.join("-")}`}
+                user={entry}
+                ownAccount={entry.id === user.id}
+              />
+              <KernButton type="submit" disabled={pending}>
+                Speichern
               </KernButton>
             </Form>
-          )}
-        </section>
-      ))}
+            {entry.id !== user.id && (
+              <Form method="post">
+                <input type="hidden" name="intent" value="delete" />
+                <input type="hidden" name="id" value={entry.id} />
+                <KernButton type="submit" style="secondary" disabled={pending}>
+                  Benutzer löschen
+                </KernButton>
+              </Form>
+            )}
+          </section>
+        ))}
+      </DefaultPage>
     </AppShell>
   );
 }

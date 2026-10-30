@@ -42,4 +42,12 @@ describe("FlowPage", () => {
     render(<FlowPage width="wide">x</FlowPage>);
     expect(screen.getByText("x")).toHaveClass("page-width--wide");
   });
+
+  it("follows the band with the report-problem button at the same width", () => {
+    const { container } = render(<FlowPage width="wide">x</FlowPage>);
+    const button = screen.getByRole("button", { name: "Problem mit dieser Seite melden" });
+    const band = container.querySelector(".flow-page")!;
+    expect(band).not.toContainElement(button);
+    expect(button.closest(".page-width")).toHaveClass("page-width--wide");
+  });
 });

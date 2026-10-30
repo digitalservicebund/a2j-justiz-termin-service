@@ -13,6 +13,7 @@ import {
 
 import { getSessionUser } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
+import { DefaultPage } from "~/components/shared/DefaultPage";
 import { KernAlert } from "~/components/shared/kern/KernAlert";
 import { BASE_PATH } from "~/lib/base-path";
 import { requireEnv } from "~/lib/env";
@@ -100,12 +101,14 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 
   return (
     <AppShell>
-      <KernAlert type="error" title={title} message={message} />
-      {stack && (
-        <pre className="app-error-stack">
-          <code>{stack}</code>
-        </pre>
-      )}
+      <DefaultPage>
+        <KernAlert type="error" title={title} message={message} />
+        {stack && (
+          <pre className="app-error-stack">
+            <code>{stack}</code>
+          </pre>
+        )}
+      </DefaultPage>
     </AppShell>
   );
 }
