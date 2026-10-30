@@ -106,6 +106,7 @@ export default function Welcome() {
       className="welcome"
       user={user ?? undefined}
       showReportProblem={false}
+      showLanguageLinks
       breadcrumbs={[]}
     >
       <section className="welcome__hero">

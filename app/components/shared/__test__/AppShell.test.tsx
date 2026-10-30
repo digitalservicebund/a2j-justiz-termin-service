@@ -43,12 +43,19 @@ describe("AppShell", () => {
     expect(container.querySelector('input[name="intent"]')).toHaveValue("logout");
   });
 
+  it("hides the language links by default", () => {
+    renderShell();
+    expect(screen.queryByRole("navigation", { name: "Sprachangebote" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Leichte Sprache" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Gebärdensprache" })).not.toBeInTheDocument();
+  });
+
   it("links to the easy-language and sign-language pages, signed in or not", () => {
     const expected = [
       ["Leichte Sprache", "https://service.justiz.de/leichtesprache"],
       ["Gebärdensprache", "https://service.justiz.de/gebaerdensprache"],
     ];
-    for (const props of [{}, { user }]) {
+    for (const props of [{ showLanguageLinks: true }, { showLanguageLinks: true, user }]) {
       const { unmount } = renderShell(props);
       const nav = screen.getByRole("navigation", { name: "Sprachangebote" });
       for (const [name, href] of expected) {

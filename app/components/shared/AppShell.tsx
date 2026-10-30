@@ -65,6 +65,8 @@ type AppShellProps = {
   user?: AuthUser;
   className?: string;
   showReportProblem?: boolean;
+  // The easy-language and sign-language links are only shown on the front page.
+  showLanguageLinks?: boolean;
   children: ReactNode;
 };
 
@@ -73,6 +75,7 @@ export function AppShell({
   user,
   className,
   showReportProblem = true,
+  showLanguageLinks = false,
   children,
 }: Readonly<AppShellProps>) {
   const classes = ["page-shell", className].filter(Boolean).join(" ");
@@ -87,18 +90,20 @@ export function AppShell({
             Justiz-Services
           </KernHeading>
           <div className="page-shell__header-actions">
-            <nav aria-label="Sprachangebote">
-              <ul className="page-shell__language-links">
-                {languageLinks.map(({ href, label, icon }) => (
-                  <li key={label}>
-                    <KernLink size="small" href={href}>
-                      <KernIcon name={icon} />
-                      {label}
-                    </KernLink>
-                  </li>
-                ))}
-              </ul>
-            </nav>
+            {showLanguageLinks && (
+              <nav aria-label="Sprachangebote">
+                <ul className="page-shell__language-links">
+                  {languageLinks.map(({ href, label, icon }) => (
+                    <li key={label}>
+                      <KernLink size="small" href={href}>
+                        <KernIcon name={icon} />
+                        {label}
+                      </KernLink>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            )}
             {user && (
               <div className="page-shell__user">
                 <KernBody muted className="page-shell__user-info">
