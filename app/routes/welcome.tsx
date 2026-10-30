@@ -120,7 +120,7 @@ export default function Welcome() {
               Verfahrensbeteiligten.
             </KernBody>
             {user ? (
-              <div>
+              <div className="welcome__hero-action">
                 <KernLinkButton to="/overview">
                   <KernLabel>Verhandlungstermin-Finder</KernLabel>
                   <KernIcon name="arrow-forward" />
@@ -177,22 +177,24 @@ export default function Welcome() {
         </DefaultPage>
       </section>
 
-      <DefaultPage>
-        <div className="welcome__sections">
-          <section aria-labelledby="welcome-ablauf">
-            <KernHeading size="large" level={2} id="welcome-ablauf">
-              Der Ablauf
-            </KernHeading>
-            <ol className="welcome__steps">
-              {steps.map(({ icon, label }) => (
-                <li key={label} className="welcome__step">
-                  {icon}
-                  <span className="kern-title">{label}</span>
-                </li>
-              ))}
-            </ol>
-          </section>
+      <section className="welcome__flow" aria-labelledby="welcome-ablauf">
+        <DefaultPage>
+          <KernHeading size="large" level={2} id="welcome-ablauf">
+            Der Ablauf
+          </KernHeading>
+          <ol className="welcome__steps">
+            {steps.map(({ icon, label }) => (
+              <li key={label} className="welcome__step">
+                {icon}
+                <span className="kern-title">{label}</span>
+              </li>
+            ))}
+          </ol>
+        </DefaultPage>
+      </section>
 
+      <section className="welcome__participation">
+        <DefaultPage>
           <A2JInlineNotice
             type="information"
             title="Gestalten Sie die digitalen Angebote der Justiz mit"
@@ -202,8 +204,8 @@ export default function Welcome() {
             Ihre Hilfe ist dabei sehr wichtig. In kurzen Online-Gesprächen können Sie Ihre
             Erfahrungen mit uns teilen und neue Services testen.
           </A2JInlineNotice>
-        </div>
-      </DefaultPage>
+        </DefaultPage>
+      </section>
     </AppShell>
   );
 }
