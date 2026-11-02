@@ -85,15 +85,22 @@ export function SuccessBanner({
   );
 }
 
+// The heading and the numbered steps, for pages that lay out their own content column.
+export function NextStepsSection({ children }: Readonly<{ children: React.ReactNode }>) {
+  return (
+    <section className="create-termin-created__steps" aria-labelledby="naechste-schritte">
+      <KernHeading size="large" level={2} id="naechste-schritte">
+        Nächste Schritte
+      </KernHeading>
+      <ol className="create-termin-created__list">{children}</ol>
+    </section>
+  );
+}
+
 export function NextSteps({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <DefaultPage>
-      <section className="create-termin-created__steps" aria-labelledby="naechste-schritte">
-        <KernHeading size="large" level={2} id="naechste-schritte">
-          Nächste Schritte
-        </KernHeading>
-        <ol className="create-termin-created__list">{children}</ol>
-      </section>
+      <NextStepsSection>{children}</NextStepsSection>
     </DefaultPage>
   );
 }

@@ -131,7 +131,7 @@ export function AppShell({
         {breadcrumbs && (
           <div className="page-shell__breadcrumbs">
             <div className="kern-container">
-              <Breadcrumb items={breadcrumbs} />
+              <Breadcrumb items={breadcrumbs} signedIn={Boolean(user)} />
             </div>
           </div>
         )}

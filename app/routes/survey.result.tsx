@@ -1,17 +1,19 @@
 import { data, redirect, useLoaderData } from "react-router";
 
 import { findSurvey, getSavedAnswer } from "~/adapters/appointments/survey.server";
+import { getSessionUser } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
-import { DefaultPage } from "~/components/shared/DefaultPage";
+import { DefaultPage, PageSection } from "~/components/shared/DefaultPage";
 import {
   KernDescriptionList,
   KernDescriptionListItem,
 } from "~/components/shared/kern/KernDescriptionList";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
+import { MainNav } from "~/components/shared/MainNav";
 import { ResultBanner } from "~/components/shared/ResultBanner";
 import { getDb } from "~/database/database";
 
-import { NextSteps, Step, SuccessBanner } from "./create-termin.created";
+import { NextStepsSection, Step } from "./create-termin.created";
 import {
   groupWindows,
   noMatchBreadcrumbs,
@@ -39,6 +41,8 @@ export async function loader({ request, params }: { request: Request } & Params)
 
   const days = groupWindows(answer.available);
   return {
+    // Guests are not signed in: only a signed-in user gets the sidebar. Never forces a login.
+    user: await getSessionUser(request),
     days,
     // Only the sorry page shows these: what was proposed, once nothing is left to choose from.
     aktenzeichen: survey.aktenzeichen,
@@ -47,13 +51,28 @@ export async function loader({ request, params }: { request: Request } & Params)
 }
 
 export default function SurveyResult() {
-  const { days, aktenzeichen, proposedDays } = useLoaderData<typeof loader>();
+  const { user, days, aktenzeichen, proposedDays } = useLoaderData<typeof loader>();
   if (days.length === 0) return <NoOption aktenzeichen={aktenzeichen} days={proposedDays} />;
-  return (
-    <AppShell breadcrumbs={surveyBreadcrumbs}>
-      <div className="create-termin-created survey-result">
+  const signedIn = Boolean(user);
+  const content = (
+    <DefaultPage width="content">
+      <div className={`create-termin-created${signedIn ? " survey-result__main" : ""}`}>
         <Positive days={days} />
       </div>
+    </DefaultPage>
+  );
+  return (
+    <AppShell user={user ?? undefined} breadcrumbs={surveyBreadcrumbs}>
+      {signedIn ? (
+        <PageSection width="wide">
+          <div className="survey-result__layout">
+            <MainNav current="overview" />
+            {content}
+          </div>
+        </PageSection>
+      ) : (
+        content
+      )}
     </AppShell>
   );
 }
@@ -61,16 +80,16 @@ export default function SurveyResult() {
 function Positive({ days }: Readonly<{ days: ReturnType<typeof groupWindows> }>) {
   return (
     <>
-      <SuccessBanner title="Danke für das Angeben Ihrer Verfügbarkeiten." overviewLink={false} />
+      <ResultBanner inline type="info" title="Danke für das Angeben Ihrer Verfügbarkeiten." />
 
-      <NextSteps>
+      <NextStepsSection>
         <Step title="Halten Sie sich die angegebenen Zeitfenster frei, bis vom Gericht ein Termin festgelegt wurde.">
           <KernDescriptionList>
             {days.map(({ key, label, windows }) => (
               <KernDescriptionListItem key={key} label={label}>
                 <ul className="create-termin-review__times">
-                  {windows.map(({ id, start }) => (
-                    <li key={id}>{start}</li>
+                  {windows.map(({ id, time }) => (
+                    <li key={id}>{time}</li>
                   ))}
                 </ul>
               </KernDescriptionListItem>
@@ -80,7 +99,7 @@ function Positive({ days }: Readonly<{ days: ReturnType<typeof groupWindows> }>)
         <Step title="Alle anderen Verfahrensbeteiligten geben Ihre Verfügbarkeiten an." />
         <Step title="Das Gericht legt einen passenden Termin fest." />
         <Step title="Sie erhalten die Ladung." />
-      </NextSteps>
+      </NextStepsSection>
     </>
   );
 }
