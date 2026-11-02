@@ -115,14 +115,14 @@ export default function OverviewDetail() {
   return (
     <AppShell
       user={user}
-      breadcrumbs={[{ label: "Übersicht", href: "/overview" }, { label: aktenzeichen }]}
+      breadcrumbs={[{ label: "Übersicht", href: "/overview" }, { label: "Terminumfrage" }]}
     >
       <PageSection width="wide">
         <div className="overview-detail__layout">
           <MainNav current="overview" />
           <DefaultPage width="content">
             <div className="overview-detail">
-              {detail.state !== "cancelled" && <BackLink />}
+              {detail.state === "confirmed" && <BackLink />}
 
               {detail.state === "confirmed" ? (
                 <>
@@ -166,24 +166,21 @@ function OpenForReplies({
 }: Readonly<{ aktenzeichen: string; days: DayWindows[]; selectUrl: string; surveyUrl: string }>) {
   return (
     <>
-      <header className="overview-detail__header">
-        <KernBadge type="info">
-          <KernIcon name="info" />
-          <KernLabel>Offen für Rückmeldungen</KernLabel>
-        </KernBadge>
-        <KernHeading size="large" level={1}>
-          Die Terminumfrage ist aktiv und die Verfahrensbeteiligten können ihre Verfügbarkeiten
-          teilen.
-        </KernHeading>
-      </header>
-
-      <div className="overview-detail__actions">
-        <KernLinkButton to={selectUrl}>
-          <KernIcon name="check" />
-          <KernLabel>Termin auswählen</KernLabel>
-        </KernLinkButton>
-        <CopyLinkButton url={surveyUrl} />
-      </div>
+      <ResultBanner
+        inline
+        type="info"
+        title="Die Terminumfrage ist aktiv und die Verfahrensbeteiligten können ihre Verfügbarkeiten teilen."
+        actions={
+          <>
+            <KernLinkButton to={selectUrl}>
+              <KernIcon name="check" />
+              <KernLabel>Termin auswählen</KernLabel>
+            </KernLinkButton>
+            <CopyLinkButton url={surveyUrl} />
+          </>
+        }
+      />
+      <BackLink>Zur Übersicht</BackLink>
 
       <Verhandlungsdaten aktenzeichen={aktenzeichen} />
       <Zeitfenster days={days} />

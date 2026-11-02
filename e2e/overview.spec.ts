@@ -280,11 +280,13 @@ test("an open termin survey opens a detail page with its survey link", async ({
   await page.getByRole("link", { name: "Terminumfrage 574 C 65412/26 öffnen" }).click();
 
   await expect(page).toHaveURL(new RegExp(`/overview/${id}$`));
-  await expect(page.getByText("Offen für Rückmeldungen")).toBeVisible();
+  await expect(page.getByText("Offen für Rückmeldungen")).toHaveCount(0);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Die Terminumfrage ist aktiv und die Verfahrensbeteiligten können ihre Verfügbarkeiten teilen.",
   );
-  await expect(page.getByRole("link", { name: "Termin auswählen" })).toBeVisible();
+  const banner = page.locator(".kern-alert--info");
+  await expect(banner.getByRole("link", { name: "Termin auswählen" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Zur Übersicht", exact: true })).toBeVisible();
   await expect(page.getByText("10:00 bis 14:00")).toBeVisible();
   await expect(page.getByText("21. September 2026")).toBeVisible();
 
