@@ -9,7 +9,7 @@ describe("ResultBanner", () => {
     expect(screen.getByRole("heading", { level: 1, name: "Erledigt" })).toBeInTheDocument();
   });
 
-  it.each(["success", "danger"] as const)("styles the %s banner", (type) => {
+  it.each(["success", "warning", "danger"] as const)("styles the %s banner", (type) => {
     const { container } = render(<ResultBanner type={type} title="Titel" />);
     expect(container.querySelector(".kern-alert")).toHaveClass(`kern-alert--${type}`);
   });
@@ -31,5 +31,16 @@ describe("ResultBanner", () => {
     const { container } = render(<ResultBanner type="success" title="Titel" />);
     expect(container.querySelector(".result-banner__actions")).toBeNull();
     expect(container.querySelector(".kern-body")).toBeNull();
+  });
+
+  it("renders without the wide page section when inline", () => {
+    const { container } = render(<ResultBanner inline type="warning" title="Titel" />);
+    expect(container.querySelector(".page-width")).toBeNull();
+    expect(container.querySelector(".kern-alert")).toBeInTheDocument();
+  });
+
+  it("sits in the wide page section by default", () => {
+    const { container } = render(<ResultBanner type="warning" title="Titel" />);
+    expect(container.querySelector(".page-width--wide .kern-alert")).toBeInTheDocument();
   });
 });
