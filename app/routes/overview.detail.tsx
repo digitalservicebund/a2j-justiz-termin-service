@@ -15,12 +15,13 @@ import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernIcon } from "~/components/shared/kern/KernIcon";
 import { KernLabel } from "~/components/shared/kern/KernLabel";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
+import { formatInstant } from "~/core/domain/time/format";
 import { getDb } from "~/database/database";
 import { BASE_PATH } from "~/lib/base-path";
 
 import { groupSlotsByDay, type DayWindows } from "./create-termin.review";
 import { rangeToSlot } from "./create-termin.slots";
-import { describeStatus, formatInstant } from "./overview.status";
+import { describeStatus } from "./overview.status";
 
 import "./overview.detail.css";
 

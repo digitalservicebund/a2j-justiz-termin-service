@@ -5,11 +5,11 @@ import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { CopyButton } from "~/components/shared/CopyButton";
 import { KernBody } from "~/components/shared/kern/KernBody";
+import { formatInstant } from "~/core/domain/time/format";
 import { getDb } from "~/database/database";
 
 import { NextSteps, Step, SuccessBanner } from "./create-termin.created";
 import { selectBreadcrumbs } from "./overview.select.schema";
-import { formatInstant } from "./overview.status";
 
 import "./create-termin.created.css";
 

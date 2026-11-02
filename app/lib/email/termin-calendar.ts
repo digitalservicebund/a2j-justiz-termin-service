@@ -1,5 +1,6 @@
 import type { AppointmentSlot } from "../../adapters/appointments/appointments.server.ts";
 import type { SlotResponse } from "../../adapters/appointments/survey.server.ts";
+import { formatSynchronizedAt } from "../../core/domain/time/format.ts";
 import { PRODUCT_NAME } from "./email-parts.ts";
 
 type TerminEvents = {
@@ -67,18 +68,6 @@ export const isCancelled = ({ responses }: { responses: SlotResponse[] }) =>
 export const availableNames = ({ responses }: { responses: SlotResponse[] }) =>
   responses.filter(({ available }) => available).map(({ name }) => name);
 
-const synchronizedFormat = new Intl.DateTimeFormat("de-DE", {
-  timeZone: "Europe/Berlin",
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
-  hourCycle: "h23",
-  timeZoneName: "short",
-});
-
 export const TERMIN_CALENDAR_CONTENT_TYPE = "text/calendar; charset=utf-8; method=PUBLISH";
 
 // One tentative event per proposed time slot, so the judge's calendar shows them as busy until a
@@ -91,7 +80,7 @@ function describe(
 ) {
   const link = `Termin öffnen, ändern oder bestätigen: ${terminUrl}`;
   const synchronized = synchronizedAt
-    ? ["", `Zuletzt synchronisiert: ${synchronizedFormat.format(synchronizedAt)}`]
+    ? ["", `Zuletzt synchronisiert: ${formatSynchronizedAt(synchronizedAt)}`]
     : [];
   if (cancelled) {
     return [

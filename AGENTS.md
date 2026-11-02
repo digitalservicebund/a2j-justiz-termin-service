@@ -40,6 +40,16 @@ Never use data that looks real in tests, seed data, fixtures, stories or placeho
 - Personal information such as names must be obviously fake: `Person A`, `Judge B`, `Guest C`. Do not use realistic names.
 - Courts are named `Court X`, `Court Y`, `Court Z` and so on, not real court names.
 
+## Dates and times
+
+All date and time logic lives in `app/core/domain/time/`. Everything is Berlin time (`Europe/Berlin`).
+
+- Show dates and times with the functions in `format.ts`. Do not create `Intl.DateTimeFormat` instances or write `"Europe/Berlin"` anywhere else.
+- Ask "which day is this?" with `berlinDay()`, never with the UTC day. Shortly after midnight in Berlin the UTC day is still the day before.
+- Convert between form input and instants with `berlin.server.ts` (Temporal, server only). It rejects times that the clock change skips or repeats; do not pick one silently.
+- Read database rows with `rowToRange()` and `confirmedWindow()` instead of calling `new Date(...)` on columns.
+- Pure functions take `now` as an argument. Only loaders, actions and adapters call `new Date()`.
+
 ## Git hooks
 
 `lefthook.yml` defines pre-commit and pre-push hooks, but they are not installed automatically. Run `lefthook install` once per clone. Running `lefthook run` also installs the git hooks into `.git/hooks` as a side effect.

@@ -1,6 +1,7 @@
 import html from "html-template-tag";
 
 import type { ResponseOverview } from "../../adapters/appointments/survey.server.ts";
+import { formatRange } from "../../core/domain/time/format.ts";
 import {
   Button,
   COLOR,
@@ -10,7 +11,6 @@ import {
   Layout,
   Slots,
   TextRow,
-  describeSlot,
   logoAttachment,
   renderFooterText,
   renderHeaderText,
@@ -42,7 +42,7 @@ function summarize({ overview, responder }: AnswerReceivedEmail) {
       .filter(({ responses }) =>
         responses.some((r) => r.participantId === responder.id && r.available === available),
       )
-      .map(describeSlot);
+      .map(formatRange);
   const open = overview.slots.filter((slot) => !isCancelled(slot));
 
   return {
@@ -52,7 +52,7 @@ function summarize({ overview, responder }: AnswerReceivedEmail) {
     // Windows an earlier answer already cancelled are listed too, so the mail shows the full state.
     states: overview.slots.map((slot) => {
       const names = availableNames(slot);
-      return `${describeSlot(slot)}: ${isCancelled(slot) ? "abgesagt" : `verfügbar: ${names.join(", ")}`}`;
+      return `${formatRange(slot)}: ${isCancelled(slot) ? "abgesagt" : `verfügbar: ${names.join(", ")}`}`;
     }),
     nothingLeft: open.length === 0,
   };

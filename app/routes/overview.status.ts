@@ -1,22 +1,6 @@
 import type { AppointmentSummary } from "~/adapters/appointments/appointments.server";
 import type { KernBadgeType } from "~/components/shared/kern/KernBadge";
-
-const dateFormat = new Intl.DateTimeFormat("de-DE", {
-  weekday: "long",
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-  timeZone: "Europe/Berlin",
-});
-
-const timeFormat = new Intl.DateTimeFormat("de-DE", {
-  hour: "2-digit",
-  minute: "2-digit",
-  timeZone: "Europe/Berlin",
-});
-
-export const formatInstant = (instant: Date) =>
-  `${dateFormat.format(instant)} um ${timeFormat.format(instant)}`;
+import { formatInstant } from "~/core/domain/time/format";
 
 export type StatusBadge = { type: KernBadgeType; text: string };
 

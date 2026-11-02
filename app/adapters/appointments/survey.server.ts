@@ -1,5 +1,6 @@
 import type { Kysely } from "kysely";
 
+import { rowToRange } from "../../core/domain/time/time-range.ts";
 import type { Database } from "../../database/types.ts";
 import { logInfo } from "../../lib/logging.ts";
 import { nextCalendarSequence, type AppointmentSlot } from "./appointments.server.ts";
@@ -43,14 +44,7 @@ function visibleSlots(db: Executor, appointmentId: string, ownParticipantId?: st
     )
     .orderBy("start_time")
     .execute()
-    .then((rows) =>
-      rows.map(({ id, start_time, end_time }): SurveySlot => ({
-        id,
-        start: new Date(start_time),
-        // end_time is nullable in the schema, but the form always sets it.
-        end: new Date(end_time ?? start_time),
-      })),
-    );
+    .then((rows) => rows.map((row): SurveySlot => ({ id: row.id, ...rowToRange(row) })));
 }
 
 // The token is either the secret of a personal link or the universal_token of the appointment.
@@ -222,11 +216,7 @@ export async function getSavedAnswer(
 
   return {
     name: participant.name,
-    available: rows.map(({ id, start_time, end_time }) => ({
-      id,
-      start: new Date(start_time),
-      end: new Date(end_time ?? start_time),
-    })),
+    available: rows.map((row) => ({ id: row.id, ...rowToRange(row) })),
   };
 }
 
@@ -298,12 +288,11 @@ async function readResponseOverview(
     aktenzeichen: appointment.aktenzeichen,
     judgeEmail: appointment.email,
     calendarSequence,
-    slots: slots.map(({ id, start_time, end_time }) => ({
-      id,
-      start: new Date(start_time),
-      end: new Date(end_time ?? start_time),
+    slots: slots.map((slot) => ({
+      id: slot.id,
+      ...rowToRange(slot),
       responses: responses
-        .filter(({ slot_id }) => slot_id === id)
+        .filter(({ slot_id }) => slot_id === slot.id)
         .map(({ participantId, name, status }) => ({
           participantId,
           name,

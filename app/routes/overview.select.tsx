@@ -14,15 +14,11 @@ import { KernFormCheck } from "~/components/shared/kern/KernFormCheck";
 import { KernFormInput } from "~/components/shared/kern/KernFormInput";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
+import { formatRangeLong } from "~/core/domain/time/format";
 import { getDb } from "~/database/database";
 
-import {
-  describeSlot,
-  readValues,
-  selectBreadcrumbs,
-  selectionSearch,
-  validateSelection,
-} from "./overview.select.schema";
+import { readValues, selectBreadcrumbs, selectionSearch } from "./overview.select.schema";
+import { validateSelection } from "./overview.select.validate.server";
 
 import "./overview.select.css";
 
@@ -45,7 +41,7 @@ export async function loader({ request, params }: { request: Request } & Params)
   return {
     user,
     aktenzeichen: appointment.aktenzeichen,
-    windows: appointment.slots.map(describeSlot),
+    windows: appointment.slots.map(formatRangeLong),
     // Going back from the review brings the earlier choice along.
     values: readValues(new URL(request.url).searchParams),
   };

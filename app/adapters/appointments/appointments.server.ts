@@ -2,10 +2,9 @@ import { randomBytes } from "node:crypto";
 
 import type { Kysely } from "kysely";
 
+import { confirmedWindow, rowToRange, type TimeRange } from "../../core/domain/time/time-range.ts";
 import type { AppointmentStatus, Database } from "../../database/types.ts";
 import { logInfo } from "../../lib/logging.ts";
-
-export type TimeRange = { start: Date; end: Date };
 
 export type AppointmentDraft = { aktenzeichen: string; slots: TimeRange[] };
 
@@ -90,7 +89,6 @@ export async function getAppointment(
       "aktenzeichen",
       "status",
       "universal_token",
-      "confirmed_slot_id",
       "confirmed_start_time",
       "confirmed_end_time",
     ])
@@ -106,28 +104,13 @@ export async function getAppointment(
     .orderBy("start_time")
     .execute();
 
-  // end_time is nullable in the schema, but the form always sets it.
-  const toRange = ({ start_time, end_time }: (typeof slots)[number]): TimeRange => ({
-    start: new Date(start_time),
-    end: new Date(end_time ?? start_time),
-  });
-  const confirmed = slots.find(({ id: slotId }) => slotId === appointment.confirmed_slot_id);
-  // A window chosen within a slot wins over the whole slot, which older rows still rely on.
-  const confirmedWindow =
-    appointment.confirmed_start_time && appointment.confirmed_end_time
-      ? {
-          start: new Date(appointment.confirmed_start_time),
-          end: new Date(appointment.confirmed_end_time),
-        }
-      : null;
-
   return {
     id: appointment.id,
     aktenzeichen: appointment.aktenzeichen,
     status: appointment.status,
     universalToken: appointment.universal_token,
-    slots: slots.map((slot) => ({ id: slot.id, ...toRange(slot) })),
-    confirmedSlot: confirmedWindow ?? (confirmed ? toRange(confirmed) : null),
+    slots: slots.map((slot) => ({ id: slot.id, ...rowToRange(slot) })),
+    confirmedSlot: confirmedWindow(appointment),
   };
 }
 
@@ -226,30 +209,20 @@ export async function listAppointments(
 ): Promise<AppointmentSummary[]> {
   const rows = await db
     .selectFrom("appointment")
-    .leftJoin("time_slot", "time_slot.id", "appointment.confirmed_slot_id")
     .select([
       "appointment.id",
       "appointment.aktenzeichen",
       "appointment.status",
       "appointment.confirmed_start_time",
       "appointment.confirmed_end_time",
-      "time_slot.start_time",
-      "time_slot.end_time",
     ])
     .where("appointment.user_id", "=", userId)
     .orderBy("appointment.created_at", "desc")
     .orderBy("appointment.id")
     .execute();
 
-  return rows.map(
-    ({ start_time, end_time, confirmed_start_time, confirmed_end_time, ...appointment }) => {
-      // A window chosen within a slot wins over the whole slot.
-      const start = confirmed_start_time ?? start_time;
-      const end = confirmed_end_time ?? end_time;
-      return {
-        ...appointment,
-        confirmedSlot: start ? { start: new Date(start), end: new Date(end ?? start) } : null,
-      };
-    },
-  );
+  return rows.map(({ confirmed_start_time, confirmed_end_time, ...appointment }) => ({
+    ...appointment,
+    confirmedSlot: confirmedWindow({ confirmed_start_time, confirmed_end_time }),
+  }));
 }

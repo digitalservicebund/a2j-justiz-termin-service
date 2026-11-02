@@ -1,8 +1,9 @@
 import type { Kysely } from "kysely";
 import { z } from "zod";
 
+import { confirmedWindow, rowToRange, type TimeRange } from "../../core/domain/time/time-range.ts";
 import type { Database } from "../../database/types.ts";
-import type { AppointmentSlot, TimeRange } from "./appointments.server.ts";
+import type { AppointmentSlot } from "./appointments.server.ts";
 import type { SlotResponse } from "./survey.server.ts";
 
 export type FeedAppointment = {
@@ -73,12 +74,11 @@ export async function readCalendarFeed(
   return appointments.flatMap((appointment): FeedAppointment[] => {
     const appointmentSlots = slots
       .filter(({ appointment_id }) => appointment_id === appointment.id)
-      .map(({ id, start_time, end_time }) => ({
-        id,
-        start: new Date(start_time),
-        end: new Date(end_time ?? start_time),
+      .map((slot) => ({
+        id: slot.id,
+        ...rowToRange(slot),
         responses: responses
-          .filter(({ slot_id }) => slot_id === id)
+          .filter(({ slot_id }) => slot_id === slot.id)
           .map(({ participantId, name, status }) => ({
             participantId,
             name,
@@ -98,20 +98,15 @@ export async function readCalendarFeed(
       ];
     }
 
-    // A window chosen within a slot wins over the whole slot, which older rows still rely on.
     const slot = appointmentSlots.find(({ id }) => id === appointment.confirmed_slot_id);
-    if (!slot) return [];
-    const { confirmed_start_time: start, confirmed_end_time: end } = appointment;
+    const window = confirmedWindow(appointment);
+    if (!slot || !window) return [];
     return [
       {
         id: appointment.id,
         aktenzeichen: appointment.aktenzeichen,
         calendarSequence: appointment.calendar_sequence,
-        confirmed: {
-          slotId: slot.id,
-          start: start && end ? new Date(start) : slot.start,
-          end: start && end ? new Date(end) : slot.end,
-        },
+        confirmed: { slotId: slot.id, ...window },
         slots: [slot],
       },
     ];

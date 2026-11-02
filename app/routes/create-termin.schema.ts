@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+import { berlinDay } from "~/core/domain/time/time-zone";
+import { checkWallClock, type WallClockKind } from "~/core/domain/time/wall-clock";
+
 export const MIN_SLOTS = 2;
 export const MAX_SLOTS = 20;
 const MAX_AKTENZEICHEN_LENGTH = 50;
@@ -12,6 +15,8 @@ export const messages = {
   start: "Geben Sie eine gültige Startzeit an.",
   end: "Geben Sie eine gültige Endzeit an.",
   range: "Die Endzeit muss nach der Startzeit liegen.",
+  skippedTime: "Diese Uhrzeit gibt es wegen der Zeitumstellung nicht. Wählen Sie eine andere.",
+  repeatedTime: "Diese Uhrzeit kommt wegen der Zeitumstellung zweimal vor. Wählen Sie eine andere.",
   overlap: (otherRow: number) =>
     `Dieses Zeitfenster überschneidet sich mit Zeitfenster ${otherRow}.`,
   tooFewSlots: "Geben Sie mindestens zwei Zeitfenster an.",
@@ -62,11 +67,6 @@ function toNumber(value: string, pattern: RegExp): number | null {
   return pattern.test(value) ? Number(value) : null;
 }
 
-function todayInBerlin(now: Date): string {
-  // sv-SE formats as YYYY-MM-DD, which compares correctly as a string.
-  return new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(now);
-}
-
 function parseDate(slot: SlotInput): string | null {
   const year = toNumber(slot.year, /^\d{4}$/);
   const month = toNumber(slot.month, /^\d{1,2}$/);
@@ -88,6 +88,25 @@ function parseMinutes(hour: string, minute: string): number | null {
   const m = toNumber(minute, /^\d{1,2}$/);
   if (h === null || m === null || h > 23 || m > 59) return null;
   return h * 60 + m;
+}
+
+const timeMessage: Record<Exclude<WallClockKind, "ok">, string> = {
+  skipped: messages.skippedTime,
+  repeated: messages.repeatedTime,
+};
+
+// The switch between summer and winter time skips or repeats an hour at night, and a wall-clock
+// time in it does not name one instant.
+function timeProblem(date: string, minutes: number): string | null {
+  const [year, month, day] = date.split("-").map(Number) as [number, number, number];
+  const kind = checkWallClock({
+    year,
+    month,
+    day,
+    hour: Math.floor(minutes / 60),
+    minute: minutes % 60,
+  });
+  return kind === "ok" ? null : timeMessage[kind];
 }
 
 type CompleteSlot = { index: number; date: string; start: number; end: number };
@@ -119,9 +138,17 @@ function createTerminSchema(now: Date = new Date()) {
         const end = parseMinutes(slot.endHour, slot.endMinute);
 
         if (date === null) addRowIssue(index, "date", messages.date);
-        else if (date < todayInBerlin(now)) addRowIssue(index, "date", messages.pastDate);
+        else if (date < berlinDay(now)) addRowIssue(index, "date", messages.pastDate);
         if (start === null) addRowIssue(index, "start", messages.start);
+        else if (date !== null) {
+          const problem = timeProblem(date, start);
+          if (problem) addRowIssue(index, "start", problem);
+        }
         if (end === null) addRowIssue(index, "end", messages.end);
+        else if (date !== null) {
+          const problem = timeProblem(date, end);
+          if (problem) addRowIssue(index, "end", problem);
+        }
         if (start !== null && end !== null && end <= start) {
           addRowIssue(index, "range", messages.range);
         }

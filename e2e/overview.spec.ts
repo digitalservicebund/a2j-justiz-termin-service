@@ -17,7 +17,8 @@ async function seed(
     .values({
       user_id: userId,
       aktenzeichen,
-      status,
+      // A confirmed appointment needs its slot, so it is confirmed once the slot exists.
+      status: confirmed ? "open" : status,
       universal_token: status === "draft" ? null : `token-${randomUUID()}`,
     })
     .returning("id")
@@ -30,7 +31,12 @@ async function seed(
       .executeTakeFirstOrThrow();
     await db
       .updateTable("appointment")
-      .set({ confirmed_slot_id: slot.id })
+      .set({
+        status,
+        confirmed_slot_id: slot.id,
+        confirmed_start_time: confirmed.start,
+        confirmed_end_time: confirmed.end,
+      })
       .where("id", "=", id)
       .execute();
   }

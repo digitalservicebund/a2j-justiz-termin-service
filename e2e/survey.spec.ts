@@ -17,7 +17,8 @@ async function seedSurvey(
     .values({
       user_id: userId,
       aktenzeichen: "574 C 65412/26",
-      status,
+      // A confirmed appointment needs its slot, so it is confirmed once the slots exist.
+      status: status === "confirmed" ? "open" : status,
       universal_token: randomUUID(),
     })
     .returning(["id", "universal_token"])
@@ -31,6 +32,18 @@ async function seedSurvey(
     ])
     .returning("id")
     .execute();
+  if (status === "confirmed") {
+    await db
+      .updateTable("appointment")
+      .set({
+        status,
+        confirmed_slot_id: slots[0]!.id,
+        confirmed_start_time: "2099-11-09T14:30:00Z",
+        confirmed_end_time: "2099-11-09T17:00:00Z",
+      })
+      .where("id", "=", id)
+      .execute();
+  }
   return { id, token: universal_token!, slotIds: slots.map((slot) => slot.id) };
 }
 
@@ -443,7 +456,7 @@ test("answering a survey that closed in the meantime stores nothing", async ({
   db,
 }) => {
   const judge = await users.create({ roles: ["richter"] });
-  const { id, token } = await seedSurvey(db, judge.id);
+  const { id, token, slotIds } = await seedSurvey(db, judge.id);
 
   await page.goto(`${BASE_PATH}/umfrage/${token}`);
   await page.getByRole("textbox", { name: "Ihr Name" }).fill("Guest C");
@@ -451,7 +464,16 @@ test("answering a survey that closed in the meantime stores nothing", async ({
   await page.getByRole("button", { name: "Weiter" }).click();
   await expect(page).toHaveURL(new RegExp(`/umfrage/${token}/zusammenfassung`));
 
-  await db.updateTable("appointment").set({ status: "confirmed" }).where("id", "=", id).execute();
+  await db
+    .updateTable("appointment")
+    .set({
+      status: "confirmed",
+      confirmed_slot_id: slotIds[0]!,
+      confirmed_start_time: "2099-11-09T14:30:00Z",
+      confirmed_end_time: "2099-11-09T17:00:00Z",
+    })
+    .where("id", "=", id)
+    .execute();
   await page.getByRole("button", { name: "Terminumfrage abschließen" }).click();
 
   await expect(page.getByText("404")).toBeVisible();
