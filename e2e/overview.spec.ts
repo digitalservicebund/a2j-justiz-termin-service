@@ -192,14 +192,24 @@ test("a cancelled termin survey opens a detail page with its time windows", asyn
   await page.getByRole("link", { name: "Terminumfrage 574 C 65412/26 öffnen" }).click();
 
   await expect(page).toHaveURL(new RegExp(`/overview/${id}$`));
-  await expect(page.getByText("Kein Zeitfenster passt")).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Es gibt leider keine Terminoption, bei der alle Verfahrensbeteiligten Zeit haben.",
+    "Es gibt leider kein Zeitfenster, dass allen Verfahrensbeteiligten passt.",
   );
+  await expect(page.getByText("Starten Sie eine neue Terminumfrage.")).toBeVisible();
+  const sidebar = page.getByRole("navigation", { name: "Bereiche" });
+  await expect(sidebar.getByRole("link", { name: "Übersicht" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await expect(sidebar.getByRole("link", { name: "Kalender abonnieren" })).toBeVisible();
   await expect(page.getByText("17. September 2026")).toBeVisible();
   await expect(page.getByText("10:00 bis 14:00")).toBeVisible();
   await expect(page.getByText("21. September 2026")).toBeVisible();
   await expect(page.getByText("09:00 bis 11:00")).toBeVisible();
+
+  await page.getByRole("link", { name: "Zur Übersicht" }).click();
+  await expect(page).toHaveURL(/\/overview$/);
+  await page.goBack();
 
   await page.getByRole("link", { name: "Terminumfrage erstellen" }).click();
   await expect(page).toHaveURL(/\/overview\/new$/);
