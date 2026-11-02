@@ -77,6 +77,10 @@ test("overview lists the user's termin surveys with their status, grouped by sta
     page.getByRole("row", { name: /574 C 1\/26.*Kein Zeitfenster passt/ }),
   ).toBeVisible();
   await expect(
+    page.locator(".kern-badge--warning", { hasText: "Kein Zeitfenster passt" }),
+  ).toBeVisible();
+  await expect(page.locator(".kern-badge--danger")).toHaveCount(0);
+  await expect(
     page.getByRole("row", { name: /574 C 2\/26.*Offen für Rückmeldungen/ }),
   ).toBeVisible();
   await expect(

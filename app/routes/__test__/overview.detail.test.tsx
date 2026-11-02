@@ -312,6 +312,9 @@ describe("OverviewDetail", () => {
       }),
     ).toBeVisible();
     expect(screen.getByText("Kein Zeitfenster passt")).toBeVisible();
+    expect(screen.getByText("Kein Zeitfenster passt").closest(".kern-badge")).toHaveClass(
+      "kern-badge--warning",
+    );
     expect(screen.getByRole("link", { name: "Zurück zu den Terminumfragen" })).toHaveAttribute(
       "href",
       "/overview",
