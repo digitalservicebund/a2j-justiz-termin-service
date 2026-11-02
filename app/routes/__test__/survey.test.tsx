@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -24,7 +24,9 @@ const universal: Survey = {
     { id: "s2", start: new Date("2026-09-21T07:00:00Z"), end: new Date("2026-09-21T09:00:00Z") },
     { id: "s3", start: new Date("2026-09-21T13:30:00Z"), end: new Date("2026-09-21T15:00:00Z") },
   ],
+  proposedSlots: [],
 };
+universal.proposedSlots = universal.slots;
 
 const personal: Survey = { ...universal, participant: { id: "p1", name: "Guest C" } };
 
@@ -228,11 +230,54 @@ describe("survey page", () => {
     expect(
       await screen.findByRole("heading", {
         level: 1,
-        name: "Es gibt leider keine Terminoption, bei der alle Verfahrensbeteiligten Zeit haben.",
+        name: "Es gibt leider kein Zeitfenster, dass allen Verfahrensbeteiligten passt.",
       }),
+    ).toBeVisible();
+    expect(
+      screen.getByText("Das Gericht wird wahrscheinlich eine neue Terminumfrage erstellen."),
     ).toBeVisible();
     expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Weiter" })).not.toBeInTheDocument();
+    // Guests have no sidebar and nothing to start; they can only report a problem.
+    expect(screen.queryByRole("navigation", { name: "Bereiche" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Terminumfrage erstellen" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Problem mit dieser Seite melden" })).toBeVisible();
+
+    const facts = screen.getByRole("heading", { name: "Verhandlungsdaten" }).closest("section")!;
+    expect(within(facts).getByText("Aktenzeichen")).toBeVisible();
+    expect(within(facts).getByText("574 C 65412/26")).toBeVisible();
+    expect(screen.queryByText("Gericht")).toBeNull();
+
+    const windows = screen.getByRole("heading", { name: "Zeitfenster" }).closest("section")!;
+    expect(within(windows).getByText("17. September 2026")).toBeVisible();
+    expect(within(windows).getByText("10:00 bis 14:00")).toBeVisible();
+    expect(within(windows).getByText("21. September 2026")).toBeVisible();
+    expect(within(windows).getByText("09:00 bis 11:00")).toBeVisible();
+    expect(within(windows).getByText("15:30 bis 17:00")).toBeVisible();
+    expect(screen.getByRole("navigation", { name: "Brotkrumen" })).toHaveTextContent(
+      "Verhandlungstermin-FinderTerminumfrage",
+    );
+  });
+
+  it("lists no Zeitfenster on the sorry page when nothing was proposed", async () => {
+    vi.mocked(findSurvey).mockResolvedValue({ ...universal, slots: [], proposedSlots: [] });
+    renderSurvey();
+
+    await screen.findByRole("heading", { level: 1 });
+    expect(screen.getByRole("heading", { name: "Verhandlungsdaten" })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Zeitfenster" })).toBeNull();
+  });
+
+  it("offers the ruled-out windows to the page only once none is left", async () => {
+    const open = await loader({ request: new Request(url), params });
+    expect(open.proposedDays).toEqual([]);
+
+    vi.mocked(findSurvey).mockResolvedValue({ ...universal, slots: [] });
+    const cancelled = await loader({ request: new Request(url), params });
+    expect(cancelled.proposedDays.map(({ label }) => label)).toEqual([
+      "17. September 2026",
+      "21. September 2026",
+    ]);
   });
 
   it("keeps an earlier answer when the guest comes back from the review", async () => {

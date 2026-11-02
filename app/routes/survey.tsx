@@ -50,6 +50,8 @@ export async function loader({ request, params }: { request: Request } & Params)
     aktenzeichen: survey.aktenzeichen,
     needsName: !survey.participant,
     days: groupWindows(survey.slots),
+    // Only listed once every window is ruled out, on the sorry page.
+    proposedDays: survey.slots.length === 0 ? groupWindows(survey.proposedSlots) : [],
     // Going back from the review brings the earlier answer along.
     values: readValues(new URL(request.url).searchParams),
   };
@@ -70,7 +72,13 @@ export async function action({ request, params }: { request: Request } & Params)
 }
 
 export default function Survey() {
-  const { aktenzeichen, needsName, days, values: saved } = useLoaderData<typeof loader>();
+  const {
+    aktenzeichen,
+    needsName,
+    days,
+    proposedDays,
+    values: saved,
+  } = useLoaderData<typeof loader>();
   const result = useActionData<typeof action>();
   const pending = useNavigation().state !== "idle";
   // What the guest just submitted wins over the earlier answer.
@@ -78,7 +86,7 @@ export default function Survey() {
   const errors = result?.errors ?? {};
 
   // Without any window left there is nothing to answer, so the guest hears that right away.
-  if (days.length === 0) return <NoOption />;
+  if (days.length === 0) return <NoOption aktenzeichen={aktenzeichen} days={proposedDays} />;
 
   return (
     <AppShell breadcrumbs={surveyBreadcrumbs}>

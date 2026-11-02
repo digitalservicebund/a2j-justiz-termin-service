@@ -162,7 +162,7 @@ test("a guest who has no time at all is told that no option works", async ({ pag
 
   await expect(page).toHaveURL(new RegExp(`/umfrage/${token}/naechste-schritte\\?teilnehmer=`));
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Es gibt leider keine Terminoption, bei der alle Verfahrensbeteiligten Zeit haben.",
+    "Es gibt leider kein Zeitfenster, dass allen Verfahrensbeteiligten passt.",
   );
   await expect(
     page.getByText("Das Gericht wird wahrscheinlich eine neue Terminumfrage erstellen."),
@@ -237,7 +237,7 @@ test("every answer raises the calendar sequence, and the last window being ruled
 
   // The guest who ruled out the last window still gets the sorry page, not a 404.
   await expect(guest.getByRole("heading", { level: 1 })).toHaveText(
-    "Es gibt leider keine Terminoption, bei der alle Verfahrensbeteiligten Zeit haben.",
+    "Es gibt leider kein Zeitfenster, dass allen Verfahrensbeteiligten passt.",
   );
   await guest.close();
 
@@ -261,8 +261,15 @@ test("every answer raises the calendar sequence, and the last window being ruled
   // The survey of a cancelled appointment keeps telling later guests the same.
   await page.goto(`${BASE_PATH}/umfrage/${token}`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Es gibt leider keine Terminoption, bei der alle Verfahrensbeteiligten Zeit haben.",
+    "Es gibt leider kein Zeitfenster, dass allen Verfahrensbeteiligten passt.",
   );
+  // It lists what was proposed, but has no sidebar and no court row.
+  await expect(page.getByRole("navigation", { name: "Bereiche" })).toHaveCount(0);
+  await expect(page.getByRole("navigation", { name: "Brotkrumen" })).toContainText("Terminumfrage");
+  await expect(page.getByText("574 C 65412/26")).toBeVisible();
+  await expect(page.getByText("Gericht", { exact: true })).toHaveCount(0);
+  await expect(page.getByText(/^\d\d:\d\d bis \d\d:\d\d$/)).toHaveCount(3);
+  await expect(page.getByRole("button", { name: "Problem mit dieser Seite melden" })).toBeVisible();
 });
 
 test("the form needs a name and an answer", async ({ page, users, db }) => {
@@ -425,7 +432,7 @@ test("a guest sees the sorry page right away when every window is ruled out", as
 
   await expect(page).toHaveURL(new RegExp(`/umfrage/${token}$`));
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Es gibt leider keine Terminoption, bei der alle Verfahrensbeteiligten Zeit haben.",
+    "Es gibt leider kein Zeitfenster, dass allen Verfahrensbeteiligten passt.",
   );
   await expect(page.getByRole("checkbox")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Weiter" })).toHaveCount(0);

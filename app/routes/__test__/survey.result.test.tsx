@@ -25,6 +25,10 @@ const survey: Survey = {
   aktenzeichen: "574 C 65412/26",
   answered: false,
   slots: [],
+  proposedSlots: [
+    { id: "s1", start: new Date("2026-09-17T08:00:00Z"), end: new Date("2026-09-17T12:00:00Z") },
+    { id: "s2", start: new Date("2026-09-21T07:00:00Z"), end: new Date("2026-09-21T09:00:00Z") },
+  ],
 };
 
 // 10:00 and 14:00 Berlin time in September are 08:00 and 12:00 UTC.
@@ -59,6 +63,19 @@ describe("survey result route", () => {
     expect(result.days.map(({ label, windows }) => [label, windows.map((w) => w.start)])).toEqual([
       ["17. September 2026", ["10:00"]],
       ["24. September 2026", ["14:00"]],
+    ]);
+  });
+
+  it("lists the proposed windows only when the participant has no window left", async () => {
+    const withAnswer = await loader({ request: new Request(`${url}?teilnehmer=p1`), params });
+    expect(withAnswer.proposedDays).toEqual([]);
+
+    vi.mocked(getSavedAnswer).mockResolvedValue({ name: "Guest C", available: [] });
+    const none = await loader({ request: new Request(`${url}?teilnehmer=p1`), params });
+    expect(none).toMatchObject({ aktenzeichen: "574 C 65412/26" });
+    expect(none.proposedDays.map(({ label }) => label)).toEqual([
+      "17. September 2026",
+      "21. September 2026",
     ]);
   });
 
@@ -135,9 +152,12 @@ describe("survey result page", () => {
     expect(
       await screen.findByRole("heading", {
         level: 1,
-        name: "Es gibt leider keine Terminoption, bei der alle Verfahrensbeteiligten Zeit haben.",
+        name: "Es gibt leider kein Zeitfenster, dass allen Verfahrensbeteiligten passt.",
       }),
     ).toBeVisible();
+    expect(screen.getByText("574 C 65412/26")).toBeVisible();
+    expect(screen.getByText("10:00 bis 14:00")).toBeVisible();
+    expect(screen.getByText("09:00 bis 11:00")).toBeVisible();
     expect(
       screen.getByText("Das Gericht wird wahrscheinlich eine neue Terminumfrage erstellen."),
     ).toBeVisible();

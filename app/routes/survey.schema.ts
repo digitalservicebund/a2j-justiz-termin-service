@@ -7,6 +7,9 @@ export const surveyBreadcrumbs = [
   { label: "Beantworten der Terminumfrage" },
 ] satisfies BreadcrumbItem[];
 
+// The sorry page is the survey's "Terminumfrage" page for guests: no overview to go back to.
+export const noMatchBreadcrumbs = [{ label: "Terminumfrage" }] satisfies BreadcrumbItem[];
+
 export const MAX_NAME_LENGTH = 200;
 
 export const messages = {
