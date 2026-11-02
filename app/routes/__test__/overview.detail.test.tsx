@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -308,16 +308,21 @@ describe("OverviewDetail", () => {
     expect(
       await screen.findByRole("heading", {
         level: 1,
-        name: "Es gibt leider keine Terminoption, bei der alle Verfahrensbeteiligten Zeit haben.",
+        name: "Es gibt leider kein Zeitfenster, dass allen Verfahrensbeteiligten passt.",
       }),
     ).toBeVisible();
-    expect(screen.getByText("Kein Zeitfenster passt")).toBeVisible();
-    expect(screen.getByText("Kein Zeitfenster passt").closest(".kern-badge")).toHaveClass(
-      "kern-badge--warning",
-    );
-    expect(screen.getByRole("link", { name: "Zurück zu den Terminumfragen" })).toHaveAttribute(
+    expect(screen.getByText("Starten Sie eine neue Terminumfrage.")).toBeVisible();
+    expect(document.querySelector(".kern-alert--warning")).toBeInTheDocument();
+    expect(screen.queryByText("Kein Zeitfenster passt")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Zur Übersicht" })).toHaveAttribute(
       "href",
       "/overview",
+    );
+    expect(screen.queryByRole("link", { name: "Zurück zu den Terminumfragen" })).toBeNull();
+    const sidebar = screen.getByRole("navigation", { name: "Bereiche" });
+    expect(within(sidebar).getByRole("link", { name: "Übersicht" })).toHaveAttribute(
+      "aria-current",
+      "page",
     );
     expect(screen.getByRole("link", { name: "Terminumfrage erstellen" })).toHaveAttribute(
       "href",

@@ -42,3 +42,20 @@
 .overview-detail__windows .kern-description-list-item__key {
   white-space: nowrap;
 }
+
+/* The sidebar is 352px wide; the content column is centred in the rest, as on the overview. */
+.overview-detail__layout {
+  display: grid;
+}
+
+@media (min-width: 64rem) {
+  .overview-detail__layout {
+    grid-template-columns: 22rem minmax(0, 1fr);
+    align-items: start;
+    padding-block-start: var(--kern-metric-space-x-large);
+  }
+}
+
+.overview-detail__layout .overview-detail {
+  padding-block-start: 0;
+}

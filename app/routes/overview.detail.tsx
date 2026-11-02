@@ -4,9 +4,8 @@ import { getAppointment } from "~/adapters/appointments/appointments.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { CopyLinkButton } from "~/components/shared/CopyLinkButton";
-import { DefaultPage } from "~/components/shared/DefaultPage";
+import { DefaultPage, PageSection } from "~/components/shared/DefaultPage";
 import { KernBadge } from "~/components/shared/kern/KernBadge";
-import { KernBody } from "~/components/shared/kern/KernBody";
 import {
   KernDescriptionList,
   KernDescriptionListItem,
@@ -15,6 +14,8 @@ import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernIcon } from "~/components/shared/kern/KernIcon";
 import { KernLabel } from "~/components/shared/kern/KernLabel";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
+import { MainNav } from "~/components/shared/MainNav";
+import { ResultBanner } from "~/components/shared/ResultBanner";
 import { formatInstant } from "~/core/domain/time/format";
 import { getDb } from "~/database/database";
 import { BASE_PATH } from "~/lib/base-path";
@@ -67,11 +68,11 @@ export async function loader({ request, params }: { request: Request } & Params)
   return { user, aktenzeichen, state: "cancelled" as const, days };
 }
 
-function BackLink() {
+function BackLink({ children = "Zurück zu den Terminumfragen" }: Readonly<{ children?: string }>) {
   return (
     <Link className="kern-link overview-detail__back" to="/overview">
       <KernIcon name="arrow-back" size="small" />
-      Zurück zu den Terminumfragen
+      {children}
     </Link>
   );
 }
@@ -116,38 +117,43 @@ export default function OverviewDetail() {
       user={user}
       breadcrumbs={[{ label: "Übersicht", href: "/overview" }, { label: aktenzeichen }]}
     >
-      <DefaultPage>
-        <div className="overview-detail">
-          <BackLink />
+      <PageSection width="wide">
+        <div className="overview-detail__layout">
+          <MainNav current="overview" />
+          <DefaultPage width="content">
+            <div className="overview-detail">
+              {detail.state !== "cancelled" && <BackLink />}
 
-          {detail.state === "confirmed" ? (
-            <>
-              <header className="overview-detail__header">
-                <KernBadge type={detail.badge.type}>
-                  {detail.badge.type === "success" && <KernIcon name="success" />}
-                  <KernLabel>{detail.badge.text}</KernLabel>
-                </KernBadge>
-                <KernHeading size="large" level={1}>
-                  {detail.past
-                    ? `Der Termin war am ${detail.termin}`
-                    : `Der Termin ist am ${detail.termin}.`}
-                </KernHeading>
-              </header>
-              <Verhandlungsdaten aktenzeichen={aktenzeichen} />
-              {detail.past && <Zeitfenster days={detail.days} />}
-            </>
-          ) : detail.state === "open" ? (
-            <OpenForReplies
-              aktenzeichen={aktenzeichen}
-              days={detail.days}
-              selectUrl={detail.selectUrl}
-              surveyUrl={detail.surveyUrl}
-            />
-          ) : (
-            <NoOptionWorks aktenzeichen={aktenzeichen} days={detail.days} />
-          )}
+              {detail.state === "confirmed" ? (
+                <>
+                  <header className="overview-detail__header">
+                    <KernBadge type={detail.badge.type}>
+                      {detail.badge.type === "success" && <KernIcon name="success" />}
+                      <KernLabel>{detail.badge.text}</KernLabel>
+                    </KernBadge>
+                    <KernHeading size="large" level={1}>
+                      {detail.past
+                        ? `Der Termin war am ${detail.termin}`
+                        : `Der Termin ist am ${detail.termin}.`}
+                    </KernHeading>
+                  </header>
+                  <Verhandlungsdaten aktenzeichen={aktenzeichen} />
+                  {detail.past && <Zeitfenster days={detail.days} />}
+                </>
+              ) : detail.state === "open" ? (
+                <OpenForReplies
+                  aktenzeichen={aktenzeichen}
+                  days={detail.days}
+                  selectUrl={detail.selectUrl}
+                  surveyUrl={detail.surveyUrl}
+                />
+              ) : (
+                <NoOptionWorks aktenzeichen={aktenzeichen} days={detail.days} />
+              )}
+            </div>
+          </DefaultPage>
         </div>
-      </DefaultPage>
+      </PageSection>
     </AppShell>
   );
 }
@@ -191,23 +197,19 @@ function NoOptionWorks({
 }: Readonly<{ aktenzeichen: string; days: DayWindows[] }>) {
   return (
     <>
-      <header className="overview-detail__header">
-        <KernBadge type="warning">
-          <KernIcon name="warning" />
-          <KernLabel>Kein Zeitfenster passt</KernLabel>
-        </KernBadge>
-        <div>
-          <KernHeading size="large" level={1}>
-            Es gibt leider keine Terminoption, bei der alle Verfahrensbeteiligten Zeit haben.
-          </KernHeading>
-          <KernBody>Starten Sie eine neue Terminumfrage.</KernBody>
-        </div>
-      </header>
-
-      <KernLinkButton to="/overview/new">
-        <KernIcon name="add" />
-        <KernLabel>Terminumfrage erstellen</KernLabel>
-      </KernLinkButton>
+      <ResultBanner
+        inline
+        type="warning"
+        title="Es gibt leider kein Zeitfenster, dass allen Verfahrensbeteiligten passt."
+        message="Starten Sie eine neue Terminumfrage."
+        actions={
+          <KernLinkButton to="/overview/new">
+            <KernIcon name="add" />
+            <KernLabel>Terminumfrage erstellen</KernLabel>
+          </KernLinkButton>
+        }
+      />
+      <BackLink>Zur Übersicht</BackLink>
 
       <Verhandlungsdaten aktenzeichen={aktenzeichen} />
 
