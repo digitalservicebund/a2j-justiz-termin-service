@@ -192,8 +192,8 @@ function NoOptionWorks({
   return (
     <>
       <header className="overview-detail__header">
-        <KernBadge type="danger">
-          <KernIcon name="danger" />
+        <KernBadge type="warning">
+          <KernIcon name="warning" />
           <KernLabel>Kein Zeitfenster passt</KernLabel>
         </KernBadge>
         <div>

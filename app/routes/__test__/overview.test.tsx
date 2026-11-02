@@ -58,6 +58,11 @@ describe("Overview", () => {
       ["574 C 4/26", "Kein Zeitfenster passt"],
     ]);
     expect(listAppointments).toHaveBeenCalledWith({ db: true }, "u1");
+    // A cancelled survey is a yellow warning, not a red error.
+    expect(document.querySelector(".kern-badge--warning")).toHaveTextContent(
+      "Kein Zeitfenster passt",
+    );
+    expect(document.querySelector(".kern-badge--danger")).toBeNull();
   });
 
   it("links drafts to their confirmation page and all other states to their detail page", async () => {

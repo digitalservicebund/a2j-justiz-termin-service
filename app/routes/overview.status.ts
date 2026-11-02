@@ -14,7 +14,7 @@ export function describeStatus(
     case "open":
       return { type: "info", text: "Offen für Rückmeldungen" };
     case "cancelled":
-      return { type: "danger", text: "Kein Zeitfenster passt" };
+      return { type: "warning", text: "Kein Zeitfenster passt" };
     case "confirmed": {
       // A confirmed appointment always has its slot; the fallback only guards against bad data.
       if (!confirmedSlot) return { type: "success", text: "Termin ist bestätigt" };

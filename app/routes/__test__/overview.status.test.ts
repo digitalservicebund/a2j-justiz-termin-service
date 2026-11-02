@@ -24,9 +24,9 @@ describe("describeStatus", () => {
     });
   });
 
-  it("marks cancelled appointments as danger", () => {
+  it("marks cancelled appointments as a warning, not an error", () => {
     expect(describeStatus({ status: "cancelled", confirmedSlot: null })).toEqual({
-      type: "danger",
+      type: "warning",
       text: "Kein Zeitfenster passt",
     });
   });

@@ -18,3 +18,10 @@
 .side-nav__item .kern-icon {
   background-color: currentColor;
 }
+
+/* The design underlines the page the user is on. */
+.side-nav__item[aria-current="page"] {
+  text-decoration: underline;
+  text-decoration-thickness: var(--kern-metric-border-width-default);
+  text-underline-offset: 0.2em;
+}
