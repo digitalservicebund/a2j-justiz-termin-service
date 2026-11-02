@@ -17,7 +17,7 @@ const slot = (day: string, month: string, start: [string, string], end: [string,
 describe("groupSlotsByDay", () => {
   it("formats the date in German and pads the times", () => {
     expect(groupSlotsByDay([slot("7", "9", ["9", "5"], ["10", "0"])])).toEqual([
-      { key: "2026-09-07", label: "7. September 2026", times: ["09:05 – 10:00"] },
+      { key: "2026-09-07", label: "7. September 2026", times: ["09:05 bis 10:00"] },
     ]);
   });
 
@@ -30,9 +30,9 @@ describe("groupSlotsByDay", () => {
     ]);
 
     expect(days.map(({ label, times }) => [label, times])).toEqual([
-      ["17. September 2026", ["10:00 – 11:00"]],
-      ["21. September 2026", ["09:00 – 10:00", "15:30 – 16:00"]],
-      ["3. Oktober 2026", ["08:00 – 09:00"]],
+      ["17. September 2026", ["10:00 bis 11:00"]],
+      ["21. September 2026", ["09:00 bis 10:00", "15:30 bis 16:00"]],
+      ["3. Oktober 2026", ["08:00 bis 09:00"]],
     ]);
   });
 

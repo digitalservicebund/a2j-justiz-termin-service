@@ -34,7 +34,7 @@ export async function loader({ request, params }: { request: Request } & Params)
   if (!appointment) throw data("Not found", { status: 404 });
   if (appointment.status === "draft") throw redirect(`/overview/${encodeURIComponent(id)}/confirm`);
   const { aktenzeichen, confirmedSlot } = appointment;
-  const days = groupSlotsByDay(appointment.slots.map(rangeToSlot), " bis ");
+  const days = groupSlotsByDay(appointment.slots.map(rangeToSlot));
 
   if (appointment.status === "confirmed") {
     // A confirmed appointment always has its slot; without it there is nothing to show.

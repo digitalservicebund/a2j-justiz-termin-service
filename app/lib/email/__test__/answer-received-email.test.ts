@@ -8,7 +8,7 @@ import { renderAnswerReceivedEmail } from "../answer-received-email";
 
 const terminUrl = "http://localhost:3000/overview/a1";
 
-// 09:00 – 10:30, 14:00 – 15:00 and 16:00 – 17:00 Berlin time in summer.
+// 09:00 bis 10:30, 14:00 bis 15:00 and 16:00 bis 17:00 Berlin time in summer.
 const times = {
   s1: { start: new Date("2026-09-17T07:00:00Z"), end: new Date("2026-09-17T08:30:00Z") },
   s2: { start: new Date("2026-09-18T12:00:00Z"), end: new Date("2026-09-18T13:00:00Z") },
@@ -76,16 +76,16 @@ describe("renderAnswerReceivedEmail", () => {
   it("lists the windows the responder is available for and those that are cancelled", () => {
     const { text } = render({ s1: true, s2: false });
     const [, available, rest] = text.split(/Verfügbar:\n|Nicht verfügbar:\n/);
-    expect(available).toContain("Donnerstag, 17.09.2026, 09:00 – 10:30 Uhr");
+    expect(available).toContain("Donnerstag, 17.09.2026, 09:00 bis 10:30 Uhr");
     expect(available).not.toContain("14:00");
     expect(rest).toContain("Diese Zeitfenster wurden abgesagt.");
-    expect(rest).toContain("Freitag, 18.09.2026, 14:00 – 15:00 Uhr");
+    expect(rest).toContain("Freitag, 18.09.2026, 14:00 bis 15:00 Uhr");
   });
 
   it("shows the state of every window, including those an earlier answer cancelled", () => {
     const { text } = render();
-    expect(text).toContain("09:00 – 10:30 Uhr: verfügbar: Guest A, Guest B");
-    expect(text).toContain("16:00 – 17:00 Uhr: abgesagt");
+    expect(text).toContain("09:00 bis 10:30 Uhr: verfügbar: Guest A, Guest B");
+    expect(text).toContain("16:00 bis 17:00 Uhr: abgesagt");
   });
 
   it("says so when no window is left", () => {

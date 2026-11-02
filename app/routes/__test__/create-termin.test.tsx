@@ -500,7 +500,7 @@ describe("CreateTermin review step", () => {
     const windows = screen.getByRole("group", { name: "Zeitfenster" });
     expect(within(windows).getByText("5. Januar 2099")).toBeInTheDocument();
     expect(within(windows).getByText("6. Januar 2099")).toBeInTheDocument();
-    expect(within(windows).getAllByText("09:00 – 10:00")).toHaveLength(2);
+    expect(within(windows).getAllByText("09:00 bis 10:00")).toHaveLength(2);
   });
 
   it("collapses and expands every section at once", async () => {
