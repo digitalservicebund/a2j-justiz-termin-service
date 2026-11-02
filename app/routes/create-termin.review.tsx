@@ -81,7 +81,7 @@ function Section({
           {editable && (
             <button type="submit" name="intent" value="back" className="kern-link">
               <KernIcon name="edit" />
-              Bearbeiten<span className="kern-sr-only">{` ${title}`}</span>
+              Bearbeiten <span className="kern-sr-only">{title}</span>
             </button>
           )}
         </div>
