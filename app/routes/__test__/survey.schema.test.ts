@@ -154,11 +154,11 @@ describe("groupWindows", () => {
 describe("describeAnswers", () => {
   it("marks every offered window as available or not", () => {
     expect(describeAnswers(groupWindows(slots), ["s1", "s3"])).toEqual([
-      { key: "2026-09-17", label: "17. September 2026", lines: ["10:00 – verfügbar"] },
+      { key: "2026-09-17", label: "17. September 2026", lines: ["10:00 bis 14:00 – verfügbar"] },
       {
         key: "2026-09-21",
         label: "21. September 2026",
-        lines: ["09:00 – nicht verfügbar", "15:30 – verfügbar"],
+        lines: ["09:00 bis 11:00 – nicht verfügbar", "15:30 bis 17:00 – verfügbar"],
       },
     ]);
   });
@@ -166,9 +166,9 @@ describe("describeAnswers", () => {
   it("marks everything as unavailable when none fits", () => {
     const lines = describeAnswers(groupWindows(slots), []).flatMap((day) => day.lines);
     expect(lines).toEqual([
-      "10:00 – nicht verfügbar",
-      "09:00 – nicht verfügbar",
-      "15:30 – nicht verfügbar",
+      "10:00 bis 14:00 – nicht verfügbar",
+      "09:00 bis 11:00 – nicht verfügbar",
+      "15:30 bis 17:00 – nicht verfügbar",
     ]);
   });
 });

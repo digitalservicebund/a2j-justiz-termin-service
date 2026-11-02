@@ -95,8 +95,11 @@ describe("survey confirm route", () => {
       none: false,
       values: { name: "Guest C", available: ["s1", "s3"], none: false },
       answers: [
-        { label: "17. September 2026", lines: ["10:00 – verfügbar"] },
-        { label: "21. September 2026", lines: ["09:00 – nicht verfügbar", "15:30 – verfügbar"] },
+        { label: "17. September 2026", lines: ["10:00 bis 14:00 – verfügbar"] },
+        {
+          label: "21. September 2026",
+          lines: ["09:00 bis 11:00 – nicht verfügbar", "15:30 bis 17:00 – verfügbar"],
+        },
       ],
     });
   });
@@ -109,9 +112,9 @@ describe("survey confirm route", () => {
 
     expect(result.none).toBe(true);
     expect(result.answers.flatMap(({ lines }) => lines)).toEqual([
-      "10:00 – nicht verfügbar",
-      "09:00 – nicht verfügbar",
-      "15:30 – nicht verfügbar",
+      "10:00 bis 14:00 – nicht verfügbar",
+      "09:00 bis 11:00 – nicht verfügbar",
+      "15:30 bis 17:00 – nicht verfügbar",
     ]);
   });
 
@@ -298,9 +301,9 @@ describe("survey confirm page", () => {
 
     const windows = screen.getByRole("heading", { name: "Zeitfenster" }).closest("details")!;
     expect(within(windows).getByText("17. September 2026")).toBeVisible();
-    expect(within(windows).getByText("10:00 – verfügbar")).toBeVisible();
-    expect(within(windows).getByText("09:00 – nicht verfügbar")).toBeVisible();
-    expect(within(windows).getByText("15:30 – verfügbar")).toBeVisible();
+    expect(within(windows).getByText("10:00 bis 14:00 – verfügbar")).toBeVisible();
+    expect(within(windows).getByText("09:00 bis 11:00 – nicht verfügbar")).toBeVisible();
+    expect(within(windows).getByText("15:30 bis 17:00 – verfügbar")).toBeVisible();
   });
 
   it("lets the guest edit the name and the windows but not the Aktenzeichen", async () => {
@@ -312,11 +315,13 @@ describe("survey confirm page", () => {
     expect(screen.queryByRole("button", { name: "Bearbeiten Verhandlungsdaten" })).toBeNull();
   });
 
-  it("shows the name of a personal link without a way to edit it", async () => {
+  it("leaves out the name section for a personal link, which the guest cannot change", async () => {
     vi.mocked(findSurvey).mockResolvedValue(personal);
     renderConfirm("?verfuegbar=s2");
 
-    expect(await screen.findByText("Guest D")).toBeVisible();
+    expect(await screen.findByRole("heading", { name: "Zeitfenster" })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Ihre Daten" })).toBeNull();
+    expect(screen.queryByText("Guest D")).toBeNull();
     expect(screen.queryByRole("button", { name: "Bearbeiten Ihre Daten" })).toBeNull();
   });
 

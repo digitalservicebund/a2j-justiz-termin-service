@@ -90,14 +90,13 @@ export function groupWindows(slots: SurveySlot[]): SurveyDay[] {
 
 export type DayAnswer = { key: string; label: string; lines: string[] };
 
-// "10:00 – verfügbar" for every offered window, as the review lists it.
+// "10:00 bis 14:00 – verfügbar" for every offered window, as the review lists it.
 export function describeAnswers(days: SurveyDay[], availableIds: string[]): DayAnswer[] {
   return days.map(({ key, label, windows }) => ({
     key,
     label,
     lines: windows.map(
-      ({ id, start }) =>
-        `${start} – ${availableIds.includes(id) ? "verfügbar" : "nicht verfügbar"}`,
+      ({ id, time }) => `${time} – ${availableIds.includes(id) ? "verfügbar" : "nicht verfügbar"}`,
     ),
   }));
 }

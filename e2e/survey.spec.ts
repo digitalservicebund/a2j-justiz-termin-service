@@ -88,9 +88,9 @@ test("a guest of the universal link gives a name and availabilities, reviews the
   );
   await expect(page.getByText("574 C 65412/26")).toBeVisible();
   await expect(page.getByText("Guest C")).toBeVisible();
-  await expect(page.getByText("15:30 – verfügbar")).toBeVisible();
-  await expect(page.getByText("09:00 – nicht verfügbar")).toBeVisible();
-  await expect(page.getByText("15:00 – verfügbar")).toBeVisible();
+  await expect(page.getByText("15:30 bis 18:00 – verfügbar")).toBeVisible();
+  await expect(page.getByText("09:00 bis 13:00 – nicht verfügbar")).toBeVisible();
+  await expect(page.getByText("15:00 bis 17:00 – verfügbar")).toBeVisible();
 
   // Nothing is stored before the guest finishes, and going back keeps the answer.
   expect(
@@ -156,6 +156,7 @@ test("a guest who has no time at all is told that no option works", async ({ pag
     "Bitte überprüfen Sie Ihre Angaben",
   );
   await expect(page.getByText("– nicht verfügbar")).toHaveCount(3);
+  await expect(page.getByText("09:00 bis 13:00 – nicht verfügbar")).toBeVisible();
   await expect(page.getByText(/– verfügbar$/)).toHaveCount(0);
 
   await page.getByRole("button", { name: "Terminumfrage abschließen" }).click();
@@ -349,9 +350,11 @@ test("a personal link knows the guest, asks for no name and answers once", async
   await page.getByRole("checkbox", { name: SECOND }).check();
   await page.getByRole("button", { name: "Weiter" }).click();
 
-  // The review names the guest but does not offer to change the name.
-  await expect(page.getByText("Guest D")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Bearbeiten Ihre Daten" })).toHaveCount(0);
+  // The guest is known, so the review has no section for the name.
+  await expect(page.getByRole("heading", { name: "Zeitfenster" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Ihre Daten" })).toHaveCount(0);
+  await expect(page.getByText("Guest D")).toHaveCount(0);
+  await expect(page.getByText("09:00 bis 13:00 – verfügbar")).toBeVisible();
   await page.getByRole("button", { name: "Terminumfrage abschließen" }).click();
 
   await expect(page).toHaveURL(
