@@ -9,7 +9,7 @@ describe("ResultBanner", () => {
     expect(screen.getByRole("heading", { level: 1, name: "Erledigt" })).toBeInTheDocument();
   });
 
-  it.each(["success", "warning", "danger"] as const)("styles the %s banner", (type) => {
+  it.each(["success", "info", "warning", "danger"] as const)("styles the %s banner", (type) => {
     const { container } = render(<ResultBanner type={type} title="Titel" />);
     expect(container.querySelector(".kern-alert")).toHaveClass(`kern-alert--${type}`);
   });

@@ -241,7 +241,17 @@ describe("OverviewDetail", () => {
         name: "Die Terminumfrage ist aktiv und die Verfahrensbeteiligten können ihre Verfügbarkeiten teilen.",
       }),
     ).toBeVisible();
-    expect(screen.getByText("Offen für Rückmeldungen")).toBeVisible();
+    // The open state is an info banner, not a badge, with the back link below it.
+    expect(screen.queryByText("Offen für Rückmeldungen")).not.toBeInTheDocument();
+    expect(document.querySelector(".kern-alert--info")).toContainElement(
+      screen.getByRole("link", { name: "Termin auswählen" }),
+    );
+    expect(screen.getByRole("link", { name: "Zur Übersicht" })).toHaveAttribute(
+      "href",
+      "/overview",
+    );
+    expect(screen.queryByRole("link", { name: "Zurück zu den Terminumfragen" })).toBeNull();
+    expect(screen.getByRole("navigation", { name: "Bereiche" })).toBeVisible();
     expect(screen.getByRole("link", { name: "Termin auswählen" })).toHaveAttribute(
       "href",
       "/overview/a1/select",

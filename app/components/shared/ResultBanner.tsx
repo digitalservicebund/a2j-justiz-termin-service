@@ -8,7 +8,7 @@ import { KernIcon } from "./kern/KernIcon";
 import "./ResultBanner.css";
 
 type ResultBannerProps = {
-  type: "success" | "warning" | "danger";
+  type: "success" | "info" | "warning" | "danger";
   // Without the wide page section, for banners that sit in a column next to the sidebar.
   inline?: boolean;
   title: string;
