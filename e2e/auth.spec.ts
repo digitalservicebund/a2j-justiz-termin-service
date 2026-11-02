@@ -171,7 +171,9 @@ test("mixed-case email resolves to the provisioned address and tokens are hashed
     .execute();
   await page.goto(link);
   await expect(page).toHaveURL(/\/\?error=/);
-  await expect(page.getByRole("alert").filter({ hasText: "Ungültiger Anmeldelink" })).toBeVisible();
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Ihr Anmelde-Link ist abgelaufen." }),
+  ).toBeVisible();
   expect(
     await db.selectFrom("session").select("id").where("userId", "=", user.id).execute(),
   ).toEqual([]);
@@ -180,7 +182,9 @@ test("mixed-case email resolves to the provisioned address and tokens are hashed
     `${BASE_PATH}/api/auth/magic-link/verify?token=invalid&errorCallbackURL=${BASE_PATH}/`,
   );
   await expect(page).toHaveURL(/\/\?error=INVALID_TOKEN/);
-  await expect(page.getByRole("alert").filter({ hasText: "Ungültiger Anmeldelink" })).toBeVisible();
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Ihr Anmelde-Link ist abgelaufen." }),
+  ).toBeVisible();
 });
 
 for (const entryPoint of ["API", "form"] as const) {

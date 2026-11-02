@@ -17,6 +17,11 @@
   margin: 0;
 }
 
+/* Space between the intro text and the sign-in link alert. */
+.welcome__hero-content .kern-alert {
+  margin-top: var(--kern-metric-space-x-large);
+}
+
 .welcome__hero-action {
   margin-top: var(--kern-metric-space-x-large);
 }
