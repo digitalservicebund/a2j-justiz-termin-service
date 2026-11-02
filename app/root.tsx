@@ -9,12 +9,14 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useRouteError,
 } from "react-router";
 
 import { getSessionUser } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { DefaultPage } from "~/components/shared/DefaultPage";
 import { KernAlert } from "~/components/shared/kern/KernAlert";
+import { NOT_FOUND_TITLE, NotFoundPage } from "~/components/shared/NotFoundPage";
 import { BASE_PATH } from "~/lib/base-path";
 import { requireEnv } from "~/lib/env";
 import { PAGE_TITLE, pageMeta } from "~/lib/page-meta";
@@ -62,6 +64,8 @@ export const links: Route.LinksFunction = () => [
 ];
 
 export function Layout({ children }: Readonly<{ children: ReactNode }>) {
+  const error = useRouteError();
+  const notFound = isRouteErrorResponse(error) && error.status === 404;
   return (
     <html lang="en">
       <head>
@@ -69,7 +73,7 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
-        <title>{PAGE_TITLE}</title>
+        <title>{notFound ? NOT_FOUND_TITLE : PAGE_TITLE}</title>
       </head>
       <body>
         {children}
@@ -85,15 +89,16 @@ export default function App() {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  if (isRouteErrorResponse(error) && error.status === 404) return <NotFoundPage />;
+
   let title = "Oops!";
 
   let message = "An unexpected error occurred.";
   let stack: string | undefined;
 
   if (isRouteErrorResponse(error)) {
-    title = error.status === 404 ? "Error 404" : "Error";
-    message =
-      error.status === 404 ? "The requested page could not be found." : error.statusText || message;
+    title = "Error";
+    message = error.statusText || message;
   } else if (import.meta.env.DEV && error && error instanceof Error) {
     message = error.message;
     stack = error.stack;

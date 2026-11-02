@@ -1,0 +1,19 @@
+/* The grey band of the 404 design, with the text block centered in it. */
+.not-found {
+  background-color: var(--kern-color-layout-background-hued);
+  padding-block: calc(var(--kern-metric-space-6x-large) + var(--kern-metric-space-5x-large))
+    calc(var(--kern-metric-space-6x-large) + var(--kern-metric-space-large));
+}
+
+.not-found__content {
+  display: grid;
+  gap: var(--kern-metric-space-default);
+}
+
+.not-found .not-found__code {
+  color: var(--kern-color-layout-text-muted);
+}
+
+.not-found__content > * {
+  margin: 0;
+}
