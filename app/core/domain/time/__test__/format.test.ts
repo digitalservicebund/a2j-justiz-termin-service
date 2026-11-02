@@ -49,7 +49,7 @@ describe("formatters", () => {
 describe("formatRangeLong and formatRange", () => {
   it("name the day once for a range within a day", () => {
     expect(formatRangeLong(range)).toBe("17. September 2026 von 15:30 bis 18:00");
-    expect(formatRange(range)).toBe("Donnerstag, 17.09.2026, 15:30 – 18:00 Uhr");
+    expect(formatRange(range)).toBe("Donnerstag, 17.09.2026, 15:30 bis 18:00 Uhr");
   });
 
   it("name both days when the range ends after midnight in Berlin", () => {
@@ -62,7 +62,7 @@ describe("formatRangeLong and formatRange", () => {
       "17. September 2026 von 23:00 bis 18. September 2026, 01:00",
     );
     expect(formatRange(overMidnight)).toBe(
-      "Donnerstag, 17.09.2026, 23:00 – Freitag, 18.09.2026, 01:00 Uhr",
+      "Donnerstag, 17.09.2026, 23:00 bis Freitag, 18.09.2026, 01:00 Uhr",
     );
   });
 

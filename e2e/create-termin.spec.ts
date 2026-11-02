@@ -96,11 +96,11 @@ test("a richter creates a Terminumfrage with four time slots next week", async (
     page.getByRole("heading", { name: "Bitte überprüfen Sie Ihre Angaben" }),
   ).toBeVisible();
   const windows = page.getByRole("group", { name: "Zeitfenster", exact: true });
-  await expect(windows.getByText(/^\d{2}:\d{2} – \d{2}:\d{2}$/)).toHaveText([
-    "09:00 – 10:30",
-    "11:00 – 12:00",
-    "13:30 – 15:00",
-    "16:00 – 17:15",
+  await expect(windows.getByText(/^\d{2}:\d{2} bis \d{2}:\d{2}$/)).toHaveText([
+    "09:00 bis 10:30",
+    "11:00 bis 12:00",
+    "13:30 bis 15:00",
+    "16:00 bis 17:15",
   ]);
   await expect(
     page.getByRole("group", { name: "Verhandlungsdaten", exact: true }).getByText("574 C 65412/26"),

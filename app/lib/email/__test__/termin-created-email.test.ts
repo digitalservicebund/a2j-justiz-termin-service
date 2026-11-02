@@ -9,7 +9,7 @@ const email = {
   terminUrl,
   sequence: 1,
   organizerEmail: "sender@example.com",
-  // 09:00 – 10:30 and 14:00 – 15:00 Berlin time in summer.
+  // 09:00 bis 10:30 and 14:00 bis 15:00 Berlin time in summer.
   slots: [
     {
       id: "slot-1",
@@ -36,8 +36,8 @@ describe("renderTerminCreatedEmail", () => {
     const { html, text } = renderTerminCreatedEmail(email);
     for (const body of [html, text]) {
       expect(body).toContain("574 C 65412/26");
-      expect(body).toContain("Donnerstag, 17.09.2026, 09:00 – 10:30 Uhr");
-      expect(body).toContain("Freitag, 18.09.2026, 14:00 – 15:00 Uhr");
+      expect(body).toContain("Donnerstag, 17.09.2026, 09:00 bis 10:30 Uhr");
+      expect(body).toContain("Freitag, 18.09.2026, 14:00 bis 15:00 Uhr");
     }
   });
 

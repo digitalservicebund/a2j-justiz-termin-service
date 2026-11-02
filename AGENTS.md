@@ -76,5 +76,5 @@ Use the Figma MCP server when asked to build or change a page from a Figma link.
 5. **Test it.** Add unit tests and an E2E test, including the failure cases.
 6. **Screenshot and compare.** Take a screenshot of the result at the design's width, using the design's sample values, and compare it with the Figma screenshot. Fix every deviation and repeat until they match. Do not commit the screenshots.
 7. **Run the checks** from "Before every commit and push".
-8. **Open a draft PR** from an up-to-date `main`. Mention anything that differs from the design on purpose or has no behaviour yet.
+8. **Open a draft PR** from an up-to-date `main`. Put the Figma link of the implemented node in the description (`https://www.figma.com/design/<fileKey>/...?node-id=...`), also when you only changed a node. Mention anything that differs from the design on purpose or has no behaviour yet.
 9. **Attach the screenshots.** The `gh` CLI can attach images directly (`gh pr create --attach`, `gh pr comment --attach`). This is the preferred way to put screenshots in a PR. Attach the Figma reference and the implementation.

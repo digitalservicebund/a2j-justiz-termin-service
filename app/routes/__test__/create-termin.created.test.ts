@@ -60,8 +60,8 @@ describe("create-termin created route", () => {
 
     expect(getAppointment).toHaveBeenCalledWith({ db: true }, "1", "a1");
     expect(result.days).toEqual([
-      { key: "2026-09-17", label: "17. September 2026", times: ["10:00 – 11:00"] },
-      { key: "2026-09-24", label: "24. September 2026", times: ["14:00 – 15:00"] },
+      { key: "2026-09-17", label: "17. September 2026", times: ["10:00 bis 11:00"] },
+      { key: "2026-09-24", label: "24. September 2026", times: ["14:00 bis 15:00"] },
     ]);
     expect(result.surveyUrl).toBe("http://localhost:3000/verhandlungstermin-finder/umfrage/tok1");
   });

@@ -68,10 +68,10 @@ export function formatRangeLong(range: TimeRange): string {
   return `${formatDay(range.start)} von ${formatTime(range.start)} bis ${end}`;
 }
 
-// "Donnerstag, 17.09.2026, 15:30 – 18:00 Uhr"
+// "Donnerstag, 17.09.2026, 15:30 bis 18:00 Uhr"
 export function formatRange(range: TimeRange): string {
   const end = endsOnAnotherDay(range)
     ? `${dayWithWeekdayNumeric.format(range.end)}, ${time.format(range.end)}`
     : time.format(range.end);
-  return `${dayWithWeekdayNumeric.format(range.start)}, ${time.format(range.start)} – ${end} Uhr`;
+  return `${dayWithWeekdayNumeric.format(range.start)}, ${time.format(range.start)} bis ${end} Uhr`;
 }
