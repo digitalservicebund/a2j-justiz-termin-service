@@ -129,3 +129,21 @@ test("the service name in the header links back to the front page", async ({ pag
 
   await expect(page).toHaveURL(startPageURL);
 });
+
+test("a signed-in user stays signed in when following the breadcrumb to the front page", async ({
+  page,
+  users,
+}) => {
+  const user = await users.create();
+  await signIn(page, user);
+  await page.goto(`${BASE_PATH}/overview`);
+
+  await page
+    .getByRole("navigation", { name: "Brotkrumen" })
+    .getByRole("link", { name: "Verhandlungstermin-Finder" })
+    .click();
+
+  await expect(page).toHaveURL(startPageURL);
+  await expect(page.getByText(user.email)).toBeVisible();
+  await expect(page.getByLabel("E‑Mail-Adresse")).toHaveCount(0);
+});

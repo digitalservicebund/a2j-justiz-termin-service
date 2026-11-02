@@ -144,5 +144,5 @@ test("every user gets a different token, also when signing up on an allowed doma
 test("anonymous visitors are sent to the start page", async ({ request }) => {
   const response = await request.get(`${BASE_PATH}/kalender-abonnieren`, { maxRedirects: 0 });
   expect(response.status()).toBe(302);
-  expect(response.headers().location).toBe(BASE_PATH);
+  expect(response.headers().location).toBe(`${BASE_PATH}/`);
 });
