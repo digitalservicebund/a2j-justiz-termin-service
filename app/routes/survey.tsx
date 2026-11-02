@@ -130,8 +130,8 @@ export default function Survey() {
                           type="checkbox"
                           label={
                             <>
-                              Verfügbar
-                              <span className="kern-sr-only">{` am ${label}, ${time}`}</span>
+                              Verfügbar{" "}
+                              <span className="kern-sr-only">{`am ${label}, ${time}`}</span>
                             </>
                           }
                           name="verfuegbar"
