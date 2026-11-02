@@ -322,8 +322,10 @@ test("a past termin opens a detail page that looks back at it", async ({ page, u
   await page.goto(`${BASE_PATH}/overview/${id}`);
 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    /^Der Termin war am \p{L}+, 3\. August 2020 um 13:30$/u,
+    /^Der Termin war am \p{L}+, dem 3\. August 2020 um 13:30\.$/u,
   );
+  await expect(page.getByRole("link", { name: "Zur Übersicht" })).toBeVisible();
+  await expect(page.locator(".kern-badge")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Zeitfenster" })).toBeVisible();
   await expect(page.getByText("27. Juli 2020")).toBeVisible();
   await expect(page.getByText("10:00 bis 14:00")).toBeVisible();

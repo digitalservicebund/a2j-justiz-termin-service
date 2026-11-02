@@ -6,6 +6,7 @@ export type A2JIconName =
   | "calendar-add"
   | "checklist-rtl"
   | "event"
+  | "history"
   | "remove-circle"
   | "settings";
 

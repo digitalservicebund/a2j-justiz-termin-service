@@ -15,7 +15,7 @@ describe("A2JIcon", () => {
   });
 
   it("applies the icon class of every icon", () => {
-    for (const name of ["calendar-add", "remove-circle", "settings"] as const) {
+    for (const name of ["calendar-add", "history", "remove-circle", "settings"] as const) {
       const { container } = render(<A2JIcon name={name} />);
       expect(container.firstChild).toHaveClass(`a2j-icon--${name}`);
     }

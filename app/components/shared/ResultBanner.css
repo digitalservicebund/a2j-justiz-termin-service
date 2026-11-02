@@ -29,3 +29,14 @@
   flex-wrap: wrap;
   gap: var(--kern-metric-space-large);
 }
+
+/* Neutral banner: KERN has no default alert, so it takes the default feedback colours itself. */
+.result-banner--default {
+  border: var(--kern-metric-border-width-default) solid
+    var(--kern-color-feedback-default-contextual);
+  background-color: var(--kern-color-feedback-default-background-contextual);
+}
+
+.result-banner--default > .kern-icon {
+  background-color: var(--kern-color-layout-text-default-contextual);
+}
