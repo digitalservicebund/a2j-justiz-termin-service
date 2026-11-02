@@ -86,7 +86,9 @@ test("a link for an address whose domain was removed meanwhile creates no accoun
   await db.deleteFrom("allowed_domain").where("domain", "=", domain).execute();
   await page.goto(link);
   await expect(page).toHaveURL(/\/\?error=/);
-  await expect(page.getByRole("alert").filter({ hasText: "Ungültiger Anmeldelink" })).toBeVisible();
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Ihr Anmelde-Link ist abgelaufen." }),
+  ).toBeVisible();
   expect(await db.selectFrom("user").select("id").where("email", "=", email).execute()).toEqual([]);
 });
 

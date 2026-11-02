@@ -128,7 +128,7 @@ test("administrator can create, edit, grant/revoke admin rights and delete users
     await otherPage.goto(pendingLink);
     await expect(otherPage).toHaveURL(/\/\?error=INVALID_TOKEN/);
     await expect(
-      otherPage.getByRole("alert").filter({ hasText: "Ungültiger Anmeldelink" }),
+      otherPage.getByRole("alert").filter({ hasText: "Ihr Anmelde-Link ist abgelaufen." }),
     ).toBeVisible();
   } finally {
     await otherContext.close();

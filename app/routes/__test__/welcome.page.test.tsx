@@ -78,9 +78,22 @@ describe("Welcome", () => {
     expect(screen.queryByRole("button", { name: "Nein" })).not.toBeInTheDocument();
   });
 
-  it("shows an alert for an invalid sign-in link", async () => {
+  it("shows a yellow warning alert for an invalid or expired sign-in link", async () => {
     await renderPage("/?error=INVALID_TOKEN");
-    expect(screen.getByText("Ungültiger Anmeldelink")).toBeInTheDocument();
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveClass("kern-alert--warning");
+    expect(alert).not.toHaveClass("kern-alert--danger");
+    expect(within(alert).getByText("Ihr Anmelde-Link ist abgelaufen.")).toBeInTheDocument();
+    expect(
+      within(alert).getByText(
+        "Fordern Sie einen neuen Anmelde-Link an. Ihr Anmelde-Link ist nur 5 Minuten gültig und kann nur einmal verwendet werden.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("shows no sign-in link alert without an error", async () => {
+    await renderPage();
+    expect(screen.queryByText("Ihr Anmelde-Link ist abgelaufen.")).not.toBeInTheDocument();
   });
 
   describe("for a signed-in user", () => {
@@ -131,7 +144,7 @@ describe("Welcome", () => {
 
     it("does not show the invalid-link alert", async () => {
       await renderPage("/?error=INVALID_TOKEN");
-      expect(screen.queryByText("Ungültiger Anmeldelink")).not.toBeInTheDocument();
+      expect(screen.queryByText("Ihr Anmelde-Link ist abgelaufen.")).not.toBeInTheDocument();
     });
   });
 });

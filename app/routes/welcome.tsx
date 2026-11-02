@@ -124,9 +124,9 @@ export default function Welcome() {
               <>
                 {invalidLink && (
                   <KernAlert
-                    type="error"
-                    title="Ungültiger Anmeldelink"
-                    message="Der Link ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen Link an."
+                    type="warning"
+                    title="Ihr Anmelde-Link ist abgelaufen."
+                    message="Fordern Sie einen neuen Anmelde-Link an. Ihr Anmelde-Link ist nur 5 Minuten gültig und kann nur einmal verwendet werden."
                   />
                 )}
                 {result && "error" in result && (
