@@ -21,7 +21,8 @@
     "lint:fix": "oxlint --fix",
     "format:check": "oxfmt --check",
     "format:fix": "oxfmt",
-    "knip": "knip && knip --production"
+    "knip": "knip && knip --production",
+    "adr:toc": "adr generate toc > doc/adr/README.md && oxfmt doc/adr/README.md"
   },
   "dependencies": {
     "@kern-ux/native": "^2.8.2",
