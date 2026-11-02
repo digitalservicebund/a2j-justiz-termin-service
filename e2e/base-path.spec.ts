@@ -67,7 +67,7 @@ test("the breadcrumb links the service home and stays under the base path", asyn
   );
   await expect(breadcrumb.getByRole("link", { name: "Verhandlungstermin-Finder" })).toHaveAttribute(
     "href",
-    BASE_PATH,
+    `${BASE_PATH}/`,
   );
 });
 
@@ -91,4 +91,17 @@ test("the health checks answer under the base path and, for now, at their old UR
     }
   }
   expect(await (await request.get(`${BASE_PATH}/health`)).json()).toEqual({ status: "ok" });
+});
+
+test("the base path without the trailing slash redirects to the front page", async ({
+  request,
+}) => {
+  const bare = await request.get(BASE_PATH, { maxRedirects: 0 });
+  expect(bare.status()).toBe(302);
+  expect(bare.headers().location).toBe(`${BASE_PATH}/`);
+
+  const withQuery = await request.get(`${BASE_PATH}?error=1`, { maxRedirects: 0 });
+  expect(withQuery.headers().location).toBe(`${BASE_PATH}/?error=1`);
+
+  expect((await request.get(`${BASE_PATH}/`, { maxRedirects: 0 })).status()).toBe(200);
 });

@@ -65,7 +65,7 @@ test("landing-page login proves email ownership, creates a session, and logout r
     maxRedirects: 0,
   });
   expect(staleCookie.status()).toBe(302);
-  expect(staleCookie.headers().location).toBe(BASE_PATH);
+  expect(staleCookie.headers().location).toBe(`${BASE_PATH}/`);
 });
 
 test("unknown addresses are told they are not allowed and get no email or account", async ({

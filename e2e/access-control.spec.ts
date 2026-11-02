@@ -9,7 +9,7 @@ test("anonymous users cannot read protected pages or invoke administration actio
   for (const path of [`${BASE_PATH}/admin/users`, `${BASE_PATH}/overview`]) {
     const response = await request.get(path, { maxRedirects: 0 });
     expect(response.status()).toBe(302);
-    expect(response.headers().location).toBe(BASE_PATH);
+    expect(response.headers().location).toBe(`${BASE_PATH}/`);
   }
   const response = await request.post(`${BASE_PATH}/admin/users`, {
     form: { intent: "delete", id: user.id },

@@ -38,6 +38,14 @@ app.use((_req, res, next) => {
 app.use(rewriteLegacyHealthPath);
 // Convenience for visitors of the bare host. Everything else outside BASE_PATH is a 404.
 app.get("/", (_req, res) => res.redirect(302, `${BASE_PATH}/`));
+// The router's basename ends in a slash (see react-router.config.ts), so the front page only exists
+// at BASE_PATH/. Express treats both spellings alike, so compare the path itself.
+app.use((req, res, next) => {
+  if (req.path !== BASE_PATH) return next();
+  const query = req.originalUrl.slice(req.originalUrl.indexOf("?") + 1);
+  const hasQuery = req.originalUrl.includes("?");
+  return res.redirect(302, `${BASE_PATH}/${hasQuery ? `?${query}` : ""}`);
+});
 
 if (DEVELOPMENT) {
   // console.log("Starting development server"); // TODO logging
