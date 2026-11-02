@@ -288,14 +288,21 @@ describe("OverviewDetail", () => {
         name: /^Der Termin ist am \p{L}+, 9\. November 2099 um 15:30\.$/u,
       }),
     ).toBeVisible();
-    expect(screen.getByText(/^Termin ist \p{L}+, 9\. November 2099 um 15:30$/u)).toBeVisible();
-    expect(screen.getByRole("link", { name: "Zurück zu den Terminumfragen" })).toHaveAttribute(
+    // The announcement is a success banner, not a badge, with the back link below it.
+    expect(screen.queryByText(/^Termin ist \p{L}+, 9\. November 2099 um 15:30$/u)).toBeNull();
+    expect(document.querySelector(".kern-alert--success")).toContainElement(
+      screen.getByRole("heading", { level: 1 }),
+    );
+    expect(screen.getByRole("link", { name: "Zur Übersicht" })).toHaveAttribute(
       "href",
       "/overview",
     );
+    expect(screen.queryByRole("link", { name: "Zurück zu den Terminumfragen" })).toBeNull();
+    expect(screen.getByRole("navigation", { name: "Bereiche" })).toBeVisible();
     expect(screen.getByRole("heading", { name: "Verhandlungsdaten" })).toBeVisible();
     expect(screen.getByText("574 C 65412/26", { selector: "dd" })).toBeVisible();
-    expect(screen.queryByRole("heading", { name: "Zeitfenster" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Zeitfenster" })).toBeVisible();
+    expect(screen.getByText("09:00 bis 11:00")).toBeVisible();
     expect(screen.queryByRole("link", { name: "Terminumfrage erstellen" })).not.toBeInTheDocument();
   });
 

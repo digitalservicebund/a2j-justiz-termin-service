@@ -250,11 +250,12 @@ test("a confirmed termin survey opens a detail page announcing the date", async 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     /^Der Termin ist am \p{L}+, 9\. November 2099 um 15:30\.$/u,
   );
-  await expect(page.getByText(/^Termin ist \p{L}+, 9\. November 2099 um 15:30$/u)).toBeVisible();
+  await expect(page.getByText(/^Termin ist \p{L}+, 9\. November 2099 um 15:30$/u)).toHaveCount(0);
   await expect(page.getByText("574 C 65412/26", { exact: true }).last()).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Zeitfenster" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Zeitfenster" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Zurück zu den Terminumfragen" })).toHaveCount(0);
 
-  await page.getByRole("link", { name: "Zurück zu den Terminumfragen" }).click();
+  await page.getByRole("link", { name: "Zur Übersicht" }).click();
   await expect(page).toHaveURL(/\/overview$/);
 });
 

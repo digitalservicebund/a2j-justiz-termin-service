@@ -122,23 +122,31 @@ export default function OverviewDetail() {
           <MainNav current="overview" />
           <DefaultPage width="content">
             <div className="overview-detail">
-              {detail.state === "confirmed" && <BackLink />}
-
-              {detail.state === "confirmed" ? (
+              {detail.state === "confirmed" && detail.past ? (
                 <>
+                  <BackLink />
                   <header className="overview-detail__header">
                     <KernBadge type={detail.badge.type}>
                       {detail.badge.type === "success" && <KernIcon name="success" />}
                       <KernLabel>{detail.badge.text}</KernLabel>
                     </KernBadge>
                     <KernHeading size="large" level={1}>
-                      {detail.past
-                        ? `Der Termin war am ${detail.termin}`
-                        : `Der Termin ist am ${detail.termin}.`}
+                      {`Der Termin war am ${detail.termin}`}
                     </KernHeading>
                   </header>
                   <Verhandlungsdaten aktenzeichen={aktenzeichen} />
-                  {detail.past && <Zeitfenster days={detail.days} />}
+                  <Zeitfenster days={detail.days} />
+                </>
+              ) : detail.state === "confirmed" ? (
+                <>
+                  <ResultBanner
+                    inline
+                    type="success"
+                    title={`Der Termin ist am ${detail.termin}.`}
+                  />
+                  <BackLink>Zur Übersicht</BackLink>
+                  <Verhandlungsdaten aktenzeichen={aktenzeichen} />
+                  <Zeitfenster days={detail.days} />
                 </>
               ) : detail.state === "open" ? (
                 <OpenForReplies
