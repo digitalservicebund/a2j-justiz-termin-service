@@ -19,7 +19,15 @@ RUN pnpm build
 FROM alpine-upgraded AS app-dependencies
 WORKDIR /app-deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN pnpm install --prod --frozen-lockfile --ignore-scripts
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts \
+    # Optional peer dependencies (vitest of better-auth, typescript of
+    # @react-router/* and valibot) are resolved against our devDependencies, so
+    # pnpm installs them together with their whole tool chain, even with --prod.
+    # None of it is needed at runtime (Node strips types from the .ts scripts
+    # itself), and the native Go compiler is flagged by Trivy for Go stdlib CVEs.
+    && cd node_modules/.pnpm \
+    && rm -rf typescript@* @typescript+* vite@* vitest@* @vitest+* esbuild@* @esbuild+* \
+              @rolldown+* rolldown@* lightningcss* jsdom@*
 
 # Production runtime image
 FROM alpine-upgraded AS prod
