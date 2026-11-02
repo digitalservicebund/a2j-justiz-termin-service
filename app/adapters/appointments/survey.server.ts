@@ -16,6 +16,8 @@ export type Survey = {
   answered: boolean;
   // The proposed windows, without those another participant already ruled out.
   slots: SurveySlot[];
+  // Every window the judge proposed, also those ruled out. Only the sorry page lists them.
+  proposedSlots: SurveySlot[];
 };
 
 type Executor = Kysely<Database>;
@@ -42,6 +44,16 @@ function visibleSlots(db: Executor, appointmentId: string, ownParticipantId?: st
         ),
       ),
     )
+    .orderBy("start_time")
+    .execute()
+    .then((rows) => rows.map((row): SurveySlot => ({ id: row.id, ...rowToRange(row) })));
+}
+
+function proposedSlots(db: Executor, appointmentId: string) {
+  return db
+    .selectFrom("time_slot")
+    .select(["id", "start_time", "end_time"])
+    .where("appointment_id", "=", appointmentId)
     .orderBy("start_time")
     .execute()
     .then((rows) => rows.map((row): SurveySlot => ({ id: row.id, ...rowToRange(row) })));
@@ -85,6 +97,7 @@ export async function findSurvey(db: Executor, token: string): Promise<Survey | 
     participant: personal ? { id: personal.id, name: personal.name } : undefined,
     answered,
     slots: await visibleSlots(db, appointment.id, personal?.id),
+    proposedSlots: await proposedSlots(db, appointment.id),
   };
 }
 

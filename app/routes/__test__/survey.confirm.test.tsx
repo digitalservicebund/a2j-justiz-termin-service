@@ -37,6 +37,7 @@ const universal: Survey = {
     { id: "s2", start: new Date("2026-09-21T07:00:00Z"), end: new Date("2026-09-21T09:00:00Z") },
     { id: "s3", start: new Date("2026-09-21T13:30:00Z"), end: new Date("2026-09-21T15:00:00Z") },
   ],
+  proposedSlots: [],
 };
 
 const personal: Survey = { ...universal, participant: { id: "p1", name: "Guest D" } };

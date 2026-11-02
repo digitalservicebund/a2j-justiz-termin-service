@@ -7,11 +7,18 @@ import {
   KernDescriptionList,
   KernDescriptionListItem,
 } from "~/components/shared/kern/KernDescriptionList";
+import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { ResultBanner } from "~/components/shared/ResultBanner";
 import { getDb } from "~/database/database";
 
 import { NextSteps, Step, SuccessBanner } from "./create-termin.created";
-import { groupWindows, surveyBreadcrumbs, surveyPath } from "./survey.schema";
+import {
+  groupWindows,
+  noMatchBreadcrumbs,
+  surveyBreadcrumbs,
+  surveyPath,
+  type SurveyDay,
+} from "./survey.schema";
 
 import "./create-termin.created.css";
 import "./survey.css";
@@ -30,12 +37,18 @@ export async function loader({ request, params }: { request: Request } & Params)
     : undefined;
   if (!answer) throw redirect(surveyPath(token));
 
-  return { days: groupWindows(answer.available) };
+  const days = groupWindows(answer.available);
+  return {
+    days,
+    // Only the sorry page shows these: what was proposed, once nothing is left to choose from.
+    aktenzeichen: survey.aktenzeichen,
+    proposedDays: days.length === 0 ? groupWindows(survey.proposedSlots) : [],
+  };
 }
 
 export default function SurveyResult() {
-  const { days } = useLoaderData<typeof loader>();
-  if (days.length === 0) return <NoOption />;
+  const { days, aktenzeichen, proposedDays } = useLoaderData<typeof loader>();
+  if (days.length === 0) return <NoOption aktenzeichen={aktenzeichen} days={proposedDays} />;
   return (
     <AppShell breadcrumbs={surveyBreadcrumbs}>
       <div className="create-termin-created survey-result">
@@ -73,26 +86,53 @@ function Positive({ days }: Readonly<{ days: ReturnType<typeof groupWindows> }>)
 }
 
 // Also shown right away when no window is left to answer.
-export function NoOption() {
+export function NoOption({
+  aktenzeichen,
+  days,
+}: Readonly<{ aktenzeichen: string; days: SurveyDay[] }>) {
   return (
-    <AppShell breadcrumbs={surveyBreadcrumbs}>
-      <div className="create-termin-created survey-result">
-        <NoTimeWorks />
+    <AppShell breadcrumbs={noMatchBreadcrumbs}>
+      <div className="survey-result survey-result--no-match">
+        <DefaultPage width="content">
+          <div className="survey-no-match">
+            <ResultBanner
+              inline
+              type="warning"
+              title="Es gibt leider kein Zeitfenster, dass allen Verfahrensbeteiligten passt."
+              message="Das Gericht wird wahrscheinlich eine neue Terminumfrage erstellen."
+            />
+            <section
+              aria-labelledby="no-match-verhandlungsdaten"
+              className="survey-no-match__section"
+            >
+              <KernHeading size="medium" level={2} id="no-match-verhandlungsdaten">
+                Verhandlungsdaten
+              </KernHeading>
+              <KernDescriptionList column>
+                <KernDescriptionListItem label="Aktenzeichen">
+                  {aktenzeichen}
+                </KernDescriptionListItem>
+              </KernDescriptionList>
+            </section>
+            {days.length > 0 && (
+              <section aria-labelledby="no-match-zeitfenster" className="survey-no-match__section">
+                <KernHeading size="medium" level={2} id="no-match-zeitfenster">
+                  Zeitfenster
+                </KernHeading>
+                <KernDescriptionList className="survey-no-match__windows">
+                  {days.map(({ key, label, windows }) => (
+                    <KernDescriptionListItem key={key} label={label}>
+                      {windows.map(({ id, time }) => (
+                        <div key={id}>{time}</div>
+                      ))}
+                    </KernDescriptionListItem>
+                  ))}
+                </KernDescriptionList>
+              </section>
+            )}
+          </div>
+        </DefaultPage>
       </div>
     </AppShell>
-  );
-}
-
-function NoTimeWorks() {
-  return (
-    <>
-      <ResultBanner
-        type="danger"
-        title="Es gibt leider keine Terminoption, bei der alle Verfahrensbeteiligten Zeit haben."
-        message="Das Gericht wird wahrscheinlich eine neue Terminumfrage erstellen."
-      />
-      {/* No steps follow; the page still ends with the report-problem button. */}
-      <DefaultPage />
-    </>
   );
 }

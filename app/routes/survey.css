@@ -76,3 +76,35 @@
     grid-template-columns: 31rem minmax(0, 1fr);
   }
 }
+
+/* The sorry page: banner, facts and windows in one column, as on the judge's detail page. */
+.survey-no-match {
+  display: grid;
+  gap: var(--kern-metric-space-x-large);
+  justify-items: start;
+  padding-block: var(--kern-metric-space-large) var(--kern-metric-space-2x-large);
+}
+
+.survey-no-match > .result-banner {
+  width: 100%;
+}
+
+.survey-no-match__section {
+  display: grid;
+  gap: var(--kern-metric-space-small);
+  width: 100%;
+}
+
+/* Date and times side by side without the date wrapping. */
+.survey-no-match__windows .kern-description-list-item {
+  flex-wrap: wrap;
+}
+
+.survey-no-match__windows .kern-description-list-item__key,
+.survey-no-match__windows .kern-description-list-item__value {
+  flex: 1 1 12rem;
+}
+
+.survey-no-match__windows .kern-description-list-item__key {
+  white-space: nowrap;
+}
