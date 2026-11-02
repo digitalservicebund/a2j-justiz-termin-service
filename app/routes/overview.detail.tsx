@@ -5,7 +5,6 @@ import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { CopyLinkButton } from "~/components/shared/CopyLinkButton";
 import { DefaultPage, PageSection } from "~/components/shared/DefaultPage";
-import { KernBadge } from "~/components/shared/kern/KernBadge";
 import {
   KernDescriptionList,
   KernDescriptionListItem,
@@ -68,6 +67,11 @@ export async function loader({ request, params }: { request: Request } & Params)
   return { user, aktenzeichen, state: "cancelled" as const, days };
 }
 
+// "Montag, 3. August 2026 um 13:30" becomes "Montag, dem 3. August 2026 um 13:30" for the sentence.
+function withDem(termin: string): string {
+  return termin.replace(", ", ", dem ");
+}
+
 function BackLink({ children = "Zurück zu den Terminumfragen" }: Readonly<{ children?: string }>) {
   return (
     <Link className="kern-link overview-detail__back" to="/overview">
@@ -124,16 +128,12 @@ export default function OverviewDetail() {
             <div className="overview-detail">
               {detail.state === "confirmed" && detail.past ? (
                 <>
-                  <BackLink />
-                  <header className="overview-detail__header">
-                    <KernBadge type={detail.badge.type}>
-                      {detail.badge.type === "success" && <KernIcon name="success" />}
-                      <KernLabel>{detail.badge.text}</KernLabel>
-                    </KernBadge>
-                    <KernHeading size="large" level={1}>
-                      {`Der Termin war am ${detail.termin}`}
-                    </KernHeading>
-                  </header>
+                  <ResultBanner
+                    inline
+                    type="default"
+                    title={`Der Termin war am ${withDem(detail.termin)}.`}
+                  />
+                  <BackLink>Zur Übersicht</BackLink>
                   <Verhandlungsdaten aktenzeichen={aktenzeichen} />
                   <Zeitfenster days={detail.days} />
                 </>

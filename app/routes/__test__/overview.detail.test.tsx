@@ -209,11 +209,18 @@ describe("OverviewDetail", () => {
     expect(
       await screen.findByRole("heading", {
         level: 1,
-        name: /^Der Termin war am \p{L}+, 3\. August 2020 um 13:30$/u,
+        name: /^Der Termin war am \p{L}+, dem 3\. August 2020 um 13:30\.$/u,
       }),
     ).toBeVisible();
-    // The badge carries the date only, without the announcement.
-    expect(screen.getByText(/^\p{L}+, 3\. August 2020 um 13:30$/u)).toBeVisible();
+    // A neutral banner with the back link below it, not a badge.
+    expect(document.querySelector(".result-banner--default")).toBeInTheDocument();
+    expect(document.querySelector(".kern-badge")).toBeNull();
+    expect(screen.getByRole("link", { name: "Zur Übersicht" })).toHaveAttribute(
+      "href",
+      "/overview",
+    );
+    expect(screen.queryByRole("link", { name: "Zurück zu den Terminumfragen" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Problem mit dieser Seite melden" })).toBeVisible();
     expect(screen.getByRole("heading", { name: "Verhandlungsdaten" })).toBeVisible();
     expect(screen.getByRole("heading", { name: "Zeitfenster" })).toBeVisible();
     expect(screen.getByText("09:00 bis 11:00")).toBeVisible();

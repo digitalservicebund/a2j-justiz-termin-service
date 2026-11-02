@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { A2JIcon } from "./a2j/A2JIcon";
 import { PageSection } from "./DefaultPage";
 import { KernBody } from "./kern/KernBody";
 import { KernHeading } from "./kern/KernHeading";
@@ -8,7 +9,8 @@ import { KernIcon } from "./kern/KernIcon";
 import "./ResultBanner.css";
 
 type ResultBannerProps = {
-  type: "success" | "info" | "warning" | "danger";
+  // "default" is the neutral banner for a page that looks back, with a history icon.
+  type: "default" | "success" | "info" | "warning" | "danger";
   // Without the wide page section, for banners that sit in a column next to the sidebar.
   inline?: boolean;
   title: string;
@@ -26,8 +28,18 @@ export function ResultBanner({
   inline,
 }: Readonly<ResultBannerProps>) {
   const banner = (
-    <div className={`kern-alert kern-alert--${type} result-banner`}>
-      <KernIcon name={type} size="x-large" />
+    <div
+      className={
+        type === "default"
+          ? "result-banner result-banner--default"
+          : `kern-alert kern-alert--${type} result-banner`
+      }
+    >
+      {type === "default" ? (
+        <A2JIcon name="history" size="x-large" />
+      ) : (
+        <KernIcon name={type} size="x-large" />
+      )}
       <div className="result-banner__body">
         <div className="result-banner__text">
           <KernHeading size="large" level={1}>

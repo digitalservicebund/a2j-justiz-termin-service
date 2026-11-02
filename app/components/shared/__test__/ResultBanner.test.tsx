@@ -14,6 +14,13 @@ describe("ResultBanner", () => {
     expect(container.querySelector(".kern-alert")).toHaveClass(`kern-alert--${type}`);
   });
 
+  it("styles the default banner neutrally with the history icon", () => {
+    const { container } = render(<ResultBanner type="default" title="Titel" />);
+    expect(container.querySelector(".result-banner--default")).toBeInTheDocument();
+    expect(container.querySelector(".kern-alert")).toBeNull();
+    expect(container.querySelector(".a2j-icon--history")).toBeInTheDocument();
+  });
+
   it("renders the message and actions when given", () => {
     render(
       <ResultBanner

@@ -53,3 +53,8 @@
 .overview-detail__layout .overview-detail {
   padding-block-start: 0;
 }
+
+/* Space between the report-problem button and the footer. */
+.overview-detail__layout {
+  padding-block-end: var(--kern-metric-space-2x-large);
+}
