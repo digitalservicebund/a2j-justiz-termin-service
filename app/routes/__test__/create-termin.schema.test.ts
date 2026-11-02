@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   emptySlot,
   MAX_SLOTS,
+  messages,
   parseCreateTerminForm,
   validateCreateTermin,
   type SlotInput,
@@ -189,6 +190,74 @@ describe("validateCreateTermin", () => {
       expect(Object.keys(rows)).toEqual(["0", "2"]);
       expect(Object.keys(rows[0]!)).toEqual(["date"]);
       expect(Object.keys(rows[2]!)).toEqual(["range"]);
+    });
+  });
+
+  describe("clock changes", () => {
+    // Clocks go forward from 02:00 to 03:00 on 2027-03-28 and back from 03:00 to 02:00 on 2026-10-25.
+    const forward = { day: "28", month: "3", year: "2027" };
+    const back = { day: "25", month: "10", year: "2026" };
+
+    it("rejects a start or end in the hour that is skipped", () => {
+      const result = errorsOf(
+        validate([
+          ...validSlots(),
+          slotOn({ ...forward, startHour: "2", startMinute: "30", endHour: "3", endMinute: "30" }),
+          slotOn({ ...forward, startHour: "1", startMinute: "0", endHour: "2", endMinute: "15" }),
+        ]),
+      );
+      expect(result.rows[2]).toEqual({ start: messages.skippedTime });
+      expect(result.rows[3]).toEqual({ end: messages.skippedTime });
+    });
+
+    it("rejects a start or end in the hour that is repeated", () => {
+      const result = errorsOf(
+        validate([
+          ...validSlots(),
+          slotOn({ ...back, startHour: "2", startMinute: "30", endHour: "3", endMinute: "30" }),
+          slotOn({ ...back, startHour: "1", startMinute: "0", endHour: "2", endMinute: "15" }),
+        ]),
+      );
+      expect(result.rows[2]).toEqual({ start: messages.repeatedTime });
+      expect(result.rows[3]).toEqual({ end: messages.repeatedTime });
+    });
+
+    it.each([forward, back])("accepts times next to the changed hour (%j)", (day) => {
+      expect(
+        validate([
+          ...validSlots(),
+          slotOn({ ...day, startHour: "1", startMinute: "0", endHour: "1", endMinute: "59" }),
+          slotOn({ ...day, startHour: "3", startMinute: "0", endHour: "4", endMinute: "0" }),
+        ]),
+      ).toEqual({ success: true });
+    });
+  });
+
+  describe("midnight", () => {
+    it("accepts a window from midnight and one that ends at 23:59", () => {
+      expect(
+        validate([
+          slotOn({ startHour: "0", startMinute: "0", endHour: "0", endMinute: "30" }),
+          slotOn({ day: "10", startHour: "23", startMinute: "0", endHour: "23", endMinute: "59" }),
+        ]),
+      ).toEqual({ success: true });
+    });
+
+    it("counts today in Berlin time, which is tomorrow in UTC late in the evening", () => {
+      // 00:30 on 2026-10-22 in Berlin is still 2026-10-21 in UTC.
+      const afterMidnight = new Date("2026-10-21T22:30:00Z");
+      const slots = [slotOn({ day: "22", month: "10" }), slotOn({ day: "23", month: "10" })];
+      expect(validateCreateTermin({ aktenzeichen: "A", slots }, afterMidnight)).toEqual({
+        success: true,
+      });
+      expect(
+        errorsOf(
+          validateCreateTermin(
+            { aktenzeichen: "A", slots: [slotOn({ day: "21", month: "10" }), ...slots] },
+            afterMidnight,
+          ),
+        ).rows[0],
+      ).toEqual({ date: messages.pastDate });
     });
   });
 

@@ -10,18 +10,12 @@ import {
 } from "~/components/shared/kern/KernDescriptionList";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernIcon } from "~/components/shared/kern/KernIcon";
+import { formatCalendarDate } from "~/core/domain/time/format";
 
 import { isEmptySlot, type CreateTerminValues, type SlotInput } from "./create-termin.schema";
 
 import "./create-termin.css";
 import "./create-termin.review.css";
-
-const dateFormat = new Intl.DateTimeFormat("de-DE", {
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-  timeZone: "UTC",
-});
 
 const pad = (value: string) => value.padStart(2, "0");
 
@@ -39,8 +33,8 @@ export function groupSlotsByDay(slots: SlotInput[], separator = " – "): DayWin
       const key = `${slot.year}-${pad(slot.month)}-${pad(slot.day)}`;
       const start = `${pad(slot.startHour)}:${pad(slot.startMinute)}`;
       const end = `${pad(slot.endHour)}:${pad(slot.endMinute)}`;
-      const date = new Date(Date.UTC(Number(slot.year), Number(slot.month) - 1, Number(slot.day)));
-      return { key, label: dateFormat.format(date), start, time: `${start}${separator}${end}` };
+      const label = formatCalendarDate(Number(slot.year), Number(slot.month), Number(slot.day));
+      return { key, label, start, time: `${start}${separator}${end}` };
     })
     .sort((a, b) => a.key.localeCompare(b.key) || a.start.localeCompare(b.start));
 

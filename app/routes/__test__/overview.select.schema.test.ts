@@ -1,12 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  describeSlot,
-  messages,
-  readValues,
-  selectionSearch,
-  validateSelection,
-} from "../overview.select.schema";
+import { messages, readValues, selectionSearch } from "../overview.select.schema";
+import { validateSelection } from "../overview.select.validate.server";
 
 // 15:30 to 18:00 and 09:00 to 13:00 Berlin time in September are 13:30 to 16:00 and 07:00 to 11:00 UTC.
 const slots = [
@@ -17,10 +12,39 @@ const slots = [
 const pick = (slot: string, hour: string, minute: string) =>
   validateSelection({ slot, hour, minute }, slots);
 
-describe("describeSlot", () => {
-  it("names the date and the time window in German", () => {
-    expect(describeSlot(slots[0]!)).toBe("17. September 2026 von 15:30 bis 18:00");
-    expect(describeSlot(slots[1]!)).toBe("21. September 2026 von 09:00 bis 13:00");
+describe("validateSelection around midnight and the clock change", () => {
+  // 00:30 to 02:00 Berlin time on 2026-09-18 is 22:30 to 00:00 UTC, which starts on the day before.
+  const afterMidnight = [
+    { start: new Date("2026-09-17T22:30:00Z"), end: new Date("2026-09-18T00:00:00Z") },
+  ];
+
+  it("measures the start on the Berlin day of the slot, not on the UTC day", () => {
+    expect(validateSelection({ slot: "0", hour: "1", minute: "15" }, afterMidnight)).toEqual({
+      success: true,
+      window: { start: new Date("2026-09-17T23:15:00Z"), end: afterMidnight[0]!.end },
+    });
+  });
+
+  // 01:00 to 04:00 Berlin time on 2026-10-25, the day the clocks go back at 03:00.
+  const clockChange = [
+    { start: new Date("2026-10-24T23:00:00Z"), end: new Date("2026-10-25T03:00:00Z") },
+  ];
+
+  it("rejects a start in the repeated hour", () => {
+    expect(validateSelection({ slot: "0", hour: "2", minute: "30" }, clockChange)).toEqual({
+      success: false,
+      errors: { start: messages.notExactlyOnce },
+    });
+  });
+
+  it("accepts a start before and after the repeated hour", () => {
+    expect(validateSelection({ slot: "0", hour: "1", minute: "30" }, clockChange).success).toBe(
+      true,
+    );
+    expect(validateSelection({ slot: "0", hour: "3", minute: "0" }, clockChange)).toEqual({
+      success: true,
+      window: { start: new Date("2026-10-25T02:00:00Z"), end: clockChange[0]!.end },
+    });
   });
 });
 

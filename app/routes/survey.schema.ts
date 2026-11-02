@@ -1,8 +1,7 @@
 import type { SurveySlot } from "~/adapters/appointments/survey.server";
 import type { BreadcrumbItem } from "~/components/shared/Breadcrumb";
-
-import { rangeToSlot } from "./create-termin.slots";
-import { formatDay } from "./overview.select.schema";
+import { formatDay, formatTime } from "~/core/domain/time/format";
+import { berlinDay } from "~/core/domain/time/time-zone";
 
 export const surveyBreadcrumbs = [
   { label: "Beantworten der Terminumfrage" },
@@ -76,10 +75,9 @@ export type SurveyDay = { key: string; label: string; windows: SurveyWindow[] };
 export function groupWindows(slots: SurveySlot[]): SurveyDay[] {
   const days: SurveyDay[] = [];
   for (const slot of slots) {
-    const { year, month, day, startHour, startMinute, endHour, endMinute } = rangeToSlot(slot);
-    const key = `${year}-${month}-${day}`;
-    const start = `${startHour}:${startMinute}`;
-    const window = { id: slot.id, start, time: `${start} bis ${endHour}:${endMinute}` };
+    const key = berlinDay(slot.start);
+    const start = formatTime(slot.start);
+    const window = { id: slot.id, start, time: `${start} bis ${formatTime(slot.end)}` };
     const last = days.at(-1);
     if (last?.key === key) last.windows.push(window);
     else days.push({ key, label: formatDay(slot.start), windows: [window] });

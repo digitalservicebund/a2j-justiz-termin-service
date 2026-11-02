@@ -1,6 +1,7 @@
 import html from "html-template-tag";
 
 import type { AppointmentSlot } from "../../adapters/appointments/appointments.server.ts";
+import { formatRange } from "../../core/domain/time/format.ts";
 import {
   Button,
   COLOR,
@@ -10,7 +11,6 @@ import {
   Layout,
   Slots,
   TextRow,
-  describeSlot,
   logoAttachment,
   renderFooterText,
   renderHeaderText,
@@ -70,7 +70,7 @@ function renderText({ aktenzeichen, terminUrl }: TerminCreatedEmail, slots: stri
 }
 
 export function renderTerminCreatedEmail(email: TerminCreatedEmail) {
-  const slots = email.slots.map(describeSlot);
+  const slots = email.slots.map(formatRange);
   return {
     subject: SUBJECT,
     text: renderText(email, slots),

@@ -13,7 +13,13 @@ async function seed(
 ) {
   const { id } = await db
     .insertInto("appointment")
-    .values({ user_id: userId, aktenzeichen, status, universal_token: `token-${randomUUID()}` })
+    .values({
+      user_id: userId,
+      aktenzeichen,
+      // A confirmed appointment needs its slot, so it is confirmed once the slot exists.
+      status: status === "confirmed" ? "open" : status,
+      universal_token: `token-${randomUUID()}`,
+    })
     .returning("id")
     .executeTakeFirstOrThrow();
   const slot = await db
@@ -28,7 +34,12 @@ async function seed(
   if (status === "confirmed") {
     await db
       .updateTable("appointment")
-      .set({ confirmed_slot_id: slot.id })
+      .set({
+        status: "confirmed",
+        confirmed_slot_id: slot.id,
+        confirmed_start_time: "2099-11-09T14:30:00Z",
+        confirmed_end_time: "2099-11-09T15:30:00Z",
+      })
       .where("id", "=", id)
       .execute();
   }

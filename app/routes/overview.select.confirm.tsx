@@ -8,16 +8,12 @@ import {
   KernDescriptionList,
   KernDescriptionListItem,
 } from "~/components/shared/kern/KernDescriptionList";
+import { formatInstant } from "~/core/domain/time/format";
 import { getDb } from "~/database/database";
 
 import { ReviewPage } from "./create-termin.review";
-import {
-  readValues,
-  selectBreadcrumbs,
-  selectionSearch,
-  validateSelection,
-} from "./overview.select.schema";
-import { formatInstant } from "./overview.status";
+import { readValues, selectBreadcrumbs, selectionSearch } from "./overview.select.schema";
+import { validateSelection } from "./overview.select.validate.server";
 
 import "./overview.select.css";
 
