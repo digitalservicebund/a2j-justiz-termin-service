@@ -1,6 +1,7 @@
 import { data, redirect, useLoaderData } from "react-router";
 
 import { findSurvey, getSavedAnswer } from "~/adapters/appointments/survey.server";
+import { getSessionUser } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { DefaultPage, PageSection } from "~/components/shared/DefaultPage";
 import {
@@ -40,6 +41,8 @@ export async function loader({ request, params }: { request: Request } & Params)
 
   const days = groupWindows(answer.available);
   return {
+    // Guests are not signed in: only a signed-in user gets the sidebar. Never forces a login.
+    user: await getSessionUser(request),
     days,
     // Only the sorry page shows these: what was proposed, once nothing is left to choose from.
     aktenzeichen: survey.aktenzeichen,
@@ -48,20 +51,28 @@ export async function loader({ request, params }: { request: Request } & Params)
 }
 
 export default function SurveyResult() {
-  const { days, aktenzeichen, proposedDays } = useLoaderData<typeof loader>();
+  const { user, days, aktenzeichen, proposedDays } = useLoaderData<typeof loader>();
   if (days.length === 0) return <NoOption aktenzeichen={aktenzeichen} days={proposedDays} />;
+  const signedIn = Boolean(user);
+  const content = (
+    <DefaultPage width="content">
+      <div className={`create-termin-created${signedIn ? " survey-result__main" : ""}`}>
+        <Positive days={days} />
+      </div>
+    </DefaultPage>
+  );
   return (
-    <AppShell breadcrumbs={surveyBreadcrumbs}>
-      <PageSection width="wide">
-        <div className="survey-result__layout">
-          <MainNav current="overview" />
-          <DefaultPage width="content">
-            <div className="create-termin-created survey-result__main">
-              <Positive days={days} />
-            </div>
-          </DefaultPage>
-        </div>
-      </PageSection>
+    <AppShell user={user ?? undefined} breadcrumbs={surveyBreadcrumbs}>
+      {signedIn ? (
+        <PageSection width="wide">
+          <div className="survey-result__layout">
+            <MainNav current="overview" />
+            {content}
+          </div>
+        </PageSection>
+      ) : (
+        content
+      )}
     </AppShell>
   );
 }

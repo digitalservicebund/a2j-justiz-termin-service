@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import type { Kysely } from "kysely";
 
 import type { AppointmentStatus, Database } from "../app/database/types.ts";
-import { BASE_PATH, expect, readMail, test } from "./fixtures.ts";
+import { BASE_PATH, expect, readMail, signIn, test } from "./fixtures.ts";
 
 // 15:30 to 18:00, 09:00 to 13:00 and 15:00 to 17:00 Berlin time in November are 14:30 to 17:00,
 // 08:00 to 12:00 and 14:00 to 16:00 UTC.
@@ -111,10 +111,23 @@ test("a guest of the universal link gives a name and availabilities, reviews the
     "Danke für das Angeben Ihrer Verfügbarkeiten.",
   );
   await expect(page.locator(".kern-alert--info")).toBeVisible();
-  await expect(page.getByRole("navigation", { name: "Bereiche" })).toBeVisible();
+  // A guest is not signed in: no sidebar, and the breadcrumb leads to the public start page.
+  await expect(page.getByRole("navigation", { name: "Bereiche" })).toHaveCount(0);
+  await expect(
+    page
+      .getByRole("navigation", { name: "Brotkrumen" })
+      .getByRole("link", { name: "Verhandlungstermin-Finder" }),
+  ).toHaveAttribute("href", `${BASE_PATH}/`);
   await expect(page.getByText("15:30 bis 18:00", { exact: true })).toBeVisible();
   await expect(page.getByText("15:00 bis 17:00", { exact: true })).toBeVisible();
   await expect(page.getByText("09:00 bis 13:00", { exact: true })).toHaveCount(0);
+
+  // Only a signed-in user gets the sidebar on the same page.
+  const resultUrl = page.url();
+  await signIn(page, judge);
+  await page.goto(resultUrl);
+  await expect(page.getByRole("navigation", { name: "Bereiche" })).toBeVisible();
+  await expect(page.getByText("15:30 bis 18:00", { exact: true })).toBeVisible();
 
   const participants = await db
     .selectFrom("participant")

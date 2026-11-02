@@ -4,9 +4,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import { Breadcrumb, type BreadcrumbItem } from "../Breadcrumb";
 
-function renderBreadcrumb(items?: BreadcrumbItem[], basename = "/base") {
+function renderBreadcrumb(items?: BreadcrumbItem[], basename = "/base", signedIn = false) {
   const router = createMemoryRouter(
-    [{ path: "/", Component: () => <Breadcrumb items={items} /> }],
+    [{ path: "/", Component: () => <Breadcrumb items={items} signedIn={signedIn} /> }],
     {
       basename,
       initialEntries: [`${basename}/`],
@@ -33,7 +33,11 @@ describe("Breadcrumb", () => {
   });
 
   it("links the Verhandlungstermin-Finder under the router's basename and marks the last item as current", () => {
-    renderBreadcrumb([{ label: "Übersicht", href: "/overview" }, { label: "Detail" }]);
+    renderBreadcrumb(
+      [{ label: "Übersicht", href: "/overview" }, { label: "Detail" }],
+      "/base",
+      true,
+    );
 
     const finder = screen.getByRole("link", { name: "Verhandlungstermin-Finder" });
     expect(finder).toHaveAttribute("href", "/base");
@@ -43,6 +47,19 @@ describe("Breadcrumb", () => {
       "/base/overview",
     );
     expect(screen.getByText("Detail")).toHaveAttribute("aria-current", "page");
+  });
+
+  it("links the Verhandlungstermin-Finder to its public start page when nobody is signed in", () => {
+    renderBreadcrumb([{ label: "Übersicht", href: "/overview" }, { label: "Detail" }]);
+
+    const finder = screen.getByRole("link", { name: "Verhandlungstermin-Finder" });
+    expect(finder).toHaveAttribute("href", "/verhandlungstermin-finder/");
+    expect(finder).toHaveClass("kern-link", "kern-link--small");
+    // Only the first crumb changes.
+    expect(screen.getByRole("link", { name: "Übersicht" })).toHaveAttribute(
+      "href",
+      "/base/overview",
+    );
   });
 
   it("renders items that share a label without key collisions", () => {
