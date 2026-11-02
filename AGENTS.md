@@ -27,6 +27,17 @@ CI also runs `pnpm test:e2e`. It needs Docker and starts its own isolated Compos
 pnpm test:e2e e2e/overview.spec.ts
 ```
 
+## Working in parallel
+
+Several agents can work at the same time, each in its own git worktree (`git worktree add`, or the Agent tool's `isolation: "worktree"`).
+
+- Right after creating a worktree, run `scripts/worktree-setup.sh`. It gives the worktree its own ports, Docker Compose project and database through a git-ignored `.env`. See "Parallel work with git worktrees" in the README.
+- Never run `docker compose down`, `pnpm docker:reset` or `docker compose` with another project name from a worktree. Use plain `docker compose` and `pnpm` there, which act on that worktree's project.
+- Work in your worktree only. Do not edit the main checkout or other worktrees.
+- Migrations are numbered sequentially. Check the highest number on `main` before you add one, and renumber when a rebase brings in the same number.
+- Remove a finished worktree with `scripts/worktree-teardown.sh`, then `git worktree remove`.
+- In a Claude Code cloud environment, `scripts/cloud-setup.sh` is the setup script. Without Docker there, `pnpm test:e2e` and `pnpm dev` do not work; leave E2E to CI and say so in the PR.
+
 ## Tests
 
 - Unit and component tests live next to the code in `__test__/` folders. E2E specs live in `e2e/`.
