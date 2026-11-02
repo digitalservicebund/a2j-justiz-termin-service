@@ -110,9 +110,11 @@ test("a guest of the universal link gives a name and availabilities, reviews the
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Danke für das Angeben Ihrer Verfügbarkeiten.",
   );
-  await expect(page.getByText("15:30", { exact: true })).toBeVisible();
-  await expect(page.getByText("15:00", { exact: true })).toBeVisible();
-  await expect(page.getByText("09:00", { exact: true })).toHaveCount(0);
+  await expect(page.locator(".kern-alert--info")).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Bereiche" })).toBeVisible();
+  await expect(page.getByText("15:30 bis 18:00", { exact: true })).toBeVisible();
+  await expect(page.getByText("15:00 bis 17:00", { exact: true })).toBeVisible();
+  await expect(page.getByText("09:00 bis 13:00", { exact: true })).toHaveCount(0);
 
   const participants = await db
     .selectFrom("participant")
@@ -363,7 +365,7 @@ test("a personal link knows the guest, asks for no name and answers once", async
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Danke für das Angeben Ihrer Verfügbarkeiten.",
   );
-  await expect(page.getByText("09:00", { exact: true })).toBeVisible();
+  await expect(page.getByText("09:00 bis 13:00", { exact: true })).toBeVisible();
 
   // No second participant was created, and opening the link again shows the result.
   expect(

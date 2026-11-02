@@ -123,8 +123,11 @@ describe("survey result page", () => {
         name: "Danke für das Angeben Ihrer Verfügbarkeiten.",
       }),
     ).toBeVisible();
-    expect(screen.getByRole("link", { name: "Nächste Schritte" })).toBeVisible();
-    // Guests have no overview to go to.
+    // A blue KERN info alert without buttons: guests have no overview to go to.
+    const banner = screen.getByRole("heading", { level: 1 }).closest(".kern-alert");
+    expect(banner).toHaveClass("kern-alert--info");
+    expect(banner).not.toHaveClass("kern-alert--success");
+    expect(screen.queryByRole("link", { name: "Nächste Schritte" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Zu den Terminumfragen" })).toBeNull();
 
     const list = screen
@@ -140,9 +143,25 @@ describe("survey result page", () => {
       "Sie erhalten die Ladung.",
     ]);
     expect(within(steps[0]!).getByText("17. September 2026")).toBeVisible();
-    expect(within(steps[0]!).getByText("10:00")).toBeVisible();
+    expect(within(steps[0]!).getByText("10:00 bis 14:00")).toBeVisible();
     expect(within(steps[0]!).getByText("24. September 2026")).toBeVisible();
-    expect(within(steps[0]!).getByText("14:00")).toBeVisible();
+    expect(within(steps[0]!).getByText("14:00 bis 17:00")).toBeVisible();
+    expect(within(steps[0]!).queryByText(/–/)).toBeNull();
+  });
+
+  it("shows the sidebar next to the content", async () => {
+    renderResult();
+
+    const nav = await screen.findByRole("navigation", { name: "Bereiche" });
+    expect(
+      within(nav)
+        .getAllByRole("listitem")
+        .map((item) => item.textContent),
+    ).toEqual(["Übersicht", "Abwesenheiten", "Kalender abonnieren", "Einstellungen"]);
+    expect(within(nav).getByRole("link", { name: "Übersicht" })).toHaveAttribute(
+      "href",
+      "/overview",
+    );
   });
 
   it("tells the guest that no option works when no window fits", async () => {
@@ -162,5 +181,6 @@ describe("survey result page", () => {
       screen.getByText("Das Gericht wird wahrscheinlich eine neue Terminumfrage erstellen."),
     ).toBeVisible();
     expect(screen.queryByRole("heading", { name: "Nächste Schritte" })).toBeNull();
+    expect(screen.queryByRole("navigation", { name: "Bereiche" })).toBeNull();
   });
 });
