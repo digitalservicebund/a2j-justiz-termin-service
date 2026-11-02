@@ -128,6 +128,39 @@ command on every pull request and main-branch push, and uploads the report and
 failure artifacts. No separate Chromium installation step is needed in CI.
 E2E failures block image publication and deployment.
 
+### Parallel work with git worktrees
+
+Several people or agents can work on separate branches at the same time, each in its own
+[git worktree](https://git-scm.com/docs/git-worktree), without sharing a database, mail catcher
+or port:
+
+```bash
+git worktree add ../jts-feature-a -b feat/feature-a
+cd ../jts-feature-a
+scripts/worktree-setup.sh          # picks the lowest free slot, or pass one: scripts/worktree-setup.sh 3
+```
+
+The script writes a git-ignored `.env` with the worktree's slot (1-9), installs the
+dependencies and starts that worktree's Compose project. `pnpm dev`, `pnpm db:migrate` and
+`docker compose` pick the file up automatically. The main checkout is slot 0 and keeps the
+default ports.
+
+| Slot | App    | Postgres | SMTP  | Mailpit | Compose project             | `pnpm test:e2e` ports (app / Postgres / SMTP / Mailpit) |
+| ---- | ------ | -------- | ----- | ------- | --------------------------- | ------------------------------------------------------- |
+| 0    | 3000   | 5433     | 587   | 8025    | `a2j-justiz-termin-service` | 3109 / 5544 / 1026 / 8026, project `jts-e2e`            |
+| N    | 3000+N | 5433+N   | 587+N | 8125+N  | `jts-slot-N`                | 3109+N / 5544+N / 1026+N / 8026+N, project `jts-e2e-N`  |
+
+`e2e/run.sh` reads the slot from `.env` (or `E2E_SLOT=N pnpm test:e2e`), so E2E runs in different
+worktrees do not collide. Each run still starts a full Docker stack, so run only a few at once.
+
+Before removing a worktree, run `scripts/worktree-teardown.sh` in it to delete its containers and
+volumes, then `git worktree remove`. Migrations stay sequentially numbered: when two branches add
+the same number, the one merged second is rebased and renumbered.
+
+[`scripts/cloud-setup.sh`](scripts/cloud-setup.sh) prepares a clean Linux machine, such as a Claude
+Code cloud environment: it installs the pinned Node.js, pnpm, the dependencies and the Playwright
+browser, and starts Postgres and Mailpit when Docker is available.
+
 ### Code Quality
 
 ```bash
@@ -201,7 +234,7 @@ probes can be switched without downtime. The steps to remove that are in
 
 ### Configuration
 
-[`.env.defaults`](.env.defaults) holds the local connection settings and matches `docker-compose.yml`. `pnpm dev`, `pnpm start` and `pnpm db:migrate` load it, plus an optional, git-ignored `.env.local` for overrides.
+[`.env.defaults`](.env.defaults) holds the local connection settings and matches `docker-compose.yml`. `pnpm dev`, `pnpm start` and `pnpm db:migrate` load it, plus an optional, git-ignored `.env.local` for overrides. A git-ignored `.env` is loaded last; `scripts/worktree-setup.sh` writes it (see "Parallel work with git worktrees").
 
 | Variable                             | Purpose                                                                                     |
 | ------------------------------------ | ------------------------------------------------------------------------------------------- |

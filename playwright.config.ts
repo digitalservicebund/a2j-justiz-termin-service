@@ -7,7 +7,9 @@ import { defineConfig, devices } from "@playwright/test";
 import { BASE_PATH } from "./app/lib/base-path.ts";
 import { requireEnv } from "./app/lib/env.ts";
 
-const environment = parseEnv(readFileSync(new URL("./.env.e2e", import.meta.url), "utf8"));
+// e2e/run.sh points E2E_ENV_FILE at a copy with shifted ports when it runs in a worktree slot.
+const environmentFile = process.env.E2E_ENV_FILE ?? new URL("./.env.e2e", import.meta.url);
+const environment = parseEnv(readFileSync(environmentFile, "utf8"));
 Object.assign(process.env, environment);
 const baseURL = requireEnv("BASE_URL");
 
