@@ -14,10 +14,10 @@ already provisioned in the database and addresses on an allowed domain can sign 
 
 ## Tech Stack
 
-- **Frontend**: React 19 + React Router 7 (SSR)
+- **Frontend**: React 19 + React Router 8 (SSR)
 - **Styling**: KERN UX Native + colocated component CSS
 - **Build**: Vite + esbuild
-- **Language**: TypeScript 5.9
+- **Language**: TypeScript 7.0
 - **Database**: PostgreSQL 18 + Kysely (query builder and migrations)
 - **Package Manager**: pnpm
 - **Code Quality**: oxlint + oxfmt
