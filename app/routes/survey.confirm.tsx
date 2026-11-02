@@ -117,17 +117,20 @@ export default function SurveyConfirm() {
               </KernDescriptionList>
             ),
           },
-          {
-            id: "teilnehmer",
-            title: "Ihre Daten",
-            // A personal link already names the guest.
-            editable: needsName,
-            children: (
-              <KernDescriptionList>
-                <KernDescriptionListItem label="Name">{name}</KernDescriptionListItem>
-              </KernDescriptionList>
-            ),
-          },
+          // A personal link already names the guest, and the review has nothing to check there.
+          ...(needsName
+            ? [
+                {
+                  id: "teilnehmer",
+                  title: "Ihre Daten",
+                  children: (
+                    <KernDescriptionList>
+                      <KernDescriptionListItem label="Name">{name}</KernDescriptionListItem>
+                    </KernDescriptionList>
+                  ),
+                },
+              ]
+            : []),
           {
             id: "zeitfenster",
             title: "Zeitfenster",
