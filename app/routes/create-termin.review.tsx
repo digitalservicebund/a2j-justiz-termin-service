@@ -3,6 +3,7 @@ import { Form, useNavigation } from "react-router";
 
 import type { BreadcrumbItem } from "~/components/shared/Breadcrumb";
 import { FlowPage } from "~/components/shared/FlowPage";
+import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernButton } from "~/components/shared/kern/KernButton";
 import {
   KernDescriptionList,
@@ -161,7 +162,17 @@ export function ReviewPage({
   );
 }
 
-export function CreateTerminReview({ values }: Readonly<{ values: CreateTerminValues }>) {
+// "a@example.com", "Person A" or "a@example.com, Person A".
+const describePerson = ({ email, name }: { email: string | null; name: string | null }) =>
+  [email, name].filter(Boolean).join(", ");
+
+export function CreateTerminReview({
+  values,
+  participants,
+}: Readonly<{
+  values: CreateTerminValues;
+  participants: Array<{ id: string; email: string | null; name: string | null }>;
+}>) {
   return (
     <ReviewPage
       sections={[
@@ -175,6 +186,20 @@ export function CreateTerminReview({ values }: Readonly<{ values: CreateTerminVa
               </KernDescriptionListItem>
             </KernDescriptionList>
           ),
+        },
+        {
+          id: "verfahrensbeteiligte",
+          title: "Verfahrensbeteiligte",
+          children:
+            participants.length === 0 ? (
+              <KernBody>Sie haben keine Verfahrensbeteiligten angegeben.</KernBody>
+            ) : (
+              <ul className="create-termin-review__times">
+                {participants.map((person) => (
+                  <li key={person.id}>{describePerson(person)}</li>
+                ))}
+              </ul>
+            ),
         },
         {
           id: "zeitfenster",

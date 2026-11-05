@@ -7,14 +7,19 @@ import {
   getAppointment,
   updateDraftAktenzeichen,
 } from "~/adapters/appointments/appointments.server";
+import {
+  deleteDraftParticipant,
+  listParticipants,
+} from "~/adapters/appointments/participants.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { ErrorMessage } from "~/components/shared/ErrorMessage";
 import { FlowPage } from "~/components/shared/FlowPage";
+import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernButton } from "~/components/shared/kern/KernButton";
 import { KernFormInput } from "~/components/shared/kern/KernFormInput";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
-import { KernIcon } from "~/components/shared/kern/KernIcon";
+import { KernIcon, type KernIconName } from "~/components/shared/kern/KernIcon";
 import { KernLabel } from "~/components/shared/kern/KernLabel";
 import {
   KernCell,
@@ -26,7 +31,8 @@ import {
 } from "~/components/shared/kern/KernTable";
 import { getDb } from "~/database/database";
 
-import { draftHref, NEW_SLOT, slotHref } from "./create-termin.paths";
+import { MAX_PARTICIPANTS } from "./create-termin.participant.schema";
+import { draftHref, NEW_SLOT, participantHref, slotHref } from "./create-termin.paths";
 import { createTerminBreadcrumbs } from "./create-termin.review";
 import {
   aktenzeichenProblem,
@@ -44,7 +50,8 @@ export async function loader({ request }: { request: Request }) {
   if (!draftId) return { user, draft: null };
 
   // The draft is the only place the entered data lives, so every visit reads it from there.
-  const appointment = await getAppointment(getDb(), user.id, draftId);
+  const db = getDb();
+  const appointment = await getAppointment(db, user.id, draftId);
   if (!appointment) throw data("Not found", { status: 404 });
   if (appointment.status !== "draft") throw redirect("/overview");
   return {
@@ -52,6 +59,7 @@ export async function loader({ request }: { request: Request }) {
     draft: {
       id: appointment.id,
       aktenzeichen: appointment.aktenzeichen,
+      participants: await listParticipants(db, user.id, appointment.id),
       slots: appointment.slots.map((slot) => ({
         id: slot.id,
         ...describeSlot(slot),
@@ -68,13 +76,13 @@ type ActionResult = {
 };
 
 // Every button of the form submits the Aktenzeichen with it, so nothing typed is lost on the way
-// to another page. The intent says what the user asked for; slot buttons carry the slot's id.
+// to another page. The intent says what the user asked for; the buttons of a row carry its id.
 export async function action({ request }: { request: Request }) {
   const user = await requireRole(request, "richter");
   const db = getDb();
   const formData = await request.formData();
   const intent = String(formData.get("intent") ?? "");
-  const [command = "", slotId = ""] = intent.split(":");
+  const [command = "", rowId = ""] = intent.split(":");
   const aktenzeichen = String(formData.get("aktenzeichen") ?? "");
   const draftIdValue = formData.get("appointmentId");
   const draftId = typeof draftIdValue === "string" ? draftIdValue : "";
@@ -107,12 +115,21 @@ export async function action({ request }: { request: Request }) {
     case "add-slot":
       return redirect(slotHref(id, NEW_SLOT));
     case "edit-slot":
-      return redirect(slotHref(id, slotId));
+      return redirect(slotHref(id, rowId));
     case "copy-slot":
-      return redirect(slotHref(id, NEW_SLOT, slotId));
+      return redirect(slotHref(id, NEW_SLOT, rowId));
     case "delete-slot":
-      if (!(await deleteDraftSlot(db, user.id, id, slotId)))
+      if (!(await deleteDraftSlot(db, user.id, id, rowId)))
         throw data("Not found", { status: 404 });
+      return redirect(draftHref(id));
+    case "add-person":
+      return redirect(participantHref(id, NEW_SLOT));
+    case "edit-person":
+      return redirect(participantHref(id, rowId));
+    case "delete-person":
+      if (!(await deleteDraftParticipant(db, user.id, id, rowId))) {
+        throw data("Not found", { status: 404 });
+      }
       return redirect(draftHref(id));
     case "next": {
       const appointment = id ? await getAppointment(db, user.id, id) : undefined;
@@ -140,20 +157,19 @@ export default function CreateTermin() {
   const aktenzeichen = result?.aktenzeichen ?? draft?.aktenzeichen ?? "";
   const errors = result?.errors;
   const slots = draft?.slots ?? [];
-  const atLimit = slots.length >= MAX_SLOTS;
+  const participants = draft?.participants ?? [];
   const rowErrors = (index: number) => Object.values(errors?.rows[index] ?? {});
 
   return (
     <AppShell user={user} breadcrumbs={createTerminBreadcrumbs}>
       <FlowPage width="content" spacing="form">
-        <h1 className="kern-sr-only">Erstellen der Terminumfrage</h1>
         <Form method="post" className="create-termin__form" noValidate>
           {/* Pressing Enter in a field submits the first button, which has to be "Weiter". */}
           <button type="submit" name="intent" value="next" hidden tabIndex={-1} />
           {draft && <input type="hidden" name="appointmentId" value={draft.id} />}
           <section aria-labelledby="verhandlungsdaten" className="create-termin__section">
-            <KernHeading size="large" level={2} id="verhandlungsdaten">
-              Verhandlungsdaten
+            <KernHeading size="large" level={1} id="verhandlungsdaten">
+              Geben Sie die Verhandlungsdaten an
             </KernHeading>
             <KernFormInput
               id="aktenzeichen"
@@ -168,30 +184,96 @@ export default function CreateTermin() {
             />
           </section>
 
+          <section aria-labelledby="verfahrensbeteiligte" className="create-termin__section">
+            <div className="create-termin__intro">
+              <KernHeading size="medium" level={2} id="verfahrensbeteiligte">
+                Geben Sie alle Verfahrensbeteiligten an
+              </KernHeading>
+              <KernBody>
+                Personen ohne E-Mail-Adresse können Sie später mit einem Link zur Terminumfrage
+                einladen.
+              </KernBody>
+            </div>
+            <div className="create-termin__windows">
+              <KernTable
+                caption="Verfahrensbeteiligte"
+                hideCaption
+                striped={participants.length > 0}
+                className="create-termin__table"
+              >
+                <KernTableHead>
+                  <KernRow>
+                    <KernColumn>E-Mail-Adresse</KernColumn>
+                    <KernColumn>Name</KernColumn>
+                    <KernColumn variant="action">Aktionen</KernColumn>
+                  </KernRow>
+                </KernTableHead>
+                <KernTableBody>
+                  {participants.length === 0 ? (
+                    <EmptyRow>Sie haben keine Verfahrensbeteiligten angegeben.</EmptyRow>
+                  ) : (
+                    participants.map(({ id, email, name }) => {
+                      const label = `Person ${email ?? name}`;
+                      return (
+                        <KernRow key={id}>
+                          <KernCell>{email}</KernCell>
+                          <KernCell>{name}</KernCell>
+                          <KernCell variant="action">
+                            <div className="create-termin__actions-cell">
+                              <RowButton
+                                intent={`edit-person:${id}`}
+                                icon="edit"
+                                label={`${label} bearbeiten`}
+                              />
+                              <RowButton
+                                intent={`delete-person:${id}`}
+                                icon="delete"
+                                label={`${label} löschen`}
+                              />
+                            </div>
+                          </KernCell>
+                        </KernRow>
+                      );
+                    })
+                  )}
+                </KernTableBody>
+              </KernTable>
+              <AddButton
+                intent="add-person"
+                label="Person hinzufügen"
+                limit={participants.length >= MAX_PARTICIPANTS}
+                hint={`Sie können höchstens ${MAX_PARTICIPANTS} Personen angeben.`}
+                hintId="add-person-hint"
+              />
+            </div>
+          </section>
+
           <section aria-labelledby="zeitfenster" className="create-termin__section">
-            <KernHeading size="large" level={2} id="zeitfenster">
-              Geben Sie Ihre verfügbaren Zeitfenster an
+            <KernHeading size="medium" level={2} id="zeitfenster">
+              Zeitfenster
             </KernHeading>
 
             <div
               className={`create-termin__windows${errors?.slots ? " kern-fieldset--error" : ""}`}
             >
-              {slots.length > 0 && (
-                <KernTable
-                  caption="Zeitfenster"
-                  hideCaption
-                  striped
-                  className="create-termin__table"
-                >
-                  <KernTableHead>
-                    <KernRow>
-                      <KernColumn>Datum</KernColumn>
-                      <KernColumn>Uhrzeit</KernColumn>
-                      <KernColumn variant="action">Aktionen</KernColumn>
-                    </KernRow>
-                  </KernTableHead>
-                  <KernTableBody>
-                    {slots.map(({ id, date, time }, index) => {
+              <KernTable
+                caption="Zeitfenster"
+                hideCaption
+                striped={slots.length > 0}
+                className="create-termin__table"
+              >
+                <KernTableHead>
+                  <KernRow>
+                    <KernColumn>Datum</KernColumn>
+                    <KernColumn>Uhrzeit</KernColumn>
+                    <KernColumn variant="action">Aktionen</KernColumn>
+                  </KernRow>
+                </KernTableHead>
+                <KernTableBody>
+                  {slots.length === 0 ? (
+                    <EmptyRow>Sie haben keine Zeitfenster angegeben.</EmptyRow>
+                  ) : (
+                    slots.map(({ id, date, time }, index) => {
                       const label = `${date}, ${time}`;
                       const problems = rowErrors(index);
                       return (
@@ -207,17 +289,17 @@ export default function CreateTermin() {
                           </KernCell>
                           <KernCell variant="action">
                             <div className="create-termin__actions-cell">
-                              <SlotButton
+                              <RowButton
                                 intent={`edit-slot:${id}`}
                                 icon="edit"
                                 label={`Zeitfenster ${label} bearbeiten`}
                               />
-                              <SlotButton
+                              <RowButton
                                 intent={`copy-slot:${id}`}
                                 icon="content-copy"
                                 label={`Zeitfenster ${label} kopieren`}
                               />
-                              <SlotButton
+                              <RowButton
                                 intent={`delete-slot:${id}`}
                                 icon="delete"
                                 label={`Zeitfenster ${label} löschen`}
@@ -226,28 +308,17 @@ export default function CreateTermin() {
                           </KernCell>
                         </KernRow>
                       );
-                    })}
-                  </KernTableBody>
-                </KernTable>
-              )}
-
-              <KernButton
-                type="submit"
-                name="intent"
-                value="add-slot"
-                style="secondary"
-                className="create-termin__add"
-                disabled={atLimit}
-                aria-describedby={atLimit ? "add-hint" : undefined}
-              >
-                <KernIcon name="add" />
-                <KernLabel>Zeitfenster hinzufügen</KernLabel>
-              </KernButton>
-              {atLimit && (
-                <p className="kern-hint" id="add-hint">
-                  {`Sie können höchstens ${MAX_SLOTS} Zeitfenster angeben.`}
-                </p>
-              )}
+                    })
+                  )}
+                </KernTableBody>
+              </KernTable>
+              <AddButton
+                intent="add-slot"
+                label="Zeitfenster hinzufügen"
+                limit={slots.length >= MAX_SLOTS}
+                hint={`Sie können höchstens ${MAX_SLOTS} Zeitfenster angeben.`}
+                hintId="add-hint"
+              />
               {errors?.slots && <ErrorMessage id="slots-error">{errors.slots}</ErrorMessage>}
             </div>
           </section>
@@ -266,14 +337,55 @@ export default function CreateTermin() {
   );
 }
 
-function SlotButton({
+// The table keeps its header when it is empty and says so in a white row.
+function EmptyRow({ children }: Readonly<{ children: string }>) {
+  return (
+    <KernRow>
+      <KernCell colSpan={3} className="create-termin__empty">
+        {children}
+      </KernCell>
+    </KernRow>
+  );
+}
+
+function RowButton({
   intent,
   icon,
   label,
-}: Readonly<{ intent: string; icon: "edit" | "content-copy" | "delete"; label: string }>) {
+}: Readonly<{ intent: string; icon: KernIconName; label: string }>) {
   return (
     <KernButton type="submit" name="intent" value={intent} style="tertiary" aria-label={label}>
       <KernIcon name={icon} />
     </KernButton>
+  );
+}
+
+function AddButton({
+  intent,
+  label,
+  limit,
+  hint,
+  hintId,
+}: Readonly<{ intent: string; label: string; limit: boolean; hint: string; hintId: string }>) {
+  return (
+    <>
+      <KernButton
+        type="submit"
+        name="intent"
+        value={intent}
+        style="secondary"
+        className="create-termin__add"
+        disabled={limit}
+        aria-describedby={limit ? hintId : undefined}
+      >
+        <KernIcon name="add" />
+        <KernLabel>{label}</KernLabel>
+      </KernButton>
+      {limit && (
+        <p className="kern-hint" id={hintId}>
+          {hint}
+        </p>
+      )}
+    </>
   );
 }

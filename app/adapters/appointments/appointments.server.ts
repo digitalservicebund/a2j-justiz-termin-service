@@ -138,7 +138,8 @@ export async function deleteDraftSlot(
 }
 
 // Removes a draft that nothing was entered into, so that giving up leaves no empty entry in the
-// overview. A draft with an Aktenzeichen or a slot is kept. Returns whether a draft was removed.
+// overview. A draft with an Aktenzeichen, a time slot or a person is kept. Returns whether a draft
+// was removed.
 export async function deleteDraftIfEmpty(
   db: Kysely<Database>,
   userId: string,
@@ -154,6 +155,16 @@ export async function deleteDraftIfEmpty(
       eb.not(
         eb.exists(
           eb.selectFrom("time_slot").select("id").whereRef("appointment_id", "=", "appointment.id"),
+        ),
+      ),
+    )
+    .where((eb) =>
+      eb.not(
+        eb.exists(
+          eb
+            .selectFrom("participant")
+            .select("id")
+            .whereRef("appointment_id", "=", "appointment.id"),
         ),
       ),
     )

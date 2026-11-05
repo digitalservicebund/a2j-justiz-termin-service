@@ -37,7 +37,9 @@ type TimeSlotsTable = {
 type ParticipantsTable = {
   id: Generated<string>;
   appointment_id: string;
-  name: string;
+  // A person has a name, an e-mail address or both. Use displayName() to read "the name".
+  name: string | null;
+  email: string | null;
   type: LinkType;
   token: string | null;
   last_accessed_at: Date | string | null;

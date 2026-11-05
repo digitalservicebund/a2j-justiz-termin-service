@@ -8,3 +8,7 @@ export const slotHref = (id: string, slotId: string, copyOf?: string) =>
   `/overview/${encodeURIComponent(id)}/zeitfenster/${encodeURIComponent(slotId)}${
     copyOf ? `?kopie=${encodeURIComponent(copyOf)}` : ""
   }`;
+
+// A person of the proceeding. "neu" stands for one that does not exist yet.
+export const participantHref = (id: string, participantId: string) =>
+  `/overview/${encodeURIComponent(id)}/verfahrensbeteiligte/${encodeURIComponent(participantId)}`;

@@ -5,6 +5,7 @@ import {
   nextCalendarSequence,
   publishAppointment,
 } from "~/adapters/appointments/appointments.server";
+import { listParticipants } from "~/adapters/appointments/participants.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { getDb } from "~/database/database";
@@ -32,7 +33,7 @@ export async function loader({ request, params }: { request: Request } & Params)
     slots: appointment.slots.map(rangeToSlot),
   };
   if (!validateCreateTermin(values).success) throw redirect(draftHref(appointment.id));
-  return { user, values };
+  return { user, values, participants: await listParticipants(getDb(), user.id, appointment.id) };
 }
 
 // Tells the judge that the Terminumfrage is open. The appointment is published either way.
@@ -76,10 +77,10 @@ export async function action({ request, params }: { request: Request } & Params)
 }
 
 export default function CreateTerminConfirm() {
-  const { user, values } = useLoaderData<typeof loader>();
+  const { user, values, participants } = useLoaderData<typeof loader>();
   return (
     <AppShell user={user} breadcrumbs={createTerminBreadcrumbs}>
-      <CreateTerminReview values={values} />
+      <CreateTerminReview values={values} participants={participants} />
     </AppShell>
   );
 }

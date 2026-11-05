@@ -18,6 +18,11 @@ import CreateTerminConfirm, {
   action as confirmAction,
   loader as confirmLoader,
 } from "../create-termin.confirm";
+import CreateTerminParticipant, {
+  action as participantAction,
+  loader as participantLoader,
+} from "../create-termin.participant";
+import { MAX_PARTICIPANTS } from "../create-termin.participant.schema";
 import { ReviewPage } from "../create-termin.review";
 import { MAX_SLOTS } from "../create-termin.schema";
 import CreateTerminSlot, {
@@ -26,7 +31,14 @@ import CreateTerminSlot, {
 } from "../create-termin.slot";
 
 type Slot = { id: string; start: Date; end: Date };
-type Draft = { id: string; status: string; aktenzeichen: string; slots: Slot[] };
+type Person = { id: string; email: string | null; name: string | null };
+type Draft = {
+  id: string;
+  status: string;
+  aktenzeichen: string;
+  slots: Slot[];
+  participants: Person[];
+};
 
 const drafts = vi.hoisted(() => new Map<string, Draft>());
 
@@ -35,7 +47,7 @@ vi.mock("~/adapters/appointments/appointments.server", () => {
   let counter = 0;
   return {
     createDraftAppointment: vi.fn(async (_db, _userId, aktenzeichen: string) => {
-      drafts.set("abc", { id: "abc", status: "draft", aktenzeichen, slots: [] });
+      drafts.set("abc", { id: "abc", status: "draft", aktenzeichen, slots: [], participants: [] });
       return "abc";
     }),
     updateDraftAktenzeichen: vi.fn(async (_db, _userId, id: string, aktenzeichen: string) => {
@@ -63,7 +75,8 @@ vi.mock("~/adapters/appointments/appointments.server", () => {
     }),
     deleteDraftIfEmpty: vi.fn(async (_db, _userId, id: string) => {
       const draft = drafts.get(id);
-      if (!draft || draft.aktenzeichen.trim() !== "" || draft.slots.length > 0) return false;
+      if (!draft || draft.aktenzeichen.trim() !== "") return false;
+      if (draft.slots.length > 0 || draft.participants.length > 0) return false;
       drafts.delete(id);
       return true;
     }),
@@ -78,6 +91,30 @@ vi.mock("~/adapters/appointments/appointments.server", () => {
     }),
     nextCalendarSequence: vi.fn(async () => 1),
     publishAppointment: vi.fn(async () => true),
+  };
+});
+vi.mock("~/adapters/appointments/participants.server", () => {
+  let counter = 0;
+  return {
+    listParticipants: vi.fn(async (_db, _userId, id: string) => drafts.get(id)?.participants ?? []),
+    addDraftParticipant: vi.fn(async (_db, _userId, id: string, person: Omit<Person, "id">) => {
+      const draft = drafts.get(id);
+      draft?.participants.push({ id: `person-${(counter += 1)}`, ...person });
+      return Boolean(draft);
+    }),
+    updateDraftParticipant: vi.fn(
+      async (_db, _userId, id: string, personId: string, person: Omit<Person, "id">) => {
+        const found = drafts.get(id)?.participants.find((candidate) => candidate.id === personId);
+        if (found) Object.assign(found, person);
+        return Boolean(found);
+      },
+    ),
+    deleteDraftParticipant: vi.fn(async (_db, _userId, id: string, personId: string) => {
+      const draft = drafts.get(id);
+      const before = draft?.participants.length ?? 0;
+      if (draft) draft.participants = draft.participants.filter((p) => p.id !== personId);
+      return Boolean(draft) && draft!.participants.length < before;
+    }),
   };
 });
 vi.mock("~/lib/email/send-termin-created-email", () => ({ sendTerminCreatedEmail: vi.fn() }));
@@ -103,8 +140,14 @@ function addSlot(day: number, hour: number, endHour: number) {
   });
 }
 
-function seedDraft(aktenzeichen = "574 C 65412/26", slots: Array<[number, number, number]> = []) {
-  drafts.set("abc", { id: "abc", status: "draft", aktenzeichen, slots: [] });
+function seedDraft(
+  aktenzeichen = "574 C 65412/26",
+  slots: Array<[number, number, number]> = [],
+  participants: Person[] = [],
+) {
+  // Copies, so that a test that edits a person cannot change the fixture for the next one.
+  const copies = participants.map((person) => ({ ...person }));
+  drafts.set("abc", { id: "abc", status: "draft", aktenzeichen, slots: [], participants: copies });
   for (const [day, hour, endHour] of slots) addSlot(day, hour, endHour);
 }
 
@@ -121,6 +164,12 @@ function renderPage(entry = "/overview/new") {
       Component: CreateTerminSlot,
       action: slotAction,
       loader: slotLoader,
+    },
+    {
+      path: "/overview/:appointmentId/verfahrensbeteiligte/:participantId",
+      Component: CreateTerminParticipant,
+      action: participantAction,
+      loader: participantLoader,
     },
     {
       path: "/overview/:appointmentId/confirm",
@@ -158,14 +207,30 @@ async function fillSlot(day: string, start: [string, string], end: [string, stri
   await type("Ende", "Minute", end[1]);
 }
 
-const rows = () => within(screen.getByRole("table")).getAllByRole("row").slice(1);
+const tableRows = (name: string) =>
+  within(screen.getByRole("table", { name })).getAllByRole("row").slice(1);
+const rows = () => tableRows("Zeitfenster");
+const personRows = () => tableRows("Verfahrensbeteiligte");
 
 describe("CreateTermin form", () => {
-  it("starts with the Aktenzeichen, no table and a button to add a time slot", async () => {
+  it("starts with the Aktenzeichen, empty tables and buttons to add a person and a slot", async () => {
     renderPage();
 
-    expect(await screen.findByRole("textbox", { name: "Aktenzeichen" })).toHaveValue("");
-    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Geben Sie die Verhandlungsdaten an" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Aktenzeichen" })).toHaveValue("");
+    expect(
+      screen.getByRole("heading", { name: "Geben Sie alle Verfahrensbeteiligten an" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Zeitfenster" })).toBeInTheDocument();
+    expect(personRows().map((row) => row.textContent)).toEqual([
+      "Sie haben keine Verfahrensbeteiligten angegeben.",
+    ]);
+    expect(rows().map((row) => row.textContent)).toEqual([
+      "Sie haben keine Zeitfenster angegeben.",
+    ]);
+    expect(screen.getByRole("button", { name: "Person hinzufügen" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Zeitfenster hinzufügen" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Abbrechen" })).toBeInTheDocument();
   });
@@ -177,7 +242,7 @@ describe("CreateTermin form", () => {
     ]);
     renderPage("/overview/new?entwurf=abc");
 
-    await screen.findByRole("table");
+    await screen.findByRole("table", { name: "Zeitfenster" });
     expect(screen.getByRole("textbox", { name: "Aktenzeichen" })).toHaveValue("A 1");
     expect(rows().map((row) => row.textContent)).toEqual([
       expect.stringContaining("5. Januar 209910:00 bis 14:00"),
@@ -219,7 +284,7 @@ describe("CreateTermin form", () => {
     await fillSlot("7", ["13", "0"], ["14", "0"]);
     await user().click(screen.getByRole("button", { name: "Speichern" }));
 
-    await screen.findByRole("table");
+    await screen.findByRole("table", { name: "Zeitfenster" });
     expect(rows()).toHaveLength(1);
     expect(within(rows()[0]!).getByText("7. Januar 2099")).toBeInTheDocument();
   });
@@ -241,7 +306,7 @@ describe("CreateTermin form", () => {
     await fillSlot("6", ["9", "0"], ["10", "0"]);
     await user().click(screen.getByRole("button", { name: "Speichern" }));
 
-    await screen.findByRole("table");
+    await screen.findByRole("table", { name: "Zeitfenster" });
     expect(rows()).toHaveLength(2);
   });
 
@@ -324,6 +389,216 @@ describe("CreateTermin form", () => {
 
   it("keeps a draft with an Aktenzeichen when cancelling", async () => {
     seedDraft("A 1");
+    renderPage("/overview/new?entwurf=abc");
+
+    await user().click(await screen.findByRole("button", { name: "Abbrechen" }));
+
+    expect(await screen.findByRole("heading", { name: "Übersicht" })).toBeInTheDocument();
+    expect(drafts.has("abc")).toBe(true);
+  });
+});
+
+async function addPerson(email: string, name = "") {
+  const typist = user();
+  await typist.click(await screen.findByRole("button", { name: "Person hinzufügen" }));
+  await screen.findByRole("heading", { name: "Wie lautet die E-Mail-Adresse der Person?" });
+  if (email) await typist.type(screen.getByRole("textbox", { name: "E-Mail-Adresse" }), email);
+  if (name) await typist.type(screen.getByRole("textbox", { name: /^Name/ }), name);
+  await typist.click(screen.getByRole("button", { name: "Speichern" }));
+}
+
+describe("CreateTermin participants", () => {
+  const personA = { id: "a", email: "person.a@example.com", name: null };
+  const personB = { id: "b", email: null, name: "Person B" };
+
+  it("lists the people with their address and name, and edit and delete actions", async () => {
+    seedDraft("A 1", [], [personA, personB]);
+    renderPage("/overview/new?entwurf=abc");
+
+    await screen.findByRole("table", { name: "Verfahrensbeteiligte" });
+    expect(personRows().map((row) => row.textContent)).toEqual([
+      expect.stringContaining("person.a@example.com"),
+      expect.stringContaining("Person B"),
+    ]);
+    const first = within(personRows()[0]!);
+    expect(
+      first.getByRole("button", { name: "Person person.a@example.com bearbeiten" }),
+    ).toBeEnabled();
+    expect(
+      first.getByRole("button", { name: "Person person.a@example.com löschen" }),
+    ).toBeEnabled();
+    expect(first.queryByRole("button", { name: /kopieren/ })).not.toBeInTheDocument();
+    expect(
+      within(personRows()[1]!).getByRole("button", { name: "Person Person B bearbeiten" }),
+    ).toBeEnabled();
+  });
+
+  it("adds a person on a page of its own and keeps the typed Aktenzeichen", async () => {
+    renderPage();
+    await user().type(await screen.findByRole("textbox", { name: "Aktenzeichen" }), "574 C 1/26");
+
+    await addPerson("Person.C@example.com", "Person C");
+
+    expect(await screen.findByRole("textbox", { name: "Aktenzeichen" })).toHaveValue("574 C 1/26");
+    expect(personRows()).toHaveLength(1);
+    expect(within(personRows()[0]!).getByText("person.c@example.com")).toBeInTheDocument();
+    expect(within(personRows()[0]!).getByText("Person C")).toBeInTheDocument();
+  });
+
+  it("adds a person who only has a name", async () => {
+    seedDraft("A 1");
+    renderPage("/overview/new?entwurf=abc");
+
+    await addPerson("", "Person C");
+
+    await screen.findByRole("table", { name: "Verfahrensbeteiligte" });
+    expect(personRows().map((row) => row.textContent)).toEqual(["Person C"]);
+  });
+
+  it("lets several people share an address and a name", async () => {
+    seedDraft("A 1", [], [personA]);
+    renderPage("/overview/new?entwurf=abc");
+
+    await addPerson("person.a@example.com", "Person A");
+    await addPerson("person.a@example.com", "Person A");
+
+    await screen.findByRole("table", { name: "Verfahrensbeteiligte" });
+    expect(personRows()).toHaveLength(3);
+  });
+
+  it("explains a missing address in place and keeps what was typed", async () => {
+    seedDraft("A 1");
+    renderPage("/overview/abc/verfahrensbeteiligte/neu");
+    await screen.findByRole("heading", { name: "Wie lautet die E-Mail-Adresse der Person?" });
+
+    await user().click(screen.getByRole("button", { name: "Speichern" }));
+
+    expect(await screen.findByText("Geben Sie eine E-Mail-Adresse an.")).toBeVisible();
+    expect(screen.getByRole("textbox", { name: "E-Mail-Adresse" })).toBeInvalid();
+    expect(drafts.get("abc")!.participants).toHaveLength(0);
+
+    await user().type(screen.getByRole("textbox", { name: "E-Mail-Adresse" }), "nope");
+    await user().click(screen.getByRole("button", { name: "Speichern" }));
+    expect(await screen.findByText("Geben Sie eine gültige E-Mail-Adresse an.")).toBeVisible();
+    expect(screen.getByRole("textbox", { name: "E-Mail-Adresse" })).toHaveValue("nope");
+  });
+
+  it("describes the name field and marks it as optional", async () => {
+    seedDraft("A 1");
+    renderPage("/overview/abc/verfahrensbeteiligte/neu");
+
+    const name = await screen.findByRole("textbox", { name: /^Name/ });
+    expect(name).toHaveAccessibleName("Name - Optional");
+    expect(name).toHaveAccessibleDescription(/keine persönliche E-Mail-Adresse/);
+  });
+
+  it("opens a person for editing with the saved values and replaces them", async () => {
+    seedDraft("A 1", [], [personA]);
+    renderPage("/overview/new?entwurf=abc");
+    await user().click(
+      await screen.findByRole("button", { name: "Person person.a@example.com bearbeiten" }),
+    );
+
+    const email = await screen.findByRole("textbox", { name: "E-Mail-Adresse" });
+    expect(email).toHaveValue("person.a@example.com");
+    await user().clear(email);
+    await user().type(email, "person.d@example.com");
+    await user().type(screen.getByRole("textbox", { name: /^Name/ }), "Person D");
+    await user().click(screen.getByRole("button", { name: "Speichern" }));
+
+    await screen.findByRole("table", { name: "Verfahrensbeteiligte" });
+    expect(personRows()).toHaveLength(1);
+    expect(personRows()[0]!.textContent).toContain("person.d@example.com");
+    expect(personRows()[0]!.textContent).toContain("Person D");
+  });
+
+  it("deletes a person at once, down to the empty state", async () => {
+    seedDraft("A 1", [], [personA]);
+    renderPage("/overview/new?entwurf=abc");
+
+    await user().click(
+      await screen.findByRole("button", { name: "Person person.a@example.com löschen" }),
+    );
+
+    expect(
+      await screen.findByText("Sie haben keine Verfahrensbeteiligten angegeben."),
+    ).toBeVisible();
+    expect(drafts.get("abc")!.participants).toHaveLength(0);
+  });
+
+  it("goes back from the page of a person without saving", async () => {
+    seedDraft("A 1");
+    renderPage("/overview/abc/verfahrensbeteiligte/neu");
+    await user().type(
+      await screen.findByRole("textbox", { name: "E-Mail-Adresse" }),
+      "a@example.com",
+    );
+
+    await user().click(screen.getByRole("link", { name: "Abbrechen" }));
+
+    expect(await screen.findByRole("textbox", { name: "Aktenzeichen" })).toHaveValue("A 1");
+    expect(drafts.get("abc")!.participants).toHaveLength(0);
+  });
+
+  it("continues to the review without any person", async () => {
+    seedDraft("A 1", [
+      [5, 9, 10],
+      [6, 9, 10],
+    ]);
+    renderPage("/overview/new?entwurf=abc");
+
+    await user().click(await screen.findByRole("button", { name: "Weiter" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "Bitte überprüfen Sie Ihre Angaben" }),
+    ).toBeInTheDocument();
+    const section = screen.getByRole("group", { name: "Verfahrensbeteiligte" });
+    expect(
+      within(section).getByText("Sie haben keine Verfahrensbeteiligten angegeben."),
+    ).toBeVisible();
+  });
+
+  it("lists the people in the review", async () => {
+    seedDraft(
+      "A 1",
+      [
+        [5, 9, 10],
+        [6, 9, 10],
+      ],
+      [{ ...personA, name: "Person A" }, personB],
+    );
+    renderPage("/overview/new?entwurf=abc");
+
+    await user().click(await screen.findByRole("button", { name: "Weiter" }));
+
+    const section = await screen.findByRole("group", { name: "Verfahrensbeteiligte" });
+    expect(
+      within(section)
+        .getAllByRole("listitem")
+        .map((item) => item.textContent),
+    ).toEqual(["person.a@example.com, Person A", "Person B"]);
+  });
+
+  it("stops offering new people at the maximum", async () => {
+    seedDraft(
+      "A 1",
+      [],
+      Array.from({ length: MAX_PARTICIPANTS }, (_, index) => ({
+        id: `p${index}`,
+        email: `person.${index}@example.com`,
+        name: null,
+      })),
+    );
+    renderPage("/overview/new?entwurf=abc");
+
+    expect(await screen.findByRole("button", { name: "Person hinzufügen" })).toBeDisabled();
+    expect(
+      screen.getByText(`Sie können höchstens ${MAX_PARTICIPANTS} Personen angeben.`),
+    ).toBeVisible();
+  });
+
+  it("keeps a draft that only has a person when cancelling", async () => {
+    seedDraft("", [], [personA]);
     renderPage("/overview/new?entwurf=abc");
 
     await user().click(await screen.findByRole("button", { name: "Abbrechen" }));

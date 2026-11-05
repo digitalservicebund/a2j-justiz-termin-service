@@ -2,7 +2,7 @@ import type { Page } from "@playwright/test";
 import type { Kysely } from "kysely";
 
 import type { Database } from "../app/database/types.ts";
-import { BASE_PATH, expect, readMail, signIn, test } from "./fixtures.ts";
+import { BASE_PATH, expect, messages, readMail, signIn, test } from "./fixtures.ts";
 
 const TOO_FEW = "Geben Sie mindestens zwei Zeitfenster an.";
 
@@ -56,7 +56,9 @@ test.beforeEach(async ({ page, users }) => {
   judgeEmail = judge.email;
   await signIn(page, judge);
   await page.goto(`${BASE_PATH}/overview/new`);
-  await expect(page.getByRole("heading", { name: "Verhandlungsdaten" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Geben Sie die Verhandlungsdaten an" }),
+  ).toBeVisible();
 });
 
 const groupField = (page: Page, group: string, label: string) =>
@@ -83,7 +85,19 @@ async function addSlot(page: Page, window: Window) {
   await expect(page).toHaveURL(/\/overview\/new\?entwurf=/);
 }
 
-const slotRows = (page: Page) => page.locator("tbody tr");
+const slotRows = (page: Page) =>
+  page.getByRole("table", { name: "Zeitfenster" }).locator("tbody tr");
+const personRows = (page: Page) =>
+  page.getByRole("table", { name: "Verfahrensbeteiligte" }).locator("tbody tr");
+
+// Adds a person on the page of its own, the way a user does without JavaScript.
+async function addPerson(page: Page, { email = "", name = "" }: { email?: string; name?: string }) {
+  await page.getByRole("button", { name: "Person hinzufügen" }).click();
+  await expect(page).toHaveURL(/\/verfahrensbeteiligte\/neu$/);
+  if (email) await page.getByRole("textbox", { name: "E-Mail-Adresse" }).fill(email);
+  if (name) await page.getByRole("textbox", { name: /^Name/ }).fill(name);
+  await page.getByRole("button", { name: "Speichern" }).click();
+}
 
 // A draft that lives in the database only, for tests that need one in a given state.
 async function seedDraft(db: Kysely<Database>, aktenzeichen: string, slots: number) {
@@ -111,6 +125,9 @@ async function seedDraft(db: Kysely<Database>, aktenzeichen: string, slots: numb
 }
 
 test("a richter creates a Terminumfrage with four time slots next week", async ({ page, db }) => {
+  // Both tables start empty and say so.
+  await expect(personRows(page)).toHaveText(["Sie haben keine Verfahrensbeteiligten angegeben."]);
+  await expect(slotRows(page)).toHaveText(["Sie haben keine Zeitfenster angegeben."]);
   await page.getByRole("textbox", { name: "Aktenzeichen" }).fill("574 C 65412/26");
 
   // Every slot has a page of its own, and the Aktenzeichen survives the trips there and back.
@@ -468,6 +485,211 @@ test("an incomplete draft cannot be reviewed or published", async ({ page, db })
     .where("id", "=", id)
     .executeTakeFirstOrThrow();
   expect(status).toBe("draft");
+});
+
+test("people can be added, edited and deleted on pages of their own", async ({ page, db }) => {
+  await page.getByRole("textbox", { name: "Aktenzeichen" }).fill("574 C 65412/26");
+
+  await addPerson(page, { email: " Person.A@Example.com ", name: "Person A" });
+  await expect(page.getByRole("textbox", { name: "Aktenzeichen" })).toHaveValue("574 C 65412/26");
+  await expect(personRows(page)).toHaveCount(1);
+  await expect(personRows(page).first()).toContainText("person.a@example.com");
+  await expect(personRows(page).first()).toContainText("Person A");
+  const id = appointmentId(page);
+
+  // Every person gets a personal link, but nobody is e-mailed before or after.
+  const [stored] = await db
+    .selectFrom("participant")
+    .select(["email", "name", "type", "token"])
+    .where("appointment_id", "=", id)
+    .execute();
+  expect(stored).toMatchObject({
+    email: "person.a@example.com",
+    name: "Person A",
+    type: "individual",
+  });
+  expect(stored!.token).toMatch(/^[\w-]{32}$/);
+
+  // Edit: the page starts with the saved values, and saving replaces them.
+  await personRows(page)
+    .first()
+    .getByRole("button", { name: /bearbeiten$/ })
+    .click();
+  await expect(page).toHaveURL(new RegExp(`/overview/${id}/verfahrensbeteiligte/(?!neu)[^/]+$`));
+  await expect(page.getByRole("textbox", { name: "E-Mail-Adresse" })).toHaveValue(
+    "person.a@example.com",
+  );
+  await page.getByRole("textbox", { name: "E-Mail-Adresse" }).fill("person.d@example.com");
+  await page.getByRole("textbox", { name: /^Name/ }).fill("");
+  await page.getByRole("button", { name: "Speichern" }).click();
+  await expect(personRows(page)).toHaveCount(1);
+  await expect(personRows(page).first()).toContainText("person.d@example.com");
+  await expect(personRows(page).first()).not.toContainText("Person A");
+  const [edited] = await db
+    .selectFrom("participant")
+    .select(["email", "name", "token"])
+    .where("appointment_id", "=", id)
+    .execute();
+  expect(edited).toEqual({ email: "person.d@example.com", name: null, token: stored!.token });
+
+  // Delete: gone at once, back to the empty state.
+  await personRows(page)
+    .first()
+    .getByRole("button", { name: /löschen$/ })
+    .click();
+  await expect(page).toHaveURL(new RegExp(`/overview/new\\?entwurf=${id}$`));
+  await expect(personRows(page)).toHaveText(["Sie haben keine Verfahrensbeteiligten angegeben."]);
+  expect(
+    await db.selectFrom("participant").select("id").where("appointment_id", "=", id).execute(),
+  ).toEqual([]);
+});
+
+test("a person without an e-mail address needs a name, and people may share both", async ({
+  page,
+  db,
+}) => {
+  await addPerson(page, { name: "Person B" });
+  await expect(personRows(page)).toHaveCount(1);
+  await addPerson(page, { email: "office@example.com", name: "Person B" });
+  await addPerson(page, { email: "office@example.com", name: "Person B" });
+  await expect(personRows(page)).toHaveCount(3);
+
+  const rows = await db
+    .selectFrom("participant")
+    .select(["email", "name"])
+    .where("appointment_id", "=", appointmentId(page))
+    .orderBy("created_at")
+    .execute();
+  expect(rows).toEqual([
+    { email: null, name: "Person B" },
+    { email: "office@example.com", name: "Person B" },
+    { email: "office@example.com", name: "Person B" },
+  ]);
+});
+
+test("the page of a person flags what is wrong in place and saves nothing", async ({
+  page,
+  db,
+}) => {
+  await page.getByRole("button", { name: "Person hinzufügen" }).click();
+  const url = page.url();
+
+  await page.getByRole("button", { name: "Speichern" }).click();
+
+  await expect(page.getByText("Geben Sie eine E-Mail-Adresse an.")).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "E-Mail-Adresse" })).toHaveAttribute(
+    "aria-invalid",
+    "true",
+  );
+  await expect(page).toHaveURL(url);
+
+  await page.getByRole("textbox", { name: "E-Mail-Adresse" }).fill("person.a");
+  await page.getByRole("textbox", { name: /^Name/ }).fill("Person A");
+  await page.getByRole("button", { name: "Speichern" }).click();
+  await expect(page.getByText("Geben Sie eine gültige E-Mail-Adresse an.")).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "E-Mail-Adresse" })).toHaveValue("person.a");
+  await expect(page.getByRole("textbox", { name: /^Name/ })).toHaveValue("Person A");
+  expect(
+    await db
+      .selectFrom("participant")
+      .select("id")
+      .where("appointment_id", "=", appointmentId(page))
+      .execute(),
+  ).toEqual([]);
+
+  // The name field is optional and explains itself.
+  await expect(page.getByRole("textbox", { name: "Name - Optional" })).toHaveAccessibleDescription(
+    /keine persönliche E-Mail-Adresse/,
+  );
+});
+
+test("the form stops offering people at twenty", async ({ page, db }) => {
+  const id = await seedDraft(db, "574 C 65412/26", 0);
+  await db
+    .insertInto("participant")
+    .values(
+      Array.from({ length: 20 }, (_, index) => ({
+        appointment_id: id,
+        email: `person.${index}@example.com`,
+        type: "individual" as const,
+        token: `token-${id}-${index}`,
+      })),
+    )
+    .execute();
+
+  await page.goto(`${BASE_PATH}/overview/new?entwurf=${id}`);
+
+  await expect(personRows(page)).toHaveCount(20);
+  await expect(page.getByRole("button", { name: "Person hinzufügen" })).toBeDisabled();
+  await expect(page.getByText("Sie können höchstens 20 Personen angeben.")).toBeVisible();
+});
+
+test("the people are reviewed, published with personal links and never e-mailed", async ({
+  page,
+  db,
+  users,
+}) => {
+  const personEmail = users.email();
+  await page.getByRole("textbox", { name: "Aktenzeichen" }).fill("574 C 65412/26");
+  await addPerson(page, { email: personEmail });
+  await addPerson(page, { name: "Person B" });
+  await addSlot(page, nextWeek[0]!);
+  await addSlot(page, nextWeek[1]!);
+  const id = appointmentId(page);
+
+  await page.getByRole("button", { name: "Weiter" }).click();
+  const people = page.getByRole("group", { name: "Verfahrensbeteiligte", exact: true });
+  await expect(people.getByRole("listitem")).toHaveText([personEmail, "Person B"]);
+  await page.getByRole("button", { name: "Terminumfrage erstellen" }).click();
+  await expect(page).toHaveURL(new RegExp(`/overview/${id}/created$`));
+
+  const stored = await db
+    .selectFrom("participant")
+    .select(["email", "type", "token"])
+    .where("appointment_id", "=", id)
+    .orderBy("created_at")
+    .execute();
+  expect(stored.map(({ email, type }) => ({ email, type }))).toEqual([
+    { email: personEmail, type: "individual" },
+    { email: null, type: "individual" },
+  ]);
+  expect(new Set(stored.map(({ token }) => token)).size).toBe(2);
+
+  // Only the judge is told; the people get no e-mail (the invitations are not sent yet).
+  await readMail(page.request, judgeEmail, "Terminumfrage erstellt: Wir warten auf Rückmeldungen");
+  expect(await messages(page.request, personEmail)).toEqual([]);
+
+  // The personal link of a person who only has an address knows them, so the judge is told by
+  // that address.
+  await page.goto(`${BASE_PATH}/umfrage/${stored[0]!.token}`);
+  await expect(page.getByRole("textbox", { name: "Ihr Name" })).toHaveCount(0);
+  await page
+    .getByRole("checkbox", { name: /^Verfügbar/ })
+    .first()
+    .check();
+  await page.getByRole("button", { name: "Weiter" }).click();
+  await page.getByRole("button", { name: "Terminumfrage abschließen" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Danke für das Angeben Ihrer Verfügbarkeiten.",
+  );
+  const answer = await readMail(page.request, judgeEmail, "Neue Antwort auf Ihre Terminumfrage");
+  expect(answer.text).toContain(`${personEmail} hat auf Ihre Terminumfrage geantwortet.`);
+});
+
+test("only the richter who created the draft can open the page of a person", async ({
+  page,
+  users,
+}) => {
+  await page.getByRole("button", { name: "Person hinzufügen" }).click();
+  const path = new URL(page.url()).pathname;
+
+  await page.context().clearCookies();
+  await signIn(page, await users.create({ roles: ["richter"] }));
+  expect((await page.goto(path))?.status()).toBe(404);
+
+  await page.context().clearCookies();
+  await signIn(page, await users.create({ roles: ["klaeger"] }));
+  expect((await page.goto(path))?.status()).toBe(403);
 });
 
 test("only a richter can open the slot page", async ({ page, users }) => {

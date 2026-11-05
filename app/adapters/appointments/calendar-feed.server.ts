@@ -4,6 +4,7 @@ import { z } from "zod";
 import { confirmedWindow, rowToRange, type TimeRange } from "../../core/domain/time/time-range.ts";
 import type { Database } from "../../database/types.ts";
 import type { AppointmentSlot } from "./appointments.server.ts";
+import { participantName } from "./participants.server.ts";
 import type { SlotResponse } from "./survey.server.ts";
 
 export type FeedAppointment = {
@@ -64,7 +65,7 @@ export async function readCalendarFeed(
       "participant_response.slot_id",
       "participant_response.status",
       "participant.id as participantId",
-      "participant.name",
+      participantName,
     ])
     .where("participant.appointment_id", "in", ids)
     .orderBy("participant.created_at")

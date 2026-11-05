@@ -30,6 +30,18 @@ describe("KernFormInput", () => {
     expect(container.firstChild).toHaveClass("kern-form-input--error");
   });
 
+  it("shows a hint and links it to the input, together with an error", () => {
+    const { rerender } = render(<KernFormInput id="field" label="Name" hint="Optional." />);
+    expect(screen.getByLabelText("Name")).toHaveAttribute("aria-describedby", "field-hint");
+    expect(screen.getByText("Optional.")).toHaveAttribute("id", "field-hint");
+
+    rerender(<KernFormInput id="field" label="Name" hint="Optional." error="Required" />);
+    expect(screen.getByLabelText("Name")).toHaveAttribute(
+      "aria-describedby",
+      "field-hint field-error",
+    );
+  });
+
   it("marks the input invalid without a message", () => {
     render(<KernFormInput id="field" label="Name" invalid />);
     const input = screen.getByLabelText("Name");

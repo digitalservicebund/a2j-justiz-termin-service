@@ -23,3 +23,8 @@
 .flow-page .kern-form-input__input {
   background-color: var(--kern-color-layout-background-default);
 }
+
+/* An input with a problem turns pink, on the white surface too. */
+.flow-page .kern-form-input__input--error {
+  background-color: var(--kern-color-feedback-danger-background);
+}
