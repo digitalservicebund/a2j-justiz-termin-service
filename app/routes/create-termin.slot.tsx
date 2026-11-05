@@ -135,7 +135,10 @@ export default function CreateTerminSlot() {
         {fields.map(({ field, label, maxLength }, position) => (
           <Fragment key={field}>
             {position > 0 && (
-              <span className="create-termin-slot__separator" aria-hidden="true">
+              <span
+                className={`create-termin-slot__separator${dots ? "" : " create-termin-slot__separator--colon"}`}
+                aria-hidden="true"
+              >
                 {dots ? "." : ":"}
               </span>
             )}

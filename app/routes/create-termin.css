@@ -129,9 +129,20 @@
   width: 100%;
 }
 
+/* The column title and the buttons are centered on each other, as in the design. */
+.create-termin__table .kern-table__header--action,
+.create-termin__table .kern-table__cell--action {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.create-termin__table .kern-table__header--action {
+  text-align: center;
+}
+
 .create-termin__actions-cell {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   gap: var(--kern-metric-space-small);
 }
 
