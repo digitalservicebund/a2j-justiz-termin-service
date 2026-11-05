@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { formatCalendarDate } from "~/core/domain/time/format";
 import { berlinDay } from "~/core/domain/time/time-zone";
 import { checkWallClock, type WallClockKind } from "~/core/domain/time/wall-clock";
 
@@ -19,6 +20,9 @@ export const messages = {
   repeatedTime: "Diese Uhrzeit kommt wegen der Zeitumstellung zweimal vor. Wählen Sie eine andere.",
   overlap: (otherRow: number) =>
     `Dieses Zeitfenster überschneidet sich mit Zeitfenster ${otherRow}.`,
+  // On the page of a single time slot there is no row number to point to.
+  overlapWith: (when: string) =>
+    `Dieses Zeitfenster überschneidet sich mit dem Zeitfenster ${when}.`,
   tooFewSlots: "Geben Sie mindestens zwei Zeitfenster an.",
   tooManySlots: `Geben Sie höchstens ${MAX_SLOTS} Zeitfenster an.`,
 };
@@ -111,6 +115,43 @@ function timeProblem(date: string, minutes: number): string | null {
 
 type CompleteSlot = { index: number; date: string; start: number; end: number };
 
+type SlotIssue = { group: SlotErrorGroup; message: string };
+
+// Everything that is wrong with one filled-in slot, and its parsed parts when nothing is.
+function checkSlot(
+  slot: SlotInput,
+  now: Date,
+): { issues: SlotIssue[]; parsed?: { date: string; start: number; end: number } } {
+  const issues: SlotIssue[] = [];
+  const add = (group: SlotErrorGroup, message: string) => issues.push({ group, message });
+
+  const date = parseDate(slot);
+  const start = parseMinutes(slot.startHour, slot.startMinute);
+  const end = parseMinutes(slot.endHour, slot.endMinute);
+
+  if (date === null) add("date", messages.date);
+  else if (date < berlinDay(now)) add("date", messages.pastDate);
+  if (start === null) add("start", messages.start);
+  else if (date !== null) {
+    const problem = timeProblem(date, start);
+    if (problem) add("start", problem);
+  }
+  if (end === null) add("end", messages.end);
+  else if (date !== null) {
+    const problem = timeProblem(date, end);
+    if (problem) add("end", problem);
+  }
+  if (start !== null && end !== null && end <= start) add("range", messages.range);
+
+  if (issues.length === 0 && date !== null && start !== null && end !== null) {
+    return { issues, parsed: { date, start, end } };
+  }
+  return { issues };
+}
+
+const overlaps = (a: Omit<CompleteSlot, "index">, b: Omit<CompleteSlot, "index">) =>
+  a.date === b.date && a.start < b.end && b.start < a.end;
+
 function createTerminSchema(now: Date = new Date()) {
   return z
     .object({
@@ -123,49 +164,28 @@ function createTerminSchema(now: Date = new Date()) {
     })
     .superRefine(({ slots }, ctx) => {
       let rowErrors = 0;
-      const addRowIssue = (index: number, group: SlotErrorGroup, message: string) => {
-        rowErrors += 1;
-        ctx.addIssue({ code: "custom", path: ["slots", index, group], message });
-      };
-
       const complete: CompleteSlot[] = [];
       slots.forEach((slot, index) => {
         if (isEmptySlot(slot)) return;
-        const errorsBefore = rowErrors;
-
-        const date = parseDate(slot);
-        const start = parseMinutes(slot.startHour, slot.startMinute);
-        const end = parseMinutes(slot.endHour, slot.endMinute);
-
-        if (date === null) addRowIssue(index, "date", messages.date);
-        else if (date < berlinDay(now)) addRowIssue(index, "date", messages.pastDate);
-        if (start === null) addRowIssue(index, "start", messages.start);
-        else if (date !== null) {
-          const problem = timeProblem(date, start);
-          if (problem) addRowIssue(index, "start", problem);
+        const { issues, parsed } = checkSlot(slot, now);
+        for (const { group, message } of issues) {
+          rowErrors += 1;
+          ctx.addIssue({ code: "custom", path: ["slots", index, group], message });
         }
-        if (end === null) addRowIssue(index, "end", messages.end);
-        else if (date !== null) {
-          const problem = timeProblem(date, end);
-          if (problem) addRowIssue(index, "end", problem);
-        }
-        if (start !== null && end !== null && end <= start) {
-          addRowIssue(index, "range", messages.range);
-        }
-
-        if (rowErrors === errorsBefore && date !== null && start !== null && end !== null) {
-          complete.push({ index, date, start, end });
-        }
+        if (parsed) complete.push({ index, ...parsed });
       });
 
       // Windows that merely touch (one ends when the next starts) are fine.
       complete.forEach((slot, position) => {
-        const earlier = complete
-          .slice(0, position)
-          .find(
-            (other) => other.date === slot.date && other.start < slot.end && slot.start < other.end,
-          );
-        if (earlier) addRowIssue(slot.index, "overlap", messages.overlap(earlier.index + 1));
+        const earlier = complete.slice(0, position).find((other) => overlaps(other, slot));
+        if (earlier) {
+          rowErrors += 1;
+          ctx.addIssue({
+            code: "custom",
+            path: ["slots", slot.index, "overlap"],
+            message: messages.overlap(earlier.index + 1),
+          });
+        }
       });
 
       if (slots.length > MAX_SLOTS) {
@@ -177,6 +197,14 @@ function createTerminSchema(now: Date = new Date()) {
     });
 }
 
+// Saving a draft only needs the Aktenzeichen to fit; "Weiter" also needs it to be filled in.
+export function aktenzeichenProblem(value: string, { required }: { required: boolean }) {
+  const trimmed = value.trim();
+  if (trimmed.length > MAX_AKTENZEICHEN_LENGTH) return messages.aktenzeichenTooLong;
+  if (required && trimmed.length === 0) return messages.aktenzeichenRequired;
+  return undefined;
+}
+
 export type CreateTerminValues = { aktenzeichen: string; slots: SlotInput[] };
 
 export type CreateTerminErrors = {
@@ -186,23 +214,13 @@ export type CreateTerminErrors = {
   rows: Record<number, Partial<Record<SlotErrorGroup, string>>>;
 };
 
-const slotFieldKey = /^slots\.(\d+)\.(\w+)$/;
-
-export function parseCreateTerminForm(form: FormData): CreateTerminValues {
-  const rows = new Map<number, SlotInput>();
-  for (const [key, value] of form.entries()) {
-    const match = slotFieldKey.exec(key);
-    if (!match || typeof value !== "string") continue;
-    const field = match[2] as SlotField;
-    if (!slotFields.includes(field)) continue;
-    const index = Number(match[1]);
-    rows.set(index, { ...(rows.get(index) ?? emptySlot), [field]: value });
+export function parseSlotForm(form: FormData): SlotInput {
+  const slot = { ...emptySlot };
+  for (const field of slotFields) {
+    const value = form.get(field);
+    if (typeof value === "string") slot[field] = value;
   }
-  const aktenzeichen = form.get("aktenzeichen");
-  return {
-    aktenzeichen: typeof aktenzeichen === "string" ? aktenzeichen : "",
-    slots: [...rows.entries()].sort(([a], [b]) => a - b).map(([, slot]) => slot),
-  };
+  return slot;
 }
 
 export function validateCreateTermin(
@@ -222,4 +240,38 @@ export function validateCreateTermin(
     }
   }
   return { success: false, errors };
+}
+
+export type SlotErrors = Partial<Record<SlotErrorGroup, string>>;
+
+const twoDigits = (value: number) => String(value).padStart(2, "0");
+const clock = (minutes: number) =>
+  `${twoDigits(Math.floor(minutes / 60))}:${twoDigits(minutes % 60)}`;
+
+// "am 17. September 2026, 10:00 bis 14:00"
+function describeComplete({ date, start, end }: Omit<CompleteSlot, "index">): string {
+  const [year, month, day] = date.split("-").map(Number) as [number, number, number];
+  return `am ${formatCalendarDate(year, month, day)}, ${clock(start)} bis ${clock(end)}`;
+}
+
+// Checks the one slot that is being added or changed, against the other slots of the draft.
+export function validateSlot(
+  slot: SlotInput,
+  others: SlotInput[],
+  now: Date = new Date(),
+): { success: true } | { success: false; errors: SlotErrors } {
+  const { issues, parsed } = checkSlot(slot, now);
+  const errors: SlotErrors = {};
+  for (const { group, message } of issues) errors[group] ??= message;
+
+  if (parsed) {
+    for (const other of others) {
+      const { parsed: otherParsed } = checkSlot(other, new Date(0));
+      if (otherParsed && overlaps(otherParsed, parsed)) {
+        errors.overlap = messages.overlapWith(describeComplete(otherParsed));
+        break;
+      }
+    }
+  }
+  return Object.keys(errors).length === 0 ? { success: true } : { success: false, errors };
 }

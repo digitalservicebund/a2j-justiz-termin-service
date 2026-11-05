@@ -81,7 +81,8 @@ test("a judge chooses a shorter window, reviews it and confirms the Termin", asy
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     /^Der Termin ist am \p{L}+, 9\. November 2099 um 16:45\.$/u,
   );
-  await expect(page.getByRole("button", { name: "Termindetails kopieren" })).toBeVisible();
+  // Copying by button needs JavaScript, so without it the details are plain text to select.
+  await expect(page.getByRole("button", { name: "Termindetails kopieren" })).toHaveCount(0);
   await expect(
     page.getByRole("heading", { name: "Ihre Servicestelle verschickt die Ladung." }),
   ).toBeVisible();

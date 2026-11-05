@@ -65,7 +65,7 @@ describe("Overview", () => {
     expect(document.querySelector(".kern-badge--danger")).toBeNull();
   });
 
-  it("links drafts to their confirmation page and all other states to their detail page", async () => {
+  it("links drafts to the form and all other states to their detail page", async () => {
     vi.mocked(listAppointments).mockResolvedValue([
       { id: "a", aktenzeichen: "574 C 1/26", status: "draft", confirmedSlot: null },
       { id: "b", aktenzeichen: "574 C 2/26", status: "open", confirmedSlot: null },
@@ -80,7 +80,7 @@ describe("Overview", () => {
       links.map((link) => [link.textContent, link.getAttribute("href")]),
     );
     expect(hrefs).toEqual({
-      "Terminumfrage 574 C 1/26 öffnen": "/overview/a/confirm",
+      "Terminumfrage 574 C 1/26 öffnen": "/overview/new?entwurf=a",
       "Terminumfrage 574 C 2/26 öffnen": "/overview/b",
       "Terminumfrage 574 C 3/26 öffnen": "/overview/c",
       "Terminumfrage 574 C 4/26 öffnen": "/overview/d",

@@ -3,7 +3,6 @@ import { data, redirect, useLoaderData } from "react-router";
 import { getAppointment } from "~/adapters/appointments/appointments.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
-import { CopyLinkButton } from "~/components/shared/CopyLinkButton";
 import { DefaultPage } from "~/components/shared/DefaultPage";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import {
@@ -15,6 +14,7 @@ import { KernIcon } from "~/components/shared/kern/KernIcon";
 import { KernLabel } from "~/components/shared/kern/KernLabel";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { ResultBanner } from "~/components/shared/ResultBanner";
+import { SurveyLinkField } from "~/components/shared/SurveyLinkField";
 import { getDb } from "~/database/database";
 import { BASE_PATH } from "~/lib/base-path";
 
@@ -128,11 +128,7 @@ export default function CreateTerminCreated() {
           </Step>
           <Step title="Teilen Sie den Link zur Terminumfrage mit allen Verfahrensbeteiligten.">
             <KernBody>Erwähnen Sie, bis wann Sie sich eine Rückmeldung wünschen.</KernBody>
-            <KernBody className="create-termin-created__url">
-              <KernIcon name="open-in-new" size="small" />
-              <span>{surveyUrl}</span>
-            </KernBody>
-            <CopyLinkButton url={surveyUrl} className="kern-btn--small" />
+            <SurveyLinkField id="survey-link" url={surveyUrl} />
           </Step>
           <Step title="Alle Verfahrensbeteiligten geben Ihre Verfügbarkeiten an." />
           <Step title="Wählen Sie einen passenden Termin aus." />

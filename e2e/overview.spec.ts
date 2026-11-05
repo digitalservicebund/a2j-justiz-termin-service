@@ -93,9 +93,9 @@ test("overview lists the user's termin surveys with their status, grouped by sta
   // Only the judge's own appointments are listed.
   await expect(page.getByText("574 C 9/26")).toHaveCount(0);
 
-  // A draft continues on its confirmation page.
+  // A draft may be incomplete, so it continues in the form.
   await page.getByRole("link", { name: "Terminumfrage 574 C 5/26 öffnen" }).click();
-  await expect(page).toHaveURL(new RegExp(`/overview/${draftId}/confirm$`));
+  await expect(page).toHaveURL(new RegExp(`/overview/new\\?entwurf=${draftId}$`));
 });
 
 test("overview tells a user without appointments that there are none", async ({ page, users }) => {
@@ -118,15 +118,19 @@ test("overview sorts and filters the termin surveys", async ({ page, users, db }
   const aktenzeichen = page.locator("tbody tr td:first-child");
   await expect(aktenzeichen).toHaveText(["574 C 3/26", "574 C 2/26", "574 C 10/26"]);
 
+  // Without JavaScript the choice only applies once the form is submitted.
   await page.getByLabel("Sortieren").selectOption("aktenzeichen");
+  await page.getByRole("button", { name: "Anwenden" }).click();
   await expect(page).toHaveURL(/sort=aktenzeichen/);
   await expect(aktenzeichen).toHaveText(["574 C 2/26", "574 C 3/26", "574 C 10/26"]);
 
   await page.getByLabel("Filter").selectOption("open");
+  await page.getByRole("button", { name: "Anwenden" }).click();
   await expect(page).toHaveURL(/filter=open/);
   await expect(aktenzeichen).toHaveText(["574 C 2/26", "574 C 10/26"]);
 
   await page.getByLabel("Filter").selectOption("cancelled");
+  await page.getByRole("button", { name: "Anwenden" }).click();
   await expect(page.getByText("Keine Terminumfragen für diesen Filter.")).toBeVisible();
 });
 
@@ -263,9 +267,7 @@ test("an open termin survey opens a detail page with its survey link", async ({
   page,
   users,
   db,
-  context,
 }) => {
-  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   const user = await users.create({ roles: ["richter"] });
   const id = await seed(db, user.id, "574 C 65412/26", "open");
   await db
@@ -291,15 +293,27 @@ test("an open termin survey opens a detail page with its survey link", async ({
   await expect(page.getByText("10:00 bis 14:00")).toBeVisible();
   await expect(page.getByText("21. September 2026")).toBeVisible();
 
-  await page.getByRole("button", { name: "Link zur Terminumfrage kopieren" }).click();
-  await expect(page.getByRole("button", { name: "Link kopiert" })).toBeVisible();
-  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  // The copy button needs JavaScript, so without it the link has to be easy to copy by hand.
+  await expect(page.getByRole("button", { name: /kopieren/ })).toHaveCount(0);
   const { universal_token } = await db
     .selectFrom("appointment")
     .select("universal_token")
     .where("id", "=", id)
     .executeTakeFirstOrThrow();
-  expect(copied).toMatch(new RegExp(`/umfrage/${universal_token}$`));
+  const link = page.getByRole("textbox", { name: "Link zur Terminumfrage" });
+  await expect(link).toHaveValue(new RegExp(`/umfrage/${universal_token}$`));
+  await expect(link).toHaveAttribute("readonly", "");
+  await expect(link).toHaveAccessibleDescription(/Strg\+C/);
+
+  // The whole link, which is long, is visible and can be selected with the keyboard.
+  await link.click();
+  await page.keyboard.press("ControlOrMeta+A");
+  const { selected, scrolls } = await link.evaluate((element: HTMLTextAreaElement) => ({
+    selected: element.value.slice(element.selectionStart, element.selectionEnd),
+    scrolls: element.scrollHeight > element.clientHeight,
+  }));
+  expect(selected).toBe(await link.inputValue());
+  expect(scrolls).toBe(false);
 });
 
 test("a past termin opens a detail page that looks back at it", async ({ page, users, db }) => {

@@ -99,6 +99,13 @@ Tests ignore local/deployed credentials,
 use a public test-only signing value, and send mail only to the isolated Mailpit.
 The runner removes its containers and database volume after success or failure.
 
+The app has to work without JavaScript, so Playwright runs every spec with JavaScript
+switched off (`javaScriptEnabled: false` in [`playwright.config.ts`](playwright.config.ts)).
+Anything that needs JavaScript, such as the copy buttons or opening all review sections at once,
+is an enhancement that only appears once the page has hydrated (`useHydrated`). Do not turn
+JavaScript back on for a spec; fix the page instead. Lists of inputs cannot grow without
+JavaScript, which is why every time slot has a page of its own.
+
 Tests in [`e2e/`](e2e/) cover:
 
 - Welcome-page email submission, mixed-case addresses, delivery

@@ -10,7 +10,9 @@ import { AppShell } from "~/components/shared/AppShell";
 import { getDb } from "~/database/database";
 import { sendTerminCreatedEmail } from "~/lib/email/send-termin-created-email";
 
+import { draftHref } from "./create-termin.paths";
 import { CreateTerminReview, createTerminBreadcrumbs } from "./create-termin.review";
+import { validateCreateTermin } from "./create-termin.schema";
 import { rangeToSlot } from "./create-termin.slots";
 
 type Params = { params: { appointmentId?: string } };
@@ -24,10 +26,13 @@ export async function loader({ request, params }: { request: Request } & Params)
   // Only drafts are reviewed; a published appointment has nothing left to confirm.
   if (appointment.status !== "draft") throw redirect("/overview");
 
-  return {
-    user,
-    values: { aktenzeichen: appointment.aktenzeichen, slots: appointment.slots.map(rangeToSlot) },
+  // A draft can be saved half-finished, so it is only reviewed once it is complete.
+  const values = {
+    aktenzeichen: appointment.aktenzeichen,
+    slots: appointment.slots.map(rangeToSlot),
   };
+  if (!validateCreateTermin(values).success) throw redirect(draftHref(appointment.id));
+  return { user, values };
 }
 
 // Tells the judge that the Terminumfrage is open. The appointment is published either way.
@@ -50,9 +55,19 @@ export async function action({ request, params }: { request: Request } & Params)
   const intent = (await request.formData()).get("intent");
 
   if (intent === "back") {
-    return redirect(`/overview/new?entwurf=${encodeURIComponent(id)}`);
+    return redirect(draftHref(id));
   }
   if (intent === "create") {
+    // The draft may have changed since it was reviewed, so it is checked again before publishing.
+    const appointment = await getAppointment(getDb(), user.id, id);
+    if (!appointment) throw notFound();
+    const values = {
+      aktenzeichen: appointment.aktenzeichen,
+      slots: appointment.slots.map(rangeToSlot),
+    };
+    if (appointment.status === "draft" && !validateCreateTermin(values).success) {
+      return redirect(draftHref(id));
+    }
     if (!(await publishAppointment(getDb(), user.id, id))) throw notFound();
     await notifyJudge(user.id, user.email, id);
     return redirect(`/overview/${encodeURIComponent(id)}/created`);

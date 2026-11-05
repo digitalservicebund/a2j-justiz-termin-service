@@ -11,6 +11,7 @@ import {
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernIcon } from "~/components/shared/kern/KernIcon";
 import { formatCalendarDate } from "~/core/domain/time/format";
+import { useHydrated } from "~/lib/use-hydrated";
 
 import { isEmptySlot, type CreateTerminValues, type SlotInput } from "./create-termin.schema";
 
@@ -107,6 +108,7 @@ export function ReviewPage({
   children?: ReactNode;
 }>) {
   const pending = useNavigation().state !== "idle";
+  const hydrated = useHydrated();
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const isOpen = (id: string) => open[id] ?? true;
   const setAll = (value: boolean) =>
@@ -120,14 +122,17 @@ export function ReviewPage({
           Bitte überprüfen Sie Ihre Angaben
         </KernHeading>
 
-        <div className="create-termin-review__bulk">
-          <KernButton type="button" style="secondary" onClick={() => setAll(true)}>
-            Alle einblenden
-          </KernButton>
-          <KernButton type="button" style="secondary" onClick={() => setAll(false)}>
-            Alle ausblenden
-          </KernButton>
-        </div>
+        {/* The sections are plain <details>; opening them all at once needs JavaScript. */}
+        {hydrated && (
+          <div className="create-termin-review__bulk">
+            <KernButton type="button" style="secondary" onClick={() => setAll(true)}>
+              Alle einblenden
+            </KernButton>
+            <KernButton type="button" style="secondary" onClick={() => setAll(false)}>
+              Alle ausblenden
+            </KernButton>
+          </div>
+        )}
 
         <div>
           {sections.map(({ id, children: content, ...section }) => (

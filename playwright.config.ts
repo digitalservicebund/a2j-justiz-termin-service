@@ -46,6 +46,8 @@ export default defineConfig({
   ],
   use: {
     baseURL,
+    // The app has to work without JavaScript, so every spec runs with it switched off.
+    javaScriptEnabled: false,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     extraHTTPHeaders: { Origin: baseURL, "X-Forwarded-For": "198.18.0.1" },

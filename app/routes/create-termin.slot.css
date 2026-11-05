@@ -1,0 +1,42 @@
+.create-termin-slot__heading {
+  display: grid;
+  gap: var(--kern-metric-space-small);
+}
+
+/* Date, start and end sit in one row and wrap on narrow screens. */
+.create-termin-slot__fields {
+  --create-termin-slot-input-height: 3rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--kern-metric-space-default);
+}
+
+.create-termin-slot__group {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--kern-metric-space-small);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+/* The inputs are 48px tall; the colon and the dot line up with their bottoms. */
+.create-termin-slot__separator,
+.create-termin-slot__word {
+  padding-bottom: var(--kern-metric-space-x-small);
+}
+
+/* The colon sits at the vertical center of the input; the dot stays at its bottom. */
+.create-termin-slot__separator--colon {
+  display: flex;
+  align-items: center;
+  height: var(--create-termin-slot-input-height);
+  padding-bottom: var(--kern-metric-space-none);
+}
+
+.create-termin-slot__errors {
+  display: grid;
+  gap: var(--kern-metric-space-small);
+}

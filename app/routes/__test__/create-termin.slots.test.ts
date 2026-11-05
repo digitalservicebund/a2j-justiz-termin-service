@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { emptySlot, type SlotInput } from "../create-termin.schema";
-import { rangeToSlot, slotToRange } from "../create-termin.slots";
+import { describeSlot, rangeToSlot, slotToRange } from "../create-termin.slots";
 
 const slot = (date: [string, string, string], start: [string, string], end: [string, string]) => ({
   ...emptySlot,
@@ -63,5 +63,25 @@ describe("rangeToSlot", () => {
       endHour: "23",
       endMinute: "59",
     });
+  });
+});
+
+describe("describeSlot", () => {
+  it("returns the date and the times as shown in the table", () => {
+    expect(
+      describeSlot({
+        start: new Date("2026-09-17T08:00:00Z"),
+        end: new Date("2026-09-17T12:00:00Z"),
+      }),
+    ).toEqual({ date: "17. September 2026", time: "10:00 bis 14:00" });
+  });
+
+  it("uses Berlin time, so a late slot stays on its day", () => {
+    expect(
+      describeSlot({
+        start: new Date("2026-01-05T22:30:00Z"),
+        end: new Date("2026-01-05T23:30:00Z"),
+      }),
+    ).toEqual({ date: "5. Januar 2026", time: "23:30 bis 00:30" });
   });
 });

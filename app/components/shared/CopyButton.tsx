@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { useHydrated } from "~/lib/use-hydrated";
+
 import { KernButton } from "./kern/KernButton";
 import { KernIcon } from "./kern/KernIcon";
 import { KernLabel } from "./kern/KernLabel";
@@ -21,6 +23,9 @@ export function CopyButton({
   className,
 }: Readonly<CopyButtonProps>) {
   const [copied, setCopied] = useState(false);
+  // The button needs JavaScript, so it only exists once the page has hydrated. Without JavaScript
+  // the text is shown selectable next to it instead of a button that does nothing.
+  const hydrated = useHydrated();
 
   async function copy() {
     try {
@@ -30,6 +35,8 @@ export function CopyButton({
       setCopied(false);
     }
   }
+
+  if (!hydrated) return null;
 
   return (
     <>

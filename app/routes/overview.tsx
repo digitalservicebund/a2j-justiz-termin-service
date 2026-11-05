@@ -5,6 +5,7 @@ import { requireUser } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { DefaultPage, PageSection } from "~/components/shared/DefaultPage";
 import { KernBadge, type KernBadgeType } from "~/components/shared/kern/KernBadge";
+import { KernButton } from "~/components/shared/kern/KernButton";
 import { KernFormSelect } from "~/components/shared/kern/KernFormSelect";
 import { KernIcon, type KernIconName } from "~/components/shared/kern/KernIcon";
 import { KernLabel } from "~/components/shared/kern/KernLabel";
@@ -33,9 +34,12 @@ import { describeStatus } from "./overview.status";
 import "./overview.css";
 
 // Drafts continue on their confirmation page, all other states have a detail page.
+const NO_AKTENZEICHEN = "Ohne Aktenzeichen";
+
 function detailHref(id: string, status: AppointmentStatus): string {
   const encoded = encodeURIComponent(id);
-  return status === "draft" ? `/overview/${encoded}/confirm` : `/overview/${encoded}`;
+  // A draft may be incomplete, so it reopens in the form, not in the review.
+  return status === "draft" ? `/overview/new?entwurf=${encoded}` : `/overview/${encoded}`;
 }
 
 export async function loader({ request }: { request: Request }) {
@@ -50,7 +54,8 @@ export async function loader({ request }: { request: Request }) {
     entries: applyOverviewQuery(appointments, query).map(
       ({ id, aktenzeichen, status, confirmedSlot }) => ({
         id,
-        aktenzeichen,
+        // A draft can be saved before an Aktenzeichen is entered.
+        aktenzeichen: aktenzeichen.trim() === "" ? NO_AKTENZEICHEN : aktenzeichen,
         href: detailHref(id, status),
         badge: describeStatus({ status, confirmedSlot }),
       }),
@@ -84,7 +89,7 @@ export default function Overview() {
                 <KernLabel>Terminumfrage erstellen</KernLabel>
               </KernLinkButton>
 
-              {/* Submits on every change; without JavaScript the button applies the choice. */}
+              {/* With JavaScript every change submits; the button applies the choice without it. */}
               <Form
                 method="get"
                 className="overview__controls"
@@ -110,11 +115,9 @@ export default function Overview() {
                     </option>
                   ))}
                 </KernFormSelect>
-                <noscript>
-                  <button type="submit" className="kern-btn kern-btn--secondary">
-                    <KernLabel>Anwenden</KernLabel>
-                  </button>
-                </noscript>
+                <KernButton type="submit" style="secondary">
+                  <KernLabel>Anwenden</KernLabel>
+                </KernButton>
               </Form>
 
               <KernTable className="overview__table" caption="Terminumfragen" hideCaption striped>
