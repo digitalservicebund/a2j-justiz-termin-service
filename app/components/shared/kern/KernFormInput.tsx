@@ -8,6 +8,8 @@ export type KernFormInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "id
   label: ReactNode;
   // Shows the message below the field, linked to the input as `${id}-error`.
   error?: string;
+  // Explains the field between its label and the input, linked to the input as `${id}-hint`.
+  hint?: ReactNode;
   // Marks the input as invalid when the message is shown elsewhere, for example by a fieldset.
   invalid?: boolean;
   // Fixed input width in characters.
@@ -22,6 +24,7 @@ export function KernFormInput({
   id,
   label,
   error,
+  hint,
   invalid = false,
   width,
   compactLabel = false,
@@ -31,6 +34,8 @@ export function KernFormInput({
 }: Readonly<KernFormInputProps>) {
   const hasError = Boolean(error);
   const errorId = `${id}-error`;
+  const hintId = `${id}-hint`;
+  const describedBy = [hint && hintId, hasError && errorId].filter(Boolean).join(" ") || undefined;
   const inputClasses = [
     "kern-form-input__input",
     width && `kern-form-input__input--width-${width}`,
@@ -49,11 +54,16 @@ export function KernFormInput({
       <KernLabel htmlFor={id} size={compactLabel ? "small" : undefined} subtle={compactLabel}>
         {label}
       </KernLabel>
+      {hint && (
+        <p className="kern-hint" id={hintId}>
+          {hint}
+        </p>
+      )}
       <input
         id={id}
         className={inputClasses}
         aria-invalid={hasError || invalid || undefined}
-        aria-describedby={hasError ? errorId : undefined}
+        aria-describedby={describedBy}
         {...inputProps}
       />
       {error && <ErrorMessage id={errorId}>{error}</ErrorMessage>}

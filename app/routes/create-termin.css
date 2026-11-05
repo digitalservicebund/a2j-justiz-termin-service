@@ -10,7 +10,7 @@
 }
 
 .create-termin__aktenzeichen {
-  width: min(100%, calc(var(--kern-metric-dimension-4x-large) * 5));
+  width: min(100%, 26.5rem);
 }
 
 /* Rows, add button, hint and the window-level error share one group, as in the error sketch. */
@@ -155,4 +155,44 @@
   flex-wrap: wrap;
   gap: var(--kern-metric-space-default);
   padding-top: var(--kern-metric-space-default);
+}
+
+/* Heading and hint of a section sit closer together than the sections do. */
+.create-termin__intro {
+  display: grid;
+  gap: var(--kern-metric-space-x-small);
+}
+
+.create-termin__intro > * {
+  margin: 0;
+}
+
+/* An empty table says so on a white surface, as in the design. KERN draws the line under a row
+   as a shadow, and stripes only tables that have rows. */
+.create-termin__table .kern-table__row .kern-table__cell.create-termin__empty {
+  padding-block: var(--kern-metric-space-4x-large);
+  background-color: var(--kern-color-layout-background-default);
+  box-shadow: none;
+  color: var(--kern-color-layout-text-muted);
+  text-align: center;
+}
+
+.create-termin__person-fields {
+  display: grid;
+  gap: var(--kern-metric-space-x-large);
+  justify-items: start;
+}
+
+.create-termin__person-fields .kern-form-input {
+  width: min(100%, 34rem);
+}
+
+/* The hint sits right under the label it explains. */
+.create-termin__person-fields .kern-hint {
+  margin: 0;
+}
+
+.create-termin__optional {
+  color: var(--kern-color-layout-text-muted);
+  font-weight: var(--kern-typography-font-weight-regular);
 }

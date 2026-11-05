@@ -4,6 +4,7 @@ import { rowToRange } from "../../core/domain/time/time-range.ts";
 import type { Database } from "../../database/types.ts";
 import { logInfo } from "../../lib/logging.ts";
 import { nextCalendarSequence, type AppointmentSlot } from "./appointments.server.ts";
+import { participantName } from "./participants.server.ts";
 
 export type SurveySlot = { id: string; start: Date; end: Date };
 
@@ -65,7 +66,7 @@ function proposedSlots(db: Executor, appointmentId: string) {
 export async function findSurvey(db: Executor, token: string): Promise<Survey | undefined> {
   const personal = await db
     .selectFrom("participant")
-    .select(["id", "name", "appointment_id"])
+    .select(["id", participantName, "appointment_id"])
     .where("token", "=", token)
     .executeTakeFirst();
 
@@ -200,7 +201,7 @@ export async function getSavedAnswer(
 ): Promise<SavedAnswer | undefined> {
   const participant = await db
     .selectFrom("participant")
-    .select(["name", "type"])
+    .select([participantName, "type"])
     .where("id", "=", participantId)
     .where("appointment_id", "=", appointmentId)
     .executeTakeFirst();
@@ -289,7 +290,7 @@ async function readResponseOverview(
       "participant_response.slot_id",
       "participant_response.status",
       "participant.id as participantId",
-      "participant.name",
+      participantName,
     ])
     .where("participant.appointment_id", "=", appointmentId)
     .orderBy("participant.created_at")

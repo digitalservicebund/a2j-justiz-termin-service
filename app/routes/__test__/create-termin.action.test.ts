@@ -8,6 +8,10 @@ import {
   getAppointment,
   updateDraftAktenzeichen,
 } from "~/adapters/appointments/appointments.server";
+import {
+  deleteDraftParticipant,
+  listParticipants,
+} from "~/adapters/appointments/participants.server";
 import { requireRole } from "~/adapters/session/session";
 import type { AuthUser } from "~/core/domain/user";
 
@@ -20,6 +24,10 @@ vi.mock("~/adapters/appointments/appointments.server", () => ({
   deleteDraftSlot: vi.fn(),
   getAppointment: vi.fn(),
   updateDraftAktenzeichen: vi.fn(),
+}));
+vi.mock("~/adapters/appointments/participants.server", () => ({
+  deleteDraftParticipant: vi.fn(),
+  listParticipants: vi.fn(),
 }));
 vi.mock("~/database/database", () => ({ getDb: () => ({ db: true }) }));
 
@@ -56,6 +64,11 @@ describe("create-termin route", () => {
     vi.mocked(createDraftAppointment).mockResolvedValue("new-id");
     vi.mocked(updateDraftAktenzeichen).mockResolvedValue(true);
     vi.mocked(deleteDraftSlot).mockResolvedValue(true);
+    vi.mocked(deleteDraftParticipant).mockResolvedValue(true);
+    vi.mocked(listParticipants).mockResolvedValue([
+      { id: "p1", email: "person.a@example.com", name: null },
+      { id: "p2", email: null, name: "Person B" },
+    ]);
     vi.mocked(getAppointment).mockResolvedValue({
       id: "d1",
       status: "draft",
@@ -102,6 +115,10 @@ describe("create-termin route", () => {
       expect(result.draft).toMatchObject({
         id: "d1",
         aktenzeichen: "A 1",
+        participants: [
+          { id: "p1", email: "person.a@example.com", name: null },
+          { id: "p2", email: null, name: "Person B" },
+        ],
         slots: [
           { id: "s5", date: "5. Januar 2099", time: "09:00 bis 10:00" },
           { id: "s6", date: "6. Januar 2099", time: "09:00 bis 10:00" },
@@ -186,6 +203,58 @@ describe("create-termin route", () => {
         "Das Aktenzeichen darf höchstens 50 Zeichen lang sein.",
       );
       expect(createDraftAppointment).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("people", () => {
+    it.each([
+      ["add-person", "/overview/d1/verfahrensbeteiligte/neu"],
+      ["edit-person:p1", "/overview/d1/verfahrensbeteiligte/p1"],
+    ])("%s saves the Aktenzeichen and opens the page of the person", async (intent, expected) => {
+      const response = await action({
+        request: post({ intent, aktenzeichen: "A 2", appointmentId: "d1" }),
+      });
+
+      expect(updateDraftAktenzeichen).toHaveBeenCalledWith({ db: true }, "1", "d1", "A 2");
+      expect(location(response)).toBe(expected);
+    });
+
+    it("creates the draft first when the person is the first thing added", async () => {
+      const response = await action({
+        request: post({ intent: "add-person", aktenzeichen: "A 1" }),
+      });
+
+      expect(createDraftAppointment).toHaveBeenCalledWith({ db: true }, "1", "A 1");
+      expect(location(response)).toBe("/overview/new-id/verfahrensbeteiligte/neu");
+    });
+
+    it("deletes a person at once and returns to the form", async () => {
+      const response = await action({
+        request: post({ intent: "delete-person:p1", aktenzeichen: "A 1", appointmentId: "d1" }),
+      });
+
+      expect(deleteDraftParticipant).toHaveBeenCalledWith({ db: true }, "1", "d1", "p1");
+      expect(location(response)).toBe("/overview/new?entwurf=d1");
+    });
+
+    it("answers 404 for a person that is not in the user's draft", async () => {
+      vi.mocked(deleteDraftParticipant).mockResolvedValue(false);
+
+      await expect(
+        action({
+          request: post({ intent: "delete-person:x", aktenzeichen: "A", appointmentId: "d1" }),
+        }),
+      ).rejects.toMatchObject({ init: { status: 404 } });
+    });
+
+    it("goes to the review without any person", async () => {
+      vi.mocked(listParticipants).mockResolvedValue([]);
+
+      const response = await action({
+        request: post({ intent: "next", aktenzeichen: "A 1", appointmentId: "d1" }),
+      });
+
+      expect(location(response)).toBe("/overview/d1/confirm");
     });
   });
 

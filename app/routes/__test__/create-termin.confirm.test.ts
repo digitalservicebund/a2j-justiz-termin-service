@@ -6,6 +6,7 @@ import {
   nextCalendarSequence,
   publishAppointment,
 } from "~/adapters/appointments/appointments.server";
+import { listParticipants } from "~/adapters/appointments/participants.server";
 import { requireRole } from "~/adapters/session/session";
 import type { AuthUser } from "~/core/domain/user";
 import { sendTerminCreatedEmail } from "~/lib/email/send-termin-created-email";
@@ -18,6 +19,7 @@ vi.mock("~/adapters/appointments/appointments.server", () => ({
   nextCalendarSequence: vi.fn(),
   publishAppointment: vi.fn(),
 }));
+vi.mock("~/adapters/appointments/participants.server", () => ({ listParticipants: vi.fn() }));
 vi.mock("~/lib/email/send-termin-created-email", () => ({ sendTerminCreatedEmail: vi.fn() }));
 vi.mock("~/database/database", () => ({ getDb: () => ({ db: true }) }));
 
@@ -65,6 +67,9 @@ describe("create-termin confirm route", () => {
     vi.mocked(publishAppointment).mockResolvedValue(true);
     vi.mocked(getAppointment).mockResolvedValue(published);
     vi.mocked(nextCalendarSequence).mockResolvedValue(1);
+    vi.mocked(listParticipants).mockResolvedValue([
+      { id: "p1", email: "person.a@example.com", name: "Person A" },
+    ]);
   });
 
   describe("access control", () => {
@@ -86,6 +91,10 @@ describe("create-termin confirm route", () => {
       const result = await loader({ request: new Request(url), params });
 
       expect(getAppointment).toHaveBeenCalledWith({ db: true }, "1", "d1");
+      expect(listParticipants).toHaveBeenCalledWith({ db: true }, "1", "d1");
+      expect(result.participants).toEqual([
+        { id: "p1", email: "person.a@example.com", name: "Person A" },
+      ]);
       expect(result.values).toEqual({
         aktenzeichen: "574 C 65412/26",
         slots: [

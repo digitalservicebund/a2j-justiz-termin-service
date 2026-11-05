@@ -23,3 +23,20 @@
 .flow-page .kern-form-input__input {
   background-color: var(--kern-color-layout-background-default);
 }
+
+/* An input with a problem turns pink, on the white surface too. */
+.flow-page .kern-form-input__input--error {
+  background-color: var(--kern-color-feedback-danger-background);
+}
+
+/* KERN stripes the odd rows of a table with the light grey of this band, so on a flow page no
+   stripe shows. Here the odd rows are white and the even ones keep the band's grey, as in the
+   design. */
+.flow-page .kern-table--striped .kern-table__body .kern-table__row:nth-child(odd) .kern-table__cell,
+.flow-page
+  .kern-table--striped
+  .kern-table__body
+  .kern-table__row:nth-child(odd)
+  .kern-table__header {
+  background-color: var(--kern-color-layout-background-default);
+}
