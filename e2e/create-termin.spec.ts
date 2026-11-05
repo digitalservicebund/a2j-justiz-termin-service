@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import type { Kysely } from "kysely";
 
 import type { Database } from "../app/database/types.ts";
@@ -414,6 +414,48 @@ test("Enter in the Aktenzeichen continues instead of editing the first slot", as
   await page.getByRole("textbox", { name: "Aktenzeichen" }).press("Enter");
 
   await expect(page).toHaveURL(/\/confirm$/);
+});
+
+// Browsers report colours in different formats, so they are compared as RGBA through a canvas.
+const paint = (locator: Locator) =>
+  locator.evaluate((element) => {
+    const context = document.createElement("canvas").getContext("2d")!;
+    context.fillStyle = getComputedStyle(element).backgroundColor;
+    context.fillRect(0, 0, 1, 1);
+    return context.getImageData(0, 0, 1, 1).data.join(",");
+  });
+
+test("the rows of the tables alternate between white and the grey of the page", async ({
+  page,
+  db,
+}) => {
+  const id = await seedDraft(db, "574 C 65412/26", 4);
+  await db
+    .insertInto("participant")
+    .values(
+      ["a", "b", "c"].map((letter) => ({
+        appointment_id: id,
+        email: `person.${letter}@example.com`,
+        type: "individual" as const,
+        token: `token-${id}-${letter}`,
+      })),
+    )
+    .execute();
+
+  await page.goto(`${BASE_PATH}/overview/new?entwurf=${id}`);
+
+  const WHITE = "255,255,255,255";
+  const NOT_PAINTED = "0,0,0,0";
+
+  // Odd rows are white; even rows are not painted, so the grey of the page shows through.
+  for (const rows of [personRows(page), slotRows(page)]) {
+    const cell = (index: number) => rows.nth(index).locator("td").first();
+    expect(await paint(cell(0))).toBe(WHITE);
+    expect(await paint(cell(1))).toBe(NOT_PAINTED);
+    expect(await paint(cell(2))).toBe(WHITE);
+  }
+  expect(await paint(slotRows(page).nth(3).locator("td").first())).toBe(NOT_PAINTED);
+  expect(await paint(page.locator(".flow-page"))).toBe("243,244,247,255");
 });
 
 test("the form stops offering time slots at twenty", async ({ page, db }) => {
