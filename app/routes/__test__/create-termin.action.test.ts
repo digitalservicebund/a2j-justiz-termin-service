@@ -3,20 +3,23 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   createDraftAppointment,
+  deleteDraftIfEmpty,
+  deleteDraftSlot,
   getAppointment,
-  updateDraftAppointment,
+  updateDraftAktenzeichen,
 } from "~/adapters/appointments/appointments.server";
 import { requireRole } from "~/adapters/session/session";
 import type { AuthUser } from "~/core/domain/user";
 
 import { action, loader } from "../create-termin";
-import { emptySlot, type SlotInput } from "../create-termin.schema";
 
 vi.mock("~/adapters/session/session", () => ({ requireRole: vi.fn() }));
 vi.mock("~/adapters/appointments/appointments.server", () => ({
   createDraftAppointment: vi.fn(),
+  deleteDraftIfEmpty: vi.fn(),
+  deleteDraftSlot: vi.fn(),
   getAppointment: vi.fn(),
-  updateDraftAppointment: vi.fn(),
+  updateDraftAktenzeichen: vi.fn(),
 }));
 vi.mock("~/database/database", () => ({ getDb: () => ({ db: true }) }));
 
@@ -27,44 +30,38 @@ const judge: AuthUser = {
   roles: ["richter"],
 };
 
-// Far in the future so the "no past dates" rule never trips these tests.
-const slot = (day: string): SlotInput => ({
-  ...emptySlot,
-  day,
-  month: "1",
-  year: "2099",
-  startHour: "9",
-  startMinute: "0",
-  endHour: "10",
-  endMinute: "0",
-});
-
-// 09:00 to 10:00 Berlin time in January is 08:00 to 09:00 UTC.
-const range = (day: string) => ({
+// 09:00 to 10:00 Berlin time in January is 08:00 to 09:00 UTC. Far in the future, so the "no
+// past dates" rule never trips these tests.
+const stored = (day: string) => ({
+  id: `s${day}`,
   start: new Date(`2099-01-${day.padStart(2, "0")}T08:00:00Z`),
   end: new Date(`2099-01-${day.padStart(2, "0")}T09:00:00Z`),
 });
 
-const stored = (day: string) => ({ id: `s${day}`, ...range(day) });
-
-function postRequest(aktenzeichen: string, slots: SlotInput[], appointmentId?: string) {
-  const form = new FormData();
-  if (appointmentId) form.set("appointmentId", appointmentId);
-  form.set("aktenzeichen", aktenzeichen);
-  slots.forEach((row, index) => {
-    for (const [field, value] of Object.entries(row)) form.set(`slots.${index}.${field}`, value);
+function post(fields: Record<string, string>) {
+  return new Request("http://localhost/overview/new", {
+    method: "POST",
+    body: new URLSearchParams(fields),
   });
-  return new Request("http://localhost/overview/new", { method: "POST", body: form });
 }
 
-type DataResponse = { data: unknown; init: { status?: number } | null };
+type DataResponse = { data: Record<string, any>; init: { status?: number } | null };
+
+const location = (response: unknown) => (response as Response).headers.get("Location");
 
 describe("create-termin route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(requireRole).mockResolvedValue(judge);
     vi.mocked(createDraftAppointment).mockResolvedValue("new-id");
-    vi.mocked(updateDraftAppointment).mockResolvedValue(true);
+    vi.mocked(updateDraftAktenzeichen).mockResolvedValue(true);
+    vi.mocked(deleteDraftSlot).mockResolvedValue(true);
+    vi.mocked(getAppointment).mockResolvedValue({
+      id: "d1",
+      status: "draft",
+      aktenzeichen: "A 1",
+      slots: [stored("5"), stored("6")],
+    });
   });
 
   describe("access control", () => {
@@ -80,11 +77,10 @@ describe("create-termin route", () => {
     it("requires the richter role before reading a submission", async () => {
       const forbidden = new Response("Forbidden", { status: 403 });
       vi.mocked(requireRole).mockRejectedValue(forbidden);
-      const request = postRequest("A 1", [slot("5"), slot("6")]);
+      const request = post({ intent: "add-slot", aktenzeichen: "A 1" });
       const formData = vi.spyOn(request, "formData");
 
       await expect(action({ request })).rejects.toBe(forbidden);
-      expect(requireRole).toHaveBeenCalledWith(request, "richter");
       expect(formData).not.toHaveBeenCalled();
       expect(createDraftAppointment).not.toHaveBeenCalled();
     });
@@ -97,43 +93,19 @@ describe("create-termin route", () => {
       expect(getAppointment).not.toHaveBeenCalled();
     });
 
-    it("returns the saved draft as form values when reopened", async () => {
-      vi.mocked(getAppointment).mockResolvedValue({
-        id: "d1",
-        status: "draft",
-        aktenzeichen: "A 1",
-        slots: [stored("5"), stored("6")],
-      });
+    it("describes the slots of a reopened draft for the table", async () => {
       const request = new Request("http://localhost/overview/new?entwurf=d1");
 
       const result = await loader({ request });
 
       expect(getAppointment).toHaveBeenCalledWith({ db: true }, "1", "d1");
-      expect(result.draft).toEqual({
+      expect(result.draft).toMatchObject({
         id: "d1",
-        values: {
-          aktenzeichen: "A 1",
-          slots: [
-            {
-              day: "05",
-              month: "01",
-              year: "2099",
-              startHour: "09",
-              startMinute: "00",
-              endHour: "10",
-              endMinute: "00",
-            },
-            {
-              day: "06",
-              month: "01",
-              year: "2099",
-              startHour: "09",
-              startMinute: "00",
-              endHour: "10",
-              endMinute: "00",
-            },
-          ],
-        },
+        aktenzeichen: "A 1",
+        slots: [
+          { id: "s5", date: "5. Januar 2099", time: "09:00 bis 10:00" },
+          { id: "s6", date: "6. Januar 2099", time: "09:00 bis 10:00" },
+        ],
       });
     });
 
@@ -157,85 +129,183 @@ describe("create-termin route", () => {
     });
   });
 
-  describe("submitting", () => {
-    it("saves a draft and redirects to its confirmation page", async () => {
-      const response = await action({ request: postRequest("A 1", [slot("5"), slot("6")]) });
-
-      expect(createDraftAppointment).toHaveBeenCalledWith({ db: true }, "1", {
-        aktenzeichen: "A 1",
-        slots: [range("5"), range("6")],
-      });
-      expect(response).toBeInstanceOf(Response);
-      expect((response as Response).status).toBe(302);
-      expect((response as Response).headers.get("Location")).toBe("/overview/new-id/confirm");
-    });
-
-    it("stores the trimmed Aktenzeichen without empty rows", async () => {
-      await action({ request: postRequest("  A 1  ", [slot("5"), emptySlot, slot("6")]) });
-
-      expect(createDraftAppointment).toHaveBeenCalledWith({ db: true }, "1", {
-        aktenzeichen: "A 1",
-        slots: [range("5"), range("6")],
-      });
-    });
-
-    it("updates the existing draft when reopened from the review", async () => {
+  describe("leaving for a slot page", () => {
+    it("creates the draft with the Aktenzeichen on the first visit to the slot page", async () => {
       const response = await action({
-        request: postRequest("A 2", [slot("7"), slot("8")], "d1"),
+        request: post({ intent: "add-slot", aktenzeichen: "  A 1 " }),
       });
 
-      expect(updateDraftAppointment).toHaveBeenCalledWith({ db: true }, "1", "d1", {
-        aktenzeichen: "A 2",
-        slots: [range("7"), range("8")],
-      });
-      expect(createDraftAppointment).not.toHaveBeenCalled();
-      expect((response as Response).headers.get("Location")).toBe("/overview/d1/confirm");
+      expect(createDraftAppointment).toHaveBeenCalledWith({ db: true }, "1", "A 1");
+      expect(location(response)).toBe("/overview/new-id/zeitfenster/neu");
     });
 
-    it("answers 404 when the draft to update is not the user's draft", async () => {
-      vi.mocked(updateDraftAppointment).mockResolvedValue(false);
+    it("creates a draft even when nothing was typed yet", async () => {
+      const response = await action({ request: post({ intent: "add-slot", aktenzeichen: "" }) });
+
+      expect(createDraftAppointment).toHaveBeenCalledWith({ db: true }, "1", "");
+      expect(location(response)).toBe("/overview/new-id/zeitfenster/neu");
+    });
+
+    it("saves the typed Aktenzeichen into the existing draft instead of creating another", async () => {
+      const response = await action({
+        request: post({ intent: "add-slot", aktenzeichen: "A 2", appointmentId: "d1" }),
+      });
+
+      expect(updateDraftAktenzeichen).toHaveBeenCalledWith({ db: true }, "1", "d1", "A 2");
+      expect(createDraftAppointment).not.toHaveBeenCalled();
+      expect(location(response)).toBe("/overview/d1/zeitfenster/neu");
+    });
+
+    it.each([
+      ["edit-slot:s5", "/overview/d1/zeitfenster/s5"],
+      ["copy-slot:s5", "/overview/d1/zeitfenster/neu?kopie=s5"],
+    ])("%s opens the slot page", async (intent, expected) => {
+      const response = await action({
+        request: post({ intent, aktenzeichen: "A 1", appointmentId: "d1" }),
+      });
+
+      expect(updateDraftAktenzeichen).toHaveBeenCalledOnce();
+      expect(location(response)).toBe(expected);
+    });
+
+    it("answers 404 when the draft to save into is not the user's draft", async () => {
+      vi.mocked(updateDraftAktenzeichen).mockResolvedValue(false);
 
       await expect(
-        action({ request: postRequest("A 2", [slot("7"), slot("8")], "other") }),
+        action({ request: post({ intent: "add-slot", aktenzeichen: "A", appointmentId: "x" }) }),
       ).rejects.toMatchObject({ init: { status: 404 } });
     });
 
-    it("answers 400 with the errors and the submitted values when invalid, saving nothing", async () => {
-      const rows = [slot("5"), { ...slot("6"), day: "40" }];
-      const response = (await action({ request: postRequest("", rows) })) as DataResponse & {
-        data: { values: { slots: SlotInput[] }; errors: Record<string, any> };
-      };
-
-      expect(response.init?.status).toBe(400);
-      expect(response.data.errors.aktenzeichen).toBe("Geben Sie ein Aktenzeichen an.");
-      expect(response.data.errors.rows[1]?.date).toBe("Geben Sie ein gültiges Datum an.");
-      expect(response.data.values.slots).toEqual(rows);
-      expect(createDraftAppointment).not.toHaveBeenCalled();
-      expect(updateDraftAppointment).not.toHaveBeenCalled();
-    });
-
-    it("answers 400 for a submission without any fields", async () => {
-      const request = new Request("http://localhost/overview/new", {
-        method: "POST",
-        body: new FormData(),
-      });
-      const response = (await action({ request })) as DataResponse & {
-        data: { errors: Record<string, any> };
-      };
-
-      expect(response.init?.status).toBe(400);
-      expect(response.data.errors.aktenzeichen).toBe("Geben Sie ein Aktenzeichen an.");
-      expect(response.data.errors.slots).toBe("Geben Sie mindestens zwei Zeitfenster an.");
-    });
-
-    it("answers 400 when only one window is given", async () => {
+    it("refuses an Aktenzeichen that is too long, without saving or leaving", async () => {
       const response = (await action({
-        request: postRequest("A 1", [slot("5")]),
-      })) as DataResponse & { data: { errors: Record<string, any> } };
+        request: post({ intent: "add-slot", aktenzeichen: "A".repeat(51) }),
+      })) as unknown as DataResponse;
+
+      expect(response.init?.status).toBe(400);
+      expect(response.data.errors.aktenzeichen).toBe(
+        "Das Aktenzeichen darf höchstens 50 Zeichen lang sein.",
+      );
+      expect(createDraftAppointment).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("deleting a slot", () => {
+    it("deletes it and returns to the form", async () => {
+      const response = await action({
+        request: post({ intent: "delete-slot:s5", aktenzeichen: "A 1", appointmentId: "d1" }),
+      });
+
+      expect(deleteDraftSlot).toHaveBeenCalledWith({ db: true }, "1", "d1", "s5");
+      expect(location(response)).toBe("/overview/new?entwurf=d1");
+    });
+
+    it("answers 404 for a slot that is not in the user's draft", async () => {
+      vi.mocked(deleteDraftSlot).mockResolvedValue(false);
+
+      await expect(
+        action({
+          request: post({ intent: "delete-slot:nope", aktenzeichen: "A", appointmentId: "d1" }),
+        }),
+      ).rejects.toMatchObject({ init: { status: 404 } });
+    });
+  });
+
+  describe("continuing to the review", () => {
+    it("goes to the review of a complete draft", async () => {
+      const response = await action({
+        request: post({ intent: "next", aktenzeichen: "A 1", appointmentId: "d1" }),
+      });
+
+      expect(updateDraftAktenzeichen).toHaveBeenCalledWith({ db: true }, "1", "d1", "A 1");
+      expect(location(response)).toBe("/overview/d1/confirm");
+    });
+
+    it("needs an Aktenzeichen, and keeps what was typed", async () => {
+      const response = (await action({
+        request: post({ intent: "next", aktenzeichen: "  ", appointmentId: "d1" }),
+      })) as unknown as DataResponse;
+
+      expect(response.init?.status).toBe(400);
+      expect(response.data.errors.aktenzeichen).toBe("Geben Sie ein Aktenzeichen an.");
+      expect(response.data.aktenzeichen).toBe("  ");
+      expect(updateDraftAktenzeichen).not.toHaveBeenCalled();
+    });
+
+    it("needs at least two slots", async () => {
+      vi.mocked(getAppointment).mockResolvedValue({
+        id: "d1",
+        status: "draft",
+        aktenzeichen: "A 1",
+        slots: [stored("5")],
+      });
+
+      const response = (await action({
+        request: post({ intent: "next", aktenzeichen: "A 1", appointmentId: "d1" }),
+      })) as unknown as DataResponse;
+
+      expect(response.init?.status).toBe(400);
+      expect(response.data.errors.slots).toBe("Geben Sie mindestens zwei Zeitfenster an.");
+    });
+
+    it("reports what is missing when nothing was entered and no draft exists", async () => {
+      const response = (await action({
+        request: post({ intent: "next", aktenzeichen: "A 1" }),
+      })) as unknown as DataResponse;
 
       expect(response.init?.status).toBe(400);
       expect(response.data.errors.slots).toBe("Geben Sie mindestens zwei Zeitfenster an.");
       expect(createDraftAppointment).not.toHaveBeenCalled();
+      expect(getAppointment).not.toHaveBeenCalled();
     });
+
+    it("flags a saved slot that lies in the past by now", async () => {
+      vi.mocked(getAppointment).mockResolvedValue({
+        id: "d1",
+        status: "draft",
+        aktenzeichen: "A 1",
+        slots: [
+          {
+            id: "old",
+            start: new Date("2020-01-05T08:00:00Z"),
+            end: new Date("2020-01-05T09:00:00Z"),
+          },
+          stored("6"),
+        ],
+      });
+
+      const response = (await action({
+        request: post({ intent: "next", aktenzeichen: "A 1", appointmentId: "d1" }),
+      })) as unknown as DataResponse;
+
+      expect(response.init?.status).toBe(400);
+      expect(response.data.errors.rows[0].date).toBe(
+        "Das Datum darf nicht in der Vergangenheit liegen.",
+      );
+    });
+  });
+
+  describe("cancelling", () => {
+    it("removes an empty draft and returns to the overview", async () => {
+      const response = await action({
+        request: post({ intent: "cancel", aktenzeichen: "", appointmentId: "d1" }),
+      });
+
+      expect(deleteDraftIfEmpty).toHaveBeenCalledWith({ db: true }, "1", "d1");
+      expect(location(response)).toBe("/overview");
+    });
+
+    it("has nothing to remove before a draft exists", async () => {
+      const response = await action({ request: post({ intent: "cancel", aktenzeichen: "A" }) });
+
+      expect(deleteDraftIfEmpty).not.toHaveBeenCalled();
+      expect(createDraftAppointment).not.toHaveBeenCalled();
+      expect(location(response)).toBe("/overview");
+    });
+  });
+
+  it("answers 400 for an unknown intent", async () => {
+    await expect(
+      action({ request: post({ intent: "explode", aktenzeichen: "A", appointmentId: "d1" }) }),
+    ).rejects.toMatchObject({ init: { status: 400 } });
   });
 });

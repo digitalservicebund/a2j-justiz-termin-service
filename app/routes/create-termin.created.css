@@ -68,11 +68,3 @@
 .create-termin-created__step-body .kern-description-list-item__value {
   flex: 1 1 12rem;
 }
-
-.create-termin-created__url {
-  display: flex;
-  align-items: center;
-  gap: var(--kern-metric-space-x-small);
-  overflow-wrap: anywhere;
-  color: var(--kern-color-action-default);
-}

@@ -9,6 +9,7 @@ export default [
   route("overview/:appointmentId/select", "routes/overview.select.tsx"),
   route("overview/:appointmentId/select/confirm", "routes/overview.select.confirm.tsx"),
   route("overview/:appointmentId/selected", "routes/overview.selected.tsx"),
+  route("overview/:appointmentId/zeitfenster/:slotId", "routes/create-termin.slot.tsx"),
   route("overview/:appointmentId/confirm", "routes/create-termin.confirm.tsx"),
   route("overview/:appointmentId/created", "routes/create-termin.created.tsx"),
   route("umfrage/:token", "routes/survey.tsx"),

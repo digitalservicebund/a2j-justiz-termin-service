@@ -37,6 +37,18 @@ const published = {
   ],
 };
 
+// Far in the future, so the "no past dates" rule never trips these tests. 09:00 to 10:30 Berlin
+// time in January is 08:00 to 09:30 UTC.
+const completeDraft = {
+  id: "d1",
+  status: "draft" as const,
+  aktenzeichen: "574 C 65412/26",
+  slots: [
+    { id: "s1", start: new Date("2099-01-05T08:00:00Z"), end: new Date("2099-01-05T09:30:00Z") },
+    { id: "s2", start: new Date("2099-01-06T08:00:00Z"), end: new Date("2099-01-06T09:30:00Z") },
+  ],
+};
+
 const params = { appointmentId: "d1" };
 const url = "http://localhost/overview/d1/confirm";
 
@@ -69,19 +81,7 @@ describe("create-termin confirm route", () => {
 
   describe("loading", () => {
     it("reads the draft from the database for the signed-in user", async () => {
-      vi.mocked(getAppointment).mockResolvedValue({
-        id: "d1",
-        status: "draft",
-        aktenzeichen: "574 C 65412/26",
-        // 09:00 and 10:30 Berlin time in summer are 07:00 and 08:30 UTC.
-        slots: [
-          {
-            id: "s1",
-            start: new Date("2026-09-17T07:00:00Z"),
-            end: new Date("2026-09-17T08:30:00Z"),
-          },
-        ],
-      });
+      vi.mocked(getAppointment).mockResolvedValue(completeDraft);
 
       const result = await loader({ request: new Request(url), params });
 
@@ -90,9 +90,18 @@ describe("create-termin confirm route", () => {
         aktenzeichen: "574 C 65412/26",
         slots: [
           {
-            day: "17",
-            month: "09",
-            year: "2026",
+            day: "05",
+            month: "01",
+            year: "2099",
+            startHour: "09",
+            startMinute: "00",
+            endHour: "10",
+            endMinute: "30",
+          },
+          {
+            day: "06",
+            month: "01",
+            year: "2099",
             startHour: "09",
             startMinute: "00",
             endHour: "10",
@@ -100,6 +109,36 @@ describe("create-termin confirm route", () => {
           },
         ],
       });
+    });
+
+    it.each([
+      ["has no Aktenzeichen yet", { aktenzeichen: " " }],
+      ["has only one time slot", { slots: completeDraft.slots.slice(0, 1) }],
+      ["has no time slot", { slots: [] }],
+      [
+        "has a time slot in the past",
+        {
+          slots: [
+            {
+              id: "old",
+              start: new Date("2020-01-05T08:00:00Z"),
+              end: new Date("2020-01-05T09:00:00Z"),
+            },
+            ...completeDraft.slots.slice(1),
+          ],
+        },
+      ],
+    ])("sends the user back to the form for a draft that %s", async (_name, change) => {
+      vi.mocked(getAppointment).mockResolvedValue({ ...completeDraft, ...change });
+
+      await expect(loader({ request: new Request(url), params })).rejects.toMatchObject({
+        status: 302,
+        headers: expect.objectContaining({}),
+      });
+      const thrown = await loader({ request: new Request(url), params }).catch(
+        (error: Response) => error,
+      );
+      expect((thrown as Response).headers.get("Location")).toBe("/overview/new?entwurf=d1");
     });
 
     it("answers 404 for an unknown appointment or one of another user", async () => {
@@ -134,11 +173,34 @@ describe("create-termin confirm route", () => {
     });
 
     it("publishes the draft and shows the next steps", async () => {
+      vi.mocked(getAppointment).mockResolvedValue(completeDraft);
       const response = (await action({ request: postRequest("create"), params })) as Response;
 
       expect(publishAppointment).toHaveBeenCalledWith({ db: true }, "1", "d1");
       expect(response.status).toBe(302);
       expect(response.headers.get("Location")).toBe("/overview/d1/created");
+    });
+
+    it("does not publish a draft that is no longer complete, but sends it back to the form", async () => {
+      vi.mocked(getAppointment).mockResolvedValue({
+        ...completeDraft,
+        slots: completeDraft.slots.slice(1),
+      });
+
+      const response = (await action({ request: postRequest("create"), params })) as Response;
+
+      expect(response.headers.get("Location")).toBe("/overview/new?entwurf=d1");
+      expect(publishAppointment).not.toHaveBeenCalled();
+      expect(sendTerminCreatedEmail).not.toHaveBeenCalled();
+    });
+
+    it("answers 404 when there is no such appointment to publish", async () => {
+      vi.mocked(getAppointment).mockResolvedValue(undefined);
+
+      await expect(action({ request: postRequest("create"), params })).rejects.toMatchObject({
+        init: { status: 404 },
+      });
+      expect(publishAppointment).not.toHaveBeenCalled();
     });
 
     it("e-mails the judge the published Terminumfrage with its time slots", async () => {

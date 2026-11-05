@@ -3,7 +3,6 @@ import { data, Link, redirect, useLoaderData } from "react-router";
 import { getAppointment } from "~/adapters/appointments/appointments.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
-import { CopyLinkButton } from "~/components/shared/CopyLinkButton";
 import { DefaultPage, PageSection } from "~/components/shared/DefaultPage";
 import {
   KernDescriptionList,
@@ -15,6 +14,7 @@ import { KernLabel } from "~/components/shared/kern/KernLabel";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { MainNav } from "~/components/shared/MainNav";
 import { ResultBanner } from "~/components/shared/ResultBanner";
+import { SurveyLinkField } from "~/components/shared/SurveyLinkField";
 import { formatInstant } from "~/core/domain/time/format";
 import { getDb } from "~/database/database";
 import { BASE_PATH } from "~/lib/base-path";
@@ -184,11 +184,12 @@ function OpenForReplies({
               <KernIcon name="check" />
               <KernLabel>Termin auswählen</KernLabel>
             </KernLinkButton>
-            <CopyLinkButton url={surveyUrl} />
           </>
         }
       />
       <BackLink>Zur Übersicht</BackLink>
+
+      <SurveyLinkField id="survey-link" url={surveyUrl} />
 
       <Verhandlungsdaten aktenzeichen={aktenzeichen} />
       <Zeitfenster days={days} />

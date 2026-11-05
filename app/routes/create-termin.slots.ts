@@ -1,4 +1,5 @@
 import { toWallClock, wallClockToInstant } from "~/core/domain/time/berlin.server";
+import { formatCalendarDate } from "~/core/domain/time/format";
 import type { TimeRange } from "~/core/domain/time/time-range";
 
 import type { SlotInput } from "./create-termin.schema";
@@ -41,5 +42,16 @@ export function rangeToSlot({ start, end }: TimeRange): SlotInput {
     startMinute: pad(from.minute),
     endHour: pad(to.hour),
     endMinute: pad(to.minute),
+  };
+}
+
+export type SlotDescription = { date: string; time: string };
+
+// "17. September 2026" and "10:00 bis 14:00", as shown in the table of time slots.
+export function describeSlot(range: TimeRange): SlotDescription {
+  const slot = rangeToSlot(range);
+  return {
+    date: formatCalendarDate(Number(slot.year), Number(slot.month), Number(slot.day)),
+    time: `${slot.startHour}:${slot.startMinute} bis ${slot.endHour}:${slot.endMinute}`,
   };
 }

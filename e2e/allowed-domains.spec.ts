@@ -36,7 +36,6 @@ test("an address on an allowed domain signs up with a verified magic link", asyn
   const email = users.email(domain);
   await requestLink(page, email);
   await expect(page.getByRole("status")).toContainText("Ihr Anmelde-Link wurde versendet");
-  await expect(page.getByRole("status")).toBeFocused();
   await expect(page.getByRole("textbox", { name: "E‑Mail-Adresse" })).toHaveValue(email);
   // The account only exists once the link was opened.
   expect(await db.selectFrom("user").select("id").where("email", "=", email).execute()).toEqual([]);

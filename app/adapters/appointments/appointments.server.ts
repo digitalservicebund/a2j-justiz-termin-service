@@ -1,18 +1,17 @@
 import { randomBytes } from "node:crypto";
 
-import type { Kysely } from "kysely";
+import { sql, type Kysely } from "kysely";
 
 import { confirmedWindow, rowToRange, type TimeRange } from "../../core/domain/time/time-range.ts";
 import type { AppointmentStatus, Database } from "../../database/types.ts";
 import { logInfo } from "../../lib/logging.ts";
 
-export type AppointmentDraft = { aktenzeichen: string; slots: TimeRange[] };
-
 // A stored time slot. Its id stays the same as long as the slot is not replaced.
 export type AppointmentSlot = TimeRange & { id: string };
 
-export type Appointment = Omit<AppointmentDraft, "slots"> & {
+export type Appointment = {
   id: string;
+  aktenzeichen: string;
   slots: AppointmentSlot[];
   status: AppointmentStatus;
   // The secret of the universal survey link. Drafts have none; it is set when they are published.
@@ -21,59 +20,146 @@ export type Appointment = Omit<AppointmentDraft, "slots"> & {
   confirmedSlot?: TimeRange | null;
 };
 
-function insertSlots(db: Kysely<Database>, appointmentId: string, slots: TimeRange[]) {
-  return db
-    .insertInto("time_slot")
-    .values(
-      slots.map(({ start, end }) => ({
-        appointment_id: appointmentId,
-        start_time: start,
-        end_time: end,
-      })),
-    )
-    .execute();
-}
-
-// Appointments start as drafts; they are published once the judge confirms the review.
+// A draft starts with just the Aktenzeichen. Its time slots are added one at a time, and it is
+// published once the judge confirms the review.
 export async function createDraftAppointment(
   db: Kysely<Database>,
   userId: string,
-  { aktenzeichen, slots }: AppointmentDraft,
+  aktenzeichen: string,
 ): Promise<string> {
-  const id = await db.transaction().execute(async (trx) => {
-    const { id } = await trx
-      .insertInto("appointment")
-      .values({ user_id: userId, aktenzeichen, status: "draft" })
-      .returning("id")
-      .executeTakeFirstOrThrow();
-    await insertSlots(trx, id, slots);
-    return id;
-  });
+  const { id } = await db
+    .insertInto("appointment")
+    .values({ user_id: userId, aktenzeichen, status: "draft" })
+    .returning("id")
+    .executeTakeFirstOrThrow();
   logInfo(`User ${userId} created draft appointment ${id}`);
   return id;
 }
 
-// Replaces the Aktenzeichen and all time slots of a draft. Returns false when the user has no such draft.
-export async function updateDraftAppointment(
+// Only the user's own drafts can be changed; a time slot is a draft exactly when its appointment is.
+const ownDraft = (db: Kysely<Database>, userId: string, id: string) =>
+  db
+    .selectFrom("appointment")
+    .select("id")
+    .where("id", "=", id)
+    .where("user_id", "=", userId)
+    .where("status", "=", "draft");
+
+// Returns false when the user has no such draft.
+export async function updateDraftAktenzeichen(
   db: Kysely<Database>,
   userId: string,
   id: string,
-  { aktenzeichen, slots }: AppointmentDraft,
+  aktenzeichen: string,
+): Promise<boolean> {
+  const updated = await db
+    .updateTable("appointment")
+    .set({ aktenzeichen, updated_at: new Date() })
+    .where("id", "=", id)
+    .where("user_id", "=", userId)
+    .where("status", "=", "draft")
+    .returning("id")
+    .executeTakeFirst();
+  return Boolean(updated);
+}
+
+// Returns false when the user has no such draft.
+export async function addDraftSlot(
+  db: Kysely<Database>,
+  userId: string,
+  id: string,
+  { start, end }: TimeRange,
 ): Promise<boolean> {
   return db.transaction().execute(async (trx) => {
-    const updated = await trx
+    if (!(await ownDraft(trx, userId, id).executeTakeFirst())) return false;
+    await trx
+      .insertInto("time_slot")
+      .values({ appointment_id: id, start_time: start, end_time: end })
+      .execute();
+    await trx
       .updateTable("appointment")
-      .set({ aktenzeichen, updated_at: new Date() })
+      .set({ updated_at: new Date() })
       .where("id", "=", id)
-      .where("user_id", "=", userId)
-      .where("status", "=", "draft")
+      .execute();
+    return true;
+  });
+}
+
+// Returns false when the user has no such draft or the draft has no such slot.
+export async function updateDraftSlot(
+  db: Kysely<Database>,
+  userId: string,
+  id: string,
+  slotId: string,
+  { start, end }: TimeRange,
+): Promise<boolean> {
+  return db.transaction().execute(async (trx) => {
+    if (!(await ownDraft(trx, userId, id).executeTakeFirst())) return false;
+    const updated = await trx
+      .updateTable("time_slot")
+      .set({ start_time: start, end_time: end })
+      .where("id", "=", slotId)
+      .where("appointment_id", "=", id)
       .returning("id")
       .executeTakeFirst();
     if (!updated) return false;
-    await trx.deleteFrom("time_slot").where("appointment_id", "=", id).execute();
-    await insertSlots(trx, id, slots);
+    await trx
+      .updateTable("appointment")
+      .set({ updated_at: new Date() })
+      .where("id", "=", id)
+      .execute();
     return true;
   });
+}
+
+// Returns false when the user has no such draft or the draft has no such slot.
+export async function deleteDraftSlot(
+  db: Kysely<Database>,
+  userId: string,
+  id: string,
+  slotId: string,
+): Promise<boolean> {
+  return db.transaction().execute(async (trx) => {
+    if (!(await ownDraft(trx, userId, id).executeTakeFirst())) return false;
+    const deleted = await trx
+      .deleteFrom("time_slot")
+      .where("id", "=", slotId)
+      .where("appointment_id", "=", id)
+      .returning("id")
+      .executeTakeFirst();
+    if (!deleted) return false;
+    await trx
+      .updateTable("appointment")
+      .set({ updated_at: new Date() })
+      .where("id", "=", id)
+      .execute();
+    return true;
+  });
+}
+
+// Removes a draft that nothing was entered into, so that giving up leaves no empty entry in the
+// overview. A draft with an Aktenzeichen or a slot is kept. Returns whether a draft was removed.
+export async function deleteDraftIfEmpty(
+  db: Kysely<Database>,
+  userId: string,
+  id: string,
+): Promise<boolean> {
+  const deleted = await db
+    .deleteFrom("appointment")
+    .where("id", "=", id)
+    .where("user_id", "=", userId)
+    .where("status", "=", "draft")
+    .where(sql<boolean>`btrim(aktenzeichen) = ''`)
+    .where((eb) =>
+      eb.not(
+        eb.exists(
+          eb.selectFrom("time_slot").select("id").whereRef("appointment_id", "=", "appointment.id"),
+        ),
+      ),
+    )
+    .returning("id")
+    .executeTakeFirst();
+  return Boolean(deleted);
 }
 
 // Returns undefined for unknown appointments and for those of other users.

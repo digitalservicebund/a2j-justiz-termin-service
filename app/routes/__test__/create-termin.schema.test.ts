@@ -5,7 +5,9 @@ import {
   emptySlot,
   MAX_SLOTS,
   messages,
-  parseCreateTerminForm,
+  parseSlotForm,
+  aktenzeichenProblem,
+  validateSlot,
   validateCreateTermin,
   type SlotInput,
 } from "../create-termin.schema";
@@ -328,32 +330,96 @@ describe("validateCreateTermin", () => {
   });
 });
 
-describe("parseCreateTerminForm", () => {
-  it("collects indexed slot fields in row order", () => {
+describe("parseSlotForm", () => {
+  it("reads every slot field", () => {
     const form = new FormData();
-    form.set("aktenzeichen", "A 1");
-    form.set("slots.2.day", "3");
-    form.set("slots.0.day", "1");
-    form.set("slots.0.startHour", "8");
-    form.set("slots.1.unknown", "x");
+    form.set("day", "1");
+    form.set("startHour", "8");
+    form.set("unknown", "x");
 
-    const { aktenzeichen, slots } = parseCreateTerminForm(form);
-
-    expect(aktenzeichen).toBe("A 1");
-    expect(slots).toEqual([
-      { ...emptySlot, day: "1", startHour: "8" },
-      { ...emptySlot, day: "3" },
-    ]);
+    expect(parseSlotForm(form)).toEqual({ ...emptySlot, day: "1", startHour: "8" });
   });
 
-  it("falls back to an empty Aktenzeichen and no rows for an empty form", () => {
-    expect(parseCreateTerminForm(new FormData())).toEqual({ aktenzeichen: "", slots: [] });
+  it("falls back to an empty slot, and ignores file uploads", () => {
+    expect(parseSlotForm(new FormData())).toEqual(emptySlot);
+    const form = new FormData();
+    form.set("day", new File(["x"], "x.txt"));
+    expect(parseSlotForm(form)).toEqual(emptySlot);
+  });
+});
+
+describe("aktenzeichenProblem", () => {
+  it("accepts a filled-in Aktenzeichen", () => {
+    expect(aktenzeichenProblem(" A 1 ", { required: true })).toBeUndefined();
   });
 
-  it("ignores file uploads and unrelated fields", () => {
-    const form = new FormData();
-    form.set("slots.0.day", new File(["x"], "x.txt"));
-    form.set("something", "else");
-    expect(parseCreateTerminForm(form).slots).toEqual([]);
+  it("only asks for one when it is required", () => {
+    expect(aktenzeichenProblem("  ", { required: true })).toBe(messages.aktenzeichenRequired);
+    expect(aktenzeichenProblem("  ", { required: false })).toBeUndefined();
+  });
+
+  it("rejects one that is too long either way", () => {
+    expect(aktenzeichenProblem("A".repeat(51), { required: false })).toBe(
+      messages.aktenzeichenTooLong,
+    );
+    expect(aktenzeichenProblem(`${"A".repeat(50)}  `, { required: true })).toBeUndefined();
+  });
+});
+
+const check = (slot: SlotInput, others: SlotInput[] = []) => validateSlot(slot, others, now);
+
+function slotErrors(result: ReturnType<typeof check>) {
+  if (result.success) throw new Error("expected validation to fail");
+  return result.errors;
+}
+
+describe("validateSlot", () => {
+  it("accepts a valid slot", () => {
+    expect(check(slotOn())).toEqual({ success: true });
+  });
+
+  it("flags every empty part of an empty slot", () => {
+    expect(slotErrors(check(emptySlot))).toEqual({
+      date: messages.date,
+      start: messages.start,
+      end: messages.end,
+    });
+  });
+
+  it("flags a date in the past, but not today", () => {
+    expect(slotErrors(check(slotOn({ day: "20", month: "10" }))).date).toBe(messages.pastDate);
+    expect(check(slotOn({ day: "21", month: "10" }))).toEqual({ success: true });
+  });
+
+  it("flags an end that is not after the start", () => {
+    expect(slotErrors(check(slotOn({ endHour: "15", endMinute: "30" }))).range).toBe(
+      messages.range,
+    );
+  });
+
+  it("flags times the clock change skips or repeats", () => {
+    const skipped = slotOn({ day: "28", month: "3", year: "2027", startHour: "2" });
+    expect(slotErrors(check(skipped)).start).toBe(messages.skippedTime);
+    const repeated = slotOn({ day: "31", month: "10", year: "2027", startHour: "2" });
+    expect(slotErrors(check(repeated)).start).toBe(messages.repeatedTime);
+  });
+
+  it("flags an overlap and names the other slot by date and time", () => {
+    const errors = slotErrors(check(slotOn({ startHour: "15", startMinute: "45" }), [slotOn()]));
+
+    expect(errors.overlap).toBe(messages.overlapWith("am 9. November 2026, 15:30 bis 16:00"));
+  });
+
+  it("lets slots touch, and ignores other slots on other days or without a valid time", () => {
+    expect(check(slotOn({ startHour: "16", endHour: "17" }), [slotOn()])).toEqual({
+      success: true,
+    });
+    expect(check(slotOn(), [slotOn({ day: "10" }), emptySlot])).toEqual({ success: true });
+  });
+
+  it("does not hold other slots to the no-past-dates rule", () => {
+    const earlier = slotOn({ day: "1", month: "1", year: "2020" });
+    expect(check(earlier, [earlier])).toMatchObject({ success: false });
+    expect(check(slotOn(), [earlier])).toEqual({ success: true });
   });
 });

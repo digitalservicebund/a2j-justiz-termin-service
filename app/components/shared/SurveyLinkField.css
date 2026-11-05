@@ -1,0 +1,12 @@
+.survey-link-field {
+  display: grid;
+  gap: var(--kern-metric-space-small);
+  justify-items: start;
+}
+
+.survey-link-field__input {
+  width: 100%;
+  resize: none;
+  font-family: var(--kern-typography-font-family-monospace, monospace);
+  overflow-wrap: anywhere;
+}

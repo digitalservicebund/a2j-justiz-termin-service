@@ -16,6 +16,7 @@
 /* Rows, add button, hint and the window-level error share one group, as in the error sketch. */
 .create-termin__windows {
   display: grid;
+  justify-self: stretch;
   gap: var(--kern-metric-space-default);
   justify-items: start;
   margin: 0;
@@ -119,6 +120,18 @@
 .create-termin__row-errors {
   display: grid;
   flex-basis: 100%;
+  gap: var(--kern-metric-space-small);
+}
+
+/* The table fills the column, with the actions at its right edge. */
+.create-termin__table {
+  justify-self: stretch;
+  width: 100%;
+}
+
+.create-termin__actions-cell {
+  display: flex;
+  justify-content: flex-end;
   gap: var(--kern-metric-space-small);
 }
 
