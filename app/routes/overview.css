@@ -1,39 +1,11 @@
-.overview {
-  display: grid;
-  gap: var(--kern-metric-space-x-large);
-  padding-block: var(--kern-metric-space-x-large) var(--kern-metric-space-6x-large);
-}
-
-/* The design's sidebar is 352px wide; the content column (864px) is centred in the rest. */
-@media (min-width: 64rem) {
-  .overview {
-    grid-template-columns: 22rem minmax(0, 1fr);
-    column-gap: 0;
-    align-items: start;
-  }
-}
-
+/* With the button's own spacing above it, the button sits 80px below the table. 3rem is beyond the
+   largest spacing helper. */
 .overview__content {
-  display: grid;
-  gap: var(--kern-metric-space-x-large);
-  justify-items: start;
-  /* With the button's own spacing above it, the button sits 80px below the table. */
   padding-bottom: 3rem;
-}
-
-.overview__controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--kern-metric-space-large);
 }
 
 .overview__controls .kern-form-input__select {
   field-sizing: content;
-}
-
-.overview__table {
-  width: 100%;
 }
 
 /* The Status column starts 158px into the table in the design, the action column hugs its button. */

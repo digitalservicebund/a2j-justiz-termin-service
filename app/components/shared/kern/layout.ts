@@ -12,10 +12,10 @@ export function classNames(...names: Array<string | false | null | undefined>): 
 }
 
 // Lists and fieldsets come with bullets, margins, padding and a border of the browser's own.
+export const resetClassName = "kern-m-none kern-p-none layout-reset";
+
 const resetClasses = (element: string) =>
-  element === "ul" || element === "ol" || element === "fieldset"
-    ? "kern-m-none kern-p-none layout-reset"
-    : "";
+  element === "ul" || element === "ol" || element === "fieldset" ? resetClassName : "";
 
 export type StackOptions = {
   gap?: Space;

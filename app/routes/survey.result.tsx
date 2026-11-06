@@ -3,14 +3,15 @@ import { data, redirect, useLoaderData } from "react-router";
 import { findSurvey, getSavedAnswer } from "~/adapters/appointments/survey.server";
 import { getSessionUser } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
-import { DefaultPage, PageSection } from "~/components/shared/DefaultPage";
+import { DefaultPage } from "~/components/shared/DefaultPage";
 import {
   KernDescriptionList,
   KernDescriptionListItem,
 } from "~/components/shared/kern/KernDescriptionList";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
-import { MainNav } from "~/components/shared/MainNav";
+import { KernStack } from "~/components/shared/kern/KernStack";
 import { ResultBanner } from "~/components/shared/ResultBanner";
+import { SidebarPage } from "~/components/shared/SidebarPage";
 import { getDb } from "~/database/database";
 
 import { NextStepsSection, Step } from "./create-termin.created";
@@ -55,23 +56,16 @@ export default function SurveyResult() {
   if (days.length === 0) return <NoOption aktenzeichen={aktenzeichen} days={proposedDays} />;
   const signedIn = Boolean(user);
   const content = (
-    <DefaultPage width="content">
-      <div className={`create-termin-created${signedIn ? " survey-result__main" : ""}`}>
-        <Positive days={days} />
-      </div>
-    </DefaultPage>
+    <KernStack className={`create-termin-created${signedIn ? " survey-result__main" : ""}`}>
+      <Positive days={days} />
+    </KernStack>
   );
   return (
     <AppShell user={user ?? undefined} breadcrumbs={surveyBreadcrumbs}>
       {signedIn ? (
-        <PageSection width="wide">
-          <div className="survey-result__layout">
-            <MainNav current="overview" />
-            {content}
-          </div>
-        </PageSection>
+        <SidebarPage current="overview">{content}</SidebarPage>
       ) : (
-        content
+        <DefaultPage width="content">{content}</DefaultPage>
       )}
     </AppShell>
   );
@@ -113,17 +107,14 @@ export function NoOption({
     <AppShell breadcrumbs={noMatchBreadcrumbs}>
       <div className="survey-result survey-result--no-match">
         <DefaultPage width="content">
-          <div className="survey-no-match">
+          <KernStack gap="xl" className="survey-no-match">
             <ResultBanner
               inline
               type="warning"
               title="Es gibt leider kein Zeitfenster, dass allen Verfahrensbeteiligten passt."
               message="Das Gericht wird wahrscheinlich eine neue Terminumfrage erstellen."
             />
-            <section
-              aria-labelledby="no-match-verhandlungsdaten"
-              className="survey-no-match__section"
-            >
+            <KernStack as="section" gap="sm" aria-labelledby="no-match-verhandlungsdaten">
               <KernHeading size="medium" level={2} id="no-match-verhandlungsdaten">
                 Verhandlungsdaten
               </KernHeading>
@@ -132,9 +123,9 @@ export function NoOption({
                   {aktenzeichen}
                 </KernDescriptionListItem>
               </KernDescriptionList>
-            </section>
+            </KernStack>
             {days.length > 0 && (
-              <section aria-labelledby="no-match-zeitfenster" className="survey-no-match__section">
+              <KernStack as="section" gap="sm" aria-labelledby="no-match-zeitfenster">
                 <KernHeading size="medium" level={2} id="no-match-zeitfenster">
                   Zeitfenster
                 </KernHeading>
@@ -147,9 +138,9 @@ export function NoOption({
                     </KernDescriptionListItem>
                   ))}
                 </KernDescriptionList>
-              </section>
+              </KernStack>
             )}
-          </div>
+          </KernStack>
         </DefaultPage>
       </div>
     </AppShell>

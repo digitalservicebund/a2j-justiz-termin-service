@@ -5,6 +5,7 @@ import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { CopyButton } from "~/components/shared/CopyButton";
 import { KernBody } from "~/components/shared/kern/KernBody";
+import { KernStack } from "~/components/shared/kern/KernStack";
 import { formatInstant } from "~/core/domain/time/format";
 import { getDb } from "~/database/database";
 
@@ -36,7 +37,7 @@ export default function OverviewSelected() {
   const { user, aktenzeichen, termin } = useLoaderData<typeof loader>();
   return (
     <AppShell user={user} breadcrumbs={selectBreadcrumbs}>
-      <div className="create-termin-created">
+      <KernStack className="create-termin-created">
         <SuccessBanner title={`Der Termin ist am ${termin}.`} />
 
         <NextSteps>
@@ -52,7 +53,7 @@ export default function OverviewSelected() {
           </Step>
           <Step title="Ihre Servicestelle verschickt die Ladung." />
         </NextSteps>
-      </div>
+      </KernStack>
     </AppShell>
   );
 }

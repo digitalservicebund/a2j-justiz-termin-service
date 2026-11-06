@@ -1,0 +1,6 @@
+/* KERN pads every column of a row on all sides. A cell only needs the gutters at its sides, and
+   must be allowed to shrink below the width of its content. */
+.kern-container .kern-row > .kern-grid-col {
+  padding-block: 0;
+  min-width: 0;
+}

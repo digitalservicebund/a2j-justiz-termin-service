@@ -1,19 +1,18 @@
 import type { ReactNode } from "react";
 
+import { KernGrid, KernGridCol, type KernGridColProps } from "./kern/KernGrid";
 import { ReportProblemButton } from "./ReportProblemButton";
-
-import "./DefaultPage.css";
 
 export type PageWidth = "narrow" | "content" | "default" | "wide";
 
 // The columns of KERN's 12-column grid each width takes, per breakpoint. They are the nearest
 // spans to the widths of the design (720, 864, 992 and 1504px) in the container at that size,
 // measured for a 1440px design frame. Below "md" every width fills the container.
-const columns: Record<PageWidth, string> = {
-  narrow: "kern-col-12 kern-col-md-11 kern-col-lg-9 kern-col-xl-7 kern-col-xxl-6",
-  content: "kern-col-12 kern-col-lg-10 kern-col-xl-8 kern-col-xxl-7",
-  default: "kern-col-12 kern-col-lg-11 kern-col-xl-9 kern-col-xxl-8",
-  wide: "kern-col-12",
+const columns: Record<PageWidth, Pick<KernGridColProps, "md" | "lg" | "xl" | "xxl">> = {
+  narrow: { md: 11, lg: 9, xl: 7, xxl: 6 },
+  content: { lg: 10, xl: 8, xxl: 7 },
+  default: { lg: 11, xl: 9, xxl: 8 },
+  wide: {},
 };
 
 type PageSectionProps = {
@@ -26,9 +25,9 @@ type PageSectionProps = {
 export function PageSection({ width = "default", children }: Readonly<PageSectionProps>) {
   return (
     <div className="kern-container page-section" data-width={width}>
-      <div className="kern-row kern-justify-content-center">
-        <div className={`page-section__column ${columns[width]}`}>{children}</div>
-      </div>
+      <KernGrid justify="center">
+        <KernGridCol {...columns[width]}>{children}</KernGridCol>
+      </KernGrid>
     </div>
   );
 }
