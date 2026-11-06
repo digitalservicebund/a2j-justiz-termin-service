@@ -1,9 +1,3 @@
-.create-termin-review__bulk {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--kern-metric-space-default);
-}
-
 /* The summary sits on a white surface in the flow-page design. */
 .create-termin-review__summary {
   align-items: flex-start;

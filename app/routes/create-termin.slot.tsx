@@ -12,10 +12,13 @@ import { ErrorMessage } from "~/components/shared/ErrorMessage";
 import { FlowPage } from "~/components/shared/FlowPage";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernButton } from "~/components/shared/kern/KernButton";
+import { KernCluster } from "~/components/shared/kern/KernCluster";
 import { KernFormInput } from "~/components/shared/kern/KernFormInput";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernLabel } from "~/components/shared/kern/KernLabel";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
+import { KernStack } from "~/components/shared/kern/KernStack";
+import { clusterClassName, stackClassName } from "~/components/shared/kern/layout";
 import { getDb } from "~/database/database";
 
 import { draftHref, NEW_SLOT } from "./create-termin.paths";
@@ -109,6 +112,8 @@ const endFields: FieldConfig[] = [
   { field: "endMinute", label: "Minute", maxLength: 2, group: "end" },
 ];
 
+const colonLayout = clusterClassName({ wrap: false, align: "center" });
+
 const errorId = (group: SlotErrorGroup) => `slot-${group}-error`;
 
 export default function CreateTerminSlot() {
@@ -130,13 +135,19 @@ export default function CreateTerminSlot() {
       .map(errorId)
       .join(" ");
     return (
-      <fieldset className="create-termin-slot__group" aria-describedby={described || undefined}>
+      <KernCluster
+        as="fieldset"
+        wrap={false}
+        gap="sm"
+        align="end"
+        aria-describedby={described || undefined}
+      >
         <legend className="kern-sr-only">{legend}</legend>
         {fields.map(({ field, label, maxLength }, position) => (
           <Fragment key={field}>
             {position > 0 && (
               <span
-                className={`create-termin-slot__separator${dots ? "" : " create-termin-slot__separator--colon"}`}
+                className={`create-termin-slot__separator${dots ? "" : ` create-termin-slot__separator--colon ${colonLayout}`}`}
                 aria-hidden="true"
               >
                 {dots ? "." : ":"}
@@ -158,15 +169,15 @@ export default function CreateTerminSlot() {
             />
           </Fragment>
         ))}
-      </fieldset>
+      </KernCluster>
     );
   };
 
   return (
     <AppShell user={user} breadcrumbs={createTerminBreadcrumbs}>
       <FlowPage width="content" spacing="form">
-        <Form method="post" className="create-termin__form" noValidate>
-          <div className="create-termin-slot__heading">
+        <Form method="post" className={stackClassName({ gap: "xl" }, "form")} noValidate>
+          <KernStack gap="sm">
             <KernBody size="small" bold>
               Zeitfenster
             </KernBody>
@@ -175,34 +186,34 @@ export default function CreateTerminSlot() {
                 ? "Geben Sie Ihr verfügbares Zeitfenster an"
                 : "Ändern Sie Ihr verfügbares Zeitfenster"}
             </KernHeading>
-          </div>
+          </KernStack>
 
-          <div className="create-termin-slot__fields">
+          <KernCluster gap="md" align="end" className="create-termin-slot__fields">
             {fieldset("Datum", "date", dateFields, true)}
             <span className="kern-body create-termin-slot__word">von</span>
             {fieldset("Beginn", "start", startFields)}
             <span className="kern-body create-termin-slot__word">bis</span>
             {fieldset("Ende", "end", endFields)}
-          </div>
+          </KernCluster>
 
           {groups.length > 0 && (
-            <div className="create-termin-slot__errors">
+            <KernStack gap="sm">
               {groups.map((group) => (
                 <ErrorMessage id={errorId(group)} key={group}>
                   {errors[group]}
                 </ErrorMessage>
               ))}
-            </div>
+            </KernStack>
           )}
 
-          <div className="create-termin__actions">
+          <KernCluster gap="md" className="kern-pt-md">
             <KernLinkButton style="secondary" to={cancelHref}>
               <KernLabel>Abbrechen</KernLabel>
             </KernLinkButton>
             <KernButton type="submit" disabled={pending}>
               Speichern
             </KernButton>
-          </div>
+          </KernCluster>
         </Form>
       </FlowPage>
     </AppShell>

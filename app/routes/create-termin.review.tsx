@@ -5,12 +5,14 @@ import type { BreadcrumbItem } from "~/components/shared/Breadcrumb";
 import { FlowPage } from "~/components/shared/FlowPage";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernButton } from "~/components/shared/kern/KernButton";
+import { KernCluster } from "~/components/shared/kern/KernCluster";
 import {
   KernDescriptionList,
   KernDescriptionListItem,
 } from "~/components/shared/kern/KernDescriptionList";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernIcon } from "~/components/shared/kern/KernIcon";
+import { stackClassName } from "~/components/shared/kern/layout";
 import { formatCalendarDate } from "~/core/domain/time/format";
 import { useHydrated } from "~/lib/use-hydrated";
 
@@ -117,7 +119,7 @@ export function ReviewPage({
 
   return (
     <FlowPage width={wide ? "default" : "narrow"} spacing={wide ? "review" : "form"}>
-      <Form method="post" className="create-termin__form">
+      <Form method="post" className={stackClassName({ gap: "xl" }, "form")}>
         {children}
         <KernHeading size="large" level={1}>
           Bitte überprüfen Sie Ihre Angaben
@@ -125,14 +127,14 @@ export function ReviewPage({
 
         {/* The sections are plain <details>; opening them all at once needs JavaScript. */}
         {hydrated && (
-          <div className="create-termin-review__bulk">
+          <KernCluster gap="md">
             <KernButton type="button" style="secondary" onClick={() => setAll(true)}>
               Alle einblenden
             </KernButton>
             <KernButton type="button" style="secondary" onClick={() => setAll(false)}>
               Alle ausblenden
             </KernButton>
-          </div>
+          </KernCluster>
         )}
 
         <div>
@@ -149,14 +151,14 @@ export function ReviewPage({
           ))}
         </div>
 
-        <div className="create-termin__actions">
+        <KernCluster gap="md" className="kern-pt-md">
           <KernButton type="submit" name="intent" value="back" style="secondary">
             Zurück
           </KernButton>
           <KernButton type="submit" name="intent" value={submit.intent} disabled={pending}>
             {submit.label}
           </KernButton>
-        </div>
+        </KernCluster>
       </Form>
     </FlowPage>
   );

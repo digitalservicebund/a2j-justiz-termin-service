@@ -11,10 +11,14 @@ import { AppShell } from "~/components/shared/AppShell";
 import { FlowPage } from "~/components/shared/FlowPage";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernButton } from "~/components/shared/kern/KernButton";
+import { KernCluster } from "~/components/shared/kern/KernCluster";
 import { KernFormInput } from "~/components/shared/kern/KernFormInput";
+import { KernGrid, KernGridCol } from "~/components/shared/kern/KernGrid";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernLabel } from "~/components/shared/kern/KernLabel";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
+import { KernStack } from "~/components/shared/kern/KernStack";
+import { stackClassName } from "~/components/shared/kern/layout";
 import { getDb } from "~/database/database";
 
 import {
@@ -103,52 +107,60 @@ export default function CreateTerminParticipant() {
   return (
     <AppShell user={user} breadcrumbs={createTerminBreadcrumbs}>
       <FlowPage width="content" spacing="form">
-        <Form method="post" className="create-termin__form" noValidate>
-          <div className="create-termin__intro">
-            <KernBody size="small" bold>
+        <Form method="post" className={stackClassName({ gap: "xl" }, "form")} noValidate>
+          <KernStack gap="xs">
+            <KernBody size="small" bold margin="none">
               Verfahrensbeteiligte
             </KernBody>
-            <KernHeading size="large" level={1}>
+            <KernHeading size="large" level={1} margin="none">
               Wie lautet die E-Mail-Adresse der Person?
             </KernHeading>
-          </div>
+          </KernStack>
 
-          <div className="create-termin__person-fields">
-            <KernFormInput
-              id="email"
-              name="email"
-              type="email"
-              label="E-Mail-Adresse"
-              error={errors.email}
-              autoComplete="off"
-              defaultValue={values.email}
-              // Remounts when a rejected submit brings back what was typed.
-              key={`email-${values.email}`}
-            />
-            <KernFormInput
-              id="name"
-              name="name"
-              label={
-                <>
-                  Name <span className="create-termin__optional">- Optional</span>
-                </>
-              }
-              hint="Ergänzen Sie den Namen, wenn Sie keine persönliche E-Mail-Adresse der Person haben."
-              error={errors.name}
-              autoComplete="off"
-              defaultValue={values.name}
-              key={`name-${values.name}`}
-            />
-          </div>
+          <KernStack gap="xl" className="create-termin__person-fields">
+            <KernGrid>
+              <KernGridCol md={8}>
+                <KernFormInput
+                  id="email"
+                  name="email"
+                  type="email"
+                  label="E-Mail-Adresse"
+                  error={errors.email}
+                  autoComplete="off"
+                  defaultValue={values.email}
+                  // Remounts when a rejected submit brings back what was typed.
+                  key={`email-${values.email}`}
+                />
+              </KernGridCol>
+            </KernGrid>
+            <KernGrid>
+              <KernGridCol md={8}>
+                <KernFormInput
+                  id="name"
+                  name="name"
+                  label={
+                    <>
+                      Name <span className="create-termin__optional">- Optional</span>
+                    </>
+                  }
+                  hint="Ergänzen Sie den Namen, wenn Sie keine persönliche E-Mail-Adresse der Person haben."
+                  error={errors.name}
+                  autoComplete="off"
+                  defaultValue={values.name}
+                  key={`name-${values.name}`}
+                />
+              </KernGridCol>
+            </KernGrid>
+          </KernStack>
 
-          <div className="create-termin__actions">
+          <KernCluster gap="md" className="kern-pt-md">
             <KernLinkButton style="secondary" to={cancelHref}>
               <KernLabel>Abbrechen</KernLabel>
             </KernLinkButton>
             <KernButton type="submit" disabled={pending}>
               Speichern
             </KernButton>
-          </div>
+          </KernCluster>
         </Form>
       </FlowPage>
     </AppShell>

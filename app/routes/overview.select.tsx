@@ -5,6 +5,7 @@ import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { FlowPage } from "~/components/shared/FlowPage";
 import { KernButton } from "~/components/shared/kern/KernButton";
+import { KernCluster } from "~/components/shared/kern/KernCluster";
 import {
   KernDescriptionList,
   KernDescriptionListItem,
@@ -12,8 +13,10 @@ import {
 import { KernFieldset } from "~/components/shared/kern/KernFieldset";
 import { KernFormCheck } from "~/components/shared/kern/KernFormCheck";
 import { KernFormInput } from "~/components/shared/kern/KernFormInput";
+import { KernGrid, KernGridCol } from "~/components/shared/kern/KernGrid";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
+import { resetClassName, stackClassName } from "~/components/shared/kern/layout";
 import { formatRangeLong } from "~/core/domain/time/format";
 import { getDb } from "~/database/database";
 
@@ -67,83 +70,88 @@ export default function OverviewSelect() {
   return (
     <AppShell user={user} breadcrumbs={selectBreadcrumbs}>
       <FlowPage width="wide">
-        <div className="overview-select__layout">
-          <KernDescriptionList column className="overview-select__facts">
-            <KernDescriptionListItem label="Aktenzeichen">{aktenzeichen}</KernDescriptionListItem>
-          </KernDescriptionList>
+        {/* The Aktenzeichen takes a column of its own next to the form on wide screens. */}
+        <KernGrid align="start" gapY="xl">
+          <KernGridCol lg={5}>
+            <KernDescriptionList column>
+              <KernDescriptionListItem label="Aktenzeichen">{aktenzeichen}</KernDescriptionListItem>
+            </KernDescriptionList>
+          </KernGridCol>
 
-          <Form method="post" className="overview-select__form" noValidate>
-            <KernHeading size="large" level={1}>
-              Wählen Sie ein Datum und eine Startzeit aus
-            </KernHeading>
+          <KernGridCol lg={7}>
+            <Form method="post" className={stackClassName({ gap: "xl" }, "form")} noValidate>
+              <KernHeading size="large" level={1}>
+                Wählen Sie ein Datum und eine Startzeit aus
+              </KernHeading>
 
-            <KernFieldset
-              id="fenster"
-              legend="Zeitfenster"
-              className="overview-select__fieldset"
-              error={errors.slot}
-            >
-              {windows.map((label, index) => (
-                <KernFormCheck
-                  key={label}
-                  id={`fenster-${index}`}
-                  type="radio"
-                  label={label}
-                  name="fenster"
-                  value={String(index)}
-                  defaultChecked={values.slot === String(index)}
-                  invalid={Boolean(errors.slot)}
-                />
-              ))}
-            </KernFieldset>
+              <KernFieldset
+                id="fenster"
+                legend="Zeitfenster"
+                className={`overview-select__fieldset ${resetClassName}`}
+                error={errors.slot}
+              >
+                {windows.map((label, index) => (
+                  <KernFormCheck
+                    key={label}
+                    id={`fenster-${index}`}
+                    type="radio"
+                    label={label}
+                    name="fenster"
+                    value={String(index)}
+                    defaultChecked={values.slot === String(index)}
+                    invalid={Boolean(errors.slot)}
+                  />
+                ))}
+              </KernFieldset>
 
-            <KernFieldset
-              id="startzeit"
-              legend="Startzeit"
-              className="overview-select__fieldset"
-              error={errors.start}
-            >
-              <div className="overview-select__time">
-                <KernFormInput
-                  id="stunde"
-                  label="Stunde"
-                  compactLabel
-                  width={2}
-                  invalid={Boolean(errors.start)}
-                  name="stunde"
-                  inputMode="numeric"
-                  autoComplete="off"
-                  maxLength={2}
-                  defaultValue={values.hour}
-                />
-                <span className="overview-select__colon" aria-hidden="true">
-                  :
-                </span>
-                <KernFormInput
-                  id="minute"
-                  label="Minute"
-                  compactLabel
-                  width={2}
-                  invalid={Boolean(errors.start)}
-                  name="minute"
-                  inputMode="numeric"
-                  autoComplete="off"
-                  maxLength={2}
-                  defaultValue={values.minute}
-                />
-              </div>
-            </KernFieldset>
+              <KernFieldset
+                id="startzeit"
+                legend="Startzeit"
+                className={`overview-select__fieldset ${resetClassName}`}
+                error={errors.start}
+              >
+                <KernCluster wrap={false} gap="sm" align="end">
+                  <KernFormInput
+                    id="stunde"
+                    label="Stunde"
+                    compactLabel
+                    width={2}
+                    invalid={Boolean(errors.start)}
+                    name="stunde"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    maxLength={2}
+                    defaultValue={values.hour}
+                  />
+                  <span className="overview-select__colon" aria-hidden="true">
+                    :
+                  </span>
+                  <KernFormInput
+                    id="minute"
+                    label="Minute"
+                    compactLabel
+                    width={2}
+                    invalid={Boolean(errors.start)}
+                    name="minute"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    maxLength={2}
+                    defaultValue={values.minute}
+                  />
+                </KernCluster>
+              </KernFieldset>
 
-            <div className="overview-select__actions">
-              <KernLinkButton style="secondary" to="/overview">
-                Abbrechen
-              </KernLinkButton>
-              <KernButton type="submit" disabled={pending}>
-                Weiter
-              </KernButton>
-            </div>
-          </Form>
-        </div>
+              <KernCluster gap="md" className="kern-pt-md">
+                <KernLinkButton style="secondary" to="/overview">
+                  Abbrechen
+                </KernLinkButton>
+                <KernButton type="submit" disabled={pending}>
+                  Weiter
+                </KernButton>
+              </KernCluster>
+            </Form>
+          </KernGridCol>
+        </KernGrid>
       </FlowPage>
     </AppShell>
   );

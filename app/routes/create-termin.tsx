@@ -17,10 +17,13 @@ import { ErrorMessage } from "~/components/shared/ErrorMessage";
 import { FlowPage } from "~/components/shared/FlowPage";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernButton } from "~/components/shared/kern/KernButton";
+import { KernCluster } from "~/components/shared/kern/KernCluster";
 import { KernFormInput } from "~/components/shared/kern/KernFormInput";
+import { KernGrid, KernGridCol } from "~/components/shared/kern/KernGrid";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernIcon, type KernIconName } from "~/components/shared/kern/KernIcon";
 import { KernLabel } from "~/components/shared/kern/KernLabel";
+import { KernStack } from "~/components/shared/kern/KernStack";
 import {
   KernCell,
   KernColumn,
@@ -29,6 +32,7 @@ import {
   KernTableBody,
   KernTableHead,
 } from "~/components/shared/kern/KernTable";
+import { stackClassName } from "~/components/shared/kern/layout";
 import { getDb } from "~/database/database";
 
 import { MAX_PARTICIPANTS } from "./create-termin.participant.schema";
@@ -163,43 +167,46 @@ export default function CreateTermin() {
   return (
     <AppShell user={user} breadcrumbs={createTerminBreadcrumbs}>
       <FlowPage width="content" spacing="form">
-        <Form method="post" className="create-termin__form" noValidate>
+        <Form method="post" className={stackClassName({ gap: "xl" }, "form")} noValidate>
           {/* Pressing Enter in a field submits the first button, which has to be "Weiter". */}
           <button type="submit" name="intent" value="next" hidden tabIndex={-1} />
           {draft && <input type="hidden" name="appointmentId" value={draft.id} />}
-          <section aria-labelledby="verhandlungsdaten" className="create-termin__section">
+          <KernStack as="section" gap="md" aria-labelledby="verhandlungsdaten">
             <KernHeading size="large" level={1} id="verhandlungsdaten">
               Geben Sie die Verhandlungsdaten an
             </KernHeading>
-            <KernFormInput
-              id="aktenzeichen"
-              label="Aktenzeichen"
-              wrapperClassName="create-termin__aktenzeichen"
-              error={errors?.aktenzeichen}
-              name="aktenzeichen"
-              defaultValue={aktenzeichen}
-              // Remounts when a rejected submit brings back what was typed.
-              key={aktenzeichen}
-              autoComplete="off"
-            />
-          </section>
+            <KernGrid>
+              <KernGridCol md={7}>
+                <KernFormInput
+                  id="aktenzeichen"
+                  label="Aktenzeichen"
+                  error={errors?.aktenzeichen}
+                  name="aktenzeichen"
+                  defaultValue={aktenzeichen}
+                  // Remounts when a rejected submit brings back what was typed.
+                  key={aktenzeichen}
+                  autoComplete="off"
+                />
+              </KernGridCol>
+            </KernGrid>
+          </KernStack>
 
-          <section aria-labelledby="verfahrensbeteiligte" className="create-termin__section">
-            <div className="create-termin__intro">
-              <KernHeading size="medium" level={2} id="verfahrensbeteiligte">
+          <KernStack as="section" gap="md" aria-labelledby="verfahrensbeteiligte">
+            <KernStack gap="xs">
+              <KernHeading size="medium" level={2} id="verfahrensbeteiligte" margin="none">
                 Geben Sie alle Verfahrensbeteiligten an
               </KernHeading>
-              <KernBody>
+              <KernBody margin="none">
                 Personen ohne E-Mail-Adresse können Sie später mit einem Link zur Terminumfrage
                 einladen.
               </KernBody>
-            </div>
-            <div className="create-termin__windows">
+            </KernStack>
+            <KernStack gap="md" align="start" className="create-termin__windows">
               <KernTable
                 caption="Verfahrensbeteiligte"
                 hideCaption
                 striped={participants.length > 0}
-                className="create-termin__table"
+                className="create-termin__table kern-w-full"
               >
                 <KernTableHead>
                   <KernRow>
@@ -219,7 +226,7 @@ export default function CreateTermin() {
                           <KernCell>{email}</KernCell>
                           <KernCell>{name}</KernCell>
                           <KernCell variant="action">
-                            <div className="create-termin__actions-cell">
+                            <KernCluster wrap={false} gap="sm" justify="center">
                               <RowButton
                                 intent={`edit-person:${id}`}
                                 icon="edit"
@@ -230,7 +237,7 @@ export default function CreateTermin() {
                                 icon="delete"
                                 label={`${label} löschen`}
                               />
-                            </div>
+                            </KernCluster>
                           </KernCell>
                         </KernRow>
                       );
@@ -245,22 +252,24 @@ export default function CreateTermin() {
                 hint={`Sie können höchstens ${MAX_PARTICIPANTS} Personen angeben.`}
                 hintId="add-person-hint"
               />
-            </div>
-          </section>
+            </KernStack>
+          </KernStack>
 
-          <section aria-labelledby="zeitfenster" className="create-termin__section">
+          <KernStack as="section" gap="md" aria-labelledby="zeitfenster">
             <KernHeading size="medium" level={2} id="zeitfenster">
               Zeitfenster
             </KernHeading>
 
-            <div
+            <KernStack
+              gap="md"
+              align="start"
               className={`create-termin__windows${errors?.slots ? " kern-fieldset--error" : ""}`}
             >
               <KernTable
                 caption="Zeitfenster"
                 hideCaption
                 striped={slots.length > 0}
-                className="create-termin__table"
+                className="create-termin__table kern-w-full"
               >
                 <KernTableHead>
                   <KernRow>
@@ -288,7 +297,7 @@ export default function CreateTermin() {
                             ))}
                           </KernCell>
                           <KernCell variant="action">
-                            <div className="create-termin__actions-cell">
+                            <KernCluster wrap={false} gap="sm" justify="center">
                               <RowButton
                                 intent={`edit-slot:${id}`}
                                 icon="edit"
@@ -304,7 +313,7 @@ export default function CreateTermin() {
                                 icon="delete"
                                 label={`Zeitfenster ${label} löschen`}
                               />
-                            </div>
+                            </KernCluster>
                           </KernCell>
                         </KernRow>
                       );
@@ -320,17 +329,17 @@ export default function CreateTermin() {
                 hintId="add-hint"
               />
               {errors?.slots && <ErrorMessage id="slots-error">{errors.slots}</ErrorMessage>}
-            </div>
-          </section>
+            </KernStack>
+          </KernStack>
 
-          <div className="create-termin__actions">
+          <KernCluster gap="md" className="kern-pt-md">
             <KernButton type="submit" name="intent" value="cancel" style="secondary">
               <KernLabel>Abbrechen</KernLabel>
             </KernButton>
             <KernButton type="submit" name="intent" value="next" disabled={pending}>
               Weiter
             </KernButton>
-          </div>
+          </KernCluster>
         </Form>
       </FlowPage>
     </AppShell>
@@ -374,7 +383,7 @@ function AddButton({
         name="intent"
         value={intent}
         style="secondary"
-        className="create-termin__add"
+        className="kern-mt-md"
         disabled={limit}
         aria-describedby={limit ? hintId : undefined}
       >
