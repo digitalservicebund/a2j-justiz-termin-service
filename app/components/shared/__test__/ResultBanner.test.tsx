@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 
 import { ResultBanner } from "~/components/shared/ResultBanner";
 
+import { expectBreakpointColumns, pageSectionColumn, pageWidthClasses } from "./page-width";
+
 describe("ResultBanner", () => {
   it("renders the title as the page heading", () => {
     render(<ResultBanner type="success" title="Erledigt" />);
@@ -42,12 +44,13 @@ describe("ResultBanner", () => {
 
   it("renders without the wide page section when inline", () => {
     const { container } = render(<ResultBanner inline type="warning" title="Titel" />);
-    expect(container.querySelector(".page-width")).toBeNull();
+    expect(container.querySelector(".page-section")).toBeNull();
     expect(container.querySelector(".kern-alert")).toBeInTheDocument();
   });
 
   it("sits in the wide page section by default", () => {
     const { container } = render(<ResultBanner type="warning" title="Titel" />);
-    expect(container.querySelector(".page-width--wide .kern-alert")).toBeInTheDocument();
+    expect(container.querySelector(".page-section .kern-alert")).toBeInTheDocument();
+    expectBreakpointColumns(pageSectionColumn(container), pageWidthClasses.wide);
   });
 });

@@ -10,10 +10,12 @@ import { AppShell } from "~/components/shared/AppShell";
 import { PageSection } from "~/components/shared/DefaultPage";
 import { KernAlert } from "~/components/shared/kern/KernAlert";
 import { KernBody } from "~/components/shared/kern/KernBody";
+import { KernCluster } from "~/components/shared/kern/KernCluster";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernIcon } from "~/components/shared/kern/KernIcon";
 import { KernLabel } from "~/components/shared/kern/KernLabel";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
+import { KernStack } from "~/components/shared/kern/KernStack";
 import { LoginForm } from "~/components/shared/LoginForm";
 import { getDb } from "~/database/database";
 import { getAuth } from "~/lib/auth.server";
@@ -105,16 +107,18 @@ export default function Welcome() {
     <AppShell className="welcome" user={user ?? undefined} showLanguageLinks breadcrumbs={[]}>
       <section className="welcome__hero">
         <PageSection>
-          <div className="welcome__hero-content">
-            <KernHeading size="x-large" level={1}>
-              Verhandlungstermin-Finder
-            </KernHeading>
-            <KernBody size="large" bold>
-              Der Verhandlungstermin-Finder vereinfacht die Terminkoordination zwischen Gericht und
-              Verfahrensbeteiligten.
-            </KernBody>
+          <KernStack gap="xl" className="welcome__hero-content">
+            <KernStack>
+              <KernHeading className="kern-m-none" size="x-large" level={1}>
+                Verhandlungstermin-Finder
+              </KernHeading>
+              <KernBody className="kern-m-none" size="large" bold>
+                Der Verhandlungstermin-Finder vereinfacht die Terminkoordination zwischen Gericht
+                und Verfahrensbeteiligten.
+              </KernBody>
+            </KernStack>
             {user ? (
-              <div className="welcome__hero-action">
+              <div>
                 <KernLinkButton to="/overview">
                   <KernLabel>Verhandlungstermin-Finder</KernLabel>
                   <KernIcon name="arrow-forward" />
@@ -151,7 +155,7 @@ export default function Welcome() {
                 />
               </>
             )}
-          </div>
+          </KernStack>
         </PageSection>
       </section>
 
@@ -161,12 +165,14 @@ export default function Welcome() {
             <summary className="kern-details__header welcome__pilot-summary">
               Der Onlinedienst befindet sich in der Testphase (Pilotprojekt)
             </summary>
-            <KernBody>
-              Mit diesem Projekt wird ein Onlinedienst für die Terminabstimmung zwischen Gerichten
-              und Verfahrensbeteiligten erprobt. Die Erstellung einer Terminumfrage ist noch nicht
-              für alle Gerichte möglich. Verfahrensbeteiligte können den Onlinedienst aktuell nur
-              auf Einladung nutzen.
-            </KernBody>
+            <div className="welcome__pilot-content kern-pt-sm">
+              <KernBody>
+                Mit diesem Projekt wird ein Onlinedienst für die Terminabstimmung zwischen Gerichten
+                und Verfahrensbeteiligten erprobt. Die Erstellung einer Terminumfrage ist noch nicht
+                für alle Gerichte möglich. Verfahrensbeteiligte können den Onlinedienst aktuell nur
+                auf Einladung nutzen.
+              </KernBody>
+            </div>
           </details>
         </PageSection>
       </section>
@@ -176,14 +182,21 @@ export default function Welcome() {
           <KernHeading size="large" level={2} id="welcome-ablauf">
             Der Ablauf
           </KernHeading>
-          <ol className="welcome__steps">
+          <KernStack as="ol" className="welcome__steps">
             {steps.map(({ icon, label }) => (
-              <li key={label} className="welcome__step">
+              <KernCluster
+                as="li"
+                key={label}
+                wrap={false}
+                gap="md"
+                align="center"
+                className="welcome__step"
+              >
                 {icon}
                 <span className="kern-title">{label}</span>
-              </li>
+              </KernCluster>
             ))}
-          </ol>
+          </KernStack>
         </PageSection>
       </section>
 

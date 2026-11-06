@@ -1,5 +1,6 @@
 import { CopyLinkButton } from "./CopyLinkButton";
 import { KernLabel } from "./kern/KernLabel";
+import { KernStack } from "./kern/KernStack";
 
 import "./SurveyLinkField.css";
 
@@ -8,7 +9,7 @@ import "./SurveyLinkField.css";
 export function SurveyLinkField({ id, url }: Readonly<{ id: string; url: string }>) {
   const hintId = `${id}-hint`;
   return (
-    <div className="survey-link-field">
+    <KernStack gap="sm" align="start" className="survey-link-field">
       <KernLabel htmlFor={id}>Link zur Terminumfrage</KernLabel>
       <textarea
         id={id}
@@ -25,6 +26,6 @@ export function SurveyLinkField({ id, url }: Readonly<{ id: string; url: string 
         (Mac: Cmd+A und Cmd+C).
       </p>
       <CopyLinkButton url={url} className="kern-btn--small" />
-    </div>
+    </KernStack>
   );
 }

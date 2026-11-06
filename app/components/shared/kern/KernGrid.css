@@ -1,0 +1,12 @@
+/* A cell must be allowed to shrink below the width of its content, or a table or a long address
+   pushes the page wider than the screen. */
+.kern-row > .kern-grid-col {
+  min-width: 0;
+}
+
+/* KERN pads every column of a row on all sides, with `.kern-container .kern-row [class*=kern-col]`
+   (three classes). A cell only needs the gutters at its sides. Four classes win whichever stylesheet
+   comes last, so a change in the order of the CSS chunks cannot bring the vertical padding back. */
+.kern-row.kern-row > .kern-grid-col.kern-grid-col {
+  padding-block: 0;
+}

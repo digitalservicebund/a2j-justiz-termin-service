@@ -1,10 +1,12 @@
 import { useState, type ReactNode } from "react";
-import { Form, useNavigation } from "react-router";
+import { useNavigation } from "react-router";
 
 import type { BreadcrumbItem } from "~/components/shared/Breadcrumb";
 import { FlowPage } from "~/components/shared/FlowPage";
+import { FormActions, FormStack } from "~/components/shared/FormLayout";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernButton } from "~/components/shared/kern/KernButton";
+import { KernCluster } from "~/components/shared/kern/KernCluster";
 import {
   KernDescriptionList,
   KernDescriptionListItem,
@@ -117,7 +119,7 @@ export function ReviewPage({
 
   return (
     <FlowPage width={wide ? "default" : "narrow"} spacing={wide ? "review" : "form"}>
-      <Form method="post" className="create-termin__form">
+      <FormStack method="post">
         {children}
         <KernHeading size="large" level={1}>
           Bitte überprüfen Sie Ihre Angaben
@@ -125,14 +127,14 @@ export function ReviewPage({
 
         {/* The sections are plain <details>; opening them all at once needs JavaScript. */}
         {hydrated && (
-          <div className="create-termin-review__bulk">
+          <KernCluster gap="md">
             <KernButton type="button" style="secondary" onClick={() => setAll(true)}>
               Alle einblenden
             </KernButton>
             <KernButton type="button" style="secondary" onClick={() => setAll(false)}>
               Alle ausblenden
             </KernButton>
-          </div>
+          </KernCluster>
         )}
 
         <div>
@@ -149,15 +151,15 @@ export function ReviewPage({
           ))}
         </div>
 
-        <div className="create-termin__actions">
+        <FormActions>
           <KernButton type="submit" name="intent" value="back" style="secondary">
             Zurück
           </KernButton>
           <KernButton type="submit" name="intent" value={submit.intent} disabled={pending}>
             {submit.label}
           </KernButton>
-        </div>
-      </Form>
+        </FormActions>
+      </FormStack>
     </FlowPage>
   );
 }

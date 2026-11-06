@@ -1,6 +1,7 @@
 import type { FieldsetHTMLAttributes, ReactNode } from "react";
 
 import { ErrorMessage } from "../ErrorMessage";
+import { classNames } from "./layout";
 
 export type KernFieldsetProps = Omit<FieldsetHTMLAttributes<HTMLFieldSetElement>, "id"> & {
   id: string;
@@ -23,10 +24,8 @@ export function KernFieldset({
   ...fieldsetProps
 }: Readonly<KernFieldsetProps>) {
   const errorId = `${id}-error`;
-  const classes = ["kern-fieldset", error && "kern-fieldset--error", className]
-    .filter(Boolean)
-    .join(" ");
-  const bodyClasses = ["kern-fieldset__body", bodyClassName].filter(Boolean).join(" ");
+  const classes = classNames("kern-fieldset", error && "kern-fieldset--error", className);
+  const bodyClasses = classNames("kern-fieldset__body", bodyClassName);
 
   return (
     <fieldset

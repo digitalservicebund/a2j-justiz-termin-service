@@ -1,10 +1,6 @@
+/* The width of the form: an input and its button side by side. */
 .login-form {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--kern-metric-space-2x-small);
   max-width: 37.5rem;
-  margin-top: var(--kern-metric-space-x-large);
 }
 
 .login-form .kern-form-input {
@@ -25,24 +21,11 @@
   background-color: var(--kern-color-feedback-danger-background);
 }
 
-.login-form__message {
-  flex-basis: 100%;
-  margin-top: var(--kern-metric-space-small);
-}
-
 .login-form__message .kern-error {
   margin: 0;
 }
 
-.login-form__sent {
-  margin-top: var(--kern-metric-space-default);
-  display: flex;
-  align-items: flex-start;
-  gap: var(--kern-metric-space-small);
-}
-
 .login-form__sent p {
-  margin: 0;
   /* Align the first line with the icon instead of the baseline padding of the body text. */
   padding-block-start: 0;
 }

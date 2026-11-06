@@ -3,7 +3,6 @@ import { data, Link, redirect, useLoaderData } from "react-router";
 import { getAppointment } from "~/adapters/appointments/appointments.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
-import { DefaultPage, PageSection } from "~/components/shared/DefaultPage";
 import {
   KernDescriptionList,
   KernDescriptionListItem,
@@ -12,8 +11,10 @@ import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernIcon } from "~/components/shared/kern/KernIcon";
 import { KernLabel } from "~/components/shared/kern/KernLabel";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
-import { MainNav } from "~/components/shared/MainNav";
+import { KernStack } from "~/components/shared/kern/KernStack";
+import { classNames, clusterClassName } from "~/components/shared/kern/layout";
 import { ResultBanner } from "~/components/shared/ResultBanner";
+import { SidebarPage } from "~/components/shared/SidebarPage";
 import { SurveyLinkField } from "~/components/shared/SurveyLinkField";
 import { formatInstant } from "~/core/domain/time/format";
 import { getDb } from "~/database/database";
@@ -74,7 +75,13 @@ function withDem(termin: string): string {
 
 function BackLink({ children = "Zurück zu den Terminumfragen" }: Readonly<{ children?: string }>) {
   return (
-    <Link className="kern-link overview-detail__back" to="/overview">
+    <Link
+      className={classNames(
+        "kern-link",
+        clusterClassName({ inline: true, wrap: false, gap: "xxs", align: "center" }),
+      )}
+      to="/overview"
+    >
       <KernIcon name="arrow-back" size="small" />
       {children}
     </Link>
@@ -83,20 +90,25 @@ function BackLink({ children = "Zurück zu den Terminumfragen" }: Readonly<{ chi
 
 function Verhandlungsdaten({ aktenzeichen }: Readonly<{ aktenzeichen: string }>) {
   return (
-    <section aria-labelledby="detail-verhandlungsdaten" className="overview-detail__section">
+    <KernStack
+      as="section"
+      gap="sm"
+      aria-labelledby="detail-verhandlungsdaten"
+      className="kern-w-full"
+    >
       <KernHeading size="medium" level={2} id="detail-verhandlungsdaten">
         Verhandlungsdaten
       </KernHeading>
       <KernDescriptionList column>
         <KernDescriptionListItem label="Aktenzeichen">{aktenzeichen}</KernDescriptionListItem>
       </KernDescriptionList>
-    </section>
+    </KernStack>
   );
 }
 
 function Zeitfenster({ days }: Readonly<{ days: DayWindows[] }>) {
   return (
-    <section aria-labelledby="detail-zeitfenster" className="overview-detail__section">
+    <KernStack as="section" gap="sm" aria-labelledby="detail-zeitfenster" className="kern-w-full">
       <KernHeading size="medium" level={2} id="detail-zeitfenster">
         Zeitfenster
       </KernHeading>
@@ -109,7 +121,7 @@ function Zeitfenster({ days }: Readonly<{ days: DayWindows[] }>) {
           </KernDescriptionListItem>
         ))}
       </KernDescriptionList>
-    </section>
+    </KernStack>
   );
 }
 
@@ -121,47 +133,38 @@ export default function OverviewDetail() {
       user={user}
       breadcrumbs={[{ label: "Übersicht", href: "/overview" }, { label: "Terminumfrage" }]}
     >
-      <PageSection width="wide">
-        <div className="overview-detail__layout">
-          <MainNav current="overview" />
-          <DefaultPage width="content">
-            <div className="overview-detail">
-              {detail.state === "confirmed" && detail.past ? (
-                <>
-                  <ResultBanner
-                    inline
-                    type="default"
-                    title={`Der Termin war am ${withDem(detail.termin)}.`}
-                  />
-                  <BackLink>Zur Übersicht</BackLink>
-                  <Verhandlungsdaten aktenzeichen={aktenzeichen} />
-                  <Zeitfenster days={detail.days} />
-                </>
-              ) : detail.state === "confirmed" ? (
-                <>
-                  <ResultBanner
-                    inline
-                    type="success"
-                    title={`Der Termin ist am ${detail.termin}.`}
-                  />
-                  <BackLink>Zur Übersicht</BackLink>
-                  <Verhandlungsdaten aktenzeichen={aktenzeichen} />
-                  <Zeitfenster days={detail.days} />
-                </>
-              ) : detail.state === "open" ? (
-                <OpenForReplies
-                  aktenzeichen={aktenzeichen}
-                  days={detail.days}
-                  selectUrl={detail.selectUrl}
-                  surveyUrl={detail.surveyUrl}
-                />
-              ) : (
-                <NoOptionWorks aktenzeichen={aktenzeichen} days={detail.days} />
-              )}
-            </div>
-          </DefaultPage>
-        </div>
-      </PageSection>
+      <SidebarPage current="overview">
+        <KernStack gap="xl" align="start" className="overview-detail">
+          {detail.state === "confirmed" && detail.past ? (
+            <>
+              <ResultBanner
+                inline
+                type="default"
+                title={`Der Termin war am ${withDem(detail.termin)}.`}
+              />
+              <BackLink>Zur Übersicht</BackLink>
+              <Verhandlungsdaten aktenzeichen={aktenzeichen} />
+              <Zeitfenster days={detail.days} />
+            </>
+          ) : detail.state === "confirmed" ? (
+            <>
+              <ResultBanner inline type="success" title={`Der Termin ist am ${detail.termin}.`} />
+              <BackLink>Zur Übersicht</BackLink>
+              <Verhandlungsdaten aktenzeichen={aktenzeichen} />
+              <Zeitfenster days={detail.days} />
+            </>
+          ) : detail.state === "open" ? (
+            <OpenForReplies
+              aktenzeichen={aktenzeichen}
+              days={detail.days}
+              selectUrl={detail.selectUrl}
+              surveyUrl={detail.surveyUrl}
+            />
+          ) : (
+            <NoOptionWorks aktenzeichen={aktenzeichen} days={detail.days} />
+          )}
+        </KernStack>
+      </SidebarPage>
     </AppShell>
   );
 }

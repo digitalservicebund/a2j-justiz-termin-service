@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 
 import { FlowPage } from "~/components/shared/FlowPage";
 
+import { expectBreakpointColumns, pageWidthClasses } from "./page-width";
+
 describe("FlowPage", () => {
   it("renders the children", () => {
     render(
@@ -35,12 +37,18 @@ describe("FlowPage", () => {
 
   it("centers the children at the default width without a width", () => {
     render(<FlowPage>x</FlowPage>);
-    expect(screen.getByText("x")).toHaveClass("page-width", "page-width--default");
+    expectBreakpointColumns(
+      screen.getByText("x").closest(".kern-grid-col")!,
+      pageWidthClasses.default,
+    );
   });
 
   it("centers the children at the given width", () => {
     render(<FlowPage width="wide">x</FlowPage>);
-    expect(screen.getByText("x")).toHaveClass("page-width--wide");
+    expectBreakpointColumns(
+      screen.getByText("x").closest(".kern-grid-col")!,
+      pageWidthClasses.wide,
+    );
   });
 
   it("follows the band with the report-problem button at the same width", () => {
@@ -48,6 +56,6 @@ describe("FlowPage", () => {
     const button = screen.getByRole("button", { name: "Problem mit dieser Seite melden" });
     const band = container.querySelector(".flow-page")!;
     expect(band).not.toContainElement(button);
-    expect(button.closest(".page-width")).toHaveClass("page-width--wide");
+    expectBreakpointColumns(button.closest(".kern-grid-col")!, pageWidthClasses.wide);
   });
 });

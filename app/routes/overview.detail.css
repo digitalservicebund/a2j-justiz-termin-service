@@ -1,26 +1,7 @@
+/* The space between the content and the report-problem button is beyond the largest spacing
+   helper. */
 .overview-detail {
-  display: grid;
-  gap: var(--kern-metric-space-x-large);
-  justify-items: start;
-  padding-block: var(--kern-metric-space-large) var(--kern-metric-space-6x-large);
-}
-
-.overview-detail__back {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--kern-metric-space-2x-small);
-}
-
-.overview-detail__header {
-  display: grid;
-  gap: var(--kern-metric-space-default);
-  justify-items: start;
-}
-
-.overview-detail__section {
-  display: grid;
-  gap: var(--kern-metric-space-small);
-  width: 100%;
+  padding-block-end: var(--kern-metric-space-6x-large);
 }
 
 /* Date and times side by side without the date wrapping. */
@@ -35,26 +16,4 @@
 
 .overview-detail__windows .kern-description-list-item__key {
   white-space: nowrap;
-}
-
-/* The sidebar is 352px wide; the content column is centred in the rest, as on the overview. */
-.overview-detail__layout {
-  display: grid;
-}
-
-@media (min-width: 64rem) {
-  .overview-detail__layout {
-    grid-template-columns: 22rem minmax(0, 1fr);
-    align-items: start;
-    padding-block-start: var(--kern-metric-space-x-large);
-  }
-}
-
-.overview-detail__layout .overview-detail {
-  padding-block-start: 0;
-}
-
-/* Space between the report-problem button and the footer. */
-.overview-detail__layout {
-  padding-block-end: var(--kern-metric-space-2x-large);
 }

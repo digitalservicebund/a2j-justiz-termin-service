@@ -4,6 +4,33 @@ import { describe, expect, it } from "vitest";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 
 describe("KernHeading", () => {
+  it("keeps a className passed in, for example the one that takes the margin away", () => {
+    render(
+      <KernHeading size="small" level={2} className="kern-m-none">
+        Title
+      </KernHeading>,
+    );
+    expect(screen.getByRole("heading")).toHaveClass("kern-heading-small", "kern-m-none");
+  });
+
+  it("joins the classes with single spaces and never writes 'undefined'", () => {
+    render(
+      <KernHeading size="small" level={2}>
+        Title
+      </KernHeading>,
+    );
+    expect(screen.getByRole("heading").className).toBe("kern-heading-small");
+  });
+
+  it("keeps KERN's margin by default", () => {
+    render(
+      <KernHeading size="small" level={2}>
+        Title
+      </KernHeading>,
+    );
+    expect(screen.getByRole("heading")).not.toHaveClass("kern-m-none");
+  });
+
   it("renders a heading of the given level", () => {
     render(
       <KernHeading size="large" level={2}>

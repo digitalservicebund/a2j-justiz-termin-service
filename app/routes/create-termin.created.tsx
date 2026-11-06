@@ -5,6 +5,7 @@ import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { DefaultPage } from "~/components/shared/DefaultPage";
 import { KernBody } from "~/components/shared/kern/KernBody";
+import { KernCluster } from "~/components/shared/kern/KernCluster";
 import {
   KernDescriptionList,
   KernDescriptionListItem,
@@ -13,6 +14,7 @@ import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernIcon } from "~/components/shared/kern/KernIcon";
 import { KernLabel } from "~/components/shared/kern/KernLabel";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
+import { KernStack } from "~/components/shared/kern/KernStack";
 import { ResultBanner } from "~/components/shared/ResultBanner";
 import { SurveyLinkField } from "~/components/shared/SurveyLinkField";
 import { getDb } from "~/database/database";
@@ -46,14 +48,24 @@ export async function loader({ request, params }: { request: Request } & Params)
 
 export function Step({ title, children }: Readonly<{ title: string; children?: React.ReactNode }>) {
   return (
-    <li className="create-termin-created__step">
-      <div className="create-termin-created__step-body">
-        <KernHeading size="title" level={3} className="create-termin-created__step-title">
+    <KernCluster
+      as="li"
+      wrap={false}
+      gap="md"
+      align="start"
+      className="create-termin-created__step"
+    >
+      <KernStack
+        gap="sm"
+        align="start"
+        className="create-termin-created__step-body kern-flex-1 kern-pt-xs"
+      >
+        <KernHeading className="kern-m-none" size="title" level={3}>
           {title}
         </KernHeading>
         {children}
-      </div>
-    </li>
+      </KernStack>
+    </KernCluster>
   );
 }
 
@@ -88,12 +100,14 @@ export function SuccessBanner({
 // The heading and the numbered steps, for pages that lay out their own content column.
 export function NextStepsSection({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <section className="create-termin-created__steps" aria-labelledby="naechste-schritte">
+    <KernStack as="section" gap="md" aria-labelledby="naechste-schritte">
       <KernHeading size="large" level={2} id="naechste-schritte">
         Nächste Schritte
       </KernHeading>
-      <ol className="create-termin-created__list">{children}</ol>
-    </section>
+      <KernStack as="ol" className="create-termin-created__list">
+        {children}
+      </KernStack>
+    </KernStack>
   );
 }
 
@@ -109,7 +123,7 @@ export default function CreateTerminCreated() {
   const { user, days, surveyUrl } = useLoaderData<typeof loader>();
   return (
     <AppShell user={user} breadcrumbs={createTerminBreadcrumbs}>
-      <div className="create-termin-created">
+      <KernStack className="create-termin-created">
         <SuccessBanner title="Sie haben die Terminumfrage erstellt." />
 
         <NextSteps>
@@ -135,7 +149,7 @@ export default function CreateTerminCreated() {
           <Step title="Informieren Sie alle Verfahrensbeteiligten und Ihre Servicestelle über den ausgewählten Termin." />
           <Step title="Die Servicestelle verschickt die Ladung." />
         </NextSteps>
-      </div>
+      </KernStack>
     </AppShell>
   );
 }

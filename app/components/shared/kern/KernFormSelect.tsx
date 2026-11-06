@@ -1,6 +1,7 @@
 import type { ReactNode, SelectHTMLAttributes } from "react";
 
 import { KernLabel } from "./KernLabel";
+import { classNames } from "./layout";
 
 export type KernFormSelectProps = Omit<SelectHTMLAttributes<HTMLSelectElement>, "id"> & {
   id: string;
@@ -19,8 +20,8 @@ export function KernFormSelect({
   children,
   ...selectProps
 }: Readonly<KernFormSelectProps>) {
-  const wrapperClasses = ["kern-form-input", wrapperClassName].filter(Boolean).join(" ");
-  const selectClasses = ["kern-form-input__select", className].filter(Boolean).join(" ");
+  const wrapperClasses = classNames("kern-form-input", wrapperClassName);
+  const selectClasses = classNames("kern-form-input__select", className);
 
   return (
     <div className={wrapperClasses}>

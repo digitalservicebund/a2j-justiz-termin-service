@@ -1,132 +1,9 @@
-.create-termin__form {
-  display: grid;
-  gap: var(--kern-metric-space-x-large);
-}
-
-.create-termin__section {
-  display: grid;
-  gap: var(--kern-metric-space-default);
-  justify-items: start;
-}
-
-.create-termin__aktenzeichen {
-  width: min(100%, 26.5rem);
-}
-
-/* Rows, add button, hint and the window-level error share one group, as in the error sketch. */
-.create-termin__windows {
-  display: grid;
-  justify-self: stretch;
-  gap: var(--kern-metric-space-default);
-  justify-items: start;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  min-inline-size: 0;
-}
-
+/* The windows group of the form: a table, its add button and a group-level error. A group with a
+   problem gets KERN's error border. */
 .create-termin__windows.kern-fieldset--error {
   border-left: var(--kern-metric-border-width-bold) solid
     var(--kern-color-feedback-danger-contextual);
   padding-left: var(--kern-metric-space-default);
-}
-
-.create-termin__rows {
-  display: grid;
-}
-
-/* The column titles belong to the first row, so only data rows are spaced apart. */
-.create-termin__row:not(.create-termin__row--head) + .create-termin__row {
-  margin-top: var(--kern-metric-space-large);
-}
-
-.create-termin__row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  column-gap: var(--kern-metric-space-4x-large);
-  /* A row's error message wraps onto its own line below the inputs. */
-  row-gap: var(--kern-metric-space-small);
-  margin: 0;
-  padding: 0;
-  border: 0;
-  min-inline-size: 0;
-}
-
-.create-termin__row--head {
-  align-items: start;
-}
-
-.create-termin__range {
-  display: flex;
-  align-items: center;
-  gap: var(--kern-metric-space-default);
-}
-
-.create-termin__row--head .create-termin__range {
-  align-items: start;
-}
-
-.create-termin__head {
-  display: grid;
-  gap: var(--kern-metric-space-small);
-}
-
-.create-termin__group {
-  display: flex;
-  align-items: center;
-  gap: var(--kern-metric-space-small);
-}
-
-.create-termin__row--head .create-termin__group {
-  align-items: start;
-  margin-bottom: var(--kern-metric-space-small);
-}
-
-/* Inputs are 48px tall; the colon and dash are centered on them, the dot sits on the baseline. */
-.create-termin__separator,
-.create-termin__dash {
-  padding-bottom: var(--kern-metric-space-x-small);
-}
-
-.create-termin__separator--dot {
-  align-self: end;
-  padding-bottom: var(--kern-metric-space-none);
-}
-
-/* In the header the separators only take up space so the captions line up with the inputs. */
-.create-termin__row--head .create-termin__separator,
-.create-termin__row--head .create-termin__dash {
-  padding-bottom: var(--kern-metric-space-none);
-  visibility: hidden;
-}
-
-.create-termin__caption--2 {
-  width: var(--kern-metric-dimension-2x-large);
-}
-
-.create-termin__caption--4 {
-  width: var(--kern-metric-dimension-4x-large);
-}
-
-/* A row with an error gets KERN's error border; hang it into the gutter so the columns stay aligned. */
-.create-termin__row.kern-fieldset--error {
-  border-left: var(--kern-metric-border-width-bold) solid
-    var(--kern-color-feedback-danger-contextual);
-  padding-left: var(--kern-metric-space-default);
-  margin-left: calc(-1 * (var(--kern-metric-border-width-bold) + var(--kern-metric-space-default)));
-}
-
-.create-termin__row-errors {
-  display: grid;
-  flex-basis: 100%;
-  gap: var(--kern-metric-space-small);
-}
-
-/* The table fills the column, with the actions at its right edge. */
-.create-termin__table {
-  justify-self: stretch;
-  width: 100%;
 }
 
 /* The column title and the buttons are centered on each other, as in the design. */
@@ -140,33 +17,6 @@
   text-align: center;
 }
 
-.create-termin__actions-cell {
-  display: flex;
-  justify-content: center;
-  gap: var(--kern-metric-space-small);
-}
-
-.create-termin__add {
-  margin-top: var(--kern-metric-space-default);
-}
-
-.create-termin__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--kern-metric-space-default);
-  padding-top: var(--kern-metric-space-default);
-}
-
-/* Heading and hint of a section sit closer together than the sections do. */
-.create-termin__intro {
-  display: grid;
-  gap: var(--kern-metric-space-x-small);
-}
-
-.create-termin__intro > * {
-  margin: 0;
-}
-
 /* An empty table says so on a white surface, as in the design. KERN draws the line under a row
    as a shadow, and stripes only tables that have rows. */
 .create-termin__table .kern-table__row .kern-table__cell.create-termin__empty {
@@ -175,16 +25,6 @@
   box-shadow: none;
   color: var(--kern-color-layout-text-muted);
   text-align: center;
-}
-
-.create-termin__person-fields {
-  display: grid;
-  gap: var(--kern-metric-space-x-large);
-  justify-items: start;
-}
-
-.create-termin__person-fields .kern-form-input {
-  width: min(100%, 34rem);
 }
 
 /* The hint sits right under the label it explains. */

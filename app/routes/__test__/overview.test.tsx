@@ -214,7 +214,7 @@ describe("Overview", () => {
     expect(screen.getAllByRole("button", { name: "Problem mit dieser Seite melden" })).toHaveLength(
       1,
     );
-    expect(button.closest(".page-width")).toHaveClass("page-width--content");
+    expect(button.closest(".kern-grid-col")).toHaveClass("kern-col-xl-10");
     expect(container.querySelector(".overview__content")).not.toContainElement(button);
   });
 });

@@ -1,0 +1,8 @@
+/* The space below the page is beyond the largest spacing helper. */
+.sidebar-page--default {
+  padding-block-end: var(--kern-metric-space-2x-large);
+}
+
+.sidebar-page--roomy {
+  padding-block-end: var(--kern-metric-space-6x-large);
+}

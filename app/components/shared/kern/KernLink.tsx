@@ -1,5 +1,7 @@
 import type { ComponentPropsWithoutRef, ElementType } from "react";
 
+import { classNames } from "./layout";
+
 type LinkSize = "default" | "small";
 
 export type KernLinkProps<T extends ElementType = "a"> = {
@@ -20,14 +22,12 @@ export function KernLink<T extends ElementType = "a">({
   ...linkProps
 }: Readonly<KernLinkProps<T>>) {
   const Component: ElementType = as ?? "a";
-  const classes = [
+  const classes = classNames(
     "kern-link",
     size === "small" && "kern-link--small",
     noVisitedState && "kern-link--no-visited-state",
     className,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  );
 
   return (
     <Component className={classes} {...linkProps}>

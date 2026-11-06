@@ -6,8 +6,10 @@ import { KernButton } from "./kern/KernButton";
 import { KernFormInput } from "./kern/KernFormInput";
 import { KernIcon } from "./kern/KernIcon";
 import { KernLabel } from "./kern/KernLabel";
+import { clusterClassName } from "./kern/layout";
 
 import "./LoginForm.css";
+import { classNames } from "./kern/layout";
 
 type LoginFormProps = {
   // Address to show again after a submission.
@@ -17,6 +19,9 @@ type LoginFormProps = {
   // The login link was sent to the submitted address.
   sent?: boolean;
 };
+
+const formLayout = clusterClassName({ gap: "xxs", align: "end" });
+const sentLayout = clusterClassName({ wrap: false, gap: "sm", align: "start" });
 
 export function LoginForm({ email, error, sent = false }: Readonly<LoginFormProps>) {
   const navigation = useNavigation();
@@ -32,7 +37,7 @@ export function LoginForm({ email, error, sent = false }: Readonly<LoginFormProp
       method="post"
       action="/?index"
       noValidate
-      className={error ? "login-form login-form--error" : "login-form"}
+      className={classNames("login-form", Boolean(error) && "login-form--error", formLayout)}
     >
       <KernFormInput
         id="login-email"
@@ -50,14 +55,18 @@ export function LoginForm({ email, error, sent = false }: Readonly<LoginFormProp
         <KernIcon name="arrow-forward" />
       </KernButton>
       {error && (
-        <div className="login-form__message">
+        <div className="login-form__message kern-basis-full kern-mt-sm">
           <ErrorMessage id="login-email-error">{error}</ErrorMessage>
         </div>
       )}
       {sent && (
-        <output ref={sentRef} className="login-form__message login-form__sent" tabIndex={-1}>
+        <output
+          ref={sentRef}
+          className={classNames("login-form__sent kern-basis-full kern-mt-md", sentLayout)}
+          tabIndex={-1}
+        >
           <KernIcon name="success" />
-          <p className="kern-body">
+          <p className="kern-body kern-m-none">
             Ihr Anmelde-Link wurde versendet, ist 5 Minuten gültig und kann nur einmal verwendet
             werden. Sie haben keine E‑Mail erhalten?{" "}
             <button type="submit" className="kern-link login-form__resend" disabled={pending}>

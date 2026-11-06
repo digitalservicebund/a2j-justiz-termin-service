@@ -6,24 +6,12 @@
   background-color: var(--kern-color-neutral-050);
 }
 
+/* The padding of the sections is beyond the largest spacing helper. */
 .welcome__hero-content {
-  display: grid;
-  gap: 0;
+  /* A long compound word of the headline breaks inside the word as a last resort instead of
+     widening the page on a phone. */
+  overflow-wrap: break-word;
   padding-block: var(--kern-metric-space-6x-large);
-}
-
-.welcome__hero-content h1,
-.welcome__hero-content p {
-  margin: 0;
-}
-
-/* Space between the intro text and the sign-in link alert. */
-.welcome__hero-content .kern-alert {
-  margin-top: var(--kern-metric-space-x-large);
-}
-
-.welcome__hero-action {
-  margin-top: var(--kern-metric-space-x-large);
 }
 
 .welcome__pilot {
@@ -35,13 +23,8 @@
   color: var(--kern-color-action-default-contextual);
 }
 
-.welcome__pilot details {
-  display: grid;
-  gap: var(--kern-metric-space-small);
-}
-
 /* Align the text with the summary text, which sits to the right of the toggle icon. */
-.welcome__pilot details > p {
+.welcome__pilot-content > p {
   padding-block: 0;
   padding-inline-start: var(--kern-metric-space-x-large);
 }
@@ -57,18 +40,11 @@
   background-color: var(--kern-color-layout-background-default);
 }
 
-.welcome__steps {
-  display: grid;
+/* Doubled class: the list is a KernStack, whose `kern-m-none` reset has one class. Two classes win
+   over it whichever stylesheet comes last. */
+.welcome__steps.welcome__steps {
   gap: var(--kern-metric-space-3x-large);
-  margin: var(--kern-metric-space-default) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.welcome__step {
-  display: flex;
-  align-items: center;
-  gap: var(--kern-metric-space-default);
+  margin-top: var(--kern-metric-space-default);
 }
 
 .welcome__step .kern-title {

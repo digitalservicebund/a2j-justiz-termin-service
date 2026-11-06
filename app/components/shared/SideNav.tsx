@@ -1,6 +1,9 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 
+import { KernStack } from "./kern/KernStack";
+import { classNames, clusterClassName } from "./kern/layout";
+
 import "./SideNav.css";
 
 export type SideNavItem = {
@@ -16,30 +19,32 @@ type SideNavProps = {
   items: SideNavItem[];
 };
 
+const itemLayout = clusterClassName({ inline: true, wrap: false, gap: "sm", align: "center" });
+
 export function SideNav({ label, items }: Readonly<SideNavProps>) {
   return (
     <nav aria-label={label} className="side-nav">
-      <ul className="side-nav__list">
+      <KernStack as="ul" gap="sm">
         {items.map(({ label: itemLabel, icon, to, current }) => (
           <li key={itemLabel}>
             {to ? (
               <Link
                 to={to}
-                className="side-nav__item kern-link"
+                className={classNames("side-nav__item kern-link", itemLayout)}
                 aria-current={current ? "page" : undefined}
               >
                 {icon}
                 {itemLabel}
               </Link>
             ) : (
-              <span className="side-nav__item">
+              <span className={classNames("side-nav__item", itemLayout)}>
                 {icon}
                 {itemLabel}
               </span>
             )}
           </li>
         ))}
-      </ul>
+      </KernStack>
     </nav>
   );
 }

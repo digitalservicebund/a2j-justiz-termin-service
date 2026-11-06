@@ -1,5 +1,7 @@
 import type { HTMLAttributes } from "react";
 
+import { classNames } from "./layout";
+
 export type KernHeadingSize = "x-large" | "large" | "medium" | "small" | "title" | "title-small";
 
 export type KernHeadingProps = Omit<HTMLAttributes<HTMLHeadingElement>, "style"> & {
@@ -24,7 +26,7 @@ export function KernHeading({
   children,
   ...headingProps
 }: Readonly<KernHeadingProps>) {
-  const classes = [sizeClassMap[size], className].filter(Boolean).join(" ");
+  const classes = classNames(sizeClassMap[size], className);
   const Element = level ? (`h${level}` as const) : "p";
 
   return (

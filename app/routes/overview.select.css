@@ -1,50 +1,10 @@
-.overview-select__layout {
-  display: grid;
-  gap: var(--kern-metric-space-x-large);
-  align-items: start;
-}
-
-.overview-select__form {
-  display: grid;
-  gap: var(--kern-metric-space-x-large);
-  width: min(100%, var(--page-width-default));
-}
-
-.overview-select__fieldset {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  min-inline-size: 0;
-}
-
 .overview-select__fieldset.kern-fieldset--error {
   border-left: var(--kern-metric-border-width-bold) solid
     var(--kern-color-feedback-danger-contextual);
   padding-left: var(--kern-metric-space-default);
 }
 
-.overview-select__time {
-  display: flex;
-  align-items: flex-end;
-  gap: var(--kern-metric-space-small);
-}
-
 /* The colon is centered on the 48px inputs, not on their captions. */
 .overview-select__colon {
   padding-bottom: var(--kern-metric-space-x-small);
-}
-
-.overview-select__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--kern-metric-space-default);
-  padding-top: var(--kern-metric-space-default);
-}
-
-/* The Aktenzeichen takes a column of its own next to the form on wide screens. */
-@media (min-width: 64rem) {
-  .overview-select__layout {
-    /* The form starts 528px from the page container in the design, which includes the gap. */
-    grid-template-columns: 31rem minmax(0, 1fr);
-  }
 }

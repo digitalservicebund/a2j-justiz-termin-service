@@ -1,0 +1,14 @@
+/* Measures that KERN's helpers have none for, shared so that a width in one component's CSS cannot
+   drift from the same width in another. */
+:root {
+  --layout-measure-narrow: 45rem;
+  --layout-field-small: 27rem;
+  --layout-field-medium: 34rem;
+}
+
+/* What KERN's helpers cannot reset on a list or fieldset used as a stack or cluster. */
+.layout-reset {
+  border: 0;
+  list-style: none;
+  min-inline-size: 0;
+}

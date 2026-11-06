@@ -2,6 +2,8 @@ import { createElement, type ReactNode } from "react";
 
 import { KernIcon } from "../kern/KernIcon";
 import { KernLink } from "../kern/KernLink";
+import { KernStack } from "../kern/KernStack";
+import { classNames, clusterClassName } from "../kern/layout";
 
 import "./A2JInlineNotice.css";
 
@@ -35,6 +37,12 @@ const iconLabels: Record<A2JInlineNoticeType, string> = {
   error: "Fehler",
 };
 
+const headerLayout = classNames(
+  clusterClassName({ wrap: false, align: "center" }),
+  "kern-py-sm kern-px-md",
+);
+const linkLayout = clusterClassName({ inline: true, wrap: false, gap: "xs", align: "start" });
+
 // A fork of the KERN alert for the A2J design's "Inline notice". It has no live-region role: it
 // highlights content in the page and is not announced when it appears.
 export function A2JInlineNotice({
@@ -48,28 +56,39 @@ export function A2JInlineNotice({
 
   return (
     <div className={`a2j-inline-notice a2j-inline-notice--${type}`}>
-      <div className="a2j-inline-notice__header">
+      <div className={classNames("a2j-inline-notice__header", headerLayout)}>
         <span
-          className={`kern-icon kern-icon--${kernIcons[type]} a2j-inline-notice__icon`}
+          className={`kern-icon kern-icon--${kernIcons[type]} a2j-inline-notice__icon kern-flex-shrink-0`}
           aria-hidden="true"
         ></span>
         <span className="kern-sr-only">{iconLabels[type]}</span>
         {createElement(
           headingLevel ? `h${headingLevel}` : "p",
-          { className: "a2j-inline-notice__title" },
+          { className: "a2j-inline-notice__title kern-flex-1 kern-m-none" },
           title,
         )}
       </div>
       {hasBody && (
-        <div className="a2j-inline-notice__body">
-          {children && <div className="kern-body a2j-inline-notice__description">{children}</div>}
+        <KernStack
+          gap="sm"
+          align="start"
+          className="a2j-inline-notice__body kern-pt-sm kern-px-lg kern-pb-md"
+        >
+          {children && (
+            <div className="kern-body a2j-inline-notice__description kern-align-self-stretch kern-m-none">
+              {children}
+            </div>
+          )}
           {link && (
-            <KernLink href={link.href} className="a2j-inline-notice__link">
+            <KernLink
+              href={link.href}
+              className={classNames("a2j-inline-notice__link", linkLayout)}
+            >
               <KernIcon name="arrow-forward" />
               {link.label}
             </KernLink>
           )}
-        </div>
+        </KernStack>
       )}
     </div>
   );

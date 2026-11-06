@@ -1,9 +1,9 @@
-.result-banner {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--kern-metric-space-default);
-  padding: var(--kern-metric-space-x-large) var(--kern-metric-space-default);
+/* Doubled class: two classes win over KERN's `.kern-alert` whichever stylesheet comes last. The
+   padding is beyond what the variants of `.kern-alert` set, and the same for every type. */
+.result-banner.result-banner {
   border-radius: var(--kern-metric-border-radius-large);
+  padding-block: var(--kern-metric-space-x-large);
+  padding-inline: var(--kern-metric-space-default);
 }
 
 .result-banner > .kern-icon {
@@ -11,23 +11,9 @@
   margin-top: var(--kern-metric-space-x-small);
 }
 
-.result-banner__body {
-  display: grid;
-  gap: var(--kern-metric-space-large);
-  justify-items: start;
-}
-
+/* The heading wraps after "alle" in the result page design. */
 .result-banner__text {
-  display: grid;
-  gap: var(--kern-metric-space-small);
-  /* The heading wraps after "alle" in the result page design. */
-  max-width: var(--page-width-narrow);
-}
-
-.result-banner__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--kern-metric-space-large);
+  max-width: var(--layout-measure-narrow);
 }
 
 /* Neutral banner: KERN has no default alert, so it takes the default feedback colours itself. */
@@ -39,4 +25,10 @@
 
 .result-banner--default > .kern-icon {
   background-color: var(--kern-color-layout-text-default-contextual);
+}
+
+/* The body is a flex child next to the icon: it has to shrink for a long title to wrap. */
+.result-banner__body {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
 }

@@ -1,98 +1,21 @@
-.survey__layout {
-  display: grid;
-  gap: var(--kern-metric-space-x-large);
-  align-items: start;
-}
-
-.survey__form {
-  display: grid;
-  gap: var(--kern-metric-space-x-large);
-  width: min(100%, var(--page-width-default));
-}
-
-.survey__fieldset {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  min-inline-size: 0;
-}
-
 .survey__fieldset.kern-fieldset--error {
   border-left: var(--kern-metric-border-width-bold) solid
     var(--kern-color-feedback-danger-contextual);
   padding-left: var(--kern-metric-space-default);
 }
 
-.survey__name {
-  width: min(100%, 27rem);
-}
-
+/* The gap between the days is beyond the largest spacing helper. */
 .survey__days {
-  display: grid;
   gap: var(--kern-metric-space-3x-large);
 }
 
-/* Date and windows side by side, the date column being 240px wide in the design. */
-.survey__day {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--kern-metric-space-default) var(--kern-metric-space-4x-large);
-  align-items: flex-start;
-}
-
-.survey__date {
-  flex: 0 0 15rem;
-  margin: 0;
-}
-
-.survey__windows {
-  display: grid;
-  flex: 1 1 15rem;
-  gap: var(--kern-metric-space-default);
-}
-
 .survey__window {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--kern-metric-space-large);
   min-height: var(--kern-metric-dimension-3x-large);
-}
-
-.survey__time {
-  margin: 0;
-}
-
-.survey__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--kern-metric-space-default);
-  padding-top: var(--kern-metric-space-default);
-}
-
-/* The Aktenzeichen takes a column of its own next to the form on wide screens. */
-@media (min-width: 64rem) {
-  .survey__layout {
-    grid-template-columns: 31rem minmax(0, 1fr);
-  }
 }
 
 /* The sorry page: banner, facts and windows in one column, as on the judge's detail page. */
 .survey-no-match {
-  display: grid;
-  gap: var(--kern-metric-space-x-large);
-  justify-items: start;
   padding-block: var(--kern-metric-space-large) var(--kern-metric-space-2x-large);
-}
-
-.survey-no-match > .result-banner {
-  width: 100%;
-}
-
-.survey-no-match__section {
-  display: grid;
-  gap: var(--kern-metric-space-small);
-  width: 100%;
 }
 
 /* Date and times side by side without the date wrapping. */
@@ -109,20 +32,7 @@
   white-space: nowrap;
 }
 
-/* The sidebar is 352px wide; the content column is centred in the rest, as on the overview. */
-.survey-result__layout {
-  display: grid;
-  padding-block-end: var(--kern-metric-space-2x-large);
-}
-
-@media (min-width: 64rem) {
-  .survey-result__layout {
-    grid-template-columns: 22rem minmax(0, 1fr);
-    align-items: start;
-    padding-block-start: var(--kern-metric-space-x-large);
-  }
-}
-
+/* The sidebar page already spaces its content from the top. */
 .survey-result__main {
   padding-block-start: 0;
 }

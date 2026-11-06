@@ -9,11 +9,13 @@ import {
 } from "~/adapters/users/allowed-domains.server";
 import { AppShell } from "~/components/shared/AppShell";
 import { DefaultPage } from "~/components/shared/DefaultPage";
+import { FieldColumn, FormStack } from "~/components/shared/FormLayout";
 import { KernAlert } from "~/components/shared/kern/KernAlert";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernButton } from "~/components/shared/kern/KernButton";
 import { KernFormInput } from "~/components/shared/kern/KernFormInput";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
+import { KernStack } from "~/components/shared/kern/KernStack";
 import { AllowedDomainSchema } from "~/core/domain/allowed-domain";
 import { getDb } from "~/database/database";
 
@@ -65,20 +67,33 @@ export default function AdminDomainsRoute() {
         {result && "success" in result && (
           <KernAlert type="success" title="Gespeichert" message={result.success} />
         )}
-        <section aria-labelledby="new-domain-title" className="admin-users__section">
+        <KernStack
+          as="section"
+          gap="md"
+          aria-labelledby="new-domain-title"
+          className="admin-users__section kern-py-md"
+        >
           <KernHeading size="small" level={2} id="new-domain-title">
             Domain hinzufügen
           </KernHeading>
-          <Form method="post" className="admin-users__form">
-            <input type="hidden" name="intent" value="create" />
-            <KernFormInput id="new-domain" label="Domain" name="domain" required />
-            <KernButton type="submit" disabled={pending}>
-              Hinzufügen
-            </KernButton>
-          </Form>
-        </section>
+          <FieldColumn size="large">
+            <FormStack method="post" gap="md">
+              <input type="hidden" name="intent" value="create" />
+              <KernFormInput id="new-domain" label="Domain" name="domain" required />
+              <KernButton type="submit" disabled={pending}>
+                Hinzufügen
+              </KernButton>
+            </FormStack>
+          </FieldColumn>
+        </KernStack>
         {domains.map(({ domain }) => (
-          <section key={domain} aria-label={domain} className="admin-users__section">
+          <KernStack
+            as="section"
+            gap="md"
+            key={domain}
+            aria-label={domain}
+            className="admin-users__section kern-py-md"
+          >
             <KernHeading size="small" level={2}>
               {domain}
             </KernHeading>
@@ -89,7 +104,7 @@ export default function AdminDomainsRoute() {
                 Domain entfernen
               </KernButton>
             </Form>
-          </section>
+          </KernStack>
         ))}
       </DefaultPage>
     </AppShell>

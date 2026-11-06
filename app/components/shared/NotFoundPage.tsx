@@ -3,6 +3,7 @@ import { PageSection } from "./DefaultPage";
 import { KernBody } from "./kern/KernBody";
 import { KernHeading } from "./kern/KernHeading";
 import { KernLabel } from "./kern/KernLabel";
+import { KernStack } from "./kern/KernStack";
 
 import "./NotFoundPage.css";
 
@@ -16,17 +17,17 @@ export function NotFoundPage() {
     <AppShell showLanguageLinks>
       <div className="not-found">
         <PageSection width="content">
-          <div className="not-found__content">
-            <KernLabel className="not-found__code">404</KernLabel>
-            <KernHeading size="large" level={1}>
+          <KernStack gap="md">
+            <KernLabel className="not-found__code kern-m-none">404</KernLabel>
+            <KernHeading className="kern-m-none" size="large" level={1}>
               Die Terminumfrage konnte nicht gefunden werden
             </KernHeading>
-            <KernBody>
+            <KernBody className="kern-m-none">
               Die von Ihnen gewünschte Terminumfrage ist leider nicht verfügbar. Möglicherweise
               wurde die Terminumfrage gelöscht. Wenn Sie die URL direkt eingegeben haben, überprüfen
               Sie die Schreibweise.
             </KernBody>
-          </div>
+          </KernStack>
         </PageSection>
       </div>
     </AppShell>

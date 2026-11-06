@@ -1,24 +1,35 @@
 import type { ReactNode } from "react";
 
+import { KernGrid, KernGridCol, type KernGridColProps } from "./kern/KernGrid";
 import { ReportProblemButton } from "./ReportProblemButton";
-
-import "./DefaultPage.css";
 
 export type PageWidth = "narrow" | "content" | "default" | "wide";
 
-export function pageWidthClass(width: PageWidth): string {
-  return `page-width page-width--${width}`;
-}
+// The columns of KERN's 12-column grid each width takes, per breakpoint. They are the nearest
+// spans to the widths of the design (720, 864, 992 and 1504px) in the container at that size,
+// measured for a 1440px design frame. Below "md" every width fills the container.
+const columns: Record<PageWidth, Pick<KernGridColProps, "md" | "lg" | "xl" | "xxl">> = {
+  narrow: { md: 11, lg: 9, xl: 7, xxl: 6 },
+  content: { lg: 10, xl: 8, xxl: 7 },
+  default: { lg: 11, xl: 9, xxl: 8 },
+  wide: {},
+};
 
 type PageSectionProps = {
   width?: PageWidth;
   children: ReactNode;
 };
 
-// A block centered at one of the page widths from app.css, for the sections of a page that has
-// several. Pages lay out their own content in the elements they put inside it.
+// A block centered at one of the page widths, for the sections of a page that has several. It is
+// a KERN container with one centered column. Pages lay out their own content inside it.
 export function PageSection({ width = "default", children }: Readonly<PageSectionProps>) {
-  return <div className={pageWidthClass(width)}>{children}</div>;
+  return (
+    <div className="kern-container page-section">
+      <KernGrid justify="center">
+        <KernGridCol {...columns[width]}>{children}</KernGridCol>
+      </KernGrid>
+    </div>
+  );
 }
 
 type DefaultPageProps = {

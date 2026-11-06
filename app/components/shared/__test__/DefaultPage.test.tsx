@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 
 import { DefaultPage, PageSection } from "~/components/shared/DefaultPage";
 
+import { expectBreakpointColumns, pageSectionColumn, pageWidthClasses } from "./page-width";
+
 describe("DefaultPage", () => {
   it("renders the children", () => {
     render(
@@ -15,12 +17,12 @@ describe("DefaultPage", () => {
 
   it("uses the default width without a width", () => {
     const { container } = render(<DefaultPage>x</DefaultPage>);
-    expect(container.firstChild).toHaveClass("page-width", "page-width--default");
+    expectBreakpointColumns(pageSectionColumn(container), pageWidthClasses.default);
   });
 
   it.each(["narrow", "content", "default", "wide"] as const)("applies the %s width", (width) => {
     const { container } = render(<DefaultPage width={width}>x</DefaultPage>);
-    expect(container.firstChild).toHaveClass(`page-width--${width}`);
+    expectBreakpointColumns(pageSectionColumn(container), pageWidthClasses[width]);
   });
 
   it("ends with the report-problem button inside the same width", () => {
@@ -45,12 +47,12 @@ describe("DefaultPage", () => {
 describe("PageSection", () => {
   it("centers the children at the given width without a report-problem button", () => {
     const { container } = render(<PageSection width="narrow">Inhalt</PageSection>);
-    expect(container.firstChild).toHaveClass("page-width", "page-width--narrow");
+    expectBreakpointColumns(pageSectionColumn(container), pageWidthClasses.narrow);
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 
   it("uses the default width without a width", () => {
     const { container } = render(<PageSection>x</PageSection>);
-    expect(container.firstChild).toHaveClass("page-width--default");
+    expectBreakpointColumns(pageSectionColumn(container), pageWidthClasses.default);
   });
 });

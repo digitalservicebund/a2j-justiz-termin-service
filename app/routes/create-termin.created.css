@@ -1,27 +1,15 @@
+/* The gaps and the space below are beyond the largest spacing helper. */
 .create-termin-created {
-  display: grid;
   gap: var(--kern-metric-space-4x-large);
   padding-block: var(--kern-metric-space-large) var(--kern-metric-space-6x-large);
 }
 
-.create-termin-created__steps {
-  display: grid;
-  gap: var(--kern-metric-space-default);
-}
-
 .create-termin-created__list {
-  display: grid;
   gap: var(--kern-metric-space-3x-large);
-  margin: 0;
-  padding: 0;
-  list-style: none;
   counter-reset: step;
 }
 
 .create-termin-created__step {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--kern-metric-space-default);
   counter-increment: step;
 }
 
@@ -39,16 +27,7 @@
 }
 
 .create-termin-created__step-body {
-  display: grid;
-  flex: 1;
-  gap: var(--kern-metric-space-small);
-  justify-items: start;
   min-width: 0;
-  padding-top: var(--kern-metric-space-x-small);
-}
-
-.create-termin-created__step-title {
-  margin: 0;
 }
 
 /* Date and times side by side without the date wrapping. */

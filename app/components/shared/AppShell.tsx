@@ -7,10 +7,13 @@ import { BmjvLogo } from "./BmjvLogo";
 import { Breadcrumb, type BreadcrumbItem } from "./Breadcrumb";
 import { contactLinks, legalLinks, operatorLinks, pilotLinks, type Link } from "./footer-links";
 import { KernBody } from "./kern/KernBody";
+import { KernCluster } from "./kern/KernCluster";
 import { KernHeading } from "./kern/KernHeading";
 import { KernIcon, type KernIconName } from "./kern/KernIcon";
 import { KernKopfZeile } from "./kern/KernKopfZeile";
 import { KernLink } from "./kern/KernLink";
+import { KernStack } from "./kern/KernStack";
+import { classNames, clusterClassName } from "./kern/layout";
 
 import "./AppShell.css";
 
@@ -29,7 +32,7 @@ const languageLinks: Array<Link & { icon: KernIconName }> = [
 
 function LinkList({ links }: Readonly<{ links: Link[] }>) {
   return (
-    <ul className="page-shell__link-list">
+    <KernStack as="ul" gap="sm">
       {links.map(({ href, label }) => (
         <li key={label}>
           <a className="kern-link" href={href}>
@@ -37,13 +40,13 @@ function LinkList({ links }: Readonly<{ links: Link[] }>) {
           </a>
         </li>
       ))}
-    </ul>
+    </KernStack>
   );
 }
 
 function ExternalLinkList({ links }: Readonly<{ links: Link[] }>) {
   return (
-    <ul className="page-shell__link-list">
+    <KernStack as="ul" gap="sm">
       {links.map(({ href, label }) => (
         <li key={label}>
           <a className="kern-link" href={href} target="_blank" rel="noreferrer">
@@ -52,9 +55,20 @@ function ExternalLinkList({ links }: Readonly<{ links: Link[] }>) {
           </a>
         </li>
       ))}
-    </ul>
+    </KernStack>
   );
 }
+
+// The footer is a 12-column grid from "lg" up: two rows of a wide cell and two narrow ones.
+// Below that its cells stack.
+const footerCell = {
+  brand: "kern-col-start-1-lg kern-col-end-7-lg kern-row-start-1-lg",
+  logo: "kern-col-start-1-lg kern-col-end-7-lg kern-row-start-2-lg",
+  legal: "page-shell__footer-legal kern-col-start-7-lg kern-col-end-10-lg kern-row-start-1-lg",
+  contact: "page-shell__footer-contact kern-col-start-10-lg kern-col-end-13-lg kern-row-start-1-lg",
+  pilot: "kern-col-start-7-lg kern-col-end-10-lg kern-row-start-2-lg",
+  operator: "kern-col-start-10-lg kern-col-end-13-lg kern-row-start-2-lg",
+};
 
 type AppShellProps = {
   // The crumbs below the fixed ones; an empty list on the front page. No breadcrumb if omitted.
@@ -77,23 +91,28 @@ export function AppShell({
   // is missing when it failed, as on the error page.
   const rootData = useRouteLoaderData<{ user: AuthUser | null }>("root");
   const user = userProp ?? rootData?.user ?? undefined;
-  const classes = ["page-shell", className].filter(Boolean).join(" ");
+  const classes = classNames("page-shell kern-flex kern-flex-col kern-min-h-screen", className);
 
   return (
     <div className={classes}>
       <KernKopfZeile />
 
-      <header className="page-shell__header">
-        <div className="kern-container page-shell__header-inner">
-          <KernHeading size="large" className="page-shell__service-name">
+      <header className="page-shell__header kern-py-lg">
+        <div
+          className={classNames(
+            "kern-container",
+            clusterClassName({ gap: "md", align: "center", justify: "between" }),
+          )}
+        >
+          <KernHeading size="large" className="page-shell__service-name kern-m-none">
             <RouterLink to="/" className="page-shell__service-link">
               Justiz-Services
             </RouterLink>
           </KernHeading>
-          <div className="page-shell__header-actions">
+          <KernCluster gapX="xl" gapY="md" align="center">
             {showLanguageLinks && (
               <nav aria-label="Sprachangebote">
-                <ul className="page-shell__language-links">
+                <KernCluster as="ul" gapX="xl" gapY="sm">
                   {languageLinks.map(({ href, label, icon }) => (
                     <li key={label}>
                       <KernLink size="small" href={href}>
@@ -102,12 +121,18 @@ export function AppShell({
                       </KernLink>
                     </li>
                   ))}
-                </ul>
+                </KernCluster>
               </nav>
             )}
             {user && (
-              <div className="page-shell__user">
-                <KernBody muted className="page-shell__user-info">
+              <KernCluster gapX="xl" align="center">
+                <KernBody
+                  muted
+                  className={classNames(
+                    "page-shell__user-info kern-m-none",
+                    clusterClassName({ gap: "sm", align: "center" }),
+                  )}
+                >
                   <KernIcon name="account-circle" />
                   <span>Angemeldet als:</span>
                   <span>{user.email}</span>
@@ -116,14 +141,20 @@ export function AppShell({
                     during a client-side submit and posts to the current route instead. */}
                 <Form method="post" action="/?index" reloadDocument>
                   <input type="hidden" name="intent" value="logout" />
-                  <button type="submit" className="kern-link kern-link--small page-shell__logout">
+                  <button
+                    type="submit"
+                    className={classNames(
+                      "kern-link kern-link--small page-shell__logout",
+                      clusterClassName({ inline: true, wrap: false, align: "center" }),
+                    )}
+                  >
                     <KernIcon name="logout" />
                     Abmelden
                   </button>
                 </Form>
-              </div>
+              </KernCluster>
             )}
-          </div>
+          </KernCluster>
         </div>
       </header>
 
@@ -139,44 +170,53 @@ export function AppShell({
         {children}
       </main>
 
-      <footer className="page-shell__footer">
-        <div className="kern-container page-shell__footer-grid">
-          <div className="page-shell__footer-brand">
-            <KernHeading size="medium">Justiz-Services</KernHeading>
-            <KernBody muted>Onlinedienste der Justiz</KernBody>
-          </div>
+      <footer className="page-shell__footer kern-mt-auto">
+        <div className="kern-container page-shell__footer-grid kern-grid kern-grid-cols-1 kern-grid-cols-12-lg kern-gap-x-md">
+          <KernStack className={footerCell.brand}>
+            <KernHeading className="kern-m-none" size="medium">
+              Justiz-Services
+            </KernHeading>
+            <KernBody className="kern-m-none" muted>
+              Onlinedienste der Justiz
+            </KernBody>
+          </KernStack>
 
-          <div className="page-shell__footer-logo">
+          <div className={footerCell.logo}>
             <BmjvLogo />
           </div>
 
-          <nav aria-labelledby="footer-legal" className="page-shell__footer-legal">
-            <KernHeading size="title-small" level={2} id="footer-legal">
+          <KernStack as="nav" gap="sm" aria-labelledby="footer-legal" className={footerCell.legal}>
+            <KernHeading className="kern-m-none" size="title-small" level={2} id="footer-legal">
               Rechtliche Hinweise
             </KernHeading>
             <LinkList links={legalLinks} />
-          </nav>
+          </KernStack>
 
-          <nav aria-labelledby="footer-contact" className="page-shell__footer-contact">
-            <KernHeading size="title-small" level={2} id="footer-contact">
+          <KernStack
+            as="nav"
+            gap="sm"
+            aria-labelledby="footer-contact"
+            className={footerCell.contact}
+          >
+            <KernHeading className="kern-m-none" size="title-small" level={2} id="footer-contact">
               Kontakt und Teilnahme
             </KernHeading>
             <LinkList links={contactLinks} />
-          </nav>
+          </KernStack>
 
-          <div className="page-shell__footer-pilot">
-            <KernHeading size="title-small" level={2}>
+          <KernStack gap="sm" className={footerCell.pilot}>
+            <KernHeading className="kern-m-none" size="title-small" level={2}>
               Ein Pilotprojekt des
             </KernHeading>
             <ExternalLinkList links={pilotLinks} />
-          </div>
+          </KernStack>
 
-          <div className="page-shell__footer-operator">
-            <KernHeading size="title-small" level={2}>
+          <KernStack gap="sm" className={footerCell.operator}>
+            <KernHeading className="kern-m-none" size="title-small" level={2}>
               Umsetzung und Betrieb
             </KernHeading>
             <ExternalLinkList links={operatorLinks} />
-          </div>
+          </KernStack>
         </div>
       </footer>
     </div>
