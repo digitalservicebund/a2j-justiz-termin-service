@@ -12,6 +12,7 @@ import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernStack } from "~/components/shared/kern/KernStack";
 import { ResultBanner } from "~/components/shared/ResultBanner";
 import { SidebarPage } from "~/components/shared/SidebarPage";
+import { classNames } from "~/components/shared/kern/layout";
 import { getDb } from "~/database/database";
 
 import { NextStepsSection, Step } from "./create-termin.created";
@@ -56,7 +57,7 @@ export default function SurveyResult() {
   if (days.length === 0) return <NoOption aktenzeichen={aktenzeichen} days={proposedDays} />;
   const signedIn = Boolean(user);
   const content = (
-    <KernStack className={`create-termin-created${signedIn ? " survey-result__main" : ""}`}>
+    <KernStack className={classNames("create-termin-created", signedIn && "survey-result__main")}>
       <Positive days={days} />
     </KernStack>
   );

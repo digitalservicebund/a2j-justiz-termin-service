@@ -5,6 +5,7 @@ import { MainNav } from "./MainNav";
 import { ReportProblemButton } from "./ReportProblemButton";
 
 import "./SidebarPage.css";
+import { classNames } from "./kern/layout";
 
 type SidebarPageProps = {
   // The entry of the main navigation that is the current page.
@@ -24,14 +25,14 @@ export function SidebarPage({
   children,
 }: Readonly<SidebarPageProps>) {
   return (
-    <div className={`kern-container sidebar-page sidebar-page--${spacing} kern-pt-xl`}>
+    <div className={classNames("kern-container sidebar-page kern-pt-xl", `sidebar-page--${spacing}`)}>
       <KernGrid gapY="xl">
         <KernGridCol lg={3}>
           <MainNav current={current} />
         </KernGridCol>
         <KernGridCol lg={9}>
           <KernGrid justify="center">
-            <KernGridCol xl={10} data-width="content">
+            <KernGridCol xl={10}>
               {children}
               <ReportProblemButton />
             </KernGridCol>

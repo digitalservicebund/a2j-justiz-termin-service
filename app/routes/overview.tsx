@@ -18,7 +18,7 @@ import {
   KernTableBody,
   KernTableHead,
 } from "~/components/shared/kern/KernTable";
-import { clusterClassName } from "~/components/shared/kern/layout";
+import { classNames, clusterClassName } from "~/components/shared/kern/layout";
 import { SidebarPage } from "~/components/shared/SidebarPage";
 import { getDb } from "~/database/database";
 import type { AppointmentStatus } from "~/database/types";
@@ -90,7 +90,7 @@ export default function Overview() {
           {/* With JavaScript every change submits; the button applies the choice without it. */}
           <Form
             method="get"
-            className={`overview__controls ${clusterClassName({ gap: "lg", align: "end" })}`}
+            className={classNames("overview__controls", clusterClassName({ gap: "lg", align: "end" }))}
             onChange={(event) => submit(event.currentTarget)}
           >
             <KernFormSelect id="sort" name="sort" label="Sortieren" defaultValue={query.sort}>

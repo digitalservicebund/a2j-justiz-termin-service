@@ -1,4 +1,5 @@
 import type { HTMLAttributes, ReactNode, TdHTMLAttributes, ThHTMLAttributes } from "react";
+import { classNames } from "./layout";
 
 type Alignment = "numeric" | "action";
 
@@ -20,14 +21,10 @@ export function KernTable({
   children,
   ...tableProps
 }: Readonly<KernTableProps>) {
-  const classes = [
-    "kern-table",
+  const classes = classNames("kern-table",
     striped && "kern-table--striped",
     small && "kern-table--small",
-    className,
-  ]
-    .filter(Boolean)
-    .join(" ");
+    className,);
 
   return (
     <table className={classes} {...tableProps}>
@@ -62,9 +59,7 @@ export function KernColumn({
   children,
   ...cellProps
 }: Readonly<KernColumnProps>) {
-  const classes = ["kern-table__header", variant && `kern-table__header--${variant}`, className]
-    .filter(Boolean)
-    .join(" ");
+  const classes = classNames("kern-table__header", variant && `kern-table__header--${variant}`, className);
 
   return (
     <th scope="col" className={classes} {...cellProps}>
@@ -79,7 +74,7 @@ export function KernRowHeader({
   children,
   ...cellProps
 }: Readonly<Omit<ThHTMLAttributes<HTMLTableCellElement>, "scope">>) {
-  const classes = ["kern-table__header", className].filter(Boolean).join(" ");
+  const classes = classNames("kern-table__header", className);
 
   return (
     <th scope="row" className={classes} {...cellProps}>
@@ -93,9 +88,7 @@ export type KernCellProps = TdHTMLAttributes<HTMLTableCellElement> & {
 };
 
 export function KernCell({ variant, className, children, ...cellProps }: Readonly<KernCellProps>) {
-  const classes = ["kern-table__cell", variant && `kern-table__cell--${variant}`, className]
-    .filter(Boolean)
-    .join(" ");
+  const classes = classNames("kern-table__cell", variant && `kern-table__cell--${variant}`, className);
 
   return (
     <td className={classes} {...cellProps}>

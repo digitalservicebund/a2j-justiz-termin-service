@@ -32,6 +32,7 @@ import {
   KernTableBody,
   KernTableHead,
 } from "~/components/shared/kern/KernTable";
+import { classNames } from "~/components/shared/kern/layout";
 import { getDb } from "~/database/database";
 
 import { MAX_PARTICIPANTS } from "./create-termin.participant.schema";
@@ -190,10 +191,10 @@ export default function CreateTermin() {
 
           <KernStack as="section" gap="md" aria-labelledby="verfahrensbeteiligte">
             <KernStack gap="xs">
-              <KernHeading size="medium" level={2} id="verfahrensbeteiligte" margin="none">
+              <KernHeading className="kern-m-none" size="medium" level={2} id="verfahrensbeteiligte">
                 Geben Sie alle Verfahrensbeteiligten an
               </KernHeading>
-              <KernBody margin="none">
+              <KernBody className="kern-m-none">
                 Personen ohne E-Mail-Adresse können Sie später mit einem Link zur Terminumfrage
                 einladen.
               </KernBody>
@@ -260,7 +261,7 @@ export default function CreateTermin() {
             <KernStack
               gap="md"
               align="start"
-              className={`create-termin__windows${errors?.slots ? " kern-fieldset--error" : ""}`}
+              className={classNames("create-termin__windows", errors?.slots && "kern-fieldset--error")}
             >
               <KernTable
                 caption="Zeitfenster"

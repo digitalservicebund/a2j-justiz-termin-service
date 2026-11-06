@@ -17,7 +17,7 @@ import { KernFormInput } from "~/components/shared/kern/KernFormInput";
 import { KernGrid, KernGridCol } from "~/components/shared/kern/KernGrid";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
-import { resetClassName } from "~/components/shared/kern/layout";
+import { classNames, resetClassName } from "~/components/shared/kern/layout";
 import { formatRangeLong } from "~/core/domain/time/format";
 import { getDb } from "~/database/database";
 
@@ -88,7 +88,7 @@ export default function OverviewSelect() {
               <KernFieldset
                 id="fenster"
                 legend="Zeitfenster"
-                className={`overview-select__fieldset ${resetClassName}`}
+                className={classNames("overview-select__fieldset", resetClassName)}
                 error={errors.slot}
               >
                 {windows.map((label, index) => (
@@ -108,7 +108,7 @@ export default function OverviewSelect() {
               <KernFieldset
                 id="startzeit"
                 legend="Startzeit"
-                className={`overview-select__fieldset ${resetClassName}`}
+                className={classNames("overview-select__fieldset", resetClassName)}
                 error={errors.start}
               >
                 <KernCluster wrap={false} gap="sm" align="end">

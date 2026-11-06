@@ -4,12 +4,18 @@ import { describe, expect, it } from "vitest";
 import { KernBody } from "~/components/shared/kern/KernBody";
 
 describe("KernBody", () => {
-  it("takes away the margin on request", () => {
-    const { container } = render(<KernBody margin="none">x</KernBody>);
-    expect(container.firstChild).toHaveClass("kern-m-none");
+  it("keeps a className passed in, for example the one that takes the margin away", () => {
+    const { container } = render(
+      <KernBody muted className="kern-m-none">
+        x
+      </KernBody>,
+    );
+    expect((container.firstChild as HTMLElement).className).toBe(
+      "kern-body kern-body--muted kern-m-none",
+    );
   });
 
-  it("keeps KERN's margin without the prop", () => {
+  it("keeps KERN's margin by default", () => {
     const { container } = render(<KernBody>x</KernBody>);
     expect(container.firstChild).not.toHaveClass("kern-m-none");
   });

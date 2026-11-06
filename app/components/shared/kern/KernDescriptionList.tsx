@@ -1,4 +1,5 @@
 import type { HTMLAttributes, ReactNode } from "react";
+import { classNames } from "./layout";
 
 export type KernDescriptionListProps = HTMLAttributes<HTMLDListElement> & {
   // Stacks each key above its value.
@@ -11,9 +12,7 @@ export function KernDescriptionList({
   children,
   ...listProps
 }: Readonly<KernDescriptionListProps>) {
-  const classes = ["kern-description-list", column && "kern-description-list--col", className]
-    .filter(Boolean)
-    .join(" ");
+  const classes = classNames("kern-description-list", column && "kern-description-list--col", className);
 
   return (
     <dl className={classes} {...listProps}>

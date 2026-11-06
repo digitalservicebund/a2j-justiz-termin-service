@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router";
 
 import { KernStack } from "./kern/KernStack";
-import { clusterClassName } from "./kern/layout";
+import { classNames, clusterClassName } from "./kern/layout";
 
 import "./SideNav.css";
 
@@ -30,14 +30,14 @@ export function SideNav({ label, items }: Readonly<SideNavProps>) {
             {to ? (
               <Link
                 to={to}
-                className={`side-nav__item kern-link ${itemLayout}`}
+                className={classNames("side-nav__item kern-link", itemLayout)}
                 aria-current={current ? "page" : undefined}
               >
                 {icon}
                 {itemLabel}
               </Link>
             ) : (
-              <span className={`side-nav__item ${itemLayout}`}>
+              <span className={classNames("side-nav__item", itemLayout)}>
                 {icon}
                 {itemLabel}
               </span>

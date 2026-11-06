@@ -19,10 +19,10 @@ export function NotFoundPage() {
         <PageSection width="content">
           <KernStack gap="md">
             <KernLabel className="not-found__code kern-m-none">404</KernLabel>
-            <KernHeading size="large" level={1} margin="none">
+            <KernHeading className="kern-m-none" size="large" level={1}>
               Die Terminumfrage konnte nicht gefunden werden
             </KernHeading>
-            <KernBody margin="none">
+            <KernBody className="kern-m-none">
               Die von Ihnen gewünschte Terminumfrage ist leider nicht verfügbar. Möglicherweise
               wurde die Terminumfrage gelöscht. Wenn Sie die URL direkt eingegeben haben, überprüfen
               Sie die Schreibweise.

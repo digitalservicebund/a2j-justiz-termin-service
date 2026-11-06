@@ -24,7 +24,7 @@ type PageSectionProps = {
 // a KERN container with one centered column. Pages lay out their own content inside it.
 export function PageSection({ width = "default", children }: Readonly<PageSectionProps>) {
   return (
-    <div className="kern-container page-section" data-width={width}>
+    <div className="kern-container page-section">
       <KernGrid justify="center">
         <KernGridCol {...columns[width]}>{children}</KernGridCol>
       </KernGrid>

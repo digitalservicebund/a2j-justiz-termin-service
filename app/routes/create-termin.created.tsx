@@ -60,7 +60,7 @@ export function Step({ title, children }: Readonly<{ title: string; children?: R
         align="start"
         className="create-termin-created__step-body kern-flex-1 kern-pt-xs"
       >
-        <KernHeading size="title" level={3} margin="none">
+        <KernHeading className="kern-m-none" size="title" level={3}>
           {title}
         </KernHeading>
         {children}

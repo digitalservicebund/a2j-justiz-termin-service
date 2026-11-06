@@ -7,6 +7,7 @@ import { KernIcon } from "./kern/KernIcon";
 import { KernLink } from "./kern/KernLink";
 
 import "./Breadcrumb.css";
+import { classNames } from "./kern/layout";
 
 const SERVICE_URL = "https://service.justiz.de/";
 const PRODUCT_NAME = "Verhandlungstermin-Finder";
@@ -31,7 +32,7 @@ export function Breadcrumb({
   className,
   signedIn = false,
 }: Readonly<BreadcrumbProps>) {
-  const classes = ["breadcrumb", className].filter(Boolean).join(" ");
+  const classes = classNames("breadcrumb", className);
   const trail: BreadcrumbItem[] = [{ label: PRODUCT_NAME, href: "/" }, ...items];
 
   return (

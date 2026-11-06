@@ -4,16 +4,25 @@ import { describe, expect, it } from "vitest";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 
 describe("KernHeading", () => {
-  it("takes away the margin on request", () => {
+  it("keeps a className passed in, for example the one that takes the margin away", () => {
     render(
-      <KernHeading size="small" level={2} margin="none">
+      <KernHeading size="small" level={2} className="kern-m-none">
         Title
       </KernHeading>,
     );
-    expect(screen.getByRole("heading")).toHaveClass("kern-m-none");
+    expect(screen.getByRole("heading")).toHaveClass("kern-heading-small", "kern-m-none");
   });
 
-  it("keeps KERN's margin without the prop", () => {
+  it("joins the classes with single spaces and never writes 'undefined'", () => {
+    render(
+      <KernHeading size="small" level={2}>
+        Title
+      </KernHeading>,
+    );
+    expect(screen.getByRole("heading").className).toBe("kern-heading-small");
+  });
+
+  it("keeps KERN's margin by default", () => {
     render(
       <KernHeading size="small" level={2}>
         Title

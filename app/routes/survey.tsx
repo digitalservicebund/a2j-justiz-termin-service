@@ -16,7 +16,7 @@ import { KernFormInput } from "~/components/shared/kern/KernFormInput";
 import { KernGrid, KernGridCol } from "~/components/shared/kern/KernGrid";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernStack } from "~/components/shared/kern/KernStack";
-import { resetClassName, stackClassName } from "~/components/shared/kern/layout";
+import { classNames, resetClassName, stackClassName } from "~/components/shared/kern/layout";
 import { getDb } from "~/database/database";
 
 import { NoOption } from "./survey.result";
@@ -129,14 +129,14 @@ export default function Survey() {
                 id="zeitfenster"
                 legend="Verfügbarkeiten"
                 hideLegend
-                className={`survey__fieldset ${resetClassName}`}
-                bodyClassName={`survey__days ${stackClassName()}`}
+                className={classNames("survey__fieldset", resetClassName)}
+                bodyClassName={classNames("survey__days", stackClassName())}
                 error={errors.slots}
               >
                 {days.map(({ key, label, windows }) => (
                   <KernGrid align="start" gapY="md" key={key}>
                     <KernGridCol md={5}>
-                      <KernHeading size="medium" level={2} margin="none">
+                      <KernHeading className="kern-m-none" size="medium" level={2}>
                         {label}
                       </KernHeading>
                     </KernGridCol>

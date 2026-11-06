@@ -19,7 +19,7 @@ import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernLabel } from "~/components/shared/kern/KernLabel";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { KernStack } from "~/components/shared/kern/KernStack";
-import { clusterClassName } from "~/components/shared/kern/layout";
+import { classNames, clusterClassName } from "~/components/shared/kern/layout";
 import { getDb } from "~/database/database";
 
 import { draftHref, NEW_SLOT } from "./create-termin.paths";
@@ -148,7 +148,11 @@ export default function CreateTerminSlot() {
           <Fragment key={field}>
             {position > 0 && (
               <span
-                className={`create-termin-slot__separator${dots ? "" : ` create-termin-slot__separator--colon ${colonLayout}`}`}
+                className={classNames(
+                  "create-termin-slot__separator",
+                  !dots && "create-termin-slot__separator--colon",
+                  !dots && colonLayout,
+                )}
                 aria-hidden="true"
               >
                 {dots ? "." : ":"}

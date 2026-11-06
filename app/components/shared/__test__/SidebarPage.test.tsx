@@ -55,8 +55,8 @@ describe("SidebarPage", () => {
     expect(screen.getAllByRole("button", { name: "Problem mit dieser Seite melden" })).toHaveLength(
       1,
     );
-    const content = button.closest("[data-width]");
-    expect(content).toHaveAttribute("data-width", "content");
+    const content = button.closest(".kern-grid-col")!;
+    expect(content).toHaveClass("kern-col-xl-10");
     expect(content).toContainElement(screen.getByText("Inhalt"));
   });
 

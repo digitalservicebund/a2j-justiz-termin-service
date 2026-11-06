@@ -1,6 +1,7 @@
 import type { InputHTMLAttributes, ReactNode } from "react";
 
 import { KernLabel } from "./KernLabel";
+import { classNames } from "./layout";
 
 export type KernFormCheckProps = Omit<InputHTMLAttributes<HTMLInputElement>, "id" | "type"> & {
   id: string;
@@ -17,13 +18,9 @@ export function KernFormCheck({
   className,
   ...inputProps
 }: Readonly<KernFormCheckProps>) {
-  const inputClasses = [
-    `kern-form-check__${type}`,
+  const inputClasses = classNames(`kern-form-check__${type}`,
     invalid && `kern-form-check__${type}--error`,
-    className,
-  ]
-    .filter(Boolean)
-    .join(" ");
+    className,);
 
   return (
     <div className="kern-form-check">

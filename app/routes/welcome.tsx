@@ -109,10 +109,10 @@ export default function Welcome() {
         <PageSection>
           <KernStack gap="xl" className="welcome__hero-content">
             <KernStack>
-              <KernHeading size="x-large" level={1} margin="none">
+              <KernHeading className="kern-m-none" size="x-large" level={1}>
                 Verhandlungstermin-Finder
               </KernHeading>
-              <KernBody size="large" bold margin="none">
+              <KernBody className="kern-m-none" size="large" bold>
                 Der Verhandlungstermin-Finder vereinfacht die Terminkoordination zwischen Gericht
                 und Verfahrensbeteiligten.
               </KernBody>

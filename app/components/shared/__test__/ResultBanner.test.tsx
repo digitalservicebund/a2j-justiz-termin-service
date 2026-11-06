@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { ResultBanner } from "~/components/shared/ResultBanner";
+import { expectBreakpointColumns, pageSectionColumn, pageWidthClasses } from "./page-width";
 
 describe("ResultBanner", () => {
   it("renders the title as the page heading", () => {
@@ -48,8 +49,7 @@ describe("ResultBanner", () => {
 
   it("sits in the wide page section by default", () => {
     const { container } = render(<ResultBanner type="warning" title="Titel" />);
-    expect(
-      container.querySelector(".page-section[data-width=wide] .kern-alert"),
-    ).toBeInTheDocument();
+    expect(container.querySelector(".page-section .kern-alert")).toBeInTheDocument();
+    expectBreakpointColumns(pageSectionColumn(container), pageWidthClasses.wide);
   });
 });

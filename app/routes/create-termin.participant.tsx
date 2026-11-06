@@ -107,10 +107,10 @@ export default function CreateTerminParticipant() {
       <FlowPage width="content" spacing="form">
         <FormStack method="post" noValidate>
           <KernStack gap="xs">
-            <KernBody size="small" bold margin="none">
+            <KernBody className="kern-m-none" size="small" bold>
               Verfahrensbeteiligte
             </KernBody>
-            <KernHeading size="large" level={1} margin="none">
+            <KernHeading className="kern-m-none" size="large" level={1}>
               Wie lautet die E-Mail-Adresse der Person?
             </KernHeading>
           </KernStack>

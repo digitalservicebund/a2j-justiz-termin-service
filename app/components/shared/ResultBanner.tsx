@@ -7,7 +7,7 @@ import { KernCluster } from "./kern/KernCluster";
 import { KernHeading } from "./kern/KernHeading";
 import { KernIcon } from "./kern/KernIcon";
 import { KernStack } from "./kern/KernStack";
-import { clusterClassName } from "./kern/layout";
+import { classNames, clusterClassName } from "./kern/layout";
 
 import "./ResultBanner.css";
 
@@ -21,7 +21,7 @@ type ResultBannerProps = {
   actions?: ReactNode;
 };
 
-const bannerLayout = `${clusterClassName({ wrap: false, gap: "md", align: "start" })}`;
+const bannerLayout = clusterClassName({ wrap: false, gap: "md", align: "start" });
 
 // The wide banner on top of a result page: an icon, the headline, and optionally a message and
 // the actions that follow from it.
@@ -34,11 +34,11 @@ export function ResultBanner({
 }: Readonly<ResultBannerProps>) {
   const banner = (
     <div
-      className={
-        type === "default"
-          ? `result-banner result-banner--default ${bannerLayout}`
-          : `kern-alert kern-alert--${type} result-banner ${bannerLayout}`
-      }
+      className={classNames(
+        type === "default" ? "result-banner--default" : `kern-alert kern-alert--${type}`,
+        "result-banner",
+        bannerLayout,
+      )}
     >
       {type === "default" ? (
         <A2JIcon name="history" size="x-large" />

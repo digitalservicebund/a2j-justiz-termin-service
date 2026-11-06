@@ -12,7 +12,7 @@ import { KernIcon } from "~/components/shared/kern/KernIcon";
 import { KernLabel } from "~/components/shared/kern/KernLabel";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { KernStack } from "~/components/shared/kern/KernStack";
-import { clusterClassName } from "~/components/shared/kern/layout";
+import { classNames, clusterClassName } from "~/components/shared/kern/layout";
 import { ResultBanner } from "~/components/shared/ResultBanner";
 import { SidebarPage } from "~/components/shared/SidebarPage";
 import { SurveyLinkField } from "~/components/shared/SurveyLinkField";
@@ -76,7 +76,10 @@ function withDem(termin: string): string {
 function BackLink({ children = "Zurück zu den Terminumfragen" }: Readonly<{ children?: string }>) {
   return (
     <Link
-      className={`kern-link ${clusterClassName({ inline: true, wrap: false, gap: "xxs", align: "center" })}`}
+      className={classNames(
+        "kern-link",
+        clusterClassName({ inline: true, wrap: false, gap: "xxs", align: "center" }),
+      )}
       to="/overview"
     >
       <KernIcon name="arrow-back" size="small" />

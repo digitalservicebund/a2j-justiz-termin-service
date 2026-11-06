@@ -1,6 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 import { KernLabel } from "./KernLabel";
+import { classNames } from "./layout";
 
 type ButtonStyle = "primary" | "secondary" | "tertiary";
 
@@ -23,7 +24,7 @@ export function KernButton({
 
   const styleClass = styleClassMap[style];
 
-  const classes = ["kern-btn", styleClass, className].filter(Boolean).join(" ");
+  const classes = classNames("kern-btn", styleClass, className);
   const content =
     typeof children === "string" || typeof children === "number" ? (
       <KernLabel>{children}</KernLabel>

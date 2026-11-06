@@ -9,6 +9,7 @@ import { KernLabel } from "./kern/KernLabel";
 import { clusterClassName } from "./kern/layout";
 
 import "./LoginForm.css";
+import { classNames } from "./kern/layout";
 
 type LoginFormProps = {
   // Address to show again after a submission.
@@ -36,7 +37,7 @@ export function LoginForm({ email, error, sent = false }: Readonly<LoginFormProp
       method="post"
       action="/?index"
       noValidate
-      className={`${error ? "login-form login-form--error" : "login-form"} ${formLayout}`}
+      className={classNames("login-form", Boolean(error) && "login-form--error", formLayout)}
     >
       <KernFormInput
         id="login-email"
@@ -61,7 +62,7 @@ export function LoginForm({ email, error, sent = false }: Readonly<LoginFormProp
       {sent && (
         <output
           ref={sentRef}
-          className={`login-form__sent kern-basis-full kern-mt-md ${sentLayout}`}
+          className={classNames("login-form__sent kern-basis-full kern-mt-md", sentLayout)}
           tabIndex={-1}
         >
           <KernIcon name="success" />

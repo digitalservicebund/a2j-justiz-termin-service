@@ -104,7 +104,7 @@ export function AppShell({
             clusterClassName({ gap: "md", align: "center", justify: "between" }),
           )}
         >
-          <KernHeading size="large" margin="none" className="page-shell__service-name">
+          <KernHeading size="large" className="page-shell__service-name kern-m-none">
             <RouterLink to="/" className="page-shell__service-link">
               Justiz-Services
             </RouterLink>
@@ -128,9 +128,8 @@ export function AppShell({
               <KernCluster gapX="xl" align="center">
                 <KernBody
                   muted
-                  margin="none"
                   className={classNames(
-                    "page-shell__user-info",
+                    "page-shell__user-info kern-m-none",
                     clusterClassName({ gap: "sm", align: "center" }),
                   )}
                 >
@@ -174,10 +173,10 @@ export function AppShell({
       <footer className="page-shell__footer kern-mt-auto">
         <div className="kern-container page-shell__footer-grid kern-grid kern-grid-cols-1 kern-grid-cols-12-lg kern-gap-x-md">
           <KernStack className={footerCell.brand}>
-            <KernHeading size="medium" margin="none">
+            <KernHeading className="kern-m-none" size="medium">
               Justiz-Services
             </KernHeading>
-            <KernBody muted margin="none">
+            <KernBody className="kern-m-none" muted>
               Onlinedienste der Justiz
             </KernBody>
           </KernStack>
@@ -187,7 +186,7 @@ export function AppShell({
           </div>
 
           <KernStack as="nav" gap="sm" aria-labelledby="footer-legal" className={footerCell.legal}>
-            <KernHeading size="title-small" level={2} margin="none" id="footer-legal">
+            <KernHeading className="kern-m-none" size="title-small" level={2} id="footer-legal">
               Rechtliche Hinweise
             </KernHeading>
             <LinkList links={legalLinks} />
@@ -199,21 +198,21 @@ export function AppShell({
             aria-labelledby="footer-contact"
             className={footerCell.contact}
           >
-            <KernHeading size="title-small" level={2} margin="none" id="footer-contact">
+            <KernHeading className="kern-m-none" size="title-small" level={2} id="footer-contact">
               Kontakt und Teilnahme
             </KernHeading>
             <LinkList links={contactLinks} />
           </KernStack>
 
           <KernStack gap="sm" className={footerCell.pilot}>
-            <KernHeading size="title-small" level={2} margin="none">
+            <KernHeading className="kern-m-none" size="title-small" level={2}>
               Ein Pilotprojekt des
             </KernHeading>
             <ExternalLinkList links={pilotLinks} />
           </KernStack>
 
           <KernStack gap="sm" className={footerCell.operator}>
-            <KernHeading size="title-small" level={2} margin="none">
+            <KernHeading className="kern-m-none" size="title-small" level={2}>
               Umsetzung und Betrieb
             </KernHeading>
             <ExternalLinkList links={operatorLinks} />

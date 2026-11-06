@@ -3,7 +3,7 @@ import { createElement, type ReactNode } from "react";
 import { KernIcon } from "../kern/KernIcon";
 import { KernLink } from "../kern/KernLink";
 import { KernStack } from "../kern/KernStack";
-import { clusterClassName } from "../kern/layout";
+import { classNames, clusterClassName } from "../kern/layout";
 
 import "./A2JInlineNotice.css";
 
@@ -37,7 +37,10 @@ const iconLabels: Record<A2JInlineNoticeType, string> = {
   error: "Fehler",
 };
 
-const headerLayout = `${clusterClassName({ wrap: false, align: "center" })} kern-py-sm kern-px-md`;
+const headerLayout = classNames(
+  clusterClassName({ wrap: false, align: "center" }),
+  "kern-py-sm kern-px-md",
+);
 const linkLayout = clusterClassName({ inline: true, wrap: false, gap: "xs", align: "start" });
 
 // A fork of the KERN alert for the A2J design's "Inline notice". It has no live-region role: it
@@ -53,7 +56,7 @@ export function A2JInlineNotice({
 
   return (
     <div className={`a2j-inline-notice a2j-inline-notice--${type}`}>
-      <div className={`a2j-inline-notice__header ${headerLayout}`}>
+      <div className={classNames("a2j-inline-notice__header", headerLayout)}>
         <span
           className={`kern-icon kern-icon--${kernIcons[type]} a2j-inline-notice__icon kern-flex-shrink-0`}
           aria-hidden="true"
@@ -77,7 +80,7 @@ export function A2JInlineNotice({
             </div>
           )}
           {link && (
-            <KernLink href={link.href} className={`a2j-inline-notice__link ${linkLayout}`}>
+            <KernLink href={link.href} className={classNames("a2j-inline-notice__link", linkLayout)}>
               <KernIcon name="arrow-forward" />
               {link.label}
             </KernLink>
