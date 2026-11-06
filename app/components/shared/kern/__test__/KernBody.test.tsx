@@ -4,6 +4,16 @@ import { describe, expect, it } from "vitest";
 import { KernBody } from "~/components/shared/kern/KernBody";
 
 describe("KernBody", () => {
+  it("takes away the margin on request", () => {
+    const { container } = render(<KernBody margin="none">x</KernBody>);
+    expect(container.firstChild).toHaveClass("kern-m-none");
+  });
+
+  it("keeps KERN's margin without the prop", () => {
+    const { container } = render(<KernBody>x</KernBody>);
+    expect(container.firstChild).not.toHaveClass("kern-m-none");
+  });
+
   it("renders a paragraph with the base class by default", () => {
     const { container } = render(<KernBody>Text</KernBody>);
     expect(container.firstChild?.nodeName).toBe("P");

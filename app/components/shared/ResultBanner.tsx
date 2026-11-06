@@ -3,8 +3,11 @@ import type { ReactNode } from "react";
 import { A2JIcon } from "./a2j/A2JIcon";
 import { PageSection } from "./DefaultPage";
 import { KernBody } from "./kern/KernBody";
+import { KernCluster } from "./kern/KernCluster";
 import { KernHeading } from "./kern/KernHeading";
 import { KernIcon } from "./kern/KernIcon";
+import { KernStack } from "./kern/KernStack";
+import { clusterClassName } from "./kern/layout";
 
 import "./ResultBanner.css";
 
@@ -17,6 +20,8 @@ type ResultBannerProps = {
   message?: string;
   actions?: ReactNode;
 };
+
+const bannerLayout = `${clusterClassName({ wrap: false, gap: "md", align: "start" })} kern-py-xl kern-px-md`;
 
 // The wide banner on top of a result page: an icon, the headline, and optionally a message and
 // the actions that follow from it.
@@ -31,8 +36,8 @@ export function ResultBanner({
     <div
       className={
         type === "default"
-          ? "result-banner result-banner--default"
-          : `kern-alert kern-alert--${type} result-banner`
+          ? `result-banner result-banner--default ${bannerLayout}`
+          : `kern-alert kern-alert--${type} result-banner ${bannerLayout}`
       }
     >
       {type === "default" ? (
@@ -40,15 +45,19 @@ export function ResultBanner({
       ) : (
         <KernIcon name={type} size="x-large" />
       )}
-      <div className="result-banner__body">
-        <div className="result-banner__text">
+      <KernStack gap="lg" align="start" className="result-banner__body">
+        <KernStack gap="sm" className="result-banner__text">
           <KernHeading size="large" level={1}>
             {title}
           </KernHeading>
           {message && <KernBody bold>{message}</KernBody>}
-        </div>
-        {actions && <div className="result-banner__actions">{actions}</div>}
-      </div>
+        </KernStack>
+        {actions && (
+          <KernCluster gap="lg" className="result-banner__actions">
+            {actions}
+          </KernCluster>
+        )}
+      </KernStack>
     </div>
   );
   return inline ? banner : <PageSection width="wide">{banner}</PageSection>;

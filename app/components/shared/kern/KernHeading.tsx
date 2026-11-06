@@ -6,6 +6,8 @@ export type KernHeadingProps = Omit<HTMLAttributes<HTMLHeadingElement>, "style">
   size: KernHeadingSize;
   // The heading level of the document outline. Without it the text is a plain paragraph.
   level?: 1 | 2 | 3 | 4 | 5 | 6;
+  // "none" takes away the margin of the heading, for text that a layout spaces itself.
+  margin?: "none";
 };
 
 const sizeClassMap: Record<KernHeadingSize, string> = {
@@ -20,11 +22,14 @@ const sizeClassMap: Record<KernHeadingSize, string> = {
 export function KernHeading({
   size,
   level,
+  margin,
   className,
   children,
   ...headingProps
 }: Readonly<KernHeadingProps>) {
-  const classes = [sizeClassMap[size], className].filter(Boolean).join(" ");
+  const classes = [sizeClassMap[size], margin && `kern-m-${margin}`, className]
+    .filter(Boolean)
+    .join(" ");
   const Element = level ? (`h${level}` as const) : "p";
 
   return (

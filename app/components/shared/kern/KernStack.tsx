@@ -1,17 +1,15 @@
 import type { HTMLAttributes } from "react";
 
-import { type Align, type Space, classNames, gapClasses, resetClasses } from "./layout";
+import { type StackOptions, classNames, stackClassName } from "./layout";
 
-export type KernStackProps = HTMLAttributes<HTMLElement> & {
-  as?: "div" | "ul" | "ol" | "section" | "fieldset" | "form";
-  // The space between the children.
-  gap?: Space;
-  // How the children line up across the stack. Without it they fill its width.
-  align?: Align;
-};
+export type KernStackProps = HTMLAttributes<HTMLElement> &
+  StackOptions & {
+    as?: "div" | "ul" | "ol" | "li" | "nav" | "section" | "fieldset" | "form" | "output";
+  };
 
-// Children one below the other, spaced with KERN's gap helpers. A list or fieldset loses the
-// bullets, margins and borders of the browser, so it stacks like any other element.
+// Children one below the other, spaced with KERN's gap helpers. Without `align` they fill its
+// width. A list or fieldset loses the bullets, margins and borders of the browser, so it stacks
+// like any other element.
 export function KernStack({
   as: Element = "div",
   gap,
@@ -20,16 +18,11 @@ export function KernStack({
   children,
   ...stackProps
 }: Readonly<KernStackProps>) {
-  const classes = classNames(
-    "kern-flex kern-flex-col",
-    ...gapClasses(gap),
-    align && `kern-align-items-${align}`,
-    ...resetClasses(Element),
-    className,
-  );
-
   return (
-    <Element className={classes} {...stackProps}>
+    <Element
+      className={classNames(stackClassName({ gap, align }, Element), className)}
+      {...stackProps}
+    >
       {children}
     </Element>
   );

@@ -1,5 +1,4 @@
+/* 3x-large is beyond the largest spacing helper. */
 .report-problem {
-  display: flex;
-  justify-content: flex-end;
   padding-top: var(--kern-metric-space-3x-large);
 }

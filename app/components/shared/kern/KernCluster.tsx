@@ -1,24 +1,11 @@
 import type { HTMLAttributes } from "react";
 
-import {
-  type Align,
-  type Justify,
-  type Space,
-  classNames,
-  gapClasses,
-  resetClasses,
-} from "./layout";
+import { type ClusterOptions, classNames, clusterClassName } from "./layout";
 
-export type KernClusterProps = HTMLAttributes<HTMLElement> & {
-  as?: "div" | "ul" | "ol" | "span" | "section" | "fieldset";
-  gap?: Space;
-  gapX?: Space;
-  gapY?: Space;
-  align?: Align;
-  justify?: Justify;
-  // Children that do not fit move to the next line. Turn it off to keep them in one row.
-  wrap?: boolean;
-};
+export type KernClusterProps = HTMLAttributes<HTMLElement> &
+  ClusterOptions & {
+    as?: "div" | "ul" | "ol" | "li" | "span" | "section" | "fieldset" | "form" | "output";
+  };
 
 // Children side by side, wrapping onto the next line when the space runs out.
 export function KernCluster({
@@ -28,23 +15,20 @@ export function KernCluster({
   gapY,
   align,
   justify,
-  wrap = true,
+  wrap,
+  inline,
   className,
   children,
   ...clusterProps
 }: Readonly<KernClusterProps>) {
-  const classes = classNames(
-    "kern-flex",
-    wrap && "kern-flex-wrap",
-    ...gapClasses(gap, gapX, gapY),
-    align && `kern-align-items-${align}`,
-    justify && `kern-justify-content-${justify}`,
-    ...resetClasses(Element),
-    className,
-  );
-
   return (
-    <Element className={classes} {...clusterProps}>
+    <Element
+      className={classNames(
+        clusterClassName({ gap, gapX, gapY, align, justify, wrap, inline }, Element),
+        className,
+      )}
+      {...clusterProps}
+    >
       {children}
     </Element>
   );

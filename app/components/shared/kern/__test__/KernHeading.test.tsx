@@ -4,6 +4,24 @@ import { describe, expect, it } from "vitest";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 
 describe("KernHeading", () => {
+  it("takes away the margin on request", () => {
+    render(
+      <KernHeading size="small" level={2} margin="none">
+        Title
+      </KernHeading>,
+    );
+    expect(screen.getByRole("heading")).toHaveClass("kern-m-none");
+  });
+
+  it("keeps KERN's margin without the prop", () => {
+    render(
+      <KernHeading size="small" level={2}>
+        Title
+      </KernHeading>,
+    );
+    expect(screen.getByRole("heading")).not.toHaveClass("kern-m-none");
+  });
+
   it("renders a heading of the given level", () => {
     render(
       <KernHeading size="large" level={2}>

@@ -5,6 +5,8 @@ export type KernBodyProps = HTMLAttributes<HTMLElement> & {
   size?: "small" | "large";
   bold?: boolean;
   muted?: boolean;
+  // "none" takes away the margin KERN gives a paragraph, for text that a layout spaces itself.
+  margin?: "none";
 };
 
 export function KernBody({
@@ -12,6 +14,7 @@ export function KernBody({
   size,
   bold = false,
   muted = false,
+  margin,
   className,
   children,
   ...bodyProps
@@ -21,6 +24,7 @@ export function KernBody({
     size && `kern-body--${size}`,
     bold && "kern-body--bold",
     muted && "kern-body--muted",
+    margin && `kern-m-${margin}`,
     className,
   ]
     .filter(Boolean)

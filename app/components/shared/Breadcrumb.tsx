@@ -2,6 +2,7 @@ import { Link } from "react-router";
 
 import { BASE_PATH } from "~/lib/base-path";
 
+import { KernCluster } from "./kern/KernCluster";
 import { KernIcon } from "./kern/KernIcon";
 import { KernLink } from "./kern/KernLink";
 
@@ -35,20 +36,25 @@ export function Breadcrumb({
 
   return (
     <nav aria-label="Brotkrumen" className={classes}>
-      <ol className="breadcrumb__list">
-        <li className="breadcrumb__item">
+      <KernCluster as="ol" wrap={false} gap="xs" align="center">
+        <KernCluster as="li" wrap={false} gap="xs" align="center">
           <KernLink noVisitedState href={SERVICE_URL} aria-label="Startseite">
             <KernIcon name="home" />
           </KernLink>
-        </li>
+        </KernCluster>
         {trail.map(({ label, href }, index) => {
           const isCurrent = index === trail.length - 1;
 
           return (
-            <li key={`${index}-${label}`} className="breadcrumb__item">
-              <span className="breadcrumb__separator" aria-hidden="true">
+            <KernCluster as="li" key={`${index}-${label}`} wrap={false} gap="xs" align="center">
+              <KernCluster
+                as="span"
+                wrap={false}
+                className="breadcrumb__separator"
+                aria-hidden="true"
+              >
                 <KernIcon name="chevron-right" />
-              </span>
+              </KernCluster>
               {href && !isCurrent && index === 0 && !signedIn ? (
                 <KernLink size="small" noVisitedState href={`${BASE_PATH}/`}>
                   {label}
@@ -62,10 +68,10 @@ export function Breadcrumb({
                   {label}
                 </span>
               )}
-            </li>
+            </KernCluster>
           );
         })}
-      </ol>
+      </KernCluster>
     </nav>
   );
 }
