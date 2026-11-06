@@ -1,4 +1,5 @@
 import type { LabelHTMLAttributes, ReactNode } from "react";
+
 import { classNames } from "./layout";
 
 export type KernLabelProps = {
@@ -17,10 +18,12 @@ export function KernLabel({
   className,
   children,
 }: Readonly<KernLabelProps>) {
-  const classes = classNames("kern-label",
+  const classes = classNames(
+    "kern-label",
     size && `kern-label--${size}`,
     subtle && "kern-label--subtle",
-    className,);
+    className,
+  );
 
   if (htmlFor) {
     return (

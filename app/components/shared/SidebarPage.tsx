@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
 
 import { KernGrid, KernGridCol } from "./kern/KernGrid";
+import { classNames } from "./kern/layout";
 import { MainNav } from "./MainNav";
-import { ReportProblemButton } from "./ReportProblemButton";
 
 import "./SidebarPage.css";
-import { classNames } from "./kern/layout";
+import { ReportProblemButton } from "./ReportProblemButton";
 
 type SidebarPageProps = {
   // The entry of the main navigation that is the current page.
@@ -25,7 +25,9 @@ export function SidebarPage({
   children,
 }: Readonly<SidebarPageProps>) {
   return (
-    <div className={classNames("kern-container sidebar-page kern-pt-xl", `sidebar-page--${spacing}`)}>
+    <div
+      className={classNames("kern-container sidebar-page kern-pt-xl", `sidebar-page--${spacing}`)}
+    >
       <KernGrid gapY="xl">
         <KernGridCol lg={3}>
           <MainNav current={current} />

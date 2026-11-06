@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { FlowPage } from "~/components/shared/FlowPage";
+
 import { expectBreakpointColumns, pageWidthClasses } from "./page-width";
 
 describe("FlowPage", () => {
@@ -44,7 +45,10 @@ describe("FlowPage", () => {
 
   it("centers the children at the given width", () => {
     render(<FlowPage width="wide">x</FlowPage>);
-    expectBreakpointColumns(screen.getByText("x").closest(".kern-grid-col")!, pageWidthClasses.wide);
+    expectBreakpointColumns(
+      screen.getByText("x").closest(".kern-grid-col")!,
+      pageWidthClasses.wide,
+    );
   });
 
   it("follows the band with the report-problem button at the same width", () => {

@@ -191,7 +191,12 @@ export default function CreateTermin() {
 
           <KernStack as="section" gap="md" aria-labelledby="verfahrensbeteiligte">
             <KernStack gap="xs">
-              <KernHeading className="kern-m-none" size="medium" level={2} id="verfahrensbeteiligte">
+              <KernHeading
+                className="kern-m-none"
+                size="medium"
+                level={2}
+                id="verfahrensbeteiligte"
+              >
                 Geben Sie alle Verfahrensbeteiligten an
               </KernHeading>
               <KernBody className="kern-m-none">
@@ -261,7 +266,10 @@ export default function CreateTermin() {
             <KernStack
               gap="md"
               align="start"
-              className={classNames("create-termin__windows", errors?.slots && "kern-fieldset--error")}
+              className={classNames(
+                "create-termin__windows",
+                errors?.slots && "kern-fieldset--error",
+              )}
             >
               <KernTable
                 caption="Zeitfenster"

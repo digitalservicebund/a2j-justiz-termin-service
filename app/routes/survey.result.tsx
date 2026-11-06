@@ -10,9 +10,9 @@ import {
 } from "~/components/shared/kern/KernDescriptionList";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernStack } from "~/components/shared/kern/KernStack";
+import { classNames } from "~/components/shared/kern/layout";
 import { ResultBanner } from "~/components/shared/ResultBanner";
 import { SidebarPage } from "~/components/shared/SidebarPage";
-import { classNames } from "~/components/shared/kern/layout";
 import { getDb } from "~/database/database";
 
 import { NextStepsSection, Step } from "./create-termin.created";

@@ -80,7 +80,10 @@ export function A2JInlineNotice({
             </div>
           )}
           {link && (
-            <KernLink href={link.href} className={classNames("a2j-inline-notice__link", linkLayout)}>
+            <KernLink
+              href={link.href}
+              className={classNames("a2j-inline-notice__link", linkLayout)}
+            >
               <KernIcon name="arrow-forward" />
               {link.label}
             </KernLink>

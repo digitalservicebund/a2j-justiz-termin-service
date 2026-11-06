@@ -37,12 +37,18 @@ export function KernFormInput({
   const errorId = `${id}-error`;
   const hintId = `${id}-hint`;
   const describedBy = [hint && hintId, hasError && errorId].filter(Boolean).join(" ") || undefined;
-  const inputClasses = classNames("kern-form-input__input",
+  const inputClasses = classNames(
+    "kern-form-input__input",
     width && `kern-form-input__input--width-${width}`,
     (hasError || invalid) && "kern-form-input__input--error",
-    className,);
+    className,
+  );
 
-  const wrapperClasses = classNames("kern-form-input", hasError && "kern-form-input--error", wrapperClassName);
+  const wrapperClasses = classNames(
+    "kern-form-input",
+    hasError && "kern-form-input--error",
+    wrapperClassName,
+  );
 
   return (
     <div className={wrapperClasses}>

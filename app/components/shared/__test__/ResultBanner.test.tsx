@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { ResultBanner } from "~/components/shared/ResultBanner";
+
 import { expectBreakpointColumns, pageSectionColumn, pageWidthClasses } from "./page-width";
 
 describe("ResultBanner", () => {
