@@ -36,7 +36,7 @@ export function LoginForm({ email, error, sent = false }: Readonly<LoginFormProp
       method="post"
       action="/?index"
       noValidate
-      className={`${error ? "login-form login-form--error" : "login-form"} kern-mt-xl ${formLayout}`}
+      className={`${error ? "login-form login-form--error" : "login-form"} ${formLayout}`}
     >
       <KernFormInput
         id="login-email"

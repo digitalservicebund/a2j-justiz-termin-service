@@ -18,7 +18,10 @@ import { KernButton } from "~/components/shared/kern/KernButton";
 import { KernFieldset } from "~/components/shared/kern/KernFieldset";
 import { KernFormCheck } from "~/components/shared/kern/KernFormCheck";
 import { KernFormInput } from "~/components/shared/kern/KernFormInput";
+import { KernGrid, KernGridCol } from "~/components/shared/kern/KernGrid";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
+import { KernStack } from "~/components/shared/kern/KernStack";
+import { stackClassName } from "~/components/shared/kern/layout";
 import { NewUserSchema, type AuthUser, type UserRole } from "~/core/domain/user";
 import { getDb } from "~/database/database";
 
@@ -135,39 +138,54 @@ export default function AdminUsersRoute() {
         {result && "success" in result && (
           <KernAlert type="success" title="Gespeichert" message={result.success} />
         )}
-        <section aria-labelledby="new-user-title" className="admin-users__section">
+        <KernStack
+          as="section"
+          gap="md"
+          aria-labelledby="new-user-title"
+          className="admin-users__section kern-py-md"
+        >
           <KernHeading size="small" level={2} id="new-user-title">
             Benutzer hinzufügen
           </KernHeading>
-          <Form method="post" className="admin-users__form">
-            <input type="hidden" name="intent" value="create" />
-            <UserFields />
-            <KernButton type="submit" disabled={pending}>
-              Hinzufügen
-            </KernButton>
-          </Form>
-        </section>
+          <KernGrid>
+            <KernGridCol md={9}>
+              <Form method="post" className={stackClassName({ gap: "md" }, "form")}>
+                <input type="hidden" name="intent" value="create" />
+                <UserFields />
+                <KernButton type="submit" disabled={pending}>
+                  Hinzufügen
+                </KernButton>
+              </Form>
+            </KernGridCol>
+          </KernGrid>
+        </KernStack>
         {users.map((entry) => (
-          <section
+          <KernStack
+            as="section"
+            gap="md"
             key={entry.id}
             aria-labelledby={`${entry.id}-title`}
-            className="admin-users__section"
+            className="admin-users__section kern-py-md"
           >
             <KernHeading size="small" level={2} id={`${entry.id}-title`}>
               {entry.email}
             </KernHeading>
-            <Form method="post" className="admin-users__form">
-              <input type="hidden" name="intent" value="update" />
-              <input type="hidden" name="id" value={entry.id} />
-              <UserFields
-                key={`${entry.name}-${entry.roles.join("-")}`}
-                user={entry}
-                ownAccount={entry.id === user.id}
-              />
-              <KernButton type="submit" disabled={pending}>
-                Speichern
-              </KernButton>
-            </Form>
+            <KernGrid>
+              <KernGridCol md={9}>
+                <Form method="post" className={stackClassName({ gap: "md" }, "form")}>
+                  <input type="hidden" name="intent" value="update" />
+                  <input type="hidden" name="id" value={entry.id} />
+                  <UserFields
+                    key={`${entry.name}-${entry.roles.join("-")}`}
+                    user={entry}
+                    ownAccount={entry.id === user.id}
+                  />
+                  <KernButton type="submit" disabled={pending}>
+                    Speichern
+                  </KernButton>
+                </Form>
+              </KernGridCol>
+            </KernGrid>
             {entry.id !== user.id && (
               <Form method="post">
                 <input type="hidden" name="intent" value="delete" />
@@ -177,7 +195,7 @@ export default function AdminUsersRoute() {
                 </KernButton>
               </Form>
             )}
-          </section>
+          </KernStack>
         ))}
       </DefaultPage>
     </AppShell>

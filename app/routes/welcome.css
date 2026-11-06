@@ -6,24 +6,9 @@
   background-color: var(--kern-color-neutral-050);
 }
 
+/* The padding of the sections is beyond the largest spacing helper. */
 .welcome__hero-content {
-  display: grid;
-  gap: 0;
   padding-block: var(--kern-metric-space-6x-large);
-}
-
-.welcome__hero-content h1,
-.welcome__hero-content p {
-  margin: 0;
-}
-
-/* Space between the intro text and the sign-in link alert. */
-.welcome__hero-content .kern-alert {
-  margin-top: var(--kern-metric-space-x-large);
-}
-
-.welcome__hero-action {
-  margin-top: var(--kern-metric-space-x-large);
 }
 
 .welcome__pilot {
@@ -33,11 +18,6 @@
 
 .welcome__pilot-summary {
   color: var(--kern-color-action-default-contextual);
-}
-
-.welcome__pilot details {
-  display: grid;
-  gap: var(--kern-metric-space-small);
 }
 
 /* Align the text with the summary text, which sits to the right of the toggle icon. */
@@ -58,17 +38,8 @@
 }
 
 .welcome__steps {
-  display: grid;
   gap: var(--kern-metric-space-3x-large);
-  margin: var(--kern-metric-space-default) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.welcome__step {
-  display: flex;
-  align-items: center;
-  gap: var(--kern-metric-space-default);
+  margin-top: var(--kern-metric-space-default);
 }
 
 .welcome__step .kern-title {
