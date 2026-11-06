@@ -1,0 +1,16 @@
+/* The widths of the fields in the design. KERN's grid has no max-width helper. */
+.field-column {
+  inline-size: 100%;
+}
+
+.field-column--small {
+  max-inline-size: var(--layout-field-small);
+}
+
+.field-column--medium {
+  max-inline-size: var(--layout-field-medium);
+}
+
+.field-column--large {
+  max-inline-size: var(--layout-measure-narrow);
+}

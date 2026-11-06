@@ -4,6 +4,11 @@ import "./layout.css";
 // "xl"; larger spaces have no helper and stay in a component's own CSS.
 export type Space = "none" | "xxs" | "xs" | "sm" | "md" | "lg" | "xl";
 
+// KERN's breakpoints in px, the min-width of the kern-col-<breakpoint>-* classes. Plain CSS cannot
+// read them in a media query, so a rule there repeats the number; layout.test.ts checks that every
+// min-width in the app's CSS is one of these.
+export const breakpoints = { sm: 576, md: 768, lg: 992, xl: 1200, xxl: 1600 } as const;
+
 export type Align = "start" | "center" | "end" | "stretch" | "baseline";
 export type Justify = "start" | "center" | "end" | "between";
 

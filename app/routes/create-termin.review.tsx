@@ -1,8 +1,9 @@
 import { useState, type ReactNode } from "react";
-import { Form, useNavigation } from "react-router";
+import { useNavigation } from "react-router";
 
 import type { BreadcrumbItem } from "~/components/shared/Breadcrumb";
 import { FlowPage } from "~/components/shared/FlowPage";
+import { FormActions, FormStack } from "~/components/shared/FormLayout";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernButton } from "~/components/shared/kern/KernButton";
 import { KernCluster } from "~/components/shared/kern/KernCluster";
@@ -12,7 +13,6 @@ import {
 } from "~/components/shared/kern/KernDescriptionList";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernIcon } from "~/components/shared/kern/KernIcon";
-import { stackClassName } from "~/components/shared/kern/layout";
 import { formatCalendarDate } from "~/core/domain/time/format";
 import { useHydrated } from "~/lib/use-hydrated";
 
@@ -119,7 +119,7 @@ export function ReviewPage({
 
   return (
     <FlowPage width={wide ? "default" : "narrow"} spacing={wide ? "review" : "form"}>
-      <Form method="post" className={stackClassName({ gap: "xl" }, "form")}>
+      <FormStack method="post">
         {children}
         <KernHeading size="large" level={1}>
           Bitte überprüfen Sie Ihre Angaben
@@ -151,15 +151,15 @@ export function ReviewPage({
           ))}
         </div>
 
-        <KernCluster gap="md" className="kern-pt-md">
+        <FormActions>
           <KernButton type="submit" name="intent" value="back" style="secondary">
             Zurück
           </KernButton>
           <KernButton type="submit" name="intent" value={submit.intent} disabled={pending}>
             {submit.label}
           </KernButton>
-        </KernCluster>
-      </Form>
+        </FormActions>
+      </FormStack>
     </FlowPage>
   );
 }

@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import { data, Form, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
+import { data, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
 
 import {
   addDraftSlot,
@@ -10,6 +10,7 @@ import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { ErrorMessage } from "~/components/shared/ErrorMessage";
 import { FlowPage } from "~/components/shared/FlowPage";
+import { FormActions, FormStack } from "~/components/shared/FormLayout";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernButton } from "~/components/shared/kern/KernButton";
 import { KernCluster } from "~/components/shared/kern/KernCluster";
@@ -18,7 +19,7 @@ import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernLabel } from "~/components/shared/kern/KernLabel";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { KernStack } from "~/components/shared/kern/KernStack";
-import { clusterClassName, stackClassName } from "~/components/shared/kern/layout";
+import { clusterClassName } from "~/components/shared/kern/layout";
 import { getDb } from "~/database/database";
 
 import { draftHref, NEW_SLOT } from "./create-termin.paths";
@@ -176,7 +177,7 @@ export default function CreateTerminSlot() {
   return (
     <AppShell user={user} breadcrumbs={createTerminBreadcrumbs}>
       <FlowPage width="content" spacing="form">
-        <Form method="post" className={stackClassName({ gap: "xl" }, "form")} noValidate>
+        <FormStack method="post" noValidate>
           <KernStack gap="sm">
             <KernBody size="small" bold>
               Zeitfenster
@@ -206,15 +207,15 @@ export default function CreateTerminSlot() {
             </KernStack>
           )}
 
-          <KernCluster gap="md" className="kern-pt-md">
+          <FormActions>
             <KernLinkButton style="secondary" to={cancelHref}>
               <KernLabel>Abbrechen</KernLabel>
             </KernLinkButton>
             <KernButton type="submit" disabled={pending}>
               Speichern
             </KernButton>
-          </KernCluster>
-        </Form>
+          </FormActions>
+        </FormStack>
       </FlowPage>
     </AppShell>
   );

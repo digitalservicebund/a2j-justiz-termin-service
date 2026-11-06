@@ -1,8 +1,9 @@
-import { data, Form, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
+import { data, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
 
 import { findSurvey } from "~/adapters/appointments/survey.server";
 import { AppShell } from "~/components/shared/AppShell";
 import { FlowPage } from "~/components/shared/FlowPage";
+import { FieldColumn, FormActions, FormStack } from "~/components/shared/FormLayout";
 import { KernButton } from "~/components/shared/kern/KernButton";
 import { KernCluster } from "~/components/shared/kern/KernCluster";
 import {
@@ -104,26 +105,24 @@ export default function Survey() {
           </KernGridCol>
 
           <KernGridCol lg={7}>
-            <Form method="post" className={stackClassName({ gap: "xl" }, "form")} noValidate>
+            <FormStack method="post" noValidate>
               <KernHeading size="large" level={1}>
                 Geben Sie Ihre Verfügbarkeiten an
               </KernHeading>
 
               {needsName && (
-                <KernGrid>
-                  <KernGridCol md={6}>
-                    <KernFormInput
-                      id="name"
-                      label="Ihr Name"
-                      className="kern-w-full"
-                      error={errors.name}
-                      name="name"
-                      autoComplete="name"
-                      maxLength={MAX_NAME_LENGTH}
-                      defaultValue={values.name}
-                    />
-                  </KernGridCol>
-                </KernGrid>
+                <FieldColumn size="small">
+                  <KernFormInput
+                    id="name"
+                    label="Ihr Name"
+                    wrapperClassName="kern-w-full"
+                    error={errors.name}
+                    name="name"
+                    autoComplete="name"
+                    maxLength={MAX_NAME_LENGTH}
+                    defaultValue={values.name}
+                  />
+                </FieldColumn>
               )}
 
               <KernFieldset
@@ -180,12 +179,12 @@ export default function Survey() {
                 />
               </KernFieldset>
 
-              <KernCluster gap="md" className="kern-pt-md">
+              <FormActions>
                 <KernButton type="submit" disabled={pending}>
                   Weiter
                 </KernButton>
-              </KernCluster>
-            </Form>
+              </FormActions>
+            </FormStack>
           </KernGridCol>
         </KernGrid>
       </FlowPage>

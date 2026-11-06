@@ -12,16 +12,15 @@ import {
 } from "~/adapters/users/users.server";
 import { AppShell } from "~/components/shared/AppShell";
 import { DefaultPage } from "~/components/shared/DefaultPage";
+import { FieldColumn, FormStack } from "~/components/shared/FormLayout";
 import { KernAlert } from "~/components/shared/kern/KernAlert";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernButton } from "~/components/shared/kern/KernButton";
 import { KernFieldset } from "~/components/shared/kern/KernFieldset";
 import { KernFormCheck } from "~/components/shared/kern/KernFormCheck";
 import { KernFormInput } from "~/components/shared/kern/KernFormInput";
-import { KernGrid, KernGridCol } from "~/components/shared/kern/KernGrid";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernStack } from "~/components/shared/kern/KernStack";
-import { stackClassName } from "~/components/shared/kern/layout";
 import { NewUserSchema, type AuthUser, type UserRole } from "~/core/domain/user";
 import { getDb } from "~/database/database";
 
@@ -147,17 +146,15 @@ export default function AdminUsersRoute() {
           <KernHeading size="small" level={2} id="new-user-title">
             Benutzer hinzufügen
           </KernHeading>
-          <KernGrid>
-            <KernGridCol md={9}>
-              <Form method="post" className={stackClassName({ gap: "md" }, "form")}>
-                <input type="hidden" name="intent" value="create" />
-                <UserFields />
-                <KernButton type="submit" disabled={pending}>
-                  Hinzufügen
-                </KernButton>
-              </Form>
-            </KernGridCol>
-          </KernGrid>
+          <FieldColumn size="large">
+            <FormStack method="post" gap="md">
+              <input type="hidden" name="intent" value="create" />
+              <UserFields />
+              <KernButton type="submit" disabled={pending}>
+                Hinzufügen
+              </KernButton>
+            </FormStack>
+          </FieldColumn>
         </KernStack>
         {users.map((entry) => (
           <KernStack
@@ -170,22 +167,20 @@ export default function AdminUsersRoute() {
             <KernHeading size="small" level={2} id={`${entry.id}-title`}>
               {entry.email}
             </KernHeading>
-            <KernGrid>
-              <KernGridCol md={9}>
-                <Form method="post" className={stackClassName({ gap: "md" }, "form")}>
-                  <input type="hidden" name="intent" value="update" />
-                  <input type="hidden" name="id" value={entry.id} />
-                  <UserFields
-                    key={`${entry.name}-${entry.roles.join("-")}`}
-                    user={entry}
-                    ownAccount={entry.id === user.id}
-                  />
-                  <KernButton type="submit" disabled={pending}>
-                    Speichern
-                  </KernButton>
-                </Form>
-              </KernGridCol>
-            </KernGrid>
+            <FieldColumn size="large">
+              <FormStack method="post" gap="md">
+                <input type="hidden" name="intent" value="update" />
+                <input type="hidden" name="id" value={entry.id} />
+                <UserFields
+                  key={`${entry.name}-${entry.roles.join("-")}`}
+                  user={entry}
+                  ownAccount={entry.id === user.id}
+                />
+                <KernButton type="submit" disabled={pending}>
+                  Speichern
+                </KernButton>
+              </FormStack>
+            </FieldColumn>
             {entry.id !== user.id && (
               <Form method="post">
                 <input type="hidden" name="intent" value="delete" />

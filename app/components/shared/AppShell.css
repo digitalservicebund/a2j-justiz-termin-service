@@ -49,8 +49,15 @@
   row-gap: var(--kern-metric-space-3x-large);
 }
 
+/* From lg (992px, see `breakpoints` in kern/layout.ts) the footer is a grid of columns: the rows are
+   further apart, and the headings of the link columns line up with the one of the brand. */
 @media (min-width: 992px) {
   .page-shell__footer-grid {
     row-gap: calc(var(--kern-metric-space-5x-large) + var(--kern-metric-space-small));
+  }
+
+  .page-shell__footer-legal,
+  .page-shell__footer-contact {
+    padding-block-start: calc(var(--kern-metric-space-small) - 1px);
   }
 }

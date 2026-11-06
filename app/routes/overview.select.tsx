@@ -1,9 +1,10 @@
-import { data, Form, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
+import { data, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
 
 import { getAppointment } from "~/adapters/appointments/appointments.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { FlowPage } from "~/components/shared/FlowPage";
+import { FormActions, FormStack } from "~/components/shared/FormLayout";
 import { KernButton } from "~/components/shared/kern/KernButton";
 import { KernCluster } from "~/components/shared/kern/KernCluster";
 import {
@@ -16,7 +17,7 @@ import { KernFormInput } from "~/components/shared/kern/KernFormInput";
 import { KernGrid, KernGridCol } from "~/components/shared/kern/KernGrid";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
-import { resetClassName, stackClassName } from "~/components/shared/kern/layout";
+import { resetClassName } from "~/components/shared/kern/layout";
 import { formatRangeLong } from "~/core/domain/time/format";
 import { getDb } from "~/database/database";
 
@@ -79,7 +80,7 @@ export default function OverviewSelect() {
           </KernGridCol>
 
           <KernGridCol lg={7}>
-            <Form method="post" className={stackClassName({ gap: "xl" }, "form")} noValidate>
+            <FormStack method="post" noValidate>
               <KernHeading size="large" level={1}>
                 Wählen Sie ein Datum und eine Startzeit aus
               </KernHeading>
@@ -141,15 +142,15 @@ export default function OverviewSelect() {
                 </KernCluster>
               </KernFieldset>
 
-              <KernCluster gap="md" className="kern-pt-md">
+              <FormActions>
                 <KernLinkButton style="secondary" to="/overview">
                   Abbrechen
                 </KernLinkButton>
                 <KernButton type="submit" disabled={pending}>
                   Weiter
                 </KernButton>
-              </KernCluster>
-            </Form>
+              </FormActions>
+            </FormStack>
           </KernGridCol>
         </KernGrid>
       </FlowPage>

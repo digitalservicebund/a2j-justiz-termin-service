@@ -9,14 +9,13 @@ import {
 } from "~/adapters/users/allowed-domains.server";
 import { AppShell } from "~/components/shared/AppShell";
 import { DefaultPage } from "~/components/shared/DefaultPage";
+import { FieldColumn, FormStack } from "~/components/shared/FormLayout";
 import { KernAlert } from "~/components/shared/kern/KernAlert";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernButton } from "~/components/shared/kern/KernButton";
 import { KernFormInput } from "~/components/shared/kern/KernFormInput";
-import { KernGrid, KernGridCol } from "~/components/shared/kern/KernGrid";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernStack } from "~/components/shared/kern/KernStack";
-import { stackClassName } from "~/components/shared/kern/layout";
 import { AllowedDomainSchema } from "~/core/domain/allowed-domain";
 import { getDb } from "~/database/database";
 
@@ -77,17 +76,15 @@ export default function AdminDomainsRoute() {
           <KernHeading size="small" level={2} id="new-domain-title">
             Domain hinzufügen
           </KernHeading>
-          <KernGrid>
-            <KernGridCol md={9}>
-              <Form method="post" className={stackClassName({ gap: "md" }, "form")}>
-                <input type="hidden" name="intent" value="create" />
-                <KernFormInput id="new-domain" label="Domain" name="domain" required />
-                <KernButton type="submit" disabled={pending}>
-                  Hinzufügen
-                </KernButton>
-              </Form>
-            </KernGridCol>
-          </KernGrid>
+          <FieldColumn size="large">
+            <FormStack method="post" gap="md">
+              <input type="hidden" name="intent" value="create" />
+              <KernFormInput id="new-domain" label="Domain" name="domain" required />
+              <KernButton type="submit" disabled={pending}>
+                Hinzufügen
+              </KernButton>
+            </FormStack>
+          </FieldColumn>
         </KernStack>
         {domains.map(({ domain }) => (
           <KernStack

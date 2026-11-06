@@ -1,6 +1,14 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
-import { classNames, clusterClassName, stackClassName } from "~/components/shared/kern/layout";
+import {
+  breakpoints,
+  classNames,
+  clusterClassName,
+  stackClassName,
+} from "~/components/shared/kern/layout";
 
 describe("classNames", () => {
   it("joins the names and skips the empty ones", () => {
@@ -56,5 +64,25 @@ describe("clusterClassName", () => {
 
   it("resets lists and fieldsets", () => {
     expect(clusterClassName({}, "ul")).toContain("kern-m-none kern-p-none layout-reset");
+  });
+});
+
+describe("breakpoints", () => {
+  const appDirectory = join(process.cwd(), "app");
+  const sheets = readdirSync(appDirectory, { recursive: true, encoding: "utf8" })
+    .filter((file) => file.endsWith(".css"))
+    .map((file) => [file, readFileSync(join(appDirectory, file), "utf8")] as const);
+
+  it("covers every min-width media query in the app's own CSS", () => {
+    const known = new Set<number>(Object.values(breakpoints));
+    const used = sheets.flatMap(([file, css]) =>
+      [...css.matchAll(/min-width:\s*(\d+)px/g)].map((match) => ({
+        file,
+        width: Number(match[1]),
+      })),
+    );
+
+    expect(used.length).toBeGreaterThan(0);
+    expect(used.filter(({ width }) => !known.has(width))).toEqual([]);
   });
 });

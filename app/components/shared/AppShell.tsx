@@ -64,8 +64,8 @@ function ExternalLinkList({ links }: Readonly<{ links: Link[] }>) {
 const footerCell = {
   brand: "kern-col-start-1-lg kern-col-end-7-lg kern-row-start-1-lg",
   logo: "kern-col-start-1-lg kern-col-end-7-lg kern-row-start-2-lg",
-  legal: "kern-col-start-7-lg kern-col-end-10-lg kern-row-start-1-lg",
-  contact: "kern-col-start-10-lg kern-col-end-13-lg kern-row-start-1-lg",
+  legal: "page-shell__footer-legal kern-col-start-7-lg kern-col-end-10-lg kern-row-start-1-lg",
+  contact: "page-shell__footer-contact kern-col-start-10-lg kern-col-end-13-lg kern-row-start-1-lg",
   pilot: "kern-col-start-7-lg kern-col-end-10-lg kern-row-start-2-lg",
   operator: "kern-col-start-10-lg kern-col-end-13-lg kern-row-start-2-lg",
 };
@@ -172,7 +172,7 @@ export function AppShell({
       </main>
 
       <footer className="page-shell__footer kern-mt-auto">
-        <div className="kern-container page-shell__footer-grid kern-grid kern-grid-cols-1 kern-grid-cols-12-lg">
+        <div className="kern-container page-shell__footer-grid kern-grid kern-grid-cols-1 kern-grid-cols-12-lg kern-gap-x-md">
           <KernStack className={footerCell.brand}>
             <KernHeading size="medium" margin="none">
               Justiz-Services

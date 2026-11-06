@@ -1,4 +1,4 @@
-import { data, Form, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
+import { data, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
 
 import {
   createDraftAppointment,
@@ -15,11 +15,11 @@ import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { ErrorMessage } from "~/components/shared/ErrorMessage";
 import { FlowPage } from "~/components/shared/FlowPage";
+import { FieldColumn, FormActions, FormStack } from "~/components/shared/FormLayout";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernButton } from "~/components/shared/kern/KernButton";
 import { KernCluster } from "~/components/shared/kern/KernCluster";
 import { KernFormInput } from "~/components/shared/kern/KernFormInput";
-import { KernGrid, KernGridCol } from "~/components/shared/kern/KernGrid";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernIcon, type KernIconName } from "~/components/shared/kern/KernIcon";
 import { KernLabel } from "~/components/shared/kern/KernLabel";
@@ -32,7 +32,6 @@ import {
   KernTableBody,
   KernTableHead,
 } from "~/components/shared/kern/KernTable";
-import { stackClassName } from "~/components/shared/kern/layout";
 import { getDb } from "~/database/database";
 
 import { MAX_PARTICIPANTS } from "./create-termin.participant.schema";
@@ -167,7 +166,7 @@ export default function CreateTermin() {
   return (
     <AppShell user={user} breadcrumbs={createTerminBreadcrumbs}>
       <FlowPage width="content" spacing="form">
-        <Form method="post" className={stackClassName({ gap: "xl" }, "form")} noValidate>
+        <FormStack method="post" noValidate>
           {/* Pressing Enter in a field submits the first button, which has to be "Weiter". */}
           <button type="submit" name="intent" value="next" hidden tabIndex={-1} />
           {draft && <input type="hidden" name="appointmentId" value={draft.id} />}
@@ -175,20 +174,18 @@ export default function CreateTermin() {
             <KernHeading size="large" level={1} id="verhandlungsdaten">
               Geben Sie die Verhandlungsdaten an
             </KernHeading>
-            <KernGrid>
-              <KernGridCol md={7}>
-                <KernFormInput
-                  id="aktenzeichen"
-                  label="Aktenzeichen"
-                  error={errors?.aktenzeichen}
-                  name="aktenzeichen"
-                  defaultValue={aktenzeichen}
-                  // Remounts when a rejected submit brings back what was typed.
-                  key={aktenzeichen}
-                  autoComplete="off"
-                />
-              </KernGridCol>
-            </KernGrid>
+            <FieldColumn size="small">
+              <KernFormInput
+                id="aktenzeichen"
+                label="Aktenzeichen"
+                error={errors?.aktenzeichen}
+                name="aktenzeichen"
+                defaultValue={aktenzeichen}
+                // Remounts when a rejected submit brings back what was typed.
+                key={aktenzeichen}
+                autoComplete="off"
+              />
+            </FieldColumn>
           </KernStack>
 
           <KernStack as="section" gap="md" aria-labelledby="verfahrensbeteiligte">
@@ -332,15 +329,15 @@ export default function CreateTermin() {
             </KernStack>
           </KernStack>
 
-          <KernCluster gap="md" className="kern-pt-md">
+          <FormActions>
             <KernButton type="submit" name="intent" value="cancel" style="secondary">
               <KernLabel>Abbrechen</KernLabel>
             </KernButton>
             <KernButton type="submit" name="intent" value="next" disabled={pending}>
               Weiter
             </KernButton>
-          </KernCluster>
-        </Form>
+          </FormActions>
+        </FormStack>
       </FlowPage>
     </AppShell>
   );

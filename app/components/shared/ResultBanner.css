@@ -9,7 +9,7 @@
 
 /* The heading wraps after "alle" in the result page design. */
 .result-banner__text {
-  max-width: 45rem;
+  max-width: var(--layout-measure-narrow);
 }
 
 /* Neutral banner: KERN has no default alert, so it takes the default feedback colours itself. */
