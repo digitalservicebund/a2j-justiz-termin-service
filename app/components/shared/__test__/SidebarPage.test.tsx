@@ -43,6 +43,12 @@ describe("SidebarPage", () => {
     expect(main).not.toContainElement(nav as HTMLElement);
   });
 
+  it("spaces the navigation from the content when they stack", async () => {
+    const { container } = renderPage();
+    await screen.findByText("Inhalt");
+    expect(container.querySelector(".sidebar-page > .kern-row")).toHaveClass("kern-gap-y-xl");
+  });
+
   it("ends the content with the report-problem button, once, at the width of the content", async () => {
     renderPage();
     const button = await screen.findByRole("button", { name: "Problem mit dieser Seite melden" });

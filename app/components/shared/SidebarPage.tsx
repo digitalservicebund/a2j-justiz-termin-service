@@ -25,7 +25,7 @@ export function SidebarPage({
 }: Readonly<SidebarPageProps>) {
   return (
     <div className={`kern-container sidebar-page sidebar-page--${spacing} kern-pt-xl`}>
-      <KernGrid>
+      <KernGrid gapY="xl">
         <KernGridCol lg={3}>
           <MainNav current={current} />
         </KernGridCol>
