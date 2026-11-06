@@ -3,6 +3,8 @@ import { BASE_PATH, baseURL, expect, signIn, startPageURL, test } from "./fixtur
 test("front page shows the login, the language links and the process steps", async ({ page }) => {
   await page.goto("/");
 
+  // The content is German, so screen readers and the browser's hyphenation must read it as German.
+  await expect(page.locator("html")).toHaveAttribute("lang", "de");
   await expect(
     page.getByRole("heading", { level: 1, name: "Verhandlungstermin-Finder" }),
   ).toBeVisible();
