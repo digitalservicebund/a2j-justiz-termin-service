@@ -21,7 +21,7 @@ type ResultBannerProps = {
   actions?: ReactNode;
 };
 
-const bannerLayout = `${clusterClassName({ wrap: false, gap: "md", align: "start" })} kern-py-xl kern-px-md`;
+const bannerLayout = `${clusterClassName({ wrap: false, gap: "md", align: "start" })}`;
 
 // The wide banner on top of a result page: an icon, the headline, and optionally a message and
 // the actions that follow from it.

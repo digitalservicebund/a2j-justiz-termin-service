@@ -16,7 +16,6 @@ import { KernIcon } from "~/components/shared/kern/KernIcon";
 import { KernLabel } from "~/components/shared/kern/KernLabel";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { KernStack } from "~/components/shared/kern/KernStack";
-import { stackClassName } from "~/components/shared/kern/layout";
 import { LoginForm } from "~/components/shared/LoginForm";
 import { getDb } from "~/database/database";
 import { getAuth } from "~/lib/auth.server";
@@ -162,16 +161,18 @@ export default function Welcome() {
 
       <section className="welcome__pilot">
         <PageSection>
-          <details className={`kern-details ${stackClassName({ gap: "sm" })}`}>
+          <details className="kern-details">
             <summary className="kern-details__header welcome__pilot-summary">
               Der Onlinedienst befindet sich in der Testphase (Pilotprojekt)
             </summary>
-            <KernBody>
-              Mit diesem Projekt wird ein Onlinedienst für die Terminabstimmung zwischen Gerichten
-              und Verfahrensbeteiligten erprobt. Die Erstellung einer Terminumfrage ist noch nicht
-              für alle Gerichte möglich. Verfahrensbeteiligte können den Onlinedienst aktuell nur
-              auf Einladung nutzen.
-            </KernBody>
+            <div className="welcome__pilot-content kern-pt-sm">
+              <KernBody>
+                Mit diesem Projekt wird ein Onlinedienst für die Terminabstimmung zwischen Gerichten
+                und Verfahrensbeteiligten erprobt. Die Erstellung einer Terminumfrage ist noch nicht
+                für alle Gerichte möglich. Verfahrensbeteiligte können den Onlinedienst aktuell nur
+                auf Einladung nutzen.
+              </KernBody>
+            </div>
           </details>
         </PageSection>
       </section>

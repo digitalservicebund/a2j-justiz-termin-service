@@ -22,6 +22,12 @@ export const resetClassName = "kern-m-none kern-p-none layout-reset";
 const resetClasses = (element: string) =>
   element === "ul" || element === "ol" || element === "fieldset" ? resetClassName : "";
 
+// Safari and VoiceOver stop announcing a list once `list-style: none` is set on it. An explicit role
+// keeps it a list. A caller can still pass its own `role`, which comes later in the props.
+export function listRole(element: string): { role?: "list" } {
+  return element === "ul" || element === "ol" ? { role: "list" } : {};
+}
+
 export type StackOptions = {
   gap?: Space;
   align?: Align;

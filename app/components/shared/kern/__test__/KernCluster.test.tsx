@@ -56,3 +56,27 @@ describe("KernCluster", () => {
     expect(cluster).toHaveClass("kern-m-none", "kern-p-none", "layout-reset");
   });
 });
+
+describe("KernCluster as a list", () => {
+  it.each(["ul", "ol"] as const)("keeps the list role of a %s the reset takes away", (as) => {
+    render(<KernCluster as={as} data-testid="cluster" />);
+    expect(screen.getByTestId("cluster")).toHaveAttribute("role", "list");
+  });
+
+  it("adds no role to a block", () => {
+    render(<KernCluster data-testid="cluster" />);
+    expect(screen.getByTestId("cluster")).not.toHaveAttribute("role");
+  });
+});
+
+describe("KernCluster as a list", () => {
+  it.each(["ul", "ol"] as const)("keeps the list role of a %s the reset takes away", (as) => {
+    render(<KernCluster as={as} data-testid="cluster" />);
+    expect(screen.getByTestId("cluster")).toHaveAttribute("role", "list");
+  });
+
+  it("adds no role to a block", () => {
+    render(<KernCluster data-testid="cluster" />);
+    expect(screen.getByTestId("cluster")).not.toHaveAttribute("role");
+  });
+});

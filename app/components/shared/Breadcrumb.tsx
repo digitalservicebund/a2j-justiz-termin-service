@@ -36,7 +36,7 @@ export function Breadcrumb({
 
   return (
     <nav aria-label="Brotkrumen" className={classes}>
-      <KernCluster as="ol" wrap={false} gap="xs" align="center">
+      <KernCluster as="ol" gap="xs" align="center">
         <KernCluster as="li" wrap={false} gap="xs" align="center">
           <KernLink noVisitedState href={SERVICE_URL} aria-label="Startseite">
             <KernIcon name="home" />

@@ -21,7 +21,7 @@
 }
 
 /* Align the text with the summary text, which sits to the right of the toggle icon. */
-.welcome__pilot details > p {
+.welcome__pilot-content > p {
   padding-block: 0;
   padding-inline-start: var(--kern-metric-space-x-large);
 }
@@ -37,7 +37,9 @@
   background-color: var(--kern-color-layout-background-default);
 }
 
-.welcome__steps {
+/* Doubled class: the list is a KernStack, whose `kern-m-none` reset has one class. Two classes win
+   over it whichever stylesheet comes last. */
+.welcome__steps.welcome__steps {
   gap: var(--kern-metric-space-3x-large);
   margin-top: var(--kern-metric-space-default);
 }

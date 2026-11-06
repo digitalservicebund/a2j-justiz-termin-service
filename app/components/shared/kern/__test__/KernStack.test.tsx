@@ -44,3 +44,20 @@ describe("KernStack", () => {
     expect(screen.getByTestId("stack")).not.toHaveClass("layout-reset");
   });
 });
+
+describe("KernStack as a list", () => {
+  it.each(["ul", "ol"] as const)("keeps the list role of a %s the reset takes away", (as) => {
+    render(<KernStack as={as} data-testid="stack" />);
+    expect(screen.getByTestId("stack")).toHaveAttribute("role", "list");
+  });
+
+  it("adds no role to a block or a fieldset", () => {
+    render(<KernStack as="fieldset" data-testid="stack" />);
+    expect(screen.getByTestId("stack")).not.toHaveAttribute("role");
+  });
+
+  it("lets a role passed in win", () => {
+    render(<KernStack as="ul" role="menu" data-testid="stack" />);
+    expect(screen.getByTestId("stack")).toHaveAttribute("role", "menu");
+  });
+});

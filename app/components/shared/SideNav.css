@@ -1,4 +1,6 @@
 .side-nav__item {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
   color: var(--kern-color-action-default);
   font-size: var(--kern-typography-font-size-large-static);
   line-height: var(--kern-metric-dimension-x-large);

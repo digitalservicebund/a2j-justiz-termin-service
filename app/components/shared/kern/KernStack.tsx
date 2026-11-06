@@ -1,6 +1,6 @@
 import type { HTMLAttributes } from "react";
 
-import { type StackOptions, classNames, stackClassName } from "./layout";
+import { type StackOptions, classNames, listRole, stackClassName } from "./layout";
 
 export type KernStackProps = HTMLAttributes<HTMLElement> &
   StackOptions & {
@@ -21,6 +21,7 @@ export function KernStack({
   return (
     <Element
       className={classNames(stackClassName({ gap, align }, Element), className)}
+      {...listRole(Element)}
       {...stackProps}
     >
       {children}

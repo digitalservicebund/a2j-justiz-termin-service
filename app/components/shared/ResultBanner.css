@@ -1,5 +1,9 @@
-.result-banner {
+/* Doubled class: two classes win over KERN's `.kern-alert` whichever stylesheet comes last. The
+   padding is beyond what the variants of `.kern-alert` set, and the same for every type. */
+.result-banner.result-banner {
   border-radius: var(--kern-metric-border-radius-large);
+  padding-block: var(--kern-metric-space-x-large);
+  padding-inline: var(--kern-metric-space-default);
 }
 
 .result-banner > .kern-icon {
@@ -21,4 +25,10 @@
 
 .result-banner--default > .kern-icon {
   background-color: var(--kern-color-layout-text-default-contextual);
+}
+
+/* The body is a flex child next to the icon: it has to shrink for a long title to wrap. */
+.result-banner__body {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
 }

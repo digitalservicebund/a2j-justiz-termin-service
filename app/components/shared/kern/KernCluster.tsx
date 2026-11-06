@@ -1,6 +1,6 @@
 import type { HTMLAttributes } from "react";
 
-import { type ClusterOptions, classNames, clusterClassName } from "./layout";
+import { type ClusterOptions, classNames, clusterClassName, listRole } from "./layout";
 
 export type KernClusterProps = HTMLAttributes<HTMLElement> &
   ClusterOptions & {
@@ -27,6 +27,7 @@ export function KernCluster({
         clusterClassName({ gap, gapX, gapY, align, justify, wrap, inline }, Element),
         className,
       )}
+      {...listRole(Element)}
       {...clusterProps}
     >
       {children}

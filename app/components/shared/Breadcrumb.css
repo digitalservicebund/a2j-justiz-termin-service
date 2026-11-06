@@ -6,3 +6,10 @@
   padding-block: var(--kern-metric-baseline-body-small-padding-top)
     var(--kern-metric-baseline-body-small-padding-bottom);
 }
+
+/* On a narrow screen the crumbs move to the next line, and one long title breaks inside its own item
+   instead of pushing the page wider than the screen. */
+.breadcrumb li {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
