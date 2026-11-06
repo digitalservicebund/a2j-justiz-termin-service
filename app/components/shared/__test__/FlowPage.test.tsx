@@ -35,12 +35,12 @@ describe("FlowPage", () => {
 
   it("centers the children at the default width without a width", () => {
     render(<FlowPage>x</FlowPage>);
-    expect(screen.getByText("x")).toHaveClass("page-width", "page-width--default");
+    expect(screen.getByText("x").closest(".page-section")).toHaveAttribute("data-width", "default");
   });
 
   it("centers the children at the given width", () => {
     render(<FlowPage width="wide">x</FlowPage>);
-    expect(screen.getByText("x")).toHaveClass("page-width--wide");
+    expect(screen.getByText("x").closest(".page-section")).toHaveAttribute("data-width", "wide");
   });
 
   it("follows the band with the report-problem button at the same width", () => {
@@ -48,6 +48,6 @@ describe("FlowPage", () => {
     const button = screen.getByRole("button", { name: "Problem mit dieser Seite melden" });
     const band = container.querySelector(".flow-page")!;
     expect(band).not.toContainElement(button);
-    expect(button.closest(".page-width")).toHaveClass("page-width--wide");
+    expect(button.closest(".page-section")).toHaveAttribute("data-width", "wide");
   });
 });

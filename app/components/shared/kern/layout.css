@@ -1,0 +1,6 @@
+/* What KERN's helpers cannot reset on a list or fieldset used as a stack or cluster. */
+.layout-reset {
+  border: 0;
+  list-style: none;
+  min-inline-size: 0;
+}
