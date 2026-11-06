@@ -90,7 +90,10 @@ export default function Overview() {
           {/* With JavaScript every change submits; the button applies the choice without it. */}
           <Form
             method="get"
-            className={classNames("overview__controls", clusterClassName({ gap: "lg", align: "end" }))}
+            className={classNames(
+              "overview__controls",
+              clusterClassName({ gap: "lg", align: "end" }),
+            )}
             onChange={(event) => submit(event.currentTarget)}
           >
             <KernFormSelect id="sort" name="sort" label="Sortieren" defaultValue={query.sort}>
@@ -113,57 +116,60 @@ export default function Overview() {
             </KernButton>
           </Form>
 
-          <KernTable
-            className="overview__table kern-w-full"
-            caption="Terminumfragen"
-            hideCaption
-            striped
-          >
-            <KernTableHead>
-              <KernRow>
-                <KernColumn>Aktenzeichen</KernColumn>
-                <KernColumn>Status</KernColumn>
-                <KernColumn variant="action">Aktionen</KernColumn>
-              </KernRow>
-            </KernTableHead>
-            <KernTableBody>
-              {entries.length === 0 ? (
+          {/* On a narrow screen the table scrolls inside its own region instead of widening the page. */}
+          <section className="overview__table-scroll kern-w-full" aria-label="Terminumfragen">
+            <KernTable
+              className="overview__table kern-w-full"
+              caption="Terminumfragen"
+              hideCaption
+              striped
+            >
+              <KernTableHead>
                 <KernRow>
-                  <KernCell colSpan={3} className="overview__empty">
-                    {emptyMessage}
-                  </KernCell>
+                  <KernColumn>Aktenzeichen</KernColumn>
+                  <KernColumn>Status</KernColumn>
+                  <KernColumn variant="action">Aktionen</KernColumn>
                 </KernRow>
-              ) : (
-                entries.map(({ id, aktenzeichen, href, badge }) => {
-                  const icon = statusIcons[badge.type];
-                  return (
-                    <KernRow key={id}>
-                      <KernCell>{aktenzeichen}</KernCell>
-                      <KernCell>
-                        <KernBadge type={badge.type}>
-                          {icon && <KernIcon name={icon} />}
-                          <KernLabel>{badge.text}</KernLabel>
-                        </KernBadge>
-                      </KernCell>
-                      <KernCell variant="action">
-                        <KernLinkButton
-                          style="secondary"
-                          className="kern-btn--x-small"
-                          to={href}
-                          title="Öffnen"
-                        >
-                          <KernIcon name="arrow-forward" size="small" />
-                          <KernLabel className="kern-sr-only">
-                            {`Terminumfrage ${aktenzeichen} öffnen`}
-                          </KernLabel>
-                        </KernLinkButton>
-                      </KernCell>
-                    </KernRow>
-                  );
-                })
-              )}
-            </KernTableBody>
-          </KernTable>
+              </KernTableHead>
+              <KernTableBody>
+                {entries.length === 0 ? (
+                  <KernRow>
+                    <KernCell colSpan={3} className="overview__empty">
+                      {emptyMessage}
+                    </KernCell>
+                  </KernRow>
+                ) : (
+                  entries.map(({ id, aktenzeichen, href, badge }) => {
+                    const icon = statusIcons[badge.type];
+                    return (
+                      <KernRow key={id}>
+                        <KernCell>{aktenzeichen}</KernCell>
+                        <KernCell>
+                          <KernBadge type={badge.type}>
+                            {icon && <KernIcon name={icon} />}
+                            <KernLabel>{badge.text}</KernLabel>
+                          </KernBadge>
+                        </KernCell>
+                        <KernCell variant="action">
+                          <KernLinkButton
+                            style="secondary"
+                            className="kern-btn--x-small"
+                            to={href}
+                            title="Öffnen"
+                          >
+                            <KernIcon name="arrow-forward" size="small" />
+                            <KernLabel className="kern-sr-only">
+                              {`Terminumfrage ${aktenzeichen} öffnen`}
+                            </KernLabel>
+                          </KernLinkButton>
+                        </KernCell>
+                      </KernRow>
+                    );
+                  })
+                )}
+              </KernTableBody>
+            </KernTable>
+          </section>
         </KernStack>
       </SidebarPage>
     </AppShell>

@@ -8,6 +8,9 @@
 
 /* The padding of the sections is beyond the largest spacing helper. */
 .welcome__hero-content {
+  /* A long compound word of the headline breaks inside the word as a last resort instead of
+     widening the page on a phone. */
+  overflow-wrap: break-word;
   padding-block: var(--kern-metric-space-6x-large);
 }
 

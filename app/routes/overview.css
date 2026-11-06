@@ -4,6 +4,10 @@
   padding-bottom: 3rem;
 }
 
+.overview__table-scroll {
+  overflow-x: auto;
+}
+
 .overview__controls .kern-form-input__select {
   field-sizing: content;
 }
