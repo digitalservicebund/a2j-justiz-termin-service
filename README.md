@@ -5,9 +5,11 @@
 Production access logs record request paths without query strings, keeping
 sensitive query parameters out of those logs.
 
-- **Richter** (judge): creates and edits time slots, confirms the final appointment, can unlock party re-submission
-- **Kläger** (plaintiff): accepts/rejects each proposed time slot
-- **Beklagter** (defendant): accepts/rejects each proposed time slot
+- **Richter** (judge): signs in, creates a Terminumfrage with time slots and a list of
+  participants, shares the survey links, and confirms the final slot.
+- **Participants** (Kläger, Beklagter and other Verfahrensbeteiligte): do not sign in. They
+  answer each proposed time slot through a survey link (`/umfrage/:token`).
+- **Administrator**: manages users and allowed domains.
 
 Login uses a single-use magic link sent by email through Better Auth. Only users
 already provisioned in the database and addresses on an allowed domain can sign in.
@@ -181,23 +183,20 @@ pnpm format:check  # Check formatting without writing
 
 ```
 app/
-├── core/                    # Domain logic & architecture
-│   ├── domain/             # Business entities (User, Verfahren)
-│   ├── ports/              # Repository/Service interfaces
-│   └── services/           # SchedulingService, SchedulingQuery
-├── adapters/               # External integrations
-│   ├── inMemory/           # In-memory scheduling store
-│   ├── users/              # Persistent user management
+├── core/domain/            # Pure domain logic: users and roles, allowed domains, time (see AGENTS.md)
+├── adapters/               # Database access and session handling, called by loaders and actions
+│   ├── appointments/       # Terminumfragen, participants, survey answers, calendar feed
+│   ├── users/              # User and allowed-domain management
 │   └── session/            # Better Auth session and access checks
-├── routes/                 # Route modules (React Router)
+├── routes/                 # Route modules (React Router), see routes.ts
 ├── database/               # Kysely, connection pool, migrations (see "Database")
-├── lib/                    # Env, secrets and logging helpers
+├── lib/                    # Env, secrets, logging, base path, calendar feed, e-mail
 ├── components/             # Reusable UI components
 │   └── shared/             # AppShell, Breadcrumb, ErrorMessage, FlowPage, LoginForm, ...
 │       └── kern/           # KERN wrappers: KernAlert, KernBadge, KernButton, KernIcon, KernLink, ...
 ├── app.css                 # KERN Native/font imports + global defaults
-├── root.tsx                # Root layout
-└── bootstrap.ts            # Dependency injection root
+└── root.tsx                # Root layout
+doc/adr/                    # Architecture decision records
 ```
 
 Tests live alongside their source in `__test__` subdirectories (e.g. `components/shared/__test__/`).
@@ -213,7 +212,7 @@ theme tokens.
 
 ## Database
 
-The app uses **PostgreSQL** with [Kysely](https://kysely.dev/) for type-safe SQL and migrations. Connection code lives in `app/database`. It is not used by the scheduling logic yet, which still runs on the in-memory store.
+The app uses **PostgreSQL** with [Kysely](https://kysely.dev/) for type-safe SQL and migrations. Connection code lives in `app/database`. Users, sessions, appointments, participants and allowed domains are all stored there.
 
 ### Local database
 
@@ -272,6 +271,10 @@ The initial schema is split deliberately:
   columns, defaults, and constraints remain unchanged. Provisioning explicitly
   sets `emailVerified` to `false`; email normalization happens in the application.
   Role names are validated in the application, not constrained in the database.
+
+Migrations `0003` to `0010` add the appointment, time slot and participant tables, the confirmed
+window, survey tokens, allowed domains, the calendar sequence and token, and participant e-mail
+addresses. Read the files for the details.
 
 Keep historical migrations unchanged after deployment; generate new migrations
 when upgrading Better Auth or changing the application schema.
@@ -406,58 +409,39 @@ delete and re-create a user to change their address.
 
 Administrators cannot delete their own account or remove their own admin rights.
 Each user has a nonempty list containing any combination of `admin`, `richter`,
-`klaeger`, and `beklagter`. The home page is an empty placeholder for now. The
-`admin` role grants access to every page as well as user management.
+`klaeger`, and `beklagter`. After signing in, the home page is the overview of the user's
+Terminumfragen. Only `richter` (and `admin`) can create and manage them; no page uses `klaeger`
+or `beklagter` yet. The `admin` role grants access to every page as well as user management.
 All loaders and actions enforce access server-side. The former role-picker
 login and development-secret cookie are no longer accepted.
 
-## Mock Calendar Subscription
+## Calendar Subscription
 
-Subscribe from a calendar application using this URL when running locally:
+Every user has a private calendar feed with their open and confirmed Terminumfragen. The page
+`/kalender-abonnieren` (signed in) shows the address and a `webcal:` link. The address looks like
 
 ```text
-http://localhost:3000/verhandlungstermin-finder/api/calendars/demo/feed.ics
+http://localhost:3000/verhandlungstermin-finder/api/calendars/<token>/feed.ics
 ```
 
-The public `GET /api/calendars/:calendarId/feed.ics` endpoint requires no login.
-Replace `demo` with any nonempty, URL-encoded calendar ID occupying one path
-segment. The ID is logged with `console.log` and otherwise ignored; every ID
-returns the same mock feed. Do not put secrets or personal data in mock IDs.
+Calendar apps cannot sign in, so the token in the address is the only credential. Each user has
+one random token (`user.calendar_token`, created with the user). An unknown or malformed token
+answers `404`. Never log the token or share the address. There is no way yet to reset the link;
+revoking a leaked address means changing the token in the database.
 
-The feed contains one recurring event, **Test Termin**, every Tuesday from
-**13:20 to 14:20 Europe/Berlin**, starting on **13 October 2026**, without an end
-date. Its timezone definition preserves Berlin local time across daylight-saving
-changes. The event UID and creation timestamp remain fixed across requests.
-The event description shows `Last synchronized (feed generated):` followed by
-the request's generation time in readable English Berlin local time, for example
-`13 October 2026 at 14:00:00 CEST`. The timezone label switches between CET and
-CEST automatically. `DTSTAMP` and `LAST-MODIFIED` record the same instant in UTC.
-This reports server-side feed generation, not a
-confirmed synchronization time in the subscriber's calendar app.
+Responses use `Content-Type: text/calendar; charset=utf-8; method=PUBLISH` and
+`Cache-Control: no-store`. Drafts and cancelled appointments are not part of the feed.
+`appointment.calendar_sequence` is raised for every calendar file sent by e-mail; the feed reads
+it without raising it. Calendar apps replace an event only when its `SEQUENCE` is higher than
+the copy they hold.
 
-Calendar-level metadata publishes the name **JTS Demo**, the description
-**Public mock calendar for Justiz Termin Service.**, and the CSS color name
-`midnightblue`. Standard `NAME` and `DESCRIPTION` properties are paired with
-`X-WR-CALNAME` and `X-WR-CALDESC` for compatibility.
+## Business Rules
 
-Responses use `Content-Type: text/calendar; charset=utf-8; method=PUBLISH`,
-matching `METHOD:PUBLISH` in the feed, and `Cache-Control: no-store`.
-`REFRESH-INTERVAL;VALUE=DURATION:PT5M` and `X-PUBLISHED-TTL:PT5M` suggest a
-five-minute minimum polling interval. Clients may ignore or override these hints;
-they do not guarantee five-minute updates. Adding the URL as a subscription keeps it
-refreshable; downloading and importing the file is a one-time copy, regardless
-of metadata.
-
-This endpoint is mock-only: it has no subscriber storage, access control, real
-appointments, attendees, event location, or reminders.
-
-## Confirmed Business Rules
-
-- Data stores in memory only (not persisted yet; PostgreSQL connection is set up but unused)
-- `Kläger` and `Beklagter` have identical permissions
-- Parties submit once by default; locked until `Richter` unlocks
-- `Richter` explicitly confirms one mutually accepted slot as final
-- Multiple mutually-accepted slots require `Richter` confirmation
+- Data is stored in PostgreSQL.
+- Only a `richter` (or `admin`) creates and manages Terminumfragen and confirms the final slot.
+- Participants answer without signing in, through a survey link. A personal link answers once;
+  the universal link of an appointment starts a new participant every time.
+- The `richter` explicitly confirms one slot as the final appointment.
 
 ## Code Style & Formatting
 
