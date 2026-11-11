@@ -31,6 +31,7 @@ already provisioned in the database and addresses on an allowed domain can sign 
 - pnpm (install with `npm install -g pnpm` if needed)
 - Docker (or another container runtime with `docker compose`) for the local database and mail mock
 - lefthook (install with `lefthook install`)
+- adr-tools (`brew install adr-tools`), for managing the Architecture decision records (ADR) in `doc/adr/`
 
 ## Installation
 
