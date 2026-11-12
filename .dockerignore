@@ -1,19 +1,18 @@
-.git
-.gitignore
-.github
-.react-router
-build
-coverage
-e2e
-.env.e2e
-playwright.config.ts
-playwright-report
-test-results
-node_modules
-vitest.config.ts
-vitest.setup.ts
+# Exclude everything, then allow only what the Dockerfile copies.
+*
+
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!tsconfig.json
+!vite.config.ts
+!react-router.config.ts
+!server.js
+
+!app/
+!public/
+!scripts/add-domain.ts
+!scripts/create-admin.ts
+
+# Not needed in the image, even inside allowed folders
 app/**/__test__
-.oxlintrc.json
-.oxfmtrc.json
-lefthook.yml
-*.md
