@@ -7,6 +7,7 @@ import { migrateToLatest } from "./app/database/migrate.ts";
 import { accessLogFormat } from "./app/lib/access-log.ts";
 import { BASE_PATH } from "./app/lib/base-path.ts";
 import { rewriteLegacyHealthPath } from "./app/lib/legacy-health.ts";
+import { logInfo } from "./app/lib/logging.ts";
 
 // Short-circuit the type-checking of the built output.
 const BUILD_PATH = "./build/server/index.js";
@@ -48,7 +49,7 @@ app.use((req, res, next) => {
 });
 
 if (DEVELOPMENT) {
-  // console.log("Starting development server"); // TODO logging
+  logInfo("Starting development server");
   const viteDevServer = await import("vite").then((vite) =>
     vite.createServer({
       server: { middlewareMode: true },
@@ -67,7 +68,7 @@ if (DEVELOPMENT) {
     }
   });
 } else {
-  // console.log("Starting production server"); // TODO logging
+  logInfo("Starting production server");
   app.use(
     `${BASE_PATH}/assets`,
     express.static("build/client/assets", { immutable: true, maxAge: "1y" }),
@@ -78,5 +79,5 @@ if (DEVELOPMENT) {
 }
 
 app.listen(PORT, () => {
-  // console.log(`Server is running on http://localhost:${PORT}`); // TODO logging
+  logInfo(`Server is running on http://localhost:${PORT}`);
 });
