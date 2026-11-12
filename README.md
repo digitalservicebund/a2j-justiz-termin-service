@@ -177,6 +177,7 @@ pnpm lint:check    # Check code with oxlint
 pnpm lint:fix      # Auto-fix oxlint issues
 pnpm format:fix    # Format code with oxfmt
 pnpm format:check  # Check formatting without writing
+pnpm knip          # Finds and fixes unused dependencies, exports and files
 ```
 
 ## Project Structure
