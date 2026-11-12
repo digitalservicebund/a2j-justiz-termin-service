@@ -35,7 +35,7 @@
     "isbot": "^5.2.2",
     "kysely": "^0.29.8",
     "morgan": "^1.12.1",
-    "nodemailer": "^10.4.0",
+    "nodemailer": "^10.5.0",
     "pg": "^8.23.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
