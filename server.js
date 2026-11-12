@@ -6,6 +6,7 @@ import { getDb } from "./app/database/database.ts";
 import { migrateToLatest } from "./app/database/migrate.ts";
 import { accessLogFormat } from "./app/lib/access-log.ts";
 import { BASE_PATH } from "./app/lib/base-path.ts";
+import { limitRequestBody } from "./app/lib/body-limit.ts";
 import { rewriteLegacyHealthPath } from "./app/lib/legacy-health.ts";
 
 // Short-circuit the type-checking of the built output.
@@ -46,6 +47,7 @@ app.use((req, res, next) => {
   const hasQuery = req.originalUrl.includes("?");
   return res.redirect(302, `${BASE_PATH}/${hasQuery ? `?${query}` : ""}`);
 });
+app.use(limitRequestBody);
 
 if (DEVELOPMENT) {
   // console.log("Starting development server"); // TODO logging
