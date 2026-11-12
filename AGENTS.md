@@ -15,7 +15,6 @@ pnpm test                             # unit tests (Vitest)
 - `lefthook run pre-commit --all-files` runs the pre-commit hook from `lefthook.yml` over the whole project, not only the staged files. It formats and auto-fixes lint problems, so it can change files: review those changes and stage them. It exits non-zero if lint errors remain.
 - Typecheck and tests are listed separately because the pre-push hook only runs them on `main`. On any other branch `lefthook run pre-push` skips them, even with `--force`, so run them yourself.
 - Fix failures before committing or pushing. Do not skip the checks or the git hooks (`--no-verify`).
-- Do not add new lint warnings. The existing `no-console` warnings in the calendar code are known.
 - Check the real result of each command: its exit code and its summary line. Do not pipe the output through `grep`, `head` or `tail`, because that can hide a failed command, for example "Command not found".
 - The package scripts are `lint:check` and `lint:fix`. There is no `pnpm lint`.
 
