@@ -2,11 +2,16 @@ import { randomUUID } from "node:crypto";
 
 import type { Kysely } from "kysely";
 
+import { windowKey } from "../app/core/domain/availability.ts";
 import type { Database } from "../app/database/types.ts";
 import { BASE_PATH, expect, signIn, test } from "./fixtures.ts";
 
 // 15:30 to 18:00 and 09:00 to 13:00 Berlin time in November are 14:30 to 17:00 and 08:00 to 12:00 UTC.
-async function seedOpen(db: Kysely<Database>, userId: string) {
+async function seedOpen(
+  db: Kysely<Database>,
+  userId: string,
+  minDurationMinutes: number | null = null,
+) {
   const { id } = await db
     .insertInto("appointment")
     .values({
@@ -14,6 +19,7 @@ async function seedOpen(db: Kysely<Database>, userId: string) {
       aktenzeichen: "574 C 65412/26",
       status: "open",
       universal_token: randomUUID(),
+      min_duration_minutes: minDurationMinutes,
     })
     .returning("id")
     .executeTakeFirstOrThrow();
@@ -159,4 +165,92 @@ test("another judge cannot choose a Termin for someone else's survey", async ({
     const response = await page.goto(`${BASE_PATH}/overview/${id}/${path}`);
     expect(response?.status()).toBe(404);
   }
+});
+
+test("a judge can only confirm a time at which every guest who answered is available", async ({
+  page,
+  users,
+  db,
+}) => {
+  const user = await users.create({ roles: ["richter"] });
+  const id = await seedOpen(db, user.id, 60);
+  const slots = await db
+    .selectFrom("time_slot")
+    .select(["id", "start_time", "end_time"])
+    .where("appointment_id", "=", id)
+    .orderBy("start_time")
+    .execute();
+
+  // Guest A can attend the first slot from 16:00 to 17:30 only and the second slot not at all.
+  const { id: guest } = await db
+    .insertInto("participant")
+    .values({ appointment_id: id, name: "Guest A", type: "universal" })
+    .returning("id")
+    .executeTakeFirstOrThrow();
+  const responses = await db
+    .insertInto("participant_response")
+    .values([
+      { participant_id: guest, slot_id: slots[0]!.id, status: "yes" },
+      { participant_id: guest, slot_id: slots[1]!.id, status: "no" },
+    ])
+    .returning(["id", "slot_id"])
+    .execute();
+  await db
+    .insertInto("participant_response_window")
+    .values({
+      response_id: responses.find(({ slot_id }) => slot_id === slots[0]!.id)!.id,
+      start_time: "2099-11-09T15:00:00Z",
+      end_time: "2099-11-09T16:30:00Z",
+    })
+    .execute();
+
+  await signIn(page, user);
+  await page.goto(`${BASE_PATH}/overview/${id}/select`);
+  await expect(page.getByRole("radio")).toHaveCount(1);
+  const remaining = page.getByRole("radio", { name: "9. November 2099 von 16:00 bis 17:30" });
+  await remaining.check();
+
+  // A start that leaves less than the minimum duration is rejected.
+  await page.getByRole("textbox", { name: "Stunde" }).fill("16");
+  await page.getByRole("textbox", { name: "Minute" }).fill("45");
+  await page.getByRole("button", { name: "Weiter" }).click();
+  await expect(
+    page.getByText(
+      "Die Startzeit darf nicht nach 16:30 liegen, damit mindestens 60 Minuten bleiben.",
+    ),
+  ).toBeVisible();
+
+  // Neither the whole slot nor the ruled-out slot can be chosen by a made-up address.
+  for (const slot of slots) {
+    const whole = windowKey({
+      slotId: slot.id,
+      start: new Date(slot.start_time),
+      end: new Date(slot.end_time!),
+    });
+    await page.goto(
+      `${BASE_PATH}/overview/${id}/select/confirm?fenster=${whole}&stunde=16&minute=0`,
+    );
+    await expect(page).toHaveURL(new RegExp(`/overview/${id}/select\\?fenster=`));
+  }
+
+  await remaining.check();
+  await page.getByRole("textbox", { name: "Stunde" }).fill("16");
+  await page.getByRole("textbox", { name: "Minute" }).fill("15");
+  await page.getByRole("button", { name: "Weiter" }).click();
+  await page.getByRole("button", { name: "Termin bestätigen" }).click();
+  await expect(page).toHaveURL(new RegExp(`/overview/${id}/selected$`));
+
+  // The confirmed window ends where the guest's availability ends, not where the slot ends.
+  expect(
+    await db
+      .selectFrom("appointment")
+      .select(["status", "confirmed_slot_id", "confirmed_start_time", "confirmed_end_time"])
+      .where("id", "=", id)
+      .executeTakeFirstOrThrow(),
+  ).toEqual({
+    status: "confirmed",
+    confirmed_slot_id: slots[0]!.id,
+    confirmed_start_time: new Date("2099-11-09T15:15:00Z"),
+    confirmed_end_time: new Date("2099-11-09T16:30:00Z"),
+  });
 });

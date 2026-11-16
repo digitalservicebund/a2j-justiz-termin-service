@@ -11,9 +11,12 @@ export const messages = {
   notExactlyOnce:
     "Diese Uhrzeit gibt es wegen der Zeitumstellung nicht oder zweimal. Wählen Sie eine andere.",
   outside: (from: string, to: string) => `Die Startzeit muss zwischen ${from} und ${to} liegen.`,
+  tooShort: (latest: string, minDuration: string) =>
+    `Die Startzeit darf nicht nach ${latest} liegen, damit mindestens ${minDuration} bleiben.`,
 };
 
-// The window is picked by its position among the appointment's slots, which are sorted by start.
+// `slot` is the key of the remaining window the judge picked. It carries the times, so a window
+// that an answer changed in the meantime is not found any more instead of standing for another.
 export type SelectValues = { slot: string; hour: string; minute: string };
 
 export type SelectErrors = { slot?: string; start?: string };

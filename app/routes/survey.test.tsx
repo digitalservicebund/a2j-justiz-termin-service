@@ -4,6 +4,7 @@ import { createRoutesStub } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { findSurvey, type Survey } from "~/adapters/appointments/survey.server";
+import { windowKey } from "~/core/domain/availability";
 
 import SurveyPage, { action, loader } from "./survey";
 
@@ -13,20 +14,31 @@ vi.mock("~/database/database", () => ({ getDb: () => ({ db: true }) }));
 const params = { token: "t1" };
 const url = "http://localhost:3000/umfrage/t1";
 
+// A window as the survey offers it: its id is the window key, which the form submits.
+const offer = (slotId: string, start: string, end: string) => {
+  const window = { slotId, start: new Date(start), end: new Date(end) };
+  return { id: windowKey(window), ...window };
+};
+const w1 = offer("s1", "2026-09-17T08:00:00Z", "2026-09-17T12:00:00Z");
+const w2 = offer("s2", "2026-09-21T07:00:00Z", "2026-09-21T09:00:00Z");
+const w3 = offer("s3", "2026-09-21T13:30:00Z", "2026-09-21T15:00:00Z");
+const [k1, k2, k3] = [w1.id, w2.id, w3.id];
+
 // 10:00 to 14:00, 09:00 to 11:00 and 15:30 to 17:00 Berlin time in September are 08:00 to 12:00,
 // 07:00 to 09:00 and 13:30 to 15:00 UTC.
 const universal: Survey = {
   appointmentId: "a1",
   aktenzeichen: "574 C 65412/26",
   answered: false,
-  slots: [
-    { id: "s1", start: new Date("2026-09-17T08:00:00Z"), end: new Date("2026-09-17T12:00:00Z") },
-    { id: "s2", start: new Date("2026-09-21T07:00:00Z"), end: new Date("2026-09-21T09:00:00Z") },
-    { id: "s3", start: new Date("2026-09-21T13:30:00Z"), end: new Date("2026-09-21T15:00:00Z") },
-  ],
+  minDurationMinutes: null,
+  slots: [w1, w2, w3],
   proposedSlots: [],
 };
-universal.proposedSlots = universal.slots;
+universal.proposedSlots = universal.slots.map(({ slotId, start, end }) => ({
+  id: slotId,
+  start,
+  end,
+}));
 
 const personal: Survey = { ...universal, participant: { id: "p1", name: "Guest C" } };
 
@@ -71,11 +83,14 @@ describe("survey route", () => {
   it("does not ask a personal link for a name and brings an earlier answer along", async () => {
     vi.mocked(findSurvey).mockResolvedValue(personal);
 
-    const result = await loader({ request: new Request(`${url}?verfuegbar=s2&keines=1`), params });
+    const result = await loader({
+      request: new Request(`${url}?verfuegbar=${k2}&keines=1`),
+      params,
+    });
 
     expect(result).toMatchObject({
       needsName: false,
-      values: { available: ["s2"], none: true },
+      values: { available: [k2], none: true },
     });
   });
 
@@ -94,15 +109,15 @@ describe("survey route", () => {
     const response = (await action({
       request: postRequest([
         ["name", "Guest C"],
-        ["verfuegbar", "s1"],
-        ["verfuegbar", "s3"],
+        ["verfuegbar", k1],
+        ["verfuegbar", k3],
       ]),
       params,
     })) as Response;
 
     expect(response.status).toBe(302);
     expect(response.headers.get("Location")).toBe(
-      "/umfrage/t1/zusammenfassung?name=Guest+C&verfuegbar=s1&verfuegbar=s3",
+      `/umfrage/t1/zusammenfassung?name=Guest+C&verfuegbar=${k1}&verfuegbar=${k3}`,
     );
   });
 
@@ -136,13 +151,13 @@ describe("survey route", () => {
 
   it("answers 400 with the entered values when the name is missing", async () => {
     const response = (await action({
-      request: postRequest([["verfuegbar", "s1"]]),
+      request: postRequest([["verfuegbar", k1]]),
       params,
     })) as { init: { status: number }; data: unknown };
 
     expect(response.init.status).toBe(400);
     expect(response.data).toEqual({
-      values: { name: "", available: ["s1"], none: false },
+      values: { name: "", available: [k1], none: false },
       errors: { name: "Geben Sie Ihren Namen an." },
     });
   });
@@ -165,11 +180,11 @@ describe("survey route", () => {
     vi.mocked(findSurvey).mockResolvedValue(personal);
 
     const response = (await action({
-      request: postRequest([["verfuegbar", "s2"]]),
+      request: postRequest([["verfuegbar", k2]]),
       params,
     })) as Response;
 
-    expect(response.headers.get("Location")).toBe("/umfrage/t1/zusammenfassung?verfuegbar=s2");
+    expect(response.headers.get("Location")).toBe(`/umfrage/t1/zusammenfassung?verfuegbar=${k2}`);
   });
 });
 
@@ -281,7 +296,7 @@ describe("survey page", () => {
   });
 
   it("keeps an earlier answer when the guest comes back from the review", async () => {
-    renderSurvey(["/umfrage/t1?name=Guest+C&verfuegbar=s3"]);
+    renderSurvey([`/umfrage/t1?name=Guest+C&verfuegbar=${k3}`]);
 
     expect(await screen.findByRole("textbox", { name: "Ihr Name" })).toHaveValue("Guest C");
     expect(

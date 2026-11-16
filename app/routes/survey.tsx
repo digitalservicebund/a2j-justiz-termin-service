@@ -70,7 +70,8 @@ export async function action({ request, params }: { request: Request } & Params)
 
   const result = validateSurvey(values, {
     needsName: !survey.participant,
-    slotIds: survey.slots.map(({ id }) => id),
+    offered: survey.slots,
+    minDurationMinutes: survey.minDurationMinutes,
   });
   if (!result.success) return data({ values, errors: result.errors }, { status: 400 });
   return redirect(`${surveyPath(token, "/zusammenfassung")}?${surveySearch(values)}`);

@@ -4,13 +4,20 @@ import { createRoutesStub } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getAppointment } from "~/adapters/appointments/appointments.server";
+import type * as AvailabilityModule from "~/adapters/appointments/availability.server";
+import { readAvailability, toAnsweredSlot } from "~/adapters/appointments/availability.server";
 import { requireRole } from "~/adapters/session/session";
+import { windowKey } from "~/core/domain/availability";
 import type { AuthUser } from "~/core/domain/user";
 
 import OverviewSelect, { action, loader } from "./overview.select";
 
 vi.mock("~/adapters/session/session", () => ({ requireRole: vi.fn() }));
 vi.mock("~/adapters/appointments/appointments.server", () => ({ getAppointment: vi.fn() }));
+vi.mock("~/adapters/appointments/availability.server", async (importOriginal) => ({
+  ...(await importOriginal<typeof AvailabilityModule>()),
+  readAvailability: vi.fn(),
+}));
 vi.mock("~/database/database", () => ({ getDb: () => ({ db: true }) }));
 
 const judge: AuthUser = {
@@ -34,6 +41,13 @@ const open = {
   ],
 };
 
+// Nobody has answered yet, so every slot is left whole.
+const availability = {
+  minDurationMinutes: null,
+  slots: open.slots.map((slot) => toAnsweredSlot(slot, [])),
+};
+const [K0, K1] = open.slots.map(({ id, start, end }) => windowKey({ slotId: id, start, end }));
+
 function postRequest(fields: Record<string, string>) {
   const form = new FormData();
   for (const [key, value] of Object.entries(fields)) form.set(key, value);
@@ -45,6 +59,7 @@ describe("overview select route", () => {
     vi.clearAllMocks();
     vi.mocked(requireRole).mockResolvedValue(judge);
     vi.mocked(getAppointment).mockResolvedValue(open);
+    vi.mocked(readAvailability).mockResolvedValue(availability);
   });
 
   it("requires the richter role to load and to submit", async () => {
@@ -75,7 +90,7 @@ describe("overview select route", () => {
 
       for (const run of [
         () => loader({ request: new Request(url), params }),
-        () => action({ request: postRequest({ fenster: "0", stunde: "16", minute: "0" }), params }),
+        () => action({ request: postRequest({ fenster: K0, stunde: "16", minute: "0" }), params }),
       ]) {
         const thrown = await run().catch((error: Response) => error);
         expect(thrown).toBeInstanceOf(Response);
@@ -84,40 +99,86 @@ describe("overview select route", () => {
     },
   );
 
+  it("offers only what the answers left of the slots", async () => {
+    // A guest can attend the first slot from 16:00 to 17:30 only and the second not at all.
+    const smaller = {
+      start: new Date("2026-09-17T14:00:00Z"),
+      end: new Date("2026-09-17T15:30:00Z"),
+    };
+    const guest = { participantId: "p1", name: "Guest A" };
+    vi.mocked(readAvailability).mockResolvedValue({
+      minDurationMinutes: 60,
+      slots: [
+        toAnsweredSlot(open.slots[0]!, [{ ...guest, available: true, windows: [smaller] }], 60),
+        toAnsweredSlot(open.slots[1]!, [{ ...guest, available: false, windows: [] }], 60),
+      ],
+    });
+    const key = windowKey({ slotId: "s1", ...smaller });
+
+    const result = await loader({ request: new Request(url), params });
+    expect(result.windows).toEqual([{ key, label: "17. September 2026 von 16:00 bis 17:30" }]);
+
+    // The whole slot cannot be chosen any more, and the start has to leave the minimum duration.
+    const whole = await action({
+      request: postRequest({ fenster: K0, stunde: "16", minute: "0" }),
+      params,
+    });
+    expect(whole).toMatchObject({
+      init: { status: 400 },
+      data: { errors: { slot: expect.any(String) } },
+    });
+    const late = await action({
+      request: postRequest({ fenster: key, stunde: "16", minute: "31" }),
+      params,
+    });
+    expect(late).toMatchObject({
+      init: { status: 400 },
+      data: { errors: { start: expect.stringContaining("16:30") } },
+    });
+    const fits = (await action({
+      request: postRequest({ fenster: key, stunde: "16", minute: "30" }),
+      params,
+    })) as Response;
+    expect(fits.status).toBe(302);
+  });
+
   it("lists the windows and brings an earlier choice along", async () => {
     const result = await loader({
-      request: new Request(`${url}?fenster=1&stunde=10&minute=15`),
+      request: new Request(`${url}?fenster=${K1}&stunde=10&minute=15`),
       params,
     });
 
     expect(result).toMatchObject({
       aktenzeichen: "574 C 65412/26",
-      windows: ["17. September 2026 von 15:30 bis 18:00", "21. September 2026 von 09:00 bis 13:00"],
-      values: { slot: "1", hour: "10", minute: "15" },
+      windows: [
+        { key: K0, label: "17. September 2026 von 15:30 bis 18:00" },
+        { key: K1, label: "21. September 2026 von 09:00 bis 13:00" },
+      ],
+      values: { slot: K1, hour: "10", minute: "15" },
     });
   });
 
   it("continues to the review with a valid choice", async () => {
     const response = (await action({
-      request: postRequest({ fenster: "0", stunde: "16", minute: "30" }),
+      request: postRequest({ fenster: K0, stunde: "16", minute: "30" }),
       params,
     })) as Response;
 
     expect(response.status).toBe(302);
     expect(response.headers.get("Location")).toBe(
-      "/overview/a1/select/confirm?fenster=0&stunde=16&minute=30",
+      `/overview/a1/select/confirm?fenster=${K0}&stunde=16&minute=30`,
     );
   });
 
   it("answers 400 with the entered values when the start lies outside the window", async () => {
     const response = (await action({
-      request: postRequest({ fenster: "0", stunde: "19", minute: "0" }),
+      request: postRequest({ fenster: K0, stunde: "19", minute: "0" }),
       params,
     })) as { init: { status: number }; data: unknown };
 
     expect(response.init.status).toBe(400);
     expect(response.data).toEqual({
-      values: { slot: "0", hour: "19", minute: "0" },
+      values: { slot: K0, hour: "19", minute: "0" },
       errors: { start: "Die Startzeit muss zwischen 15:30 und 18:00 liegen." },
     });
   });
@@ -159,7 +220,7 @@ describe("OverviewSelect", () => {
   });
 
   it("restores an earlier choice", async () => {
-    renderPage("/overview/a1/select?fenster=1&stunde=10&minute=15");
+    renderPage(`/overview/a1/select?fenster=${K1}&stunde=10&minute=15`);
 
     expect(
       await screen.findByRole("radio", { name: "21. September 2026 von 09:00 bis 13:00" }),

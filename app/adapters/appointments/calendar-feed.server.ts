@@ -1,11 +1,9 @@
 import type { Kysely } from "kysely";
 import { z } from "zod";
 
-import { confirmedWindow, rowToRange, type TimeRange } from "../../core/domain/time/time-range.ts";
+import { confirmedWindow, type TimeRange } from "../../core/domain/time/time-range.ts";
 import type { Database } from "../../database/types.ts";
-import type { AppointmentSlot } from "./appointments.server.ts";
-import { participantName } from "./participants.server.ts";
-import type { SlotResponse } from "./survey.server.ts";
+import { readAvailabilities, type AnsweredSlot } from "./availability.server.ts";
 
 export type FeedAppointment = {
   id: string;
@@ -13,7 +11,7 @@ export type FeedAppointment = {
   calendarSequence: number;
   // The chosen window of a confirmed appointment, which lies within the slot `confirmedSlotId`.
   confirmed: (TimeRange & { slotId: string }) | null;
-  slots: Array<AppointmentSlot & { responses: SlotResponse[] }>;
+  slots: AnsweredSlot[];
 };
 
 // The appointments that belong in the calendar feed of the user who owns the token: open ones with
@@ -51,41 +49,11 @@ export async function readCalendarFeed(
   if (appointments.length === 0) return [];
   const ids = appointments.map(({ id }) => id);
 
-  const slots = await db
-    .selectFrom("time_slot")
-    .select(["id", "appointment_id", "start_time", "end_time"])
-    .where("appointment_id", "in", ids)
-    .orderBy("start_time")
-    .execute();
-
-  const responses = await db
-    .selectFrom("participant_response")
-    .innerJoin("participant", "participant.id", "participant_response.participant_id")
-    .select([
-      "participant_response.slot_id",
-      "participant_response.status",
-      "participant.id as participantId",
-      participantName,
-    ])
-    .where("participant.appointment_id", "in", ids)
-    .orderBy("participant.created_at")
-    .orderBy("participant.id")
-    .execute();
+  // All appointments in two queries, however many there are.
+  const availabilities = await readAvailabilities(db, ids);
 
   return appointments.flatMap((appointment): FeedAppointment[] => {
-    const appointmentSlots = slots
-      .filter(({ appointment_id }) => appointment_id === appointment.id)
-      .map((slot) => ({
-        id: slot.id,
-        ...rowToRange(slot),
-        responses: responses
-          .filter(({ slot_id }) => slot_id === slot.id)
-          .map(({ participantId, name, status }) => ({
-            participantId,
-            name,
-            available: status === "yes",
-          })),
-      }));
+    const appointmentSlots = availabilities.get(appointment.id)?.slots ?? [];
 
     if (appointment.status === "open") {
       return [

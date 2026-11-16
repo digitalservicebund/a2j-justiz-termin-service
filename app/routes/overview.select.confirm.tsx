@@ -1,6 +1,7 @@
 import { data, redirect, useLoaderData } from "react-router";
 
 import { confirmAppointment, getAppointment } from "~/adapters/appointments/appointments.server";
+import { readAvailability, remainingOf } from "~/adapters/appointments/availability.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { KernBody } from "~/components/shared/kern/KernBody";
@@ -32,7 +33,12 @@ export async function loader({ request, params }: { request: Request } & Params)
 
   // Without a valid choice there is nothing to review, so the judge picks again.
   const values = readValues(new URL(request.url).searchParams);
-  const result = validateSelection(values, appointment.slots);
+  const availability = await readAvailability(getDb(), id);
+  const result = validateSelection(
+    values,
+    remainingOf(availability),
+    availability.minDurationMinutes,
+  );
   if (!result.success) throw redirect(`${detailUrl(id)}/select?${selectionSearch(values)}`);
 
   return {
@@ -55,10 +61,16 @@ export async function action({ request, params }: { request: Request } & Params)
 
   const appointment = await getAppointment(getDb(), user.id, id);
   if (!appointment) throw notFound();
-  const result = validateSelection(values, appointment.slots);
+  const availability = await readAvailability(getDb(), id);
+  const result = validateSelection(
+    values,
+    remainingOf(availability),
+    availability.minDurationMinutes,
+  );
   if (!result.success) return redirect(`${detailUrl(id)}/select?${selectionSearch(values)}`);
   if (!(await confirmAppointment(getDb(), user.id, id, result.window))) {
-    // Someone else confirmed it in the meantime; the detail page shows what happened.
+    // It was confirmed or cancelled in the meantime, or an answer just took the window away; the
+    // detail page shows where the appointment stands.
     return redirect(detailUrl(id));
   }
   return redirect(`${detailUrl(id)}/selected`);
