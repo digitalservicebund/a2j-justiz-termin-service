@@ -61,6 +61,10 @@ test.beforeEach(async ({ page, users }) => {
   ).toBeVisible();
 });
 
+// No window of nextWeek is shorter than the 60 minutes the tests enter here.
+const minDuration = (page: Page) =>
+  page.getByRole("textbox", { name: "Mindestdauer der Verhandlung in Minuten" });
+
 const groupField = (page: Page, group: string, label: string) =>
   page.getByRole("group", { name: group, exact: true }).getByRole("textbox", { name: label });
 
@@ -103,7 +107,7 @@ async function addPerson(page: Page, { email = "", name = "" }: { email?: string
 async function seedDraft(db: Kysely<Database>, aktenzeichen: string, slots: number) {
   const { id } = await db
     .insertInto("appointment")
-    .values({ user_id: judgeId, aktenzeichen, status: "draft" })
+    .values({ user_id: judgeId, aktenzeichen, min_duration_minutes: 60, status: "draft" })
     .returning("id")
     .executeTakeFirstOrThrow();
   for (let index = 0; index < slots; index += 1) {
@@ -129,11 +133,13 @@ test("a richter creates a Terminumfrage with four time slots next week", async (
   await expect(personRows(page)).toHaveText(["Sie haben keine Verfahrensbeteiligten angegeben."]);
   await expect(slotRows(page)).toHaveText(["Sie haben keine Zeitfenster angegeben."]);
   await page.getByRole("textbox", { name: "Aktenzeichen" }).fill("574 C 65412/26");
+  await minDuration(page).fill("60");
 
-  // Every slot has a page of its own, and the Aktenzeichen survives the trips there and back.
+  // Every slot has a page of its own, and what was typed survives the trips there and back.
   for (const window of nextWeek) {
     await addSlot(page, window);
     await expect(page.getByRole("textbox", { name: "Aktenzeichen" })).toHaveValue("574 C 65412/26");
+    await expect(minDuration(page)).toHaveValue("60");
   }
   await expect(slotRows(page)).toHaveCount(4);
   await page.getByRole("button", { name: "Weiter" }).click();
@@ -143,10 +149,15 @@ test("a richter creates a Terminumfrage with four time slots next week", async (
   const id = appointmentId(page);
   const draft = await db
     .selectFrom("appointment")
-    .select(["aktenzeichen", "status", "user_id"])
+    .select(["aktenzeichen", "min_duration_minutes", "status", "user_id"])
     .where("id", "=", id)
     .executeTakeFirstOrThrow();
-  expect(draft).toEqual({ aktenzeichen: "574 C 65412/26", status: "draft", user_id: judgeId });
+  expect(draft).toEqual({
+    aktenzeichen: "574 C 65412/26",
+    min_duration_minutes: 60,
+    status: "draft",
+    user_id: judgeId,
+  });
   expect(await slotCount(db, id)).toBe(4);
 
   // The review is read from the database, so it survives a reload and lists every window.
@@ -216,6 +227,7 @@ test("going back from the review keeps what was entered and updates the same dra
   db,
 }) => {
   await page.getByRole("textbox", { name: "Aktenzeichen" }).fill("574 C 65412/26");
+  await minDuration(page).fill("60");
   await addSlot(page, nextWeek[0]!);
   await addSlot(page, nextWeek[1]!);
   await page.getByRole("button", { name: "Weiter" }).click();
@@ -249,6 +261,7 @@ test("going back from the review keeps what was entered and updates the same dra
 
 test("a draft is only visible to the richter who created it", async ({ page, users }) => {
   await page.getByRole("textbox", { name: "Aktenzeichen" }).fill("574 C 65412/26");
+  await minDuration(page).fill("60");
   await addSlot(page, nextWeek[0]!);
   await addSlot(page, nextWeek[1]!);
   const formPath = new URL(page.url()).pathname + new URL(page.url()).search;
@@ -271,18 +284,106 @@ test("the form shows what is missing and keeps what was typed", async ({ page })
   await page.getByRole("button", { name: "Weiter" }).click();
 
   await expect(page.getByText("Geben Sie ein Aktenzeichen an.")).toBeVisible();
+  await expect(page.getByText("Geben Sie eine Mindestdauer an.")).toBeVisible();
+  await expect(minDuration(page)).toHaveAttribute("aria-invalid", "true");
   await expect(page).toHaveURL(/\/overview\/new$/);
 
   await page.getByRole("textbox", { name: "Aktenzeichen" }).fill("574 C 65412/26");
+  await minDuration(page).fill("60");
   await page.getByRole("button", { name: "Weiter" }).click();
 
   await expect(page.getByText(TOO_FEW)).toBeVisible();
   await expect(page.getByRole("textbox", { name: "Aktenzeichen" })).toHaveValue("574 C 65412/26");
   await expect(page.getByText("Geben Sie ein Aktenzeichen an.")).toBeHidden();
+  await expect(minDuration(page)).toHaveValue("60");
+  await expect(page.getByText("Geben Sie eine Mindestdauer an.")).toBeHidden();
+});
+
+test("a minimum duration that is not a whole number of minutes is refused and nothing is saved", async ({
+  page,
+  db,
+}) => {
+  await page.getByRole("textbox", { name: "Aktenzeichen" }).fill("574 C 1/26");
+  await minDuration(page).fill("1,5");
+
+  await page.getByRole("button", { name: "Zeitfenster hinzufügen" }).click();
+
+  await expect(
+    page.getByText("Geben Sie die Mindestdauer in ganzen Minuten an, zum Beispiel 30."),
+  ).toBeVisible();
+  await expect(page).toHaveURL(/\/overview\/new$/);
+  await expect(minDuration(page)).toHaveValue("1,5");
+  await expect(page.getByRole("textbox", { name: "Aktenzeichen" })).toHaveValue("574 C 1/26");
+  const drafts = await db
+    .selectFrom("appointment")
+    .select("id")
+    .where("user_id", "=", judgeId)
+    .execute();
+  expect(drafts).toEqual([]);
+
+  await minDuration(page).fill("1440");
+  await page.getByRole("button", { name: "Weiter" }).click();
+  await expect(
+    page.getByText("Die Mindestdauer darf höchstens 1439 Minuten betragen."),
+  ).toBeVisible();
+});
+
+test("no time slot can be shorter than the minimum duration", async ({ page, db }) => {
+  await page.getByRole("textbox", { name: "Aktenzeichen" }).fill("574 C 1/26");
+  await minDuration(page).fill("90");
+  await addSlot(page, nextWeek[0]!);
+
+  // An hour is too short for a slot of its own page.
+  await page.getByRole("button", { name: "Zeitfenster hinzufügen" }).click();
+  await expect(page.getByText("Mindestdauer der Verhandlung: 90 Minuten")).toBeVisible();
+  await fillSlotPage(page, nextWeek[1]!);
+  await page.getByRole("button", { name: "Speichern" }).click();
+
+  await expect(
+    page.getByText("Das Zeitfenster muss mindestens 90 Minuten lang sein."),
+  ).toBeVisible();
+  await expect(page).toHaveURL(/\/zeitfenster\/neu$/);
+  await expect(groupField(page, "Ende", "Stunde")).toHaveValue("12");
+  await expect(groupField(page, "Ende", "Stunde")).toHaveAttribute("aria-invalid", "true");
+  const id = appointmentId(page);
+  expect(await slotCount(db, id)).toBe(1);
+
+  // Exactly the minimum is long enough.
+  await groupField(page, "Ende", "Minute").fill("30");
+  await page.getByRole("button", { name: "Speichern" }).click();
+  await expect(slotRows(page)).toHaveCount(2);
+
+  // Raising the minimum afterwards flags the slots that are too short now, and does not continue.
+  await minDuration(page).fill("120");
+  await page.getByRole("button", { name: "Weiter" }).click();
+  await expect(page).toHaveURL(/\/overview\/new/);
+  for (const index of [0, 1]) {
+    await expect(slotRows(page).nth(index)).toContainText(
+      "Das Zeitfenster muss mindestens 120 Minuten lang sein.",
+    );
+  }
+  await expect(minDuration(page)).toHaveValue("120");
+
+  // A hand-made request for the review is sent back too, and nothing is published.
+  await page.goto(`${BASE_PATH}/overview/${id}/confirm`);
+  await expect(page).toHaveURL(new RegExp(`/overview/new\\?entwurf=${id}$`));
+
+  await minDuration(page).fill("90");
+  await page.getByRole("button", { name: "Weiter" }).click();
+  await expect(page).toHaveURL(/\/confirm$/);
+  const data = page.getByRole("group", { name: "Verhandlungsdaten", exact: true });
+  await expect(data.getByText("90 Minuten")).toBeVisible();
+  const { min_duration_minutes } = await db
+    .selectFrom("appointment")
+    .select("min_duration_minutes")
+    .where("id", "=", id)
+    .executeTakeFirstOrThrow();
+  expect(min_duration_minutes).toBe(90);
 });
 
 test("one time slot is not enough", async ({ page }) => {
   await page.getByRole("textbox", { name: "Aktenzeichen" }).fill("574 C 65412/26");
+  await minDuration(page).fill("60");
   await addSlot(page, nextWeek[0]!);
 
   await page.getByRole("button", { name: "Weiter" }).click();
@@ -301,6 +402,7 @@ test("a time slot with a problem is flagged in place and nothing is saved", asyn
   db,
 }) => {
   await page.getByRole("textbox", { name: "Aktenzeichen" }).fill("574 C 65412/26");
+  await minDuration(page).fill("60");
   await page.getByRole("button", { name: "Zeitfenster hinzufügen" }).click();
   const url = page.url();
   await fillSlotPage(page, { ...nextWeek[1]!, end: ["10", "0"] });
@@ -350,6 +452,7 @@ test("a time slot that overlaps another names it, and one that only touches is f
 
 test("a time slot can be edited, copied and deleted", async ({ page, db }) => {
   await page.getByRole("textbox", { name: "Aktenzeichen" }).fill("574 C 65412/26");
+  await minDuration(page).fill("60");
   await addSlot(page, nextWeek[0]!);
   await addSlot(page, nextWeek[1]!);
   const id = new URL(page.url()).searchParams.get("entwurf")!;
@@ -393,6 +496,7 @@ test("a time slot can be edited, copied and deleted", async ({ page, db }) => {
 
 test("a slot can be deleted below two, but then the form cannot continue", async ({ page }) => {
   await page.getByRole("textbox", { name: "Aktenzeichen" }).fill("574 C 65412/26");
+  await minDuration(page).fill("60");
   await addSlot(page, nextWeek[0]!);
   await addSlot(page, nextWeek[1]!);
 
@@ -408,6 +512,7 @@ test("a slot can be deleted below two, but then the form cannot continue", async
 
 test("Enter in the Aktenzeichen continues instead of editing the first slot", async ({ page }) => {
   await page.getByRole("textbox", { name: "Aktenzeichen" }).fill("574 C 65412/26");
+  await minDuration(page).fill("60");
   await addSlot(page, nextWeek[0]!);
   await addSlot(page, nextWeek[1]!);
 
@@ -488,6 +593,7 @@ test("giving up removes a draft that is still empty and keeps one with content",
   // With an Aktenzeichen, the draft stays, and the overview offers to continue it.
   await page.goto(`${BASE_PATH}/overview/new`);
   await page.getByRole("textbox", { name: "Aktenzeichen" }).fill("574 C 65412/26");
+  await minDuration(page).fill("60");
   await page.getByRole("button", { name: "Zeitfenster hinzufügen" }).click();
   const kept = appointmentId(page);
   await page.getByRole("link", { name: "Abbrechen" }).click();
@@ -531,6 +637,7 @@ test("an incomplete draft cannot be reviewed or published", async ({ page, db })
 
 test("people can be added, edited and deleted on pages of their own", async ({ page, db }) => {
   await page.getByRole("textbox", { name: "Aktenzeichen" }).fill("574 C 65412/26");
+  await minDuration(page).fill("60");
 
   await addPerson(page, { email: " Person.A@Example.com ", name: "Person A" });
   await expect(page.getByRole("textbox", { name: "Aktenzeichen" })).toHaveValue("574 C 65412/26");
@@ -673,6 +780,7 @@ test("the people are reviewed, published with personal links and never e-mailed"
 }) => {
   const personEmail = users.email();
   await page.getByRole("textbox", { name: "Aktenzeichen" }).fill("574 C 65412/26");
+  await minDuration(page).fill("60");
   await addPerson(page, { email: personEmail });
   await addPerson(page, { name: "Person B" });
   await addSlot(page, nextWeek[0]!);

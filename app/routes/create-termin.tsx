@@ -5,7 +5,7 @@ import {
   deleteDraftIfEmpty,
   deleteDraftSlot,
   getAppointment,
-  updateDraftAktenzeichen,
+  updateDraftDetails,
 } from "~/adapters/appointments/appointments.server";
 import {
   deleteDraftParticipant,
@@ -41,6 +41,7 @@ import { createTerminBreadcrumbs } from "./create-termin.review";
 import {
   aktenzeichenProblem,
   MAX_SLOTS,
+  parseMinDuration,
   validateCreateTermin,
   type CreateTerminErrors,
 } from "./create-termin.schema";
@@ -63,6 +64,7 @@ export async function loader({ request }: { request: Request }) {
     draft: {
       id: appointment.id,
       aktenzeichen: appointment.aktenzeichen,
+      minDurationMinutes: appointment.minDurationMinutes ?? null,
       participants: await listParticipants(db, user.id, appointment.id),
       slots: appointment.slots.map((slot) => ({
         id: slot.id,
@@ -76,11 +78,18 @@ export async function loader({ request }: { request: Request }) {
 
 type ActionResult = {
   aktenzeichen: string;
-  errors: { aktenzeichen?: string; slots?: string; rows: CreateTerminErrors["rows"] };
+  // As typed, so a rejected submit can show it again.
+  minDuration: string;
+  errors: {
+    aktenzeichen?: string;
+    minDuration?: string;
+    slots?: string;
+    rows: CreateTerminErrors["rows"];
+  };
 };
 
-// Every button of the form submits the Aktenzeichen with it, so nothing typed is lost on the way
-// to another page. The intent says what the user asked for; the buttons of a row carry its id.
+// Every button of the form submits the Aktenzeichen and the minimum duration with it, so nothing
+// typed is lost on the way to another page. The intent says what the user asked for; the buttons of a row carry its id.
 export async function action({ request }: { request: Request }) {
   const user = await requireRole(request, "richter");
   const db = getDb();
@@ -88,6 +97,7 @@ export async function action({ request }: { request: Request }) {
   const intent = String(formData.get("intent") ?? "");
   const [command = "", rowId = ""] = intent.split(":");
   const aktenzeichen = String(formData.get("aktenzeichen") ?? "");
+  const minDuration = String(formData.get("minDuration") ?? "");
   const draftIdValue = formData.get("appointmentId");
   const draftId = typeof draftIdValue === "string" ? draftIdValue : "";
 
@@ -98,21 +108,25 @@ export async function action({ request }: { request: Request }) {
 
   const final = command === "next";
   const problem = aktenzeichenProblem(aktenzeichen, { required: final });
+  const duration = parseMinDuration(minDuration, { required: final });
   const rejected = (errors: Partial<ActionResult["errors"]>) =>
-    data({ aktenzeichen, errors: { rows: {}, ...errors } } satisfies ActionResult, {
+    data({ aktenzeichen, minDuration, errors: { rows: {}, ...errors } } satisfies ActionResult, {
       status: 400,
     });
-  if (problem) return rejected({ aktenzeichen: problem });
+  if (problem || duration.problem !== undefined) {
+    return rejected({ aktenzeichen: problem, minDuration: duration.problem });
+  }
 
+  const details = { aktenzeichen: aktenzeichen.trim(), minDurationMinutes: duration.minutes };
   let id = draftId;
   if (id) {
-    if (!(await updateDraftAktenzeichen(db, user.id, id, aktenzeichen.trim()))) {
+    if (!(await updateDraftDetails(db, user.id, id, details))) {
       throw data("Not found", { status: 404 });
     }
   } else if (final) {
     // Nothing was entered, so there is no draft; the checks below report what is missing.
   } else {
-    id = await createDraftAppointment(db, user.id, aktenzeichen.trim());
+    id = await createDraftAppointment(db, user.id, details);
   }
 
   switch (command) {
@@ -139,11 +153,14 @@ export async function action({ request }: { request: Request }) {
       const appointment = id ? await getAppointment(db, user.id, id) : undefined;
       const result = validateCreateTermin({
         aktenzeichen,
+        minDurationMinutes: duration.minutes,
         slots: appointment?.slots.map(rangeToSlot) ?? [],
       });
       if (!result.success) {
         const { errors } = result;
-        return data({ aktenzeichen, errors } satisfies ActionResult, { status: 400 });
+        return data({ aktenzeichen, minDuration, errors } satisfies ActionResult, {
+          status: 400,
+        });
       }
       return redirect(`/overview/${encodeURIComponent(id)}/confirm`);
     }
@@ -159,6 +176,7 @@ export default function CreateTermin() {
 
   // What the user just submitted wins over the saved draft.
   const aktenzeichen = result?.aktenzeichen ?? draft?.aktenzeichen ?? "";
+  const minDuration = result?.minDuration ?? draft?.minDurationMinutes?.toString() ?? "";
   const errors = result?.errors;
   const slots = draft?.slots ?? [];
   const participants = draft?.participants ?? [];
@@ -184,6 +202,22 @@ export default function CreateTermin() {
                 defaultValue={aktenzeichen}
                 // Remounts when a rejected submit brings back what was typed.
                 key={aktenzeichen}
+                autoComplete="off"
+              />
+            </FieldColumn>
+            <FieldColumn size="medium">
+              <KernFormInput
+                id="minDuration"
+                label="Mindestdauer der Verhandlung in Minuten"
+                hint="Zum Beispiel 15, 30, 60, 90 oder 120. Kein Zeitfenster darf kürzer sein."
+                error={errors?.minDuration}
+                name="minDuration"
+                defaultValue={minDuration}
+                // Remounts when a rejected submit brings back what was typed.
+                key={minDuration}
+                width={4}
+                maxLength={4}
+                inputMode="numeric"
                 autoComplete="off"
               />
             </FieldColumn>

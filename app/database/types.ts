@@ -16,6 +16,8 @@ type AppointmentsTable = {
   aktenzeichen: string;
   status: AppointmentStatus;
   universal_token: string | null;
+  // The shortest a proposed time slot may be. Empty until the judge enters it.
+  min_duration_minutes: number | null;
   confirmed_slot_id: string | null;
   // The confirmed window lies within the confirmed slot and may be shorter than it.
   confirmed_start_time: Date | string | null;

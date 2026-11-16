@@ -2,6 +2,7 @@ import { data, redirect, useLoaderData } from "react-router";
 
 import {
   getAppointment,
+  type Appointment,
   nextCalendarSequence,
   publishAppointment,
 } from "~/adapters/appointments/appointments.server";
@@ -13,12 +14,18 @@ import { sendTerminCreatedEmail } from "~/lib/email/send-termin-created-email";
 
 import { draftHref } from "./create-termin.paths";
 import { CreateTerminReview, createTerminBreadcrumbs } from "./create-termin.review";
-import { validateCreateTermin } from "./create-termin.schema";
+import { validateCreateTermin, type CreateTerminValues } from "./create-termin.schema";
 import { rangeToSlot } from "./create-termin.slots";
 
 type Params = { params: { appointmentId?: string } };
 
 const notFound = () => data("Not found", { status: 404 });
+
+const draftValues = (appointment: Appointment): CreateTerminValues => ({
+  aktenzeichen: appointment.aktenzeichen,
+  minDurationMinutes: appointment.minDurationMinutes ?? null,
+  slots: appointment.slots.map(rangeToSlot),
+});
 
 export async function loader({ request, params }: { request: Request } & Params) {
   const user = await requireRole(request, "richter");
@@ -28,10 +35,7 @@ export async function loader({ request, params }: { request: Request } & Params)
   if (appointment.status !== "draft") throw redirect("/overview");
 
   // A draft can be saved half-finished, so it is only reviewed once it is complete.
-  const values = {
-    aktenzeichen: appointment.aktenzeichen,
-    slots: appointment.slots.map(rangeToSlot),
-  };
+  const values = draftValues(appointment);
   if (!validateCreateTermin(values).success) throw redirect(draftHref(appointment.id));
   return { user, values, participants: await listParticipants(getDb(), user.id, appointment.id) };
 }
@@ -62,10 +66,7 @@ export async function action({ request, params }: { request: Request } & Params)
     // The draft may have changed since it was reviewed, so it is checked again before publishing.
     const appointment = await getAppointment(getDb(), user.id, id);
     if (!appointment) throw notFound();
-    const values = {
-      aktenzeichen: appointment.aktenzeichen,
-      slots: appointment.slots.map(rangeToSlot),
-    };
+    const values = draftValues(appointment);
     if (appointment.status === "draft" && !validateCreateTermin(values).success) {
       return redirect(draftHref(id));
     }

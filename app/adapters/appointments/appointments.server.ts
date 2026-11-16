@@ -12,6 +12,8 @@ export type AppointmentSlot = TimeRange & { id: string };
 export type Appointment = {
   id: string;
   aktenzeichen: string;
+  // The shortest a time slot may be. Drafts may not have it yet.
+  minDurationMinutes?: number | null;
   slots: AppointmentSlot[];
   status: AppointmentStatus;
   // The secret of the universal survey link. Drafts have none; it is set when they are published.
@@ -20,16 +22,24 @@ export type Appointment = {
   confirmedSlot?: TimeRange | null;
 };
 
-// A draft starts with just the Aktenzeichen. Its time slots are added one at a time, and it is
-// published once the judge confirms the review.
+// What the judge enters about the proceeding itself, on the first page.
+export type DraftDetails = { aktenzeichen: string; minDurationMinutes: number | null };
+
+// A draft starts with just the details of the proceeding. Its time slots are added one at a time,
+// and it is published once the judge confirms the review.
 export async function createDraftAppointment(
   db: Kysely<Database>,
   userId: string,
-  aktenzeichen: string,
+  { aktenzeichen, minDurationMinutes }: DraftDetails,
 ): Promise<string> {
   const { id } = await db
     .insertInto("appointment")
-    .values({ user_id: userId, aktenzeichen, status: "draft" })
+    .values({
+      user_id: userId,
+      aktenzeichen,
+      min_duration_minutes: minDurationMinutes,
+      status: "draft",
+    })
     .returning("id")
     .executeTakeFirstOrThrow();
   logInfo(`User ${userId} created draft appointment ${id}`);
@@ -46,15 +56,15 @@ const ownDraft = (db: Kysely<Database>, userId: string, id: string) =>
     .where("status", "=", "draft");
 
 // Returns false when the user has no such draft.
-export async function updateDraftAktenzeichen(
+export async function updateDraftDetails(
   db: Kysely<Database>,
   userId: string,
   id: string,
-  aktenzeichen: string,
+  { aktenzeichen, minDurationMinutes }: DraftDetails,
 ): Promise<boolean> {
   const updated = await db
     .updateTable("appointment")
-    .set({ aktenzeichen, updated_at: new Date() })
+    .set({ aktenzeichen, min_duration_minutes: minDurationMinutes, updated_at: new Date() })
     .where("id", "=", id)
     .where("user_id", "=", userId)
     .where("status", "=", "draft")
@@ -138,7 +148,7 @@ export async function deleteDraftSlot(
 }
 
 // Removes a draft that nothing was entered into, so that giving up leaves no empty entry in the
-// overview. A draft with an Aktenzeichen, a time slot or a person is kept. Returns whether a draft
+// overview. A draft with an Aktenzeichen, a minimum duration, a time slot or a person is kept. Returns whether a draft
 // was removed.
 export async function deleteDraftIfEmpty(
   db: Kysely<Database>,
@@ -151,6 +161,7 @@ export async function deleteDraftIfEmpty(
     .where("user_id", "=", userId)
     .where("status", "=", "draft")
     .where(sql<boolean>`btrim(aktenzeichen) = ''`)
+    .where("min_duration_minutes", "is", null)
     .where((eb) =>
       eb.not(
         eb.exists(
@@ -185,6 +196,7 @@ export async function getAppointment(
       "id",
       "aktenzeichen",
       "status",
+      "min_duration_minutes",
       "universal_token",
       "confirmed_start_time",
       "confirmed_end_time",
@@ -205,6 +217,7 @@ export async function getAppointment(
     id: appointment.id,
     aktenzeichen: appointment.aktenzeichen,
     status: appointment.status,
+    minDurationMinutes: appointment.min_duration_minutes,
     universalToken: appointment.universal_token,
     slots: slots.map((slot) => ({ id: slot.id, ...rowToRange(slot) })),
     confirmedSlot: confirmedWindow(appointment),

@@ -7,15 +7,25 @@ import { checkWallClock, type WallClockKind } from "~/core/domain/time/wall-cloc
 export const MIN_SLOTS = 2;
 export const MAX_SLOTS = 20;
 const MAX_AKTENZEICHEN_LENGTH = 50;
+// A time slot lies within one day, so it is at most 23 hours and 59 minutes long.
+export const MAX_MIN_DURATION = 23 * 60 + 59;
+
+export const formatMinutes = (minutes: number) =>
+  minutes === 1 ? "1 Minute" : `${minutes} Minuten`;
 
 export const messages = {
   aktenzeichenRequired: "Geben Sie ein Aktenzeichen an.",
   aktenzeichenTooLong: `Das Aktenzeichen darf höchstens ${MAX_AKTENZEICHEN_LENGTH} Zeichen lang sein.`,
+  minDurationRequired: "Geben Sie eine Mindestdauer an.",
+  minDurationInvalid: "Geben Sie die Mindestdauer in ganzen Minuten an, zum Beispiel 30.",
+  minDurationTooLong: `Die Mindestdauer darf höchstens ${MAX_MIN_DURATION} Minuten betragen.`,
   date: "Geben Sie ein gültiges Datum an.",
   pastDate: "Das Datum darf nicht in der Vergangenheit liegen.",
   start: "Geben Sie eine gültige Startzeit an.",
   end: "Geben Sie eine gültige Endzeit an.",
   range: "Die Endzeit muss nach der Startzeit liegen.",
+  tooShort: (minDurationMinutes: number) =>
+    `Das Zeitfenster muss mindestens ${formatMinutes(minDurationMinutes)} lang sein.`,
   skippedTime: "Diese Uhrzeit gibt es wegen der Zeitumstellung nicht. Wählen Sie eine andere.",
   repeatedTime: "Diese Uhrzeit kommt wegen der Zeitumstellung zweimal vor. Wählen Sie eine andere.",
   overlap: (otherRow: number) =>
@@ -40,7 +50,8 @@ const slotFields = [
 export type SlotField = (typeof slotFields)[number];
 export type SlotInput = Record<SlotField, string>;
 
-// Part of a row an error belongs to. "range" covers the start/end pair, "overlap" the whole row.
+// Part of a row an error belongs to. "range" covers the start/end pair, including a slot that is
+// shorter than the minimum duration, and "overlap" the whole row.
 export type SlotErrorGroup = "date" | "start" | "end" | "range" | "overlap";
 
 export const emptySlot: SlotInput = {
@@ -117,10 +128,12 @@ type CompleteSlot = { index: number; date: string; start: number; end: number };
 
 type SlotIssue = { group: SlotErrorGroup; message: string };
 
-// Everything that is wrong with one filled-in slot, and its parsed parts when nothing is.
+// Everything that is wrong with one filled-in slot, and its parsed parts when nothing is. Without a
+// minimum duration, any slot that ends after it starts is long enough.
 function checkSlot(
   slot: SlotInput,
   now: Date,
+  minDurationMinutes: number | null = null,
 ): { issues: SlotIssue[]; parsed?: { date: string; start: number; end: number } } {
   const issues: SlotIssue[] = [];
   const add = (group: SlotErrorGroup, message: string) => issues.push({ group, message });
@@ -141,7 +154,12 @@ function checkSlot(
     const problem = timeProblem(date, end);
     if (problem) add("end", problem);
   }
-  if (start !== null && end !== null && end <= start) add("range", messages.range);
+  if (start !== null && end !== null) {
+    if (end <= start) add("range", messages.range);
+    else if (minDurationMinutes !== null && end - start < minDurationMinutes) {
+      add("range", messages.tooShort(minDurationMinutes));
+    }
+  }
 
   if (issues.length === 0 && date !== null && start !== null && end !== null) {
     return { issues, parsed: { date, start, end } };
@@ -160,14 +178,23 @@ function createTerminSchema(now: Date = new Date()) {
         .trim()
         .min(1, messages.aktenzeichenRequired)
         .max(MAX_AKTENZEICHEN_LENGTH, messages.aktenzeichenTooLong),
+      minDurationMinutes: z.number().int().min(1).max(MAX_MIN_DURATION).nullable(),
       slots: z.array(SlotInputSchema),
     })
-    .superRefine(({ slots }, ctx) => {
+    .superRefine(({ minDurationMinutes, slots }, ctx) => {
+      if (minDurationMinutes === null) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["minDurationMinutes"],
+          message: messages.minDurationRequired,
+        });
+      }
+
       let rowErrors = 0;
       const complete: CompleteSlot[] = [];
       slots.forEach((slot, index) => {
         if (isEmptySlot(slot)) return;
-        const { issues, parsed } = checkSlot(slot, now);
+        const { issues, parsed } = checkSlot(slot, now, minDurationMinutes);
         for (const { group, message } of issues) {
           rowErrors += 1;
           ctx.addIssue({ code: "custom", path: ["slots", index, group], message });
@@ -205,10 +232,33 @@ export function aktenzeichenProblem(value: string, { required }: { required: boo
   return undefined;
 }
 
-export type CreateTerminValues = { aktenzeichen: string; slots: SlotInput[] };
+// Reads the minimum duration as typed into the form. Saving a draft accepts an empty field;
+// "Weiter" needs it to be filled in.
+export function parseMinDuration(
+  value: string,
+  { required }: { required: boolean },
+): { minutes: number | null; problem?: undefined } | { problem: string } {
+  const trimmed = value.trim();
+  if (trimmed === "") {
+    return required ? { problem: messages.minDurationRequired } : { minutes: null };
+  }
+  if (!/^\d+$/.test(trimmed) || Number(trimmed) < 1) {
+    return { problem: messages.minDurationInvalid };
+  }
+  const minutes = Number(trimmed);
+  if (minutes > MAX_MIN_DURATION) return { problem: messages.minDurationTooLong };
+  return { minutes };
+}
+
+export type CreateTerminValues = {
+  aktenzeichen: string;
+  minDurationMinutes: number | null;
+  slots: SlotInput[];
+};
 
 export type CreateTerminErrors = {
   aktenzeichen?: string;
+  minDuration?: string;
   slots?: string;
   // Keyed by row index, then by the part of the row the message belongs to.
   rows: Record<number, Partial<Record<SlotErrorGroup, string>>>;
@@ -234,6 +284,7 @@ export function validateCreateTermin(
   for (const issue of result.error.issues) {
     const [first, index, group] = issue.path;
     if (first === "aktenzeichen") errors.aktenzeichen ??= issue.message;
+    else if (first === "minDurationMinutes") errors.minDuration ??= issue.message;
     else if (first === "slots" && index === undefined) errors.slots ??= issue.message;
     else if (first === "slots" && typeof index === "number") {
       (errors.rows[index] ??= {})[group as SlotErrorGroup] ??= issue.message;
@@ -254,13 +305,15 @@ function describeComplete({ date, start, end }: Omit<CompleteSlot, "index">): st
   return `am ${formatCalendarDate(year, month, day)}, ${clock(start)} bis ${clock(end)}`;
 }
 
-// Checks the one slot that is being added or changed, against the other slots of the draft.
+// Checks the one slot that is being added or changed, against the other slots of the draft and
+// against the minimum duration, when the draft has one.
 export function validateSlot(
   slot: SlotInput,
   others: SlotInput[],
   now: Date = new Date(),
+  minDurationMinutes: number | null = null,
 ): { success: true } | { success: false; errors: SlotErrors } {
-  const { issues, parsed } = checkSlot(slot, now);
+  const { issues, parsed } = checkSlot(slot, now, minDurationMinutes);
   const errors: SlotErrors = {};
   for (const { group, message } of issues) errors[group] ??= message;
 
