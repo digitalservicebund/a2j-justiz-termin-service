@@ -33,10 +33,10 @@ const chromePath = findLocalChrome();
 
 export default defineConfig({
   testDir: "./e2e",
-  fullyParallel: false,
+  fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: 0,
-  workers: 1,
+  workers: process.env.CI ? 2 : "50%",
   timeout: 30_000,
   // On CI the github reporter turns each failure into an annotation on the pull request.
   reporter: [
