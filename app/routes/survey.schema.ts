@@ -7,9 +7,12 @@ import {
   windowKey,
   type SlotWindow,
 } from "~/core/domain/availability";
-import { formatDay, formatTime } from "~/core/domain/time/format";
+import { formatDay, formatTime, formatWeekday } from "~/core/domain/time/format";
 import type { TimeRange } from "~/core/domain/time/time-range";
 import { berlinDay } from "~/core/domain/time/time-zone";
+
+// "10:00 bis 14:00"
+const formatTimes = ({ start, end }: TimeRange) => `${formatTime(start)} bis ${formatTime(end)}`;
 
 export const surveyBreadcrumbs = [
   { label: "Beantworten der Terminumfrage" },
@@ -97,12 +100,58 @@ export function addWindow(available: string[], window: SlotWindow, replacing?: s
   return mergeWindows([...kept, window]).map(windowKey);
 }
 
-export const removeWindow = (available: string[], key: string) =>
-  available.filter((other) => other !== key);
+// The keys of a draft without the given availability window. Windows of a slot that overlap or
+// touch are merged first, so the key of a window as the survey shows it is found.
+export function removeWindow(available: string[], key: string): string[] {
+  const windows = available.map(parseWindowKey).filter((window) => window !== undefined);
+  return mergeWindows(windows)
+    .map(windowKey)
+    .filter((other) => other !== key);
+}
+
+// The keys of a draft once the guest adds or changes a smaller window within an offered one. A tick
+// of the whole offered window gives way to it: the guest is now available for part of it only,
+// unless the windows together cover it again.
+export function setSmallerWindow(
+  available: string[],
+  offerKey: string,
+  window: SlotWindow,
+  replacing?: string,
+): string[] {
+  return addWindow(
+    available.filter((key) => key !== offerKey),
+    window,
+    replacing,
+  );
+}
+
+type AnsweredWindow = { key: string; time: string };
+
+export type OfferView = {
+  // "full" ticks the box, "partial" lists the smaller windows instead, "none" leaves it empty.
+  state: "full" | "partial" | "none";
+  windows: AnsweredWindow[];
+};
+
+// How the draft answers every offered window, by its key. Offered windows and the draft are both
+// given as window keys, so this works on what the page has, without dates.
+export function offerViews(offerKeys: string[], available: string[]): Map<string, OfferView> {
+  const offers = offerKeys.map(parseWindowKey).filter((offer) => offer !== undefined);
+  const windows = available.map(parseWindowKey).filter((window) => window !== undefined);
+  return new Map(
+    answersByOffer(offers, windows).map(({ offer, state, windows }) => [
+      windowKey(offer),
+      {
+        state,
+        windows: windows.map((window) => ({ key: windowKey(window), time: formatTimes(window) })),
+      },
+    ]),
+  );
+}
 
 type SurveyWindow = { id: string; time: string; start: string };
 
-export type SurveyDay = { key: string; label: string; windows: SurveyWindow[] };
+export type SurveyDay = { key: string; label: string; weekday: string; windows: SurveyWindow[] };
 
 // Windows on the same Berlin day share one entry. Expects slots sorted by start.
 export function groupWindows(slots: Array<TimeRange & { id: string }>): SurveyDay[] {
@@ -113,14 +162,19 @@ export function groupWindows(slots: Array<TimeRange & { id: string }>): SurveyDa
     const window = { id: slot.id, start, time: `${start} bis ${formatTime(slot.end)}` };
     const last = days.at(-1);
     if (last?.key === key) last.windows.push(window);
-    else days.push({ key, label: formatDay(slot.start), windows: [window] });
+    else {
+      days.push({
+        key,
+        label: formatDay(slot.start),
+        weekday: formatWeekday(slot.start),
+        windows: [window],
+      });
+    }
   }
   return days;
 }
 
 export type DayAnswer = { key: string; label: string; lines: string[] };
-
-const formatTimes = ({ start, end }: TimeRange) => `${formatTime(start)} bis ${formatTime(end)}`;
 
 // "10:00 bis 14:00 – verfügbar" for every offered window, as the review lists it. A window the
 // guest is only partly available in is followed by the smaller windows.

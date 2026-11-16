@@ -1,4 +1,4 @@
-import { contains, isLongEnough, type SlotWindow } from "~/core/domain/availability";
+import { contains, isLongEnough, mergeWindows, type SlotWindow } from "~/core/domain/availability";
 import { toWallClock, wallClockToInstant } from "~/core/domain/time/berlin.server";
 import { formatTime } from "~/core/domain/time/format";
 import { checkWallClock } from "~/core/domain/time/wall-clock";
@@ -45,11 +45,14 @@ function readTime(offer: SlotWindow, hourValue: string, minuteValue: string, inv
 
 // A smaller availability window within the remaining window a guest was offered. It has to lie
 // within the offer and be long enough for the appointment; the whole offer is fine as well, and
-// then simply means "available".
+// then simply means "available". `others` are the guest's other windows in the offer: a window
+// that overlaps or touches one of them becomes one with it, so only the two together have to be
+// long enough.
 export function validateSmallerWindow(
   values: WindowValues,
   offer: SlotWindow,
   minDurationMinutes: number | null,
+  others: SlotWindow[] = [],
 ): Result {
   const start = readTime(offer, values.startHour, values.startMinute, messages.start);
   const end = readTime(offer, values.endHour, values.endMinute, messages.end);
@@ -62,7 +65,8 @@ export function validateSmallerWindow(
   if (!contains(offer, window)) {
     return fail(messages.outside(formatTime(offer.start), formatTime(offer.end)));
   }
-  if (minDurationMinutes !== null && !isLongEnough(window, minDurationMinutes)) {
+  const merged = mergeWindows([...others, window]).find((other) => contains(other, window));
+  if (minDurationMinutes !== null && !isLongEnough(merged ?? window, minDurationMinutes)) {
     return fail(messages.tooShort(minDurationMinutes));
   }
   return { success: true, window };

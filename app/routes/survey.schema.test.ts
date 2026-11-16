@@ -8,8 +8,10 @@ import {
   groupWindows,
   MAX_NAME_LENGTH,
   messages,
+  offerViews,
   readValues,
   removeWindow,
+  setSmallerWindow,
   surveyPath,
   surveySearch,
   validateSurvey,
@@ -213,6 +215,53 @@ describe("addWindow and removeWindow", () => {
   it("removes a window", () => {
     expect(removeWindow([windowKey(noon), k2], windowKey(noon))).toEqual([k2]);
   });
+
+  it("removes a window as the survey shows it, merged from the keys of the draft", () => {
+    const merged = windowKey({ slotId: "s1", start: noon.start, end: afternoon.end });
+    expect(removeWindow([windowKey(noon), windowKey(afternoon), k2], merged)).toEqual([k2]);
+  });
+});
+
+describe("setSmallerWindow", () => {
+  it("replaces the tick of the whole offered window", () => {
+    expect(setSmallerWindow([k1, k2], k1, noon)).toEqual([windowKey(noon), k2]);
+  });
+
+  it("is the tick again when the window is the whole offered one", () => {
+    expect(setSmallerWindow([k2], k1, s1)).toEqual([k1, k2]);
+  });
+
+  it("changes a window and merges it with the others", () => {
+    const morning = { slotId: "s1", start: s1.start, end: noon.start };
+    expect(setSmallerWindow([windowKey(morning), k2], k1, afternoon)).toEqual([
+      windowKey(morning),
+      windowKey(afternoon),
+      k2,
+    ]);
+    expect(setSmallerWindow([windowKey(morning)], k1, noon, windowKey(morning))).toEqual([
+      windowKey(noon),
+    ]);
+  });
+});
+
+describe("offerViews", () => {
+  it("tells for every offered window whether the guest is available in all, part or none", () => {
+    const views = offerViews([k1, k2, k3], [windowKey(noon), k3]);
+
+    expect(views.get(k1)).toEqual({
+      state: "partial",
+      windows: [{ key: windowKey(noon), time: "11:00 bis 13:00" }],
+    });
+    expect(views.get(k2)).toEqual({ state: "none", windows: [] });
+    expect(views.get(k3)).toMatchObject({ state: "full" });
+  });
+
+  it("ignores keys it cannot read", () => {
+    expect(offerViews([k1, "nonsense"], ["nonsense"]).get(k1)).toEqual({
+      state: "none",
+      windows: [],
+    });
+  });
 });
 
 describe("groupWindows", () => {
@@ -221,11 +270,13 @@ describe("groupWindows", () => {
       {
         key: "2026-09-17",
         label: "17. September 2026",
+        weekday: "Donnerstag",
         windows: [{ id: "s1", start: "10:00", time: "10:00 bis 14:00" }],
       },
       {
         key: "2026-09-21",
         label: "21. September 2026",
+        weekday: "Montag",
         windows: [
           { id: "s2", start: "09:00", time: "09:00 bis 11:00" },
           { id: "s3", start: "15:30", time: "15:30 bis 17:00" },
@@ -243,7 +294,11 @@ describe("groupWindows", () => {
     const [day] = groupWindows([
       { id: "s4", start: new Date("2026-09-17T22:30:00Z"), end: new Date("2026-09-18T00:30:00Z") },
     ]);
-    expect(day).toMatchObject({ key: "2026-09-18", label: "18. September 2026" });
+    expect(day).toMatchObject({
+      key: "2026-09-18",
+      label: "18. September 2026",
+      weekday: "Freitag",
+    });
   });
 });
 

@@ -675,12 +675,16 @@ test("the appointment is cancelled when the guests have no time in common that i
   expect(await status()).toBe("open");
 
   // Guest D can only attend from 16:15, which leaves 15 minutes with Guest C: less than the
-  // minimum duration, so the answer is not accepted as it stands. Saying no cancels the appointment.
+  // minimum duration, so the answer is not accepted as it stands. The form still shows the window,
+  // so Guest D can remove it. Saying no then cancels the appointment.
   const lastPart = key(slotIds[0]!, "2099-11-09T15:15:00Z", "2099-11-09T15:30:00Z");
   await page.goto(
     `${BASE_PATH}/umfrage/${token}/zusammenfassung?name=Guest+D&verfuegbar=${lastPart}`,
   );
   await expect(page).toHaveURL(new RegExp(`/umfrage/${token}\\?name=Guest\\+D`));
+  await expect(page.getByText("16:15 bis 16:30 – verfügbar")).toBeVisible();
+  await page.getByRole("button", { name: /^Zeitfenster 16:15 bis 16:30 .* löschen$/ }).click();
+  await expect(page.getByText("16:15 bis 16:30 – verfügbar")).toHaveCount(0);
   await page.getByRole("checkbox", { name: "Kein Zeitfenster passt" }).check();
   await page.getByRole("button", { name: "Weiter" }).click();
   await page.getByRole("button", { name: "Terminumfrage abschließen" }).click();
@@ -688,4 +692,144 @@ test("the appointment is cancelled when the guests have no time in common that i
     "Es gibt leider kein Zeitfenster, dass allen Verfahrensbeteiligten passt.",
   );
   expect(await status()).toBe("cancelled");
+});
+
+test("a guest adds, changes and removes smaller windows and finishes with them", async ({
+  page,
+  users,
+  db,
+}) => {
+  const judge = await users.create({ roles: ["richter"] });
+  const { id, token } = await seedSurvey(db, judge.id, "open", 60);
+  const add = (window: string) =>
+    page.getByRole("button", { name: `Kleineres Zeitfenster hinzufügen am ${window}` });
+  const fill = async (start: string, end: string) => {
+    const [startHour, startMinute, endHour, endMinute] = [...start.split(":"), ...end.split(":")];
+    const fields = page.getByRole("textbox");
+    await fields.nth(0).fill(startHour!);
+    await fields.nth(1).fill(startMinute!);
+    await fields.nth(2).fill(endHour!);
+    await fields.nth(3).fill(endMinute!);
+  };
+
+  await page.goto(`${BASE_PATH}/umfrage/${token}`);
+  await page.getByRole("textbox", { name: "Ihr Name" }).fill("Guest C");
+  await page.getByRole("checkbox", { name: FIRST }).check();
+  await add("9. November 2099, 15:30 bis 18:00").click();
+
+  // The page starts with the whole offered window.
+  await expect(page).toHaveURL(new RegExp(`/umfrage/${token}/zeitfenster\\?`));
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Geben Sie ein kleineres Zeitfenster an",
+  );
+  await expect(
+    page.getByRole("heading", { level: 2, name: "9. November 2099 von 15:30 bis 18:00" }),
+  ).toBeVisible();
+  await expect(page.getByRole("textbox").nth(0)).toHaveValue("15");
+  await expect(page.getByRole("textbox").nth(3)).toHaveValue("00");
+
+  // A window shorter than the minimum duration is rejected.
+  await fill("16:00", "16:30");
+  await page.getByRole("button", { name: "Speichern" }).click();
+  await expect(
+    page.getByText("Das Zeitfenster muss mindestens 60 Minuten lang sein."),
+  ).toBeVisible();
+
+  await fill("16:00", "17:15");
+  await page.getByRole("button", { name: "Speichern" }).click();
+
+  // Back on the survey, the window replaces the tick, and the name is kept.
+  await expect(page).toHaveURL(new RegExp(`/umfrage/${token}\\?`));
+  await expect(page.getByRole("textbox", { name: "Ihr Name" })).toHaveValue("Guest C");
+  await expect(page.getByText("Teilweise verfügbar")).toBeVisible();
+  await expect(page.getByText("16:00 bis 17:15 – verfügbar")).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: FIRST })).toHaveCount(0);
+
+  // Changing it starts from its own times.
+  await page
+    .getByRole("button", {
+      name: "Zeitfenster 16:00 bis 17:15 am 9. November 2099, 15:30 bis 18:00 ändern",
+    })
+    .click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Ändern Sie das kleinere Zeitfenster",
+  );
+  await expect(page.getByRole("textbox").nth(0)).toHaveValue("16");
+  await expect(page.getByRole("textbox").nth(3)).toHaveValue("15");
+  await fill("16:15", "17:15");
+  await page.getByRole("button", { name: "Speichern" }).click();
+  await expect(page.getByText("16:15 bis 17:15 – verfügbar")).toBeVisible();
+
+  // A second window that touches the first becomes one with it.
+  await add("9. November 2099, 15:30 bis 18:00").click();
+  await fill("17:15", "18:00");
+  await page.getByRole("button", { name: "Speichern" }).click();
+  await expect(page.getByText("16:15 bis 18:00 – verfügbar")).toBeVisible();
+  await expect(page.getByText(/– verfügbar$/)).toHaveCount(1);
+
+  // A window that is removed again leaves the box empty.
+  await add("13. November 2099, 15:00 bis 17:00").click();
+  await fill("15:00", "16:00");
+  await page.getByRole("button", { name: "Speichern" }).click();
+  await page
+    .getByRole("button", {
+      name: "Zeitfenster 15:00 bis 16:00 am 13. November 2099, 15:00 bis 17:00 löschen",
+    })
+    .click();
+  await expect(page.getByRole("checkbox", { name: THIRD })).not.toBeChecked();
+  await expect(page.getByText("Teilweise verfügbar")).toHaveCount(1);
+
+  // Cancelling the page keeps the draft as it was.
+  await add("13. November 2099, 09:00 bis 13:00").click();
+  await page.getByRole("link", { name: "Abbrechen" }).click();
+  await expect(page.getByText("16:15 bis 18:00 – verfügbar")).toBeVisible();
+
+  await page.getByRole("checkbox", { name: SECOND }).check();
+  await page.getByRole("button", { name: "Weiter" }).click();
+  await expect(page.getByText("15:30 bis 18:00 – teilweise verfügbar")).toBeVisible();
+  await expect(page.getByText("16:15 bis 18:00 – verfügbar")).toBeVisible();
+  await expect(page.getByText("09:00 bis 13:00 – verfügbar")).toBeVisible();
+  await page.getByRole("button", { name: "Terminumfrage abschließen" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Danke für das Angeben Ihrer Verfügbarkeiten.",
+  );
+
+  const windows = await db
+    .selectFrom("participant_response_window")
+    .innerJoin(
+      "participant_response",
+      "participant_response.id",
+      "participant_response_window.response_id",
+    )
+    .innerJoin("participant", "participant.id", "participant_response.participant_id")
+    .select(["participant_response_window.start_time", "participant_response_window.end_time"])
+    .where("participant.appointment_id", "=", id)
+    .orderBy("participant_response_window.start_time")
+    .execute();
+  expect(windows).toEqual([
+    { start_time: new Date("2099-11-09T15:15:00Z"), end_time: new Date("2099-11-09T17:00:00Z") },
+    { start_time: new Date("2099-11-13T08:00:00Z"), end_time: new Date("2099-11-13T12:00:00Z") },
+  ]);
+});
+
+test("the survey names the weekday of every date, and cancelling throws the draft away", async ({
+  page,
+  users,
+  db,
+}) => {
+  const judge = await users.create({ roles: ["richter"] });
+  const { token } = await seedSurvey(db, judge.id);
+
+  await page.goto(`${BASE_PATH}/umfrage/${token}`);
+  // 9 and 13 November 2099 are a Monday and a Friday.
+  await expect(page.getByText("Montag", { exact: true })).toBeVisible();
+  await expect(page.getByText("Freitag", { exact: true })).toBeVisible();
+
+  await page.getByRole("textbox", { name: "Ihr Name" }).fill("Guest C");
+  await page.getByRole("checkbox", { name: FIRST }).check();
+  await page.getByRole("link", { name: "Abbrechen" }).click();
+
+  await expect(page).toHaveURL(new RegExp(`/umfrage/${token}$`));
+  await expect(page.getByRole("textbox", { name: "Ihr Name" })).toHaveValue("");
+  await expect(page.getByRole("checkbox", { name: FIRST })).not.toBeChecked();
 });

@@ -77,6 +77,24 @@ describe("validateSmallerWindow", () => {
     });
   });
 
+  it("measures a window together with another one it touches or overlaps", () => {
+    // 15:00 to 15:45 alone is too short, but becomes 15:00 to 16:45 with 15:45 to 16:45.
+    const other = {
+      slotId: "s1",
+      start: new Date("2026-09-24T13:45:00Z"),
+      end: new Date("2026-09-24T14:45:00Z"),
+    };
+    const values = { startHour: "15", startMinute: "00", endHour: "15", endMinute: "45" };
+    expect(validateSmallerWindow(values, offer, 90, [other]).success).toBe(true);
+    expect(validateSmallerWindow(values, offer, 120, [other])).toEqual({
+      success: false,
+      errors: { range: messages.tooShort(120) },
+    });
+    // A window that only lies next to it, with a gap, does not count.
+    const apart = { ...other, start: new Date("2026-09-24T14:00:00Z") };
+    expect(validateSmallerWindow(values, offer, 90, [apart]).success).toBe(false);
+  });
+
   it("accepts any length without a minimum duration", () => {
     expect(enter("15:00", "15:01", null).success).toBe(true);
   });

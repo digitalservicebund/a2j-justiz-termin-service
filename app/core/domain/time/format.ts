@@ -21,6 +21,7 @@ const dayWithWeekdayNumeric = intl({
   year: "numeric",
 });
 const time = intl({ hour: "2-digit", minute: "2-digit" });
+const weekday = intl({ weekday: "long" });
 const synchronizedAt = intl({
   day: "numeric",
   month: "long",
@@ -43,6 +44,9 @@ const calendarDate = new Intl.DateTimeFormat("de-DE", {
 
 // "17. September 2026"
 export const formatDay = (instant: Date) => dayLong.format(instant);
+
+// "Donnerstag"
+export const formatWeekday = (instant: Date) => weekday.format(instant);
 
 // "09:00"
 export const formatTime = (instant: Date) => time.format(instant);

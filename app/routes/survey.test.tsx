@@ -369,3 +369,176 @@ describe("survey page", () => {
     expect(await screen.findByRole("heading", { name: "Review page" })).toBeVisible();
   });
 });
+
+// Submits the survey with a name and the button that was pressed.
+const submit = async (intent: string, extra: Array<[string, string]> = []) =>
+  (await action({
+    request: postRequest([["name", "Guest C"], ["intent", intent], ...extra]),
+    params,
+  })) as Response;
+
+describe("smaller windows on the survey", () => {
+  // 11:00 to 12:30 and 13:00 to 14:00 Berlin time within the first offered window.
+  const late = { slotId: "s1", start: new Date("2026-09-17T09:00:00Z"), end: w1.end };
+  const early = {
+    slotId: "s1",
+    start: new Date("2026-09-17T09:00:00Z"),
+    end: new Date("2026-09-17T10:30:00Z"),
+  };
+  const lateKey = windowKey(late);
+  const earlyKey = windowKey(early);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(findSurvey).mockResolvedValue(universal);
+  });
+
+  it("goes to the page of a new smaller window with the draft, without checking it", async () => {
+    const response = await submit(`add:${k1}`, [["verfuegbar", k2]]);
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get("Location")).toBe(
+      `/umfrage/t1/zeitfenster?name=Guest+C&verfuegbar=${k2}&angebot=${k1}`,
+    );
+  });
+
+  it("goes to the page of a smaller window to change it", async () => {
+    const response = await submit(`edit:${k1}:${earlyKey}`, [["verfuegbar", earlyKey]]);
+
+    expect(response.headers.get("Location")).toBe(
+      `/umfrage/t1/zeitfenster?name=Guest+C&verfuegbar=${earlyKey}&angebot=${k1}&fenster=${earlyKey}`,
+    );
+  });
+
+  it("removes a smaller window and comes back to its offered window", async () => {
+    const response = await submit(`delete:${k1}:${earlyKey}`, [
+      ["verfuegbar", earlyKey],
+      ["verfuegbar", k3],
+    ]);
+
+    expect(response.headers.get("Location")).toBe(
+      `/umfrage/t1?name=Guest+C&verfuegbar=${k3}#zeitfenster-${k1}`,
+    );
+  });
+
+  it("checks the answer as before when the guest continues", async () => {
+    const response = await action({ request: postRequest([["intent", "next"]]), params });
+
+    expect(response).toMatchObject({ init: { status: 400 } });
+  });
+
+  it("shows a partly answered window with its smaller windows instead of the box", async () => {
+    renderSurvey([`/umfrage/t1?verfuegbar=${earlyKey}&verfuegbar=${k3}`]);
+
+    expect(await screen.findByText("Teilweise verfügbar")).toBeVisible();
+    expect(screen.getByText("11:00 bis 12:30 – verfügbar")).toBeVisible();
+    expect(
+      screen.queryByRole("checkbox", { name: "Verfügbar am 17. September 2026, 10:00 bis 14:00" }),
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", {
+        name: "Zeitfenster 11:00 bis 12:30 am 17. September 2026, 10:00 bis 14:00 ändern",
+      }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", {
+        name: "Zeitfenster 11:00 bis 12:30 am 17. September 2026, 10:00 bis 14:00 löschen",
+      }),
+    ).toBeVisible();
+    // The other windows keep their box; the third is ticked.
+    expect(
+      screen.getByRole("checkbox", { name: "Verfügbar am 21. September 2026, 15:30 bis 17:00" }),
+    ).toBeChecked();
+    expect(
+      screen.getByRole("checkbox", { name: "Verfügbar am 21. September 2026, 09:00 bis 11:00" }),
+    ).not.toBeChecked();
+  });
+
+  it("ticks the box once the smaller windows cover the offered window", async () => {
+    const before = { slotId: "s1", start: w1.start, end: late.start };
+    renderSurvey([`/umfrage/t1?verfuegbar=${windowKey(before)}&verfuegbar=${lateKey}`]);
+
+    expect(
+      await screen.findByRole("checkbox", {
+        name: "Verfügbar am 17. September 2026, 10:00 bis 14:00",
+      }),
+    ).toBeChecked();
+    expect(screen.queryByText("Teilweise verfügbar")).toBeNull();
+  });
+
+  it("offers to add a smaller window to every offered window", async () => {
+    renderSurvey();
+
+    const buttons = await screen.findAllByRole("button", {
+      name: /^Kleineres Zeitfenster hinzufügen am /,
+    });
+    expect(buttons).toHaveLength(3);
+    expect(buttons[0]).toHaveAccessibleName(
+      "Kleineres Zeitfenster hinzufügen am 17. September 2026, 10:00 bis 14:00",
+    );
+  });
+
+  it("keeps the smaller windows when the guest continues", async () => {
+    let submitted: FormData | undefined;
+    const Stub = createRoutesStub([
+      {
+        path: "/umfrage/:token",
+        Component: SurveyPage,
+        loader,
+        action: async ({ request }) => {
+          submitted = await request.clone().formData();
+          return action({ request, params });
+        },
+      },
+      { path: "/umfrage/:token/zusammenfassung", Component: () => <h1>Review page</h1> },
+    ]);
+    render(<Stub initialEntries={[`/umfrage/t1?name=Guest+C&verfuegbar=${earlyKey}`]} />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Weiter" }));
+
+    expect(await screen.findByRole("heading", { name: "Review page" })).toBeVisible();
+    expect(submitted?.getAll("verfuegbar")).toEqual([earlyKey]);
+    expect(submitted?.get("intent")).toBe("next");
+  });
+
+  it("continues, not adds, when the guest presses Enter in the name field", async () => {
+    renderSurvey(["/umfrage/t1"]);
+
+    const name = await screen.findByRole("textbox", { name: "Ihr Name" });
+    await userEvent.type(name, "Guest C{Enter}");
+
+    // The answer is checked as for "Weiter": nothing is ticked yet.
+    expect(
+      await screen.findByText(
+        "Wählen Sie mindestens ein Zeitfenster aus oder geben Sie an, dass kein Zeitfenster passt.",
+      ),
+    ).toBeVisible();
+  });
+});
+
+describe("weekday and cancelling", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(findSurvey).mockResolvedValue(universal);
+  });
+
+  it("names the weekday under every date", async () => {
+    renderSurvey();
+
+    expect(await screen.findByText("Donnerstag")).toBeVisible();
+    expect(screen.getByText("Montag")).toBeVisible();
+  });
+
+  it("throws the draft away when the guest cancels", async () => {
+    renderSurvey([`/umfrage/t1?name=Guest+C&verfuegbar=${k1}`]);
+
+    expect(await screen.findByRole("textbox", { name: "Ihr Name" })).toHaveValue("Guest C");
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "Verfügbar am 21. September 2026, 09:00 bis 11:00" }),
+    );
+    await userEvent.click(screen.getByRole("link", { name: "Abbrechen" }));
+
+    await expect.poll(() => screen.getByRole("textbox", { name: "Ihr Name" })).toHaveValue("");
+    for (const checkbox of screen.getAllByRole("checkbox")) expect(checkbox).not.toBeChecked();
+  });
+});
