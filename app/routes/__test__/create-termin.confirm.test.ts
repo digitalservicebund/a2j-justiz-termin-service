@@ -40,11 +40,12 @@ const published = {
 };
 
 // Far in the future, so the "no past dates" rule never trips these tests. 09:00 to 10:30 Berlin
-// time in January is 08:00 to 09:30 UTC.
+// time in January is 08:00 to 09:30 UTC, which is exactly the minimum duration.
 const completeDraft = {
   id: "d1",
   status: "draft" as const,
   aktenzeichen: "574 C 65412/26",
+  minDurationMinutes: 90,
   slots: [
     { id: "s1", start: new Date("2099-01-05T08:00:00Z"), end: new Date("2099-01-05T09:30:00Z") },
     { id: "s2", start: new Date("2099-01-06T08:00:00Z"), end: new Date("2099-01-06T09:30:00Z") },
@@ -97,6 +98,7 @@ describe("create-termin confirm route", () => {
       ]);
       expect(result.values).toEqual({
         aktenzeichen: "574 C 65412/26",
+        minDurationMinutes: 90,
         slots: [
           {
             day: "05",
@@ -122,6 +124,8 @@ describe("create-termin confirm route", () => {
 
     it.each([
       ["has no Aktenzeichen yet", { aktenzeichen: " " }],
+      ["has no minimum duration yet", { minDurationMinutes: null }],
+      ["has a time slot that is shorter than the minimum duration", { minDurationMinutes: 91 }],
       ["has only one time slot", { slots: completeDraft.slots.slice(0, 1) }],
       ["has no time slot", { slots: [] }],
       [

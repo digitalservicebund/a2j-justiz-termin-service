@@ -27,6 +27,7 @@ import { createTerminBreadcrumbs } from "./create-termin.review";
 import {
   emptySlot,
   MAX_SLOTS,
+  formatMinutes,
   messages,
   parseSlotForm,
   validateSlot,
@@ -65,6 +66,7 @@ export async function loader({ request, params }: { request: Request } & Params)
     user,
     isNew,
     cancelHref: draftHref(appointment.id),
+    minDurationMinutes: appointment.minDurationMinutes ?? null,
     values: source ? rangeToSlot(source) : emptySlot,
   };
 }
@@ -85,7 +87,7 @@ export async function action({ request, params }: { request: Request } & Params)
   }
 
   const others = appointment.slots.filter((slot) => slot.id !== params.slotId).map(rangeToSlot);
-  const result = validateSlot(values, others);
+  const result = validateSlot(values, others, new Date(), appointment.minDurationMinutes ?? null);
   if (!result.success) return reject(result.errors);
 
   const range = slotToRange(values);
@@ -118,7 +120,13 @@ const colonLayout = clusterClassName({ wrap: false, align: "center" });
 const errorId = (group: SlotErrorGroup) => `slot-${group}-error`;
 
 export default function CreateTerminSlot() {
-  const { user, isNew, cancelHref, values: saved } = useLoaderData<typeof loader>();
+  const {
+    user,
+    isNew,
+    cancelHref,
+    minDurationMinutes,
+    values: saved,
+  } = useLoaderData<typeof loader>();
   const result = useActionData<typeof action>();
   const pending = useNavigation().state !== "idle";
 
@@ -191,6 +199,9 @@ export default function CreateTerminSlot() {
                 ? "Geben Sie Ihr verfügbares Zeitfenster an"
                 : "Ändern Sie Ihr verfügbares Zeitfenster"}
             </KernHeading>
+            {minDurationMinutes !== null && (
+              <KernBody>Mindestdauer der Verhandlung: {formatMinutes(minDurationMinutes)}</KernBody>
+            )}
           </KernStack>
 
           <KernCluster gap="md" align="end" className="create-termin-slot__fields">

@@ -6,7 +6,7 @@ import {
   deleteDraftIfEmpty,
   deleteDraftSlot,
   getAppointment,
-  updateDraftAktenzeichen,
+  updateDraftDetails,
 } from "~/adapters/appointments/appointments.server";
 import {
   deleteDraftParticipant,
@@ -23,7 +23,7 @@ vi.mock("~/adapters/appointments/appointments.server", () => ({
   deleteDraftIfEmpty: vi.fn(),
   deleteDraftSlot: vi.fn(),
   getAppointment: vi.fn(),
-  updateDraftAktenzeichen: vi.fn(),
+  updateDraftDetails: vi.fn(),
 }));
 vi.mock("~/adapters/appointments/participants.server", () => ({
   deleteDraftParticipant: vi.fn(),
@@ -62,7 +62,7 @@ describe("create-termin route", () => {
     vi.clearAllMocks();
     vi.mocked(requireRole).mockResolvedValue(judge);
     vi.mocked(createDraftAppointment).mockResolvedValue("new-id");
-    vi.mocked(updateDraftAktenzeichen).mockResolvedValue(true);
+    vi.mocked(updateDraftDetails).mockResolvedValue(true);
     vi.mocked(deleteDraftSlot).mockResolvedValue(true);
     vi.mocked(deleteDraftParticipant).mockResolvedValue(true);
     vi.mocked(listParticipants).mockResolvedValue([
@@ -152,14 +152,20 @@ describe("create-termin route", () => {
         request: post({ intent: "add-slot", aktenzeichen: "  A 1 " }),
       });
 
-      expect(createDraftAppointment).toHaveBeenCalledWith({ db: true }, "1", "A 1");
+      expect(createDraftAppointment).toHaveBeenCalledWith({ db: true }, "1", {
+        aktenzeichen: "A 1",
+        minDurationMinutes: null,
+      });
       expect(location(response)).toBe("/overview/new-id/zeitfenster/neu");
     });
 
     it("creates a draft even when nothing was typed yet", async () => {
       const response = await action({ request: post({ intent: "add-slot", aktenzeichen: "" }) });
 
-      expect(createDraftAppointment).toHaveBeenCalledWith({ db: true }, "1", "");
+      expect(createDraftAppointment).toHaveBeenCalledWith({ db: true }, "1", {
+        aktenzeichen: "",
+        minDurationMinutes: null,
+      });
       expect(location(response)).toBe("/overview/new-id/zeitfenster/neu");
     });
 
@@ -168,7 +174,10 @@ describe("create-termin route", () => {
         request: post({ intent: "add-slot", aktenzeichen: "A 2", appointmentId: "d1" }),
       });
 
-      expect(updateDraftAktenzeichen).toHaveBeenCalledWith({ db: true }, "1", "d1", "A 2");
+      expect(updateDraftDetails).toHaveBeenCalledWith({ db: true }, "1", "d1", {
+        aktenzeichen: "A 2",
+        minDurationMinutes: null,
+      });
       expect(createDraftAppointment).not.toHaveBeenCalled();
       expect(location(response)).toBe("/overview/d1/zeitfenster/neu");
     });
@@ -181,12 +190,12 @@ describe("create-termin route", () => {
         request: post({ intent, aktenzeichen: "A 1", appointmentId: "d1" }),
       });
 
-      expect(updateDraftAktenzeichen).toHaveBeenCalledOnce();
+      expect(updateDraftDetails).toHaveBeenCalledOnce();
       expect(location(response)).toBe(expected);
     });
 
     it("answers 404 when the draft to save into is not the user's draft", async () => {
-      vi.mocked(updateDraftAktenzeichen).mockResolvedValue(false);
+      vi.mocked(updateDraftDetails).mockResolvedValue(false);
 
       await expect(
         action({ request: post({ intent: "add-slot", aktenzeichen: "A", appointmentId: "x" }) }),
@@ -215,7 +224,10 @@ describe("create-termin route", () => {
         request: post({ intent, aktenzeichen: "A 2", appointmentId: "d1" }),
       });
 
-      expect(updateDraftAktenzeichen).toHaveBeenCalledWith({ db: true }, "1", "d1", "A 2");
+      expect(updateDraftDetails).toHaveBeenCalledWith({ db: true }, "1", "d1", {
+        aktenzeichen: "A 2",
+        minDurationMinutes: null,
+      });
       expect(location(response)).toBe(expected);
     });
 
@@ -224,7 +236,10 @@ describe("create-termin route", () => {
         request: post({ intent: "add-person", aktenzeichen: "A 1" }),
       });
 
-      expect(createDraftAppointment).toHaveBeenCalledWith({ db: true }, "1", "A 1");
+      expect(createDraftAppointment).toHaveBeenCalledWith({ db: true }, "1", {
+        aktenzeichen: "A 1",
+        minDurationMinutes: null,
+      });
       expect(location(response)).toBe("/overview/new-id/verfahrensbeteiligte/neu");
     });
 
@@ -251,7 +266,12 @@ describe("create-termin route", () => {
       vi.mocked(listParticipants).mockResolvedValue([]);
 
       const response = await action({
-        request: post({ intent: "next", aktenzeichen: "A 1", appointmentId: "d1" }),
+        request: post({
+          intent: "next",
+          aktenzeichen: "A 1",
+          minDuration: "60",
+          appointmentId: "d1",
+        }),
       });
 
       expect(location(response)).toBe("/overview/d1/confirm");
@@ -282,22 +302,35 @@ describe("create-termin route", () => {
   describe("continuing to the review", () => {
     it("goes to the review of a complete draft", async () => {
       const response = await action({
-        request: post({ intent: "next", aktenzeichen: "A 1", appointmentId: "d1" }),
+        request: post({
+          intent: "next",
+          aktenzeichen: "A 1",
+          minDuration: "60",
+          appointmentId: "d1",
+        }),
       });
 
-      expect(updateDraftAktenzeichen).toHaveBeenCalledWith({ db: true }, "1", "d1", "A 1");
+      expect(updateDraftDetails).toHaveBeenCalledWith({ db: true }, "1", "d1", {
+        aktenzeichen: "A 1",
+        minDurationMinutes: 60,
+      });
       expect(location(response)).toBe("/overview/d1/confirm");
     });
 
     it("needs an Aktenzeichen, and keeps what was typed", async () => {
       const response = (await action({
-        request: post({ intent: "next", aktenzeichen: "  ", appointmentId: "d1" }),
+        request: post({
+          intent: "next",
+          aktenzeichen: "  ",
+          minDuration: "60",
+          appointmentId: "d1",
+        }),
       })) as unknown as DataResponse;
 
       expect(response.init?.status).toBe(400);
       expect(response.data.errors.aktenzeichen).toBe("Geben Sie ein Aktenzeichen an.");
       expect(response.data.aktenzeichen).toBe("  ");
-      expect(updateDraftAktenzeichen).not.toHaveBeenCalled();
+      expect(updateDraftDetails).not.toHaveBeenCalled();
     });
 
     it("needs at least two slots", async () => {
@@ -309,7 +342,12 @@ describe("create-termin route", () => {
       });
 
       const response = (await action({
-        request: post({ intent: "next", aktenzeichen: "A 1", appointmentId: "d1" }),
+        request: post({
+          intent: "next",
+          aktenzeichen: "A 1",
+          minDuration: "60",
+          appointmentId: "d1",
+        }),
       })) as unknown as DataResponse;
 
       expect(response.init?.status).toBe(400);
@@ -318,7 +356,7 @@ describe("create-termin route", () => {
 
     it("reports what is missing when nothing was entered and no draft exists", async () => {
       const response = (await action({
-        request: post({ intent: "next", aktenzeichen: "A 1" }),
+        request: post({ intent: "next", aktenzeichen: "A 1", minDuration: "60" }),
       })) as unknown as DataResponse;
 
       expect(response.init?.status).toBe(400);
@@ -343,13 +381,124 @@ describe("create-termin route", () => {
       });
 
       const response = (await action({
-        request: post({ intent: "next", aktenzeichen: "A 1", appointmentId: "d1" }),
+        request: post({
+          intent: "next",
+          aktenzeichen: "A 1",
+          minDuration: "60",
+          appointmentId: "d1",
+        }),
       })) as unknown as DataResponse;
 
       expect(response.init?.status).toBe(400);
       expect(response.data.errors.rows[0].date).toBe(
         "Das Datum darf nicht in der Vergangenheit liegen.",
       );
+    });
+  });
+
+  describe("minimum duration", () => {
+    it("saves it with the Aktenzeichen on the way to another page", async () => {
+      await action({
+        request: post({ intent: "add-slot", aktenzeichen: "A 1", minDuration: " 90 " }),
+      });
+      await action({
+        request: post({
+          intent: "add-person",
+          aktenzeichen: "A 1",
+          minDuration: "45",
+          appointmentId: "d1",
+        }),
+      });
+
+      expect(createDraftAppointment).toHaveBeenCalledWith({ db: true }, "1", {
+        aktenzeichen: "A 1",
+        minDurationMinutes: 90,
+      });
+      expect(updateDraftDetails).toHaveBeenCalledWith({ db: true }, "1", "d1", {
+        aktenzeichen: "A 1",
+        minDurationMinutes: 45,
+      });
+    });
+
+    it("returns the saved value to the form", async () => {
+      vi.mocked(getAppointment).mockResolvedValue({
+        id: "d1",
+        status: "draft",
+        aktenzeichen: "A 1",
+        minDurationMinutes: 90,
+        slots: [],
+      });
+
+      const result = await loader({
+        request: new Request("http://localhost/overview/new?entwurf=d1"),
+      });
+
+      expect(result.draft?.minDurationMinutes).toBe(90);
+    });
+
+    it.each([
+      ["abc", "Geben Sie die Mindestdauer in ganzen Minuten an, zum Beispiel 30."],
+      ["0", "Geben Sie die Mindestdauer in ganzen Minuten an, zum Beispiel 30."],
+      ["1440", "Die Mindestdauer darf höchstens 1439 Minuten betragen."],
+    ])("refuses %j without saving or leaving, and keeps what was typed", async (typed, message) => {
+      const response = (await action({
+        request: post({
+          intent: "add-slot",
+          aktenzeichen: "A 1",
+          minDuration: typed,
+          appointmentId: "d1",
+        }),
+      })) as unknown as DataResponse;
+
+      expect(response.init?.status).toBe(400);
+      expect(response.data.errors.minDuration).toBe(message);
+      expect(response.data.minDuration).toBe(typed);
+      expect(response.data.aktenzeichen).toBe("A 1");
+      expect(updateDraftDetails).not.toHaveBeenCalled();
+    });
+
+    it("is needed to continue, and is reported together with a missing Aktenzeichen", async () => {
+      const response = (await action({
+        request: post({ intent: "next", aktenzeichen: "", minDuration: "", appointmentId: "d1" }),
+      })) as unknown as DataResponse;
+
+      expect(response.init?.status).toBe(400);
+      expect(response.data.errors).toMatchObject({
+        aktenzeichen: "Geben Sie ein Aktenzeichen an.",
+        minDuration: "Geben Sie eine Mindestdauer an.",
+      });
+      expect(updateDraftDetails).not.toHaveBeenCalled();
+    });
+
+    it("flags every saved slot that is shorter, on its row", async () => {
+      const response = (await action({
+        request: post({
+          intent: "next",
+          aktenzeichen: "A 1",
+          minDuration: "61",
+          appointmentId: "d1",
+        }),
+      })) as unknown as DataResponse;
+
+      expect(response.init?.status).toBe(400);
+      expect(response.data.errors.rows).toEqual({
+        0: { range: "Das Zeitfenster muss mindestens 61 Minuten lang sein." },
+        1: { range: "Das Zeitfenster muss mindestens 61 Minuten lang sein." },
+      });
+      expect(response.data.minDuration).toBe("61");
+    });
+
+    it("accepts slots that are exactly as long", async () => {
+      const response = await action({
+        request: post({
+          intent: "next",
+          aktenzeichen: "A 1",
+          minDuration: "60",
+          appointmentId: "d1",
+        }),
+      });
+
+      expect(location(response)).toBe("/overview/d1/confirm");
     });
   });
 

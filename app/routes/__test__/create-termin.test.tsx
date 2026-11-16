@@ -36,9 +36,11 @@ type Draft = {
   id: string;
   status: string;
   aktenzeichen: string;
+  minDurationMinutes: number | null;
   slots: Slot[];
   participants: Person[];
 };
+type Details = { aktenzeichen: string; minDurationMinutes: number | null };
 
 const drafts = vi.hoisted(() => new Map<string, Draft>());
 
@@ -46,13 +48,13 @@ const drafts = vi.hoisted(() => new Map<string, Draft>());
 vi.mock("~/adapters/appointments/appointments.server", () => {
   let counter = 0;
   return {
-    createDraftAppointment: vi.fn(async (_db, _userId, aktenzeichen: string) => {
-      drafts.set("abc", { id: "abc", status: "draft", aktenzeichen, slots: [], participants: [] });
+    createDraftAppointment: vi.fn(async (_db, _userId, details: Details) => {
+      drafts.set("abc", { id: "abc", status: "draft", ...details, slots: [], participants: [] });
       return "abc";
     }),
-    updateDraftAktenzeichen: vi.fn(async (_db, _userId, id: string, aktenzeichen: string) => {
+    updateDraftDetails: vi.fn(async (_db, _userId, id: string, details: Details) => {
       const draft = drafts.get(id);
-      if (draft) draft.aktenzeichen = aktenzeichen;
+      if (draft) Object.assign(draft, details);
       return Boolean(draft);
     }),
     addDraftSlot: vi.fn(async (_db, _userId, id: string, range: { start: Date; end: Date }) => {
@@ -76,6 +78,7 @@ vi.mock("~/adapters/appointments/appointments.server", () => {
     deleteDraftIfEmpty: vi.fn(async (_db, _userId, id: string) => {
       const draft = drafts.get(id);
       if (!draft || draft.aktenzeichen.trim() !== "") return false;
+      if (draft.minDurationMinutes !== null) return false;
       if (draft.slots.length > 0 || draft.participants.length > 0) return false;
       drafts.delete(id);
       return true;
@@ -144,10 +147,19 @@ function seedDraft(
   aktenzeichen = "574 C 65412/26",
   slots: Array<[number, number, number]> = [],
   participants: Person[] = [],
+  // No seeded slot is shorter than an hour.
+  minDurationMinutes: number | null = 60,
 ) {
   // Copies, so that a test that edits a person cannot change the fixture for the next one.
   const copies = participants.map((person) => ({ ...person }));
-  drafts.set("abc", { id: "abc", status: "draft", aktenzeichen, slots: [], participants: copies });
+  drafts.set("abc", {
+    id: "abc",
+    status: "draft",
+    aktenzeichen,
+    minDurationMinutes,
+    slots: [],
+    participants: copies,
+  });
   for (const [day, hour, endHour] of slots) addSlot(day, hour, endHour);
 }
 
@@ -187,6 +199,7 @@ function renderPage(entry = "/overview/new") {
 }
 
 const TOO_FEW = "Geben Sie mindestens zwei Zeitfenster an.";
+const MIN_DURATION = "Mindestdauer der Verhandlung in Minuten";
 const user = () => userEvent.setup();
 
 async function fillSlot(day: string, start: [string, string], end: [string, string]) {
@@ -220,6 +233,11 @@ describe("CreateTermin form", () => {
       await screen.findByRole("heading", { level: 1, name: "Geben Sie die Verhandlungsdaten an" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Aktenzeichen" })).toHaveValue("");
+    const minDuration = screen.getByRole("textbox", { name: MIN_DURATION });
+    expect(minDuration).toHaveValue("");
+    expect(minDuration).toHaveAccessibleDescription(
+      "Zum Beispiel 15, 30, 60, 90 oder 120. Kein Zeitfenster darf kürzer sein.",
+    );
     expect(
       screen.getByRole("heading", { name: "Geben Sie alle Verfahrensbeteiligten an" }),
     ).toBeInTheDocument();
@@ -259,6 +277,7 @@ describe("CreateTermin form", () => {
   it("keeps what was typed when going to the slot page and back", async () => {
     renderPage();
     await user().type(await screen.findByRole("textbox", { name: "Aktenzeichen" }), "574 C 1/26");
+    await user().type(screen.getByRole("textbox", { name: MIN_DURATION }), "90");
 
     await user().click(screen.getByRole("button", { name: "Zeitfenster hinzufügen" }));
     await screen.findByRole("heading", { name: "Geben Sie Ihr verfügbares Zeitfenster an" });
@@ -266,6 +285,7 @@ describe("CreateTermin form", () => {
     await user().click(screen.getByRole("button", { name: "Speichern" }));
 
     expect(await screen.findByRole("textbox", { name: "Aktenzeichen" })).toHaveValue("574 C 1/26");
+    expect(screen.getByRole("textbox", { name: MIN_DURATION })).toHaveValue("90");
     expect(rows()).toHaveLength(1);
     expect(within(rows()[0]!).getByText("09:00 bis 10:30")).toBeInTheDocument();
   });
@@ -340,6 +360,54 @@ describe("CreateTermin form", () => {
     await user().click(screen.getByRole("button", { name: "Weiter" }));
     expect(await screen.findByText(TOO_FEW)).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Aktenzeichen" })).toHaveValue("  A 1");
+  });
+
+  it("asks for the minimum duration when continuing without one, and for a whole number", async () => {
+    seedDraft(
+      "A 1",
+      [
+        [5, 9, 10],
+        [6, 9, 10],
+      ],
+      [],
+      null,
+    );
+    renderPage("/overview/new?entwurf=abc");
+
+    await user().click(await screen.findByRole("button", { name: "Weiter" }));
+
+    expect(await screen.findByText("Geben Sie eine Mindestdauer an.")).toBeVisible();
+    expect(screen.getByRole("textbox", { name: MIN_DURATION })).toBeInvalid();
+
+    await user().type(screen.getByRole("textbox", { name: MIN_DURATION }), "1,5");
+    await user().click(screen.getByRole("button", { name: "Weiter" }));
+
+    expect(
+      await screen.findByText("Geben Sie die Mindestdauer in ganzen Minuten an, zum Beispiel 30."),
+    ).toBeVisible();
+    expect(screen.getByRole("textbox", { name: MIN_DURATION })).toHaveValue("1,5");
+    expect(drafts.get("abc")!.minDurationMinutes).toBeNull();
+  });
+
+  it("flags the saved slots that are shorter than a raised minimum duration", async () => {
+    seedDraft("A 1", [
+      [5, 9, 10],
+      [6, 9, 11],
+    ]);
+    renderPage("/overview/new?entwurf=abc");
+    const minDuration = await screen.findByRole("textbox", { name: MIN_DURATION });
+    expect(minDuration).toHaveValue("60");
+
+    await user().clear(minDuration);
+    await user().type(minDuration, "90");
+    await user().click(screen.getByRole("button", { name: "Weiter" }));
+
+    const message = await screen.findByText(
+      "Das Zeitfenster muss mindestens 90 Minuten lang sein.",
+    );
+    expect(rows()[0]).toContainElement(message);
+    expect(rows()[1]!.textContent).not.toContain("mindestens");
+    expect(screen.getByRole("textbox", { name: MIN_DURATION })).toHaveValue("90");
   });
 
   it("submits 'Weiter', not a slot button, when Enter is pressed in the Aktenzeichen", async () => {
@@ -627,6 +695,42 @@ describe("CreateTermin slot page", () => {
     expect(drafts.get("abc")!.slots).toHaveLength(1);
   });
 
+  it("names the minimum duration and refuses a slot that is shorter", async () => {
+    seedDraft("A 1", [], [], 90);
+    renderPage("/overview/abc/zeitfenster/neu");
+    expect(await screen.findByText("Mindestdauer der Verhandlung: 90 Minuten")).toBeVisible();
+
+    await fillSlot("5", ["9", "0"], ["10", "29"]);
+    await user().click(screen.getByRole("button", { name: "Speichern" }));
+
+    const end = within(await screen.findByRole("group", { name: "Ende" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Das Zeitfenster muss mindestens 90 Minuten lang sein.",
+    );
+    expect(end.getByRole("textbox", { name: "Minute" })).toBeInvalid();
+    expect(end.getByRole("textbox", { name: "Minute" })).toHaveValue("29");
+    expect(drafts.get("abc")!.slots).toHaveLength(0);
+
+    await fillSlot("5", ["9", "0"], ["10", "30"]);
+    await user().click(screen.getByRole("button", { name: "Speichern" }));
+
+    await screen.findByRole("table", { name: "Zeitfenster" });
+    expect(drafts.get("abc")!.slots).toHaveLength(1);
+  });
+
+  it("accepts a slot of any length while the draft has no minimum duration", async () => {
+    seedDraft("A 1", [], [], null);
+    renderPage("/overview/abc/zeitfenster/neu");
+    await screen.findByRole("group", { name: "Datum" });
+    expect(screen.queryByText(/Mindestdauer/)).not.toBeInTheDocument();
+
+    await fillSlot("5", ["9", "0"], ["9", "1"]);
+    await user().click(screen.getByRole("button", { name: "Speichern" }));
+
+    await screen.findByRole("table", { name: "Zeitfenster" });
+    expect(drafts.get("abc")!.slots).toHaveLength(1);
+  });
+
   it("points out an overlap with another slot of the draft", async () => {
     seedDraft("A 1", [[5, 9, 11]]);
     renderPage("/overview/abc/zeitfenster/neu");
@@ -678,6 +782,8 @@ describe("CreateTermin review step", () => {
 
     const data = screen.getByRole("group", { name: "Verhandlungsdaten" });
     expect(within(data).getByText("574 C 65412/26")).toBeInTheDocument();
+    expect(within(data).getByText("Mindestdauer")).toBeInTheDocument();
+    expect(within(data).getByText("60 Minuten")).toBeInTheDocument();
     const windows = screen.getByRole("group", { name: "Zeitfenster" });
     expect(within(windows).getByText("5. Januar 2099")).toBeInTheDocument();
     expect(within(windows).getByText("6. Januar 2099")).toBeInTheDocument();

@@ -7,6 +7,7 @@ import {
   messages,
   parseSlotForm,
   aktenzeichenProblem,
+  parseMinDuration,
   validateSlot,
   validateCreateTermin,
   type SlotInput,
@@ -28,8 +29,12 @@ const slotOn = (overrides: Partial<SlotInput> = {}): SlotInput => ({
 // Two valid, non-overlapping windows: the smallest input that passes.
 const validSlots = () => [slotOn(), slotOn({ day: "10" })];
 
-const validate = (slots: SlotInput[], aktenzeichen = "574 C 65412/26") =>
-  validateCreateTermin({ aktenzeichen, slots }, now);
+// A minimum of one minute lets every window through that ends after it starts.
+const validate = (
+  slots: SlotInput[],
+  aktenzeichen = "574 C 65412/26",
+  minDurationMinutes: number | null = 1,
+) => validateCreateTermin({ aktenzeichen, minDurationMinutes, slots }, now);
 
 function errorsOf(result: ReturnType<typeof validate>) {
   if (result.success) throw new Error("expected validation to fail");
@@ -40,6 +45,39 @@ describe("validateCreateTermin", () => {
   it("accepts two valid windows and ignores empty rows", () => {
     expect(validate([...validSlots(), { ...emptySlot }, { ...emptySlot }])).toEqual({
       success: true,
+    });
+  });
+
+  describe("minimum duration", () => {
+    it("requires a value", () => {
+      expect(errorsOf(validate(validSlots(), "A", null)).minDuration).toBe(
+        "Geben Sie eine Mindestdauer an.",
+      );
+    });
+
+    it("accepts windows that are exactly as long", () => {
+      expect(validate(validSlots(), "A", 30)).toEqual({ success: true });
+    });
+
+    it("flags every window that is shorter, on its row", () => {
+      const long = slotOn({ day: "10", endHour: "17" });
+      expect(errorsOf(validate([slotOn(), long, slotOn({ day: "11" })], "A", 31))).toEqual({
+        rows: {
+          0: { range: "Das Zeitfenster muss mindestens 31 Minuten lang sein." },
+          2: { range: "Das Zeitfenster muss mindestens 31 Minuten lang sein." },
+        },
+      });
+    });
+
+    it("reports an end before the start as that, not as too short", () => {
+      const { rows } = errorsOf(
+        validate([slotOn({ endHour: "15", endMinute: "00" }), slotOn()], "A", 30),
+      );
+      expect(rows[0]).toEqual({ range: messages.range });
+    });
+
+    it("does not hold windows to a length while the minimum is missing", () => {
+      expect(errorsOf(validate(validSlots(), "A", null)).rows).toEqual({});
     });
   });
 
@@ -180,7 +218,10 @@ describe("validateCreateTermin", () => {
       const lateNow = new Date("2026-10-21T22:30:00Z");
       const yesterdayInBerlin = slotOn({ day: "21", month: "10" });
       const { rows } = errorsOf(
-        validateCreateTermin({ aktenzeichen: "A", slots: [yesterdayInBerlin, slotOn()] }, lateNow),
+        validateCreateTermin(
+          { aktenzeichen: "A", minDurationMinutes: 30, slots: [yesterdayInBerlin, slotOn()] },
+          lateNow,
+        ),
       );
       expect(rows[0]?.date).toBe("Das Datum darf nicht in der Vergangenheit liegen.");
     });
@@ -249,13 +290,19 @@ describe("validateCreateTermin", () => {
       // 00:30 on 2026-10-22 in Berlin is still 2026-10-21 in UTC.
       const afterMidnight = new Date("2026-10-21T22:30:00Z");
       const slots = [slotOn({ day: "22", month: "10" }), slotOn({ day: "23", month: "10" })];
-      expect(validateCreateTermin({ aktenzeichen: "A", slots }, afterMidnight)).toEqual({
+      expect(
+        validateCreateTermin({ aktenzeichen: "A", minDurationMinutes: 30, slots }, afterMidnight),
+      ).toEqual({
         success: true,
       });
       expect(
         errorsOf(
           validateCreateTermin(
-            { aktenzeichen: "A", slots: [slotOn({ day: "21", month: "10" }), ...slots] },
+            {
+              aktenzeichen: "A",
+              minDurationMinutes: 30,
+              slots: [slotOn({ day: "21", month: "10" }), ...slots],
+            },
             afterMidnight,
           ),
         ).rows[0],
@@ -366,7 +413,45 @@ describe("aktenzeichenProblem", () => {
   });
 });
 
-const check = (slot: SlotInput, others: SlotInput[] = []) => validateSlot(slot, others, now);
+describe("parseMinDuration", () => {
+  it.each([
+    ["15", 15],
+    [" 120 ", 120],
+    ["1", 1],
+    ["090", 90],
+    ["1439", 1439],
+  ])("reads %j as minutes", (typed, minutes) => {
+    expect(parseMinDuration(typed, { required: true })).toEqual({ minutes });
+  });
+
+  it("only asks for one when it is required", () => {
+    expect(parseMinDuration("  ", { required: true })).toEqual({
+      problem: messages.minDurationRequired,
+    });
+    expect(parseMinDuration("  ", { required: false })).toEqual({ minutes: null });
+  });
+
+  it.each(["0", "-30", "1,5", "1.5", "30 min", "eine Stunde", "1e2"])(
+    "rejects %j, which is not a whole number of minutes",
+    (typed) => {
+      expect(parseMinDuration(typed, { required: false })).toEqual({
+        problem: messages.minDurationInvalid,
+      });
+    },
+  );
+
+  it("rejects more minutes than a window within one day can have", () => {
+    expect(parseMinDuration("1440", { required: false })).toEqual({
+      problem: "Die Mindestdauer darf höchstens 1439 Minuten betragen.",
+    });
+  });
+});
+
+const check = (
+  slot: SlotInput,
+  others: SlotInput[] = [],
+  minDurationMinutes: number | null = null,
+) => validateSlot(slot, others, now, minDurationMinutes);
 
 function slotErrors(result: ReturnType<typeof check>) {
   if (result.success) throw new Error("expected validation to fail");
@@ -395,6 +480,24 @@ describe("validateSlot", () => {
     expect(slotErrors(check(slotOn({ endHour: "15", endMinute: "30" }))).range).toBe(
       messages.range,
     );
+  });
+
+  it("flags a slot that is shorter than the minimum duration", () => {
+    expect(slotErrors(check(slotOn(), [], 31))).toEqual({
+      range: "Das Zeitfenster muss mindestens 31 Minuten lang sein.",
+    });
+    expect(slotErrors(check(slotOn({ endHour: "15", endMinute: "31" }), [], 1 + 1)).range).toBe(
+      "Das Zeitfenster muss mindestens 2 Minuten lang sein.",
+    );
+  });
+
+  it("accepts a slot that is exactly as long as the minimum duration, or longer", () => {
+    expect(check(slotOn(), [], 30)).toEqual({ success: true });
+    expect(check(slotOn({ endHour: "18" }), [], 120)).toEqual({ success: true });
+  });
+
+  it("names a minimum of one minute in the singular", () => {
+    expect(messages.tooShort(1)).toBe("Das Zeitfenster muss mindestens 1 Minute lang sein.");
   });
 
   it("flags times the clock change skips or repeats", () => {

@@ -16,7 +16,12 @@ import { KernIcon } from "~/components/shared/kern/KernIcon";
 import { formatCalendarDate } from "~/core/domain/time/format";
 import { useHydrated } from "~/lib/use-hydrated";
 
-import { isEmptySlot, type CreateTerminValues, type SlotInput } from "./create-termin.schema";
+import {
+  formatMinutes,
+  isEmptySlot,
+  type CreateTerminValues,
+  type SlotInput,
+} from "./create-termin.schema";
 
 import "./create-termin.css";
 import "./create-termin.review.css";
@@ -186,6 +191,11 @@ export function CreateTerminReview({
               <KernDescriptionListItem label="Aktenzeichen">
                 {values.aktenzeichen}
               </KernDescriptionListItem>
+              {values.minDurationMinutes !== null && (
+                <KernDescriptionListItem label="Mindestdauer">
+                  {formatMinutes(values.minDurationMinutes)}
+                </KernDescriptionListItem>
+              )}
             </KernDescriptionList>
           ),
         },

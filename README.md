@@ -273,9 +273,9 @@ The initial schema is split deliberately:
   sets `emailVerified` to `false`; email normalization happens in the application.
   Role names are validated in the application, not constrained in the database.
 
-Migrations `0003` to `0010` add the appointment, time slot and participant tables, the confirmed
-window, survey tokens, allowed domains, the calendar sequence and token, and participant e-mail
-addresses. Read the files for the details.
+Migrations `0003` to `0011` add the appointment, time slot and participant tables, the confirmed
+window, survey tokens, allowed domains, the calendar sequence and token, participant e-mail
+addresses, and the minimum duration of an appointment. Read the files for the details.
 
 Keep historical migrations unchanged after deployment; generate new migrations
 when upgrading Better Auth or changing the application schema.
@@ -443,6 +443,7 @@ the copy they hold.
 - Participants answer without signing in, through a survey link. A personal link answers once;
   the universal link of an appointment starts a new participant every time.
 - The `richter` explicitly confirms one slot as the final appointment.
+- Every Terminumfrage has a minimum duration in minutes. No proposed time slot may be shorter.
 
 ## Code Style & Formatting
 
