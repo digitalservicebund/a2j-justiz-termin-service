@@ -1,0 +1,84 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    cooldown:
+      default-days: 3
+    commit-message:
+      prefix: "chore(deps)"
+    ignore:
+      # @types/node follows the Node major, which is upgraded by hand together with .tool-versions and engines.node
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+    groups:
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+      react-router:
+        patterns:
+          - "react-router"
+          - "@react-router/*"
+      vitest:
+        patterns:
+          - "vite"
+          - "vitest"
+          - "@vitest/*"
+      lint:
+        patterns:
+          - "oxlint"
+          - "oxfmt"
+          - "knip"
+      production-dependencies:
+        dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
+      development-dependencies:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    cooldown:
+      default-days: 3
+    commit-message:
+      prefix: "chore(deps)"
+    ignore:
+      # Node majors are upgraded by hand, together with .tool-versions and engines.node
+      - dependency-name: "node"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "docker-compose"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    cooldown:
+      default-days: 3
+    commit-message:
+      prefix: "chore(deps)"
+    ignore:
+      # Postgres 19 can't read data volumes created by 18; upgrade by hand and reset local volumes
+      - dependency-name: "postgres"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    cooldown:
+      default-days: 3
+    commit-message:
+      prefix: "chore(ci)"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
