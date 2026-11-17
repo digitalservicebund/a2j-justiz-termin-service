@@ -235,10 +235,6 @@ from it, so changing it is a code change. Requests for `/` are redirected to the
 path outside the prefix is a 404. The session cookie is named `jts.session_token` and scoped to
 the prefix.
 
-The health checks also still answer at their old unprefixed URLs (`/health*`) so the Kubernetes
-probes can be switched without downtime. The steps to remove that are in
-`app/lib/legacy-health.ts`.
-
 ### Configuration
 
 [`.env.defaults`](.env.defaults) holds the local connection settings and matches `docker-compose.yml`. `pnpm dev`, `pnpm start` and `pnpm db:migrate` load it, plus an optional, git-ignored `.env.local` for overrides. A git-ignored `.env` is loaded last; `scripts/worktree-setup.sh` writes it (see "Parallel work with git worktrees").
