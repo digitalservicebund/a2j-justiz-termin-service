@@ -19,7 +19,6 @@ export function MainNav({ current }: Readonly<MainNavProps>) {
           to: "/overview",
           current: current === "overview",
         },
-        { label: "Abwesenheiten", icon: <A2JIcon name="remove-circle" size="large" /> },
         {
           label: "Kalender abonnieren",
           icon: <A2JIcon name="calendar-add" size="large" />,

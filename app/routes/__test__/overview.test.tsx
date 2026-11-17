@@ -201,7 +201,7 @@ describe("Overview", () => {
       within(nav)
         .getAllByRole("listitem")
         .map((item) => item.textContent),
-    ).toEqual(["Übersicht", "Abwesenheiten", "Kalender abonnieren", "Einstellungen"]);
+    ).toEqual(["Übersicht", "Kalender abonnieren", "Einstellungen"]);
     expect(within(nav).getAllByRole("link")).toHaveLength(2);
   });
 

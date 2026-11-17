@@ -182,7 +182,7 @@ describe("survey result page", () => {
       within(nav)
         .getAllByRole("listitem")
         .map((item) => item.textContent),
-    ).toEqual(["Übersicht", "Abwesenheiten", "Kalender abonnieren", "Einstellungen"]);
+    ).toEqual(["Übersicht", "Kalender abonnieren", "Einstellungen"]);
     expect(within(nav).getByRole("link", { name: "Übersicht" })).toHaveAttribute(
       "href",
       "/overview",

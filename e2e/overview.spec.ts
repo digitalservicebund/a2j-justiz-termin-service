@@ -160,7 +160,6 @@ test("overview shows the sidebar with the overview and the calendar subscription
   );
   await expect(nav.getByRole("link", { name: "Kalender abonnieren" })).toBeVisible();
   await expect(nav.getByRole("link")).toHaveCount(2);
-  await expect(nav.getByText("Abwesenheiten")).toBeVisible();
   await expect(nav.getByText("Einstellungen")).toBeVisible();
 });
 
