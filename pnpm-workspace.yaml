@@ -3,3 +3,6 @@ allowBuilds:
 
 minimumReleaseAgeExclude:
   - body-parser@2.4.0
+
+# Save exact versions on `pnpm add`. pnpm-lock.yaml pins the installed versions and Dependabot bumps them.
+savePrefix: ""
