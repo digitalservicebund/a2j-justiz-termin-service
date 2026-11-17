@@ -7,7 +7,6 @@ import { migrateToLatest } from "./app/database/migrate.ts";
 import { accessLogFormat } from "./app/lib/access-log.ts";
 import { BASE_PATH } from "./app/lib/base-path.ts";
 import { limitRequestBody } from "./app/lib/body-limit.ts";
-import { rewriteLegacyHealthPath } from "./app/lib/legacy-health.ts";
 import { logInfo } from "./app/lib/logging.ts";
 
 // Short-circuit the type-checking of the built output.
@@ -36,8 +35,6 @@ app.use((_req, res, next) => {
   next();
 });
 
-// LEGACY: serves the old /health* URLs, see legacy-health.ts for how to remove it.
-app.use(rewriteLegacyHealthPath);
 // Convenience for visitors of the bare host. Everything else outside BASE_PATH is a 404.
 app.get("/", (_req, res) => res.redirect(302, `${BASE_PATH}/`));
 // The router's basename ends in a slash (see react-router.config.ts), so the front page only exists

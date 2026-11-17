@@ -80,19 +80,6 @@ test("the session cookie is named and scoped for this app", async ({ page, users
   expect(cookies.some((cookie) => cookie.name.startsWith("better-auth"))).toBe(false);
 });
 
-// LEGACY: delete this test together with app/lib/legacy-health.ts, see the clean-up steps there.
-test("the health checks answer under the base path and, for now, at their old URLs", async ({
-  request,
-}) => {
-  for (const path of ["/health", "/health/database", "/health/smtp"]) {
-    for (const url of [`${BASE_PATH}${path}`, path]) {
-      const response = await request.get(url);
-      expect(response.status(), url).toBe(200);
-    }
-  }
-  expect(await (await request.get(`${BASE_PATH}/health`)).json()).toEqual({ status: "ok" });
-});
-
 test("the base path without the trailing slash redirects to the front page", async ({
   request,
 }) => {
