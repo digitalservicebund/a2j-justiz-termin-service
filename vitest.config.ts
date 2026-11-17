@@ -19,18 +19,11 @@ export default defineConfig({
       exclude: [
         "app/**/*.d.ts",
         "app/routes.ts",
-        "app/root.tsx",
-        // Imports the React Router server build, which only exists in a Vite build.
+        // Imports a virtual module from the React Router Vite plugin, which Vitest doesn't load,
+        // so instrumenting this file breaks test:coverage.
         "app/app.ts",
-        "app/bootstrap.ts",
         "app/database/migrations/**",
-        "app/welcome/**",
-        "app/core/ports/**",
-        "app/adapters/inMemory/**",
         "**/*.test.{ts,tsx}",
-        "**/node_modules/**",
-        "**/build/**",
-        "**/.react-router/**",
       ],
     },
   },
