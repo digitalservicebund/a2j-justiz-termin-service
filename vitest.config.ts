@@ -20,6 +20,8 @@ export default defineConfig({
         "app/**/*.d.ts",
         "app/routes.ts",
         "app/root.tsx",
+        // Imports the React Router server build, which only exists in a Vite build.
+        "app/app.ts",
         "app/bootstrap.ts",
         "app/welcome/**",
         "app/core/ports/**",
