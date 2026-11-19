@@ -200,7 +200,8 @@ app/
 doc/adr/                    # Architecture decision records
 ```
 
-Tests live alongside their source in `__test__` subdirectories (e.g. `components/shared/__test__/`).
+Unit tests live next to their source as `*.test.ts(x)` (e.g. `components/shared/FlowPage.test.tsx`).
+Shared test helpers live in `tests/` and are imported with `~tests/…`.
 
 ### Styling
 

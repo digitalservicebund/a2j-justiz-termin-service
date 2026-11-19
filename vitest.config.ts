@@ -4,12 +4,13 @@ export default defineConfig({
   resolve: {
     alias: {
       "~": new URL("./app", import.meta.url).pathname,
+      "~tests": new URL("./tests", import.meta.url).pathname,
     },
   },
   test: {
     environment: "jsdom",
     globals: true,
-    include: ["./app/**/__test__/**/*.test.{ts,tsx}"],
+    include: ["./app/**/*.test.{ts,tsx}"],
     pool: "threads",
     setupFiles: ["vitest.setup.ts"],
     coverage: {
