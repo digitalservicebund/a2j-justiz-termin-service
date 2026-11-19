@@ -36,7 +36,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: 0,
-  workers: process.env.CI ? 2 : "50%",
+  workers: process.env.CI ? "75%" : "50%",
   timeout: 30_000,
   // On CI the github reporter turns each failure into an annotation on the pull request.
   reporter: [
