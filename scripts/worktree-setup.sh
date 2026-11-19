@@ -67,12 +67,12 @@ WORKTREE_SLOT=$slot
 COMPOSE_PROJECT_NAME=jts-slot-$slot
 COMPOSE_BIND_ADDRESS=127.0.0.1
 POSTGRES_HOST_PORT=$((5433 + slot))
-SMTP_HOST_PORT=$((587 + slot))
+SMTP_HOST_PORT=$((2525 + slot))
 MAILPIT_HOST_PORT=$((8125 + slot))
 PORT=$app_port
 BASE_URL=http://localhost:$app_port
 DATABASE_PORT=$((5433 + slot))
-SMTP_PORT=$((587 + slot))
+SMTP_PORT=$((2525 + slot))
 EOF
 
 # Personal overrides (for example credentials injected locally) are shared, not copied.

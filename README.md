@@ -154,10 +154,10 @@ dependencies and starts that worktree's Compose project. `pnpm dev`, `pnpm db:mi
 `docker compose` pick the file up automatically. The main checkout is slot 0 and keeps the
 default ports.
 
-| Slot | App    | Postgres | SMTP  | Mailpit | Compose project             | `pnpm test:e2e` ports (app / Postgres / SMTP / Mailpit) |
-| ---- | ------ | -------- | ----- | ------- | --------------------------- | ------------------------------------------------------- |
-| 0    | 3000   | 5433     | 587   | 8025    | `a2j-justiz-termin-service` | 3109 / 5544 / 1026 / 8026, project `jts-e2e`            |
-| N    | 3000+N | 5433+N   | 587+N | 8125+N  | `jts-slot-N`                | 3109+N / 5544+N / 1026+N / 8026+N, project `jts-e2e-N`  |
+| Slot | App    | Postgres | SMTP   | Mailpit | Compose project             | `pnpm test:e2e` ports (app / Postgres / SMTP / Mailpit) |
+| ---- | ------ | -------- | ------ | ------- | --------------------------- | ------------------------------------------------------- |
+| 0    | 3000   | 5433     | 2525   | 8025    | `a2j-justiz-termin-service` | 3109 / 5544 / 1026 / 8026, project `jts-e2e`            |
+| N    | 3000+N | 5433+N   | 2525+N | 8125+N  | `jts-slot-N`                | 3109+N / 5544+N / 1026+N / 8026+N, project `jts-e2e-N`  |
 
 `e2e/run.sh` reads the slot from `.env` (or `E2E_SLOT=N pnpm test:e2e`), so E2E runs in different
 worktrees do not collide. Each run still starts a full Docker stack, so run only a few at once.
@@ -303,7 +303,7 @@ curl localhost:3000/verhandlungstermin-finder/health/database
 
 ### Local SMTP mock
 
-`docker compose up -d` also starts [Mailpit](https://mailpit.axllent.org/), a catch-all SMTP server that keeps every mail it receives inside the container and never relays anything. `.env.defaults` points the app at it (`localhost:587`, any credentials, no STARTTLS), so nothing you send locally leaves your machine.
+`docker compose up -d` also starts [Mailpit](https://mailpit.axllent.org/), a catch-all SMTP server that keeps every mail it receives inside the container and never relays anything. `.env.defaults` points the app at it (`localhost:2525`, any credentials, no STARTTLS), so nothing you send locally leaves your machine.
 
 - Web UI to read the received mails: http://localhost:8025
 - REST API, e.g. `curl localhost:8025/api/v1/messages`
