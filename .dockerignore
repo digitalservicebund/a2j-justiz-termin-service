@@ -15,4 +15,5 @@
 !scripts/create-admin.ts
 
 # Not needed in the image, even inside allowed folders
-app/**/__test__
+app/**/*.test.ts
+app/**/*.test.tsx

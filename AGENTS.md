@@ -39,7 +39,8 @@ Several agents can work at the same time, each in its own git worktree (`git wor
 
 ## Tests
 
-- Unit and component tests live next to the code in `__test__/` folders. E2E specs live in `e2e/`.
+- Unit and component tests live next to the code they test as `*.test.ts(x)`, e.g. `app/components/shared/FlowPage.test.tsx`. E2E specs live in `e2e/`.
+- Shared test helpers live in `tests/` and are imported with `~tests/…`.
 - Add or update tests for every behaviour change, including the failure cases.
 
 ## Test and placeholder data
