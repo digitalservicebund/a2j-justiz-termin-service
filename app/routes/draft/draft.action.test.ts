@@ -66,8 +66,8 @@ describe("create-termin route", () => {
     vi.mocked(deleteDraftSlot).mockResolvedValue(true);
     vi.mocked(deleteDraftParticipant).mockResolvedValue(true);
     vi.mocked(listParticipants).mockResolvedValue([
-      { id: "p1", email: "person.a@example.com", name: null },
-      { id: "p2", email: null, name: "Person B" },
+      { id: "p1", email: "person.a@example.com", safeId: null, name: null },
+      { id: "p2", email: null, safeId: null, name: "Person B" },
     ]);
     vi.mocked(getAppointment).mockResolvedValue({
       id: "d1",
@@ -116,8 +116,8 @@ describe("create-termin route", () => {
         id: "d1",
         aktenzeichen: "A 1",
         participants: [
-          { id: "p1", email: "person.a@example.com", name: null },
-          { id: "p2", email: null, name: "Person B" },
+          { id: "p1", email: "person.a@example.com", safeId: null, name: null },
+          { id: "p2", email: null, safeId: null, name: "Person B" },
         ],
         slots: [
           { id: "s5", date: "5. Januar 2099", time: "09:00 bis 10:00" },

@@ -41,9 +41,11 @@ type TimeSlotsTable = {
 type ParticipantsTable = {
   id: Generated<string>;
   appointment_id: string;
-  // A person has a name, an e-mail address or both. Use displayName() to read "the name".
+  // A person has at least one of a name, an e-mail address and a SAFE-ID. Select participantName to
+  // read "the name".
   name: string | null;
   email: string | null;
+  safe_id: string | null;
   type: LinkType;
   token: string | null;
   last_accessed_at: Date | string | null;

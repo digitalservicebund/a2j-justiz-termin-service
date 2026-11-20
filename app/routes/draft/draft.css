@@ -36,3 +36,9 @@
   color: var(--kern-color-layout-text-muted);
   font-weight: var(--kern-typography-font-weight-regular);
 }
+
+/* A SAFE-ID is one long word without spaces, so it may break anywhere instead of widening the
+   table. */
+.create-termin__safe-id {
+  overflow-wrap: anywhere;
+}

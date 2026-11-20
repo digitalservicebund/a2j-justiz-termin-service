@@ -57,7 +57,11 @@ export async function loader({ request, params }: { request: Request } & Params)
   return {
     user,
     cancelHref: draftPath(appointment.id),
-    values: { email: person?.email ?? "", name: person?.name ?? "" } satisfies ParticipantFields,
+    values: {
+      email: person?.email ?? "",
+      safeId: person?.safeId ?? "",
+      name: person?.name ?? "",
+    } satisfies ParticipantFields,
   };
 }
 
@@ -112,7 +116,7 @@ export default function CreateTerminParticipant() {
               Verfahrensbeteiligte
             </KernBody>
             <KernHeading className="kern-m-none" size="large" level={1}>
-              Wie lautet die E-Mail-Adresse der Person?
+              Wie erreichen Sie die Person?
             </KernHeading>
           </KernStack>
 
@@ -122,12 +126,33 @@ export default function CreateTerminParticipant() {
                 id="email"
                 name="email"
                 type="email"
-                label="E-Mail-Adresse"
+                label={
+                  <>
+                    E-Mail-Adresse <span className="create-termin__optional">- Optional</span>
+                  </>
+                }
                 error={errors.email}
                 autoComplete="off"
                 defaultValue={values.email}
                 // Remounts when a rejected submit brings back what was typed.
                 key={`email-${values.email}`}
+              />
+            </FieldColumn>
+            <FieldColumn size="medium">
+              <KernFormInput
+                id="safeId"
+                name="safeId"
+                label={
+                  <>
+                    SAFE-ID <span className="create-termin__optional">- Optional</span>
+                  </>
+                }
+                hint="Ergänzen Sie die SAFE-ID, wenn die Person ein elektronisches Postfach hat, zum Beispiel beA."
+                error={errors.safeId}
+                autoComplete="off"
+                spellCheck={false}
+                defaultValue={values.safeId}
+                key={`safeId-${values.safeId}`}
               />
             </FieldColumn>
             <FieldColumn size="medium">
@@ -139,7 +164,7 @@ export default function CreateTerminParticipant() {
                     Name <span className="create-termin__optional">- Optional</span>
                   </>
                 }
-                hint="Ergänzen Sie den Namen, wenn Sie keine persönliche E-Mail-Adresse der Person haben."
+                hint="Ergänzen Sie den Namen, wenn Sie weder eine persönliche E-Mail-Adresse noch eine SAFE-ID der Person haben."
                 error={errors.name}
                 autoComplete="off"
                 defaultValue={values.name}

@@ -69,7 +69,7 @@ describe("create-termin confirm route", () => {
     vi.mocked(getAppointment).mockResolvedValue(published);
     vi.mocked(nextCalendarSequence).mockResolvedValue(1);
     vi.mocked(listParticipants).mockResolvedValue([
-      { id: "p1", email: "person.a@example.com", name: "Person A" },
+      { id: "p1", email: "person.a@example.com", safeId: null, name: "Person A" },
     ]);
   });
 
@@ -94,7 +94,7 @@ describe("create-termin confirm route", () => {
       expect(getAppointment).toHaveBeenCalledWith({ db: true }, "1", "d1");
       expect(listParticipants).toHaveBeenCalledWith({ db: true }, "1", "d1");
       expect(result.participants).toEqual([
-        { id: "p1", email: "person.a@example.com", name: "Person A" },
+        { id: "p1", email: "person.a@example.com", safeId: null, name: "Person A" },
       ]);
       expect(result.values).toEqual({
         aktenzeichen: "574 C 65412/26",
