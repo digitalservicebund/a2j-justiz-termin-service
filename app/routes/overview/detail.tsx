@@ -20,7 +20,7 @@ import { formatInstant } from "~/core/domain/time/format";
 import { getDb } from "~/database/database";
 import { BASE_PATH } from "~/lib/base-path";
 
-import { groupSlotsByDay, type DayWindows } from "../draft/review";
+import { groupSlotsByDay, type DayWindows } from "../draft/slot-days";
 import { rangeToSlot } from "../draft/slots";
 import { describeStatus } from "./status";
 

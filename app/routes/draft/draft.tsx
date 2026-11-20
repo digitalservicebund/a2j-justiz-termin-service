@@ -35,9 +35,9 @@ import {
 import { classNames } from "~/components/shared/kern/layout";
 import { getDb } from "~/database/database";
 
+import { createTerminBreadcrumbs } from "./breadcrumbs";
 import { MAX_PARTICIPANTS } from "./participant.schema";
 import { draftHref, NEW_SLOT, participantHref, slotHref } from "./paths";
-import { createTerminBreadcrumbs } from "./review";
 import {
   aktenzeichenProblem,
   MAX_SLOTS,

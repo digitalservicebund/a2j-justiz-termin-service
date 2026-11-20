@@ -19,6 +19,7 @@ import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { KernStack } from "~/components/shared/kern/KernStack";
 import { getDb } from "~/database/database";
 
+import { createTerminBreadcrumbs } from "./breadcrumbs";
 import {
   emptyParticipant,
   MAX_PARTICIPANTS,
@@ -29,7 +30,6 @@ import {
   type ParticipantFields,
 } from "./participant.schema";
 import { draftHref, NEW_SLOT } from "./paths";
-import { createTerminBreadcrumbs } from "./review";
 
 import "./draft.css";
 

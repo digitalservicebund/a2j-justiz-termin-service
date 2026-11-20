@@ -6,13 +6,11 @@ import { AppShell } from "~/components/shared/AppShell";
 import { CopyButton } from "~/components/shared/CopyButton";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernStack } from "~/components/shared/kern/KernStack";
+import { NextSteps, Step, SuccessBanner } from "~/components/shared/NextSteps";
 import { formatInstant } from "~/core/domain/time/format";
 import { getDb } from "~/database/database";
 
-import { NextSteps, Step, SuccessBanner } from "../draft/created";
 import { selectBreadcrumbs } from "./select.schema";
-
-import "../draft/created.css";
 
 type Params = { params: { appointmentId?: string } };
 
@@ -37,7 +35,7 @@ export default function OverviewSelected() {
   const { user, aktenzeichen, termin } = useLoaderData<typeof loader>();
   return (
     <AppShell user={user} breadcrumbs={selectBreadcrumbs}>
-      <KernStack className="create-termin-created">
+      <KernStack className="next-steps__page">
         <SuccessBanner title={`Der Termin ist am ${termin}.`} />
 
         <NextSteps>

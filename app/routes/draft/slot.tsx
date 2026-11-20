@@ -22,8 +22,8 @@ import { KernStack } from "~/components/shared/kern/KernStack";
 import { classNames, clusterClassName } from "~/components/shared/kern/layout";
 import { getDb } from "~/database/database";
 
+import { createTerminBreadcrumbs } from "./breadcrumbs";
 import { draftHref, NEW_SLOT } from "./paths";
-import { createTerminBreadcrumbs } from "./review";
 import {
   emptySlot,
   MAX_SLOTS,

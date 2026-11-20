@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { groupSlotsByDay } from "./review";
 import { emptySlot, type SlotInput } from "./schema";
+import { groupSlotsByDay } from "./slot-days";
 
 const slot = (day: string, month: string, start: [string, string], end: [string, string]) => ({
   ...emptySlot,

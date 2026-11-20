@@ -191,11 +191,19 @@ app/
 │   ├── appointments/       # Terminumfragen, participants, survey answers, calendar feed
 │   ├── users/              # User and allowed-domain management
 │   └── session/            # Better Auth session and access checks
-├── routes/                 # Route modules (React Router), see routes.ts
+├── routes/                 # Route modules (React Router) by feature, mapped to URLs in routes.ts
+│   ├── welcome/            # Sign-in page
+│   ├── overview/           # The judge's Terminumfragen, details, choosing the Termin
+│   ├── draft/              # Drafting a Terminumfrage: data, time slots, participants, review
+│   ├── survey/             # The guests' survey (/umfrage/:token)
+│   ├── calendar/           # Calendar subscription page and iCalendar feed
+│   ├── admin/              # User and domain management
+│   ├── health/             # Readiness, database and SMTP checks
+│   └── auth.ts             # Better Auth API handler
 ├── database/               # Kysely, connection pool, migrations (see "Database")
 ├── lib/                    # Env, secrets, logging, base path, calendar feed, e-mail
 ├── components/             # Reusable UI components
-│   └── shared/             # AppShell, Breadcrumb, ErrorMessage, FlowPage, LoginForm, ...
+│   └── shared/             # AppShell, Breadcrumb, FlowPage, ReviewPage, NextSteps, ...
 │       └── kern/           # KERN wrappers: KernAlert, KernBadge, KernButton, KernIcon, KernLink, ...
 ├── app.css                 # KERN Native/font imports + global defaults
 └── root.tsx                # Root layout

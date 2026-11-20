@@ -12,8 +12,9 @@ import { AppShell } from "~/components/shared/AppShell";
 import { getDb } from "~/database/database";
 import { sendTerminCreatedEmail } from "~/lib/email/send-termin-created-email";
 
+import { createTerminBreadcrumbs } from "./breadcrumbs";
 import { draftHref } from "./paths";
-import { CreateTerminReview, createTerminBreadcrumbs } from "./review";
+import { CreateTerminReview } from "./review";
 import { validateCreateTermin, type CreateTerminValues } from "./schema";
 import { rangeToSlot } from "./slots";
 

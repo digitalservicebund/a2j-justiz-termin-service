@@ -11,11 +11,11 @@ import {
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernStack } from "~/components/shared/kern/KernStack";
 import { classNames } from "~/components/shared/kern/layout";
+import { NextStepsSection, Step } from "~/components/shared/NextSteps";
 import { ResultBanner } from "~/components/shared/ResultBanner";
 import { SidebarPage } from "~/components/shared/SidebarPage";
 import { getDb } from "~/database/database";
 
-import { NextStepsSection, Step } from "../draft/created";
 import {
   groupWindows,
   noMatchBreadcrumbs,
@@ -24,7 +24,6 @@ import {
   type SurveyDay,
 } from "./schema";
 
-import "../draft/created.css";
 import "./survey.css";
 
 type Params = { params: { token?: string } };
@@ -57,7 +56,7 @@ export default function SurveyResult() {
   if (days.length === 0) return <NoOption aktenzeichen={aktenzeichen} days={proposedDays} />;
   const signedIn = Boolean(user);
   const content = (
-    <KernStack className={classNames("create-termin-created", signedIn && "survey-result__main")}>
+    <KernStack className={classNames("next-steps__page", signedIn && "survey-result__main")}>
       <Positive days={days} />
     </KernStack>
   );
@@ -82,7 +81,7 @@ function Positive({ days }: Readonly<{ days: ReturnType<typeof groupWindows> }>)
           <KernDescriptionList>
             {days.map(({ key, label, windows }) => (
               <KernDescriptionListItem key={key} label={label}>
-                <ul className="create-termin-review__times">
+                <ul className="next-steps__times">
                   {windows.map(({ id, time }) => (
                     <li key={id}>{time}</li>
                   ))}

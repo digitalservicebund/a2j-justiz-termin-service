@@ -10,10 +10,10 @@ import {
   KernDescriptionList,
   KernDescriptionListItem,
 } from "~/components/shared/kern/KernDescriptionList";
+import { ReviewPage } from "~/components/shared/ReviewPage";
 import { getDb } from "~/database/database";
 import { sendAnswerReceivedEmail } from "~/lib/email/send-answer-received-email";
 
-import { ReviewPage } from "../draft/review";
 import {
   describeAnswers,
   readValues,
@@ -141,7 +141,7 @@ export default function SurveyConfirm() {
               <KernDescriptionList>
                 {answers.map(({ key, label, lines }) => (
                   <KernDescriptionListItem key={key} label={label}>
-                    <ul className="create-termin-review__times">
+                    <ul className="review-page__list">
                       {lines.map((line) => (
                         <li key={line}>{line}</li>
                       ))}

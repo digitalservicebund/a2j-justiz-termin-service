@@ -9,10 +9,10 @@ import {
   KernDescriptionList,
   KernDescriptionListItem,
 } from "~/components/shared/kern/KernDescriptionList";
+import { ReviewPage } from "~/components/shared/ReviewPage";
 import { formatInstant } from "~/core/domain/time/format";
 import { getDb } from "~/database/database";
 
-import { ReviewPage } from "../draft/review";
 import { readValues, selectBreadcrumbs, selectionSearch } from "./select.schema";
 import { validateSelection } from "./select.validate.server";
 

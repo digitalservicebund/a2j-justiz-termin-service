@@ -1,13 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { renderToString } from "react-dom/server";
-import {
-  createRoutesStub,
-  createStaticHandler,
-  createStaticRouter,
-  StaticRouterProvider,
-  type StaticHandlerContext,
-} from "react-router";
+import { createRoutesStub } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { publishAppointment } from "~/adapters/appointments/appointments.server";
@@ -20,7 +13,6 @@ import CreateTerminParticipant, {
   loader as participantLoader,
 } from "./participant";
 import { MAX_PARTICIPANTS } from "./participant.schema";
-import { ReviewPage } from "./review";
 import { MAX_SLOTS } from "./schema";
 import CreateTerminSlot, { action as slotAction, loader as slotLoader } from "./slot";
 
@@ -793,29 +785,6 @@ describe("CreateTermin review step", () => {
 
     await user().click(screen.getByRole("button", { name: "Alle einblenden" }));
     expect(sections().every((element) => element.open)).toBe(true);
-  });
-
-  it("leaves the sections as plain <details> and no bulk buttons without JavaScript", async () => {
-    const routes = [
-      {
-        path: "/",
-        Component: () => (
-          <ReviewPage
-            sections={[{ id: "a", title: "A", children: "x" }]}
-            submit={{ label: "Los", intent: "go" }}
-          />
-        ),
-      },
-    ];
-    const context = (await createStaticHandler(routes).query(
-      new Request("http://localhost/"),
-    )) as StaticHandlerContext;
-    const html = renderToString(
-      <StaticRouterProvider router={createStaticRouter(routes, context)} context={context} />,
-    );
-
-    expect(html).toContain("<details");
-    expect(html).not.toContain("Alle einblenden");
   });
 
   it.each(["Zurück", "Bearbeiten Verhandlungsdaten", "Bearbeiten Zeitfenster"])(
