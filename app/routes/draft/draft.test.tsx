@@ -234,6 +234,14 @@ describe("CreateTermin form", () => {
     expect(rows().map((row) => row.textContent)).toEqual([
       "Sie haben keine Zeitfenster angegeben.",
     ]);
+    for (const name of ["Verfahrensbeteiligte", "Zeitfenster"]) {
+      const table = screen.getByRole("table", { name });
+      const [emptyCell] = within(tableRows(name)[0]).getAllByRole("cell");
+      expect(emptyCell).toHaveAttribute(
+        "colspan",
+        String(within(table).getAllByRole("columnheader").length),
+      );
+    }
     expect(screen.getByRole("button", { name: "Person hinzufügen" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Zeitfenster hinzufügen" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Abbrechen" })).toBeInTheDocument();
