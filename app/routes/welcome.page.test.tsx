@@ -68,7 +68,7 @@ describe("Welcome", () => {
     expect(notice).toHaveClass("a2j-inline-notice--information");
     expect(
       within(notice as HTMLElement).getByRole("link", { name: "Jetzt für die Teilnahme anmelden" }),
-    ).toBeInTheDocument();
+    ).toHaveAttribute("href", "mailto:a2j-jts@digitalservice.bund.de");
   });
 
   it("has no feedback box", async () => {
