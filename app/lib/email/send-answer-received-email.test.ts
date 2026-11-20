@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { toAnsweredSlot } from "~/adapters/appointments/availability.server";
 import type { ResponseOverview } from "~/adapters/appointments/survey.server";
 
 import { logError } from "../logging";
@@ -13,18 +14,17 @@ vi.mock("../env", () => ({ requireEnv: () => "http://localhost:3000" }));
 vi.mock("../secrets", () => ({ requireSecret: () => "sender@example.com" }));
 vi.mock("../logging", () => ({ logError: vi.fn() }));
 
+const s1 = { start: new Date("2026-09-17T07:00:00Z"), end: new Date("2026-09-17T08:30:00Z") };
+
 const overview: ResponseOverview = {
   appointmentId: "a 1",
   aktenzeichen: "574 C 65412/26",
   judgeEmail: " Judge.A@Example.com ",
   calendarSequence: 7,
   slots: [
-    {
-      id: "s1",
-      start: new Date("2026-09-17T07:00:00Z"),
-      end: new Date("2026-09-17T08:30:00Z"),
-      responses: [{ participantId: "p1", name: "Guest A", available: true }],
-    },
+    toAnsweredSlot({ id: "s1", ...s1 }, [
+      { participantId: "p1", name: "Guest A", available: true, windows: [s1] },
+    ]),
   ],
 };
 

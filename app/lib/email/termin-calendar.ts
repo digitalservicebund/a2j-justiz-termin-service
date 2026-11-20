@@ -1,6 +1,7 @@
 import type { AppointmentSlot } from "../../adapters/appointments/appointments.server.ts";
-import type { SlotResponse } from "../../adapters/appointments/survey.server.ts";
-import { formatSynchronizedAt } from "../../core/domain/time/format.ts";
+import type { AnsweredSlot } from "../../adapters/appointments/availability.server.ts";
+import { formatSynchronizedAt, formatTime } from "../../core/domain/time/format.ts";
+import type { TimeRange } from "../../core/domain/time/time-range.ts";
 import { PRODUCT_NAME } from "./email-parts.ts";
 
 type TerminEvents = {
@@ -28,6 +29,8 @@ export type CalendarSlot = AppointmentSlot & {
   confirmed?: boolean;
   // Who said they are available. Left out while nobody has answered yet.
   availableNames?: string[];
+  // The remaining windows within the event, when the answers left more than one.
+  windows?: TimeRange[];
 };
 
 const toUtcStamp = (date: Date) =>
@@ -61,19 +64,36 @@ function fold(line: string): string[] {
   return lines;
 }
 
-// A window one participant cannot attend is off the table for everyone.
-export const isCancelled = ({ responses }: { responses: SlotResponse[] }) =>
-  responses.some(({ available }) => !available);
+// A slot without a remaining window is off the table for everyone: one participant cannot attend
+// it, or the participants have no time in common that is long enough.
+export const isCancelled = ({ remaining }: Pick<AnsweredSlot, "remaining">) =>
+  remaining.length === 0;
 
-export const availableNames = ({ responses }: { responses: SlotResponse[] }) =>
+export const availableNames = ({ responses }: Pick<AnsweredSlot, "responses">) =>
   responses.filter(({ available }) => available).map(({ name }) => name);
+
+// The event of a slot in the judge's calendar. It keeps the id of the slot and shrinks to what is
+// left of it: from the start of the first remaining window to the end of the last one. A cancelled
+// slot keeps its proposed times.
+export function toCalendarSlot(slot: AnsweredSlot): CalendarSlot {
+  const first = slot.remaining.at(0);
+  const last = slot.remaining.at(-1);
+  if (!first || !last) return { id: slot.id, start: slot.start, end: slot.end, cancelled: true };
+  return {
+    id: slot.id,
+    start: first.start,
+    end: last.end,
+    availableNames: availableNames(slot),
+    ...(slot.remaining.length > 1 ? { windows: slot.remaining } : {}),
+  };
+}
 
 export const TERMIN_CALENDAR_CONTENT_TYPE = "text/calendar; charset=utf-8; method=PUBLISH";
 
 // One tentative event per proposed time slot, so the judge's calendar shows them as busy until a
 // slot is confirmed. Times are UTC, which spares the calendar a time zone definition.
 function describe(
-  { cancelled, confirmed, availableNames }: CalendarSlot,
+  { cancelled, confirmed, availableNames, windows }: CalendarSlot,
   aktenzeichen: string,
   terminUrl: string,
   synchronizedAt?: Date,
@@ -84,7 +104,7 @@ function describe(
     : [];
   if (cancelled) {
     return [
-      `Abgesagt: Mindestens ein Verfahrensbeteiligter ist für die Verhandlung ${aktenzeichen} in diesem Zeitraum nicht verfügbar.`,
+      `Abgesagt: In diesem Zeitraum sind nicht alle Verfahrensbeteiligten für die Verhandlung ${aktenzeichen} verfügbar.`,
       "",
       link,
       ...synchronized,
@@ -102,6 +122,11 @@ function describe(
     `Vorläufiger Zeitraum für die Verhandlung ${aktenzeichen}.`,
     ...(availableNames
       ? [`Verfügbar: ${availableNames.length > 0 ? availableNames.join(", ") : "–"}`]
+      : []),
+    ...(windows
+      ? [
+          `Mögliche Zeiträume: ${windows.map(({ start, end }) => `${formatTime(start)} bis ${formatTime(end)}`).join(", ")}`,
+        ]
       : []),
     "Wir warten auf die Rückmeldungen der Verfahrensbeteiligten.",
     "",

@@ -16,7 +16,6 @@ import { sendAnswerReceivedEmail } from "~/lib/email/send-answer-received-email"
 import { ReviewPage } from "./create-termin.review";
 import {
   describeAnswers,
-  groupWindows,
   readValues,
   surveyBreadcrumbs,
   surveyPath,
@@ -41,10 +40,13 @@ export async function loader({ request, params }: { request: Request } & Params)
   if (survey.slots.length === 0) throw redirect(surveyPath(token));
   const values = readValues(new URL(request.url).searchParams);
   const needsName = !survey.participant;
-  const days = groupWindows(survey.slots);
 
   // Without a valid answer there is nothing to review, so the guest answers again.
-  const result = validateSurvey(values, { needsName, slotIds: survey.slots.map(({ id }) => id) });
+  const result = validateSurvey(values, {
+    needsName,
+    offered: survey.slots,
+    minDurationMinutes: survey.minDurationMinutes,
+  });
   if (!result.success) throw redirect(`${surveyPath(token)}?${surveySearch(values)}`);
 
   return {
@@ -52,9 +54,9 @@ export async function loader({ request, params }: { request: Request } & Params)
     needsName,
     aktenzeichen: survey.aktenzeichen,
     name: survey.participant?.name ?? result.name,
-    answers: describeAnswers(days, result.availableSlotIds),
+    answers: describeAnswers(survey.slots, result.availability),
     // Which design the review follows: without any window the guest is not available at all.
-    none: result.availableSlotIds.length === 0,
+    none: result.availability.length === 0,
   };
 }
 
@@ -78,7 +80,8 @@ export async function action({ request, params }: { request: Request } & Params)
 
   const result = validateSurvey(values, {
     needsName: !survey.participant,
-    slotIds: survey.slots.map(({ id }) => id),
+    offered: survey.slots,
+    minDurationMinutes: survey.minDurationMinutes,
   });
   if (!result.success) return redirect(back);
 
@@ -87,7 +90,7 @@ export async function action({ request, params }: { request: Request } & Params)
     appointmentId: survey.appointmentId,
     name,
     participantId: survey.participant?.id,
-    availableSlotIds: result.availableSlotIds,
+    availability: result.availability,
   });
   // Another answer ruled a window out in the meantime, or the survey closed: the form shows
   // what is left, or the page is gone.

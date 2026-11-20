@@ -1,7 +1,8 @@
 import html from "html-template-tag";
 
 import type { ResponseOverview } from "../../adapters/appointments/survey.server.ts";
-import { formatRange } from "../../core/domain/time/format.ts";
+import { formatRange, formatTime } from "../../core/domain/time/format.ts";
+import type { TimeRange } from "../../core/domain/time/time-range.ts";
 import {
   Button,
   COLOR,
@@ -20,12 +21,13 @@ import {
   createTerminCalendar,
   isCancelled,
   TERMIN_CALENDAR_CONTENT_TYPE,
+  toCalendarSlot,
 } from "./termin-calendar.ts";
 
 const SUBJECT = "Neue Antwort auf Ihre Terminumfrage";
 const BUTTON = "Termin öffnen";
 const CALENDAR_HINT =
-  "Der Kalenderanhang aktualisiert Ihre Einträge: Abgesagte Zeitfenster sind als abgesagt markiert, bei den übrigen steht, wer verfügbar ist.";
+  "Der Kalenderanhang aktualisiert Ihre Einträge: Abgesagte Zeitfenster sind als abgesagt markiert, die übrigen zeigen den noch möglichen Zeitraum und wer verfügbar ist.";
 const CALENDAR_FILENAME = "terminumfrage.ics";
 
 export type AnswerReceivedEmail = {
@@ -37,25 +39,37 @@ export type AnswerReceivedEmail = {
 
 // What the mail says, apart from layout: kept as plain strings so the text and HTML versions agree.
 function summarize({ overview, responder }: AnswerReceivedEmail) {
-  const answered = (available: boolean) =>
-    overview.slots
-      .filter(({ responses }) =>
-        responses.some((r) => r.participantId === responder.id && r.available === available),
-      )
-      .map(formatRange);
+  const own = overview.slots.flatMap((slot) =>
+    slot.responses
+      .filter(({ participantId }) => participantId === responder.id)
+      .map((response) => ({ slot, response })),
+  );
   const open = overview.slots.filter((slot) => !isCancelled(slot));
 
   return {
     heading: `${responder.name} hat auf Ihre Terminumfrage geantwortet.`,
-    available: answered(true),
-    cancelled: answered(false),
-    // Windows an earlier answer already cancelled are listed too, so the mail shows the full state.
+    // The exact availability windows, which may be shorter than the slot.
+    available: own.flatMap(({ response }) => response.windows.map(formatRange)),
+    cancelled: own
+      .filter(({ response }) => !response.available)
+      .map(({ slot }) => formatRange(slot)),
+    // Slots an earlier answer already cancelled are listed too, so the mail shows the full state.
+    // The others show what is left of them.
     states: overview.slots.map((slot) => {
-      const names = availableNames(slot);
-      return `${formatRange(slot)}: ${isCancelled(slot) ? "abgesagt" : `verfügbar: ${names.join(", ")}`}`;
+      if (isCancelled(slot)) return `${formatRange(slot)}: abgesagt`;
+      return `${formatRanges(slot.remaining)}: verfügbar: ${availableNames(slot).join(", ")}`;
     }),
     nothingLeft: open.length === 0,
   };
+}
+
+// "Donnerstag, 17.09.2026, 09:00 bis 11:00 Uhr und 15:00 bis 17:00 Uhr"
+function formatRanges([first, ...others]: TimeRange[]) {
+  if (!first) return "";
+  return [
+    formatRange(first),
+    ...others.map(({ start, end }) => `${formatTime(start)} bis ${formatTime(end)} Uhr`),
+  ].join(" und ");
 }
 
 function Section(title: string, items: string[], note?: string) {
@@ -133,13 +147,7 @@ export function renderAnswerReceivedEmail(email: AnswerReceivedEmail) {
           terminUrl,
           organizerEmail,
           sequence: overview.calendarSequence,
-          slots: overview.slots.map((slot) => ({
-            id: slot.id,
-            start: slot.start,
-            end: slot.end,
-            cancelled: isCancelled(slot),
-            availableNames: availableNames(slot),
-          })),
+          slots: overview.slots.map(toCalendarSlot),
         }),
         contentType: TERMIN_CALENDAR_CONTENT_TYPE,
       },

@@ -33,6 +33,7 @@ const url = "http://localhost:3000/umfrage/t1/naechste-schritte";
 const survey: Survey = {
   appointmentId: "a1",
   aktenzeichen: "574 C 65412/26",
+  minDurationMinutes: null,
   answered: false,
   slots: [],
   proposedSlots: [
@@ -45,8 +46,18 @@ const survey: Survey = {
 const available: SavedAnswer = {
   name: "Guest C",
   available: [
-    { id: "s1", start: new Date("2026-09-17T08:00:00Z"), end: new Date("2026-09-17T12:00:00Z") },
-    { id: "s3", start: new Date("2026-09-24T12:00:00Z"), end: new Date("2026-09-24T15:00:00Z") },
+    {
+      id: "k1",
+      slotId: "s1",
+      start: new Date("2026-09-17T08:00:00Z"),
+      end: new Date("2026-09-17T12:00:00Z"),
+    },
+    {
+      id: "k3",
+      slotId: "s3",
+      start: new Date("2026-09-24T12:00:00Z"),
+      end: new Date("2026-09-24T15:00:00Z"),
+    },
   ],
 };
 

@@ -6,11 +6,12 @@
 
 /* The gap between the days is beyond the largest spacing helper. */
 .survey__days {
-  gap: var(--kern-metric-space-3x-large);
+  gap: var(--kern-metric-space-x-large);
 }
 
+/* The times with the tick are 40px high; the add button follows right below. */
 .survey__window {
-  min-height: var(--kern-metric-dimension-3x-large);
+  min-height: var(--kern-40);
 }
 
 /* The sorry page: banner, facts and windows in one column, as on the judge's detail page. */
@@ -35,4 +36,23 @@
 /* The sidebar page already spaces its content from the top. */
 .survey-result__main {
   padding-block-start: 0;
+}
+
+/* One offered window: the times with the tick or "Teilweise verfügbar", the smaller windows, and
+   the button to add one. */
+.survey__smaller {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.survey__smaller-window {
+  display: flex;
+  align-items: center;
+}
+
+/* The add button lines up with the times above it, not with its own padding. Its margins keep
+   the 48px target KERN gives an x-small button. */
+.survey__add {
+  margin-inline-start: calc(-1 * var(--kern-metric-space-small));
 }

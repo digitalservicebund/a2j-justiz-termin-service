@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import type { Kysely } from "kysely";
 
+import { windowKey } from "../app/core/domain/availability.ts";
 import type { AppointmentStatus, Database } from "../app/database/types.ts";
 import { BASE_PATH, expect, readMail, signIn, test } from "./fixtures.ts";
 
@@ -11,6 +12,7 @@ async function seedSurvey(
   db: Kysely<Database>,
   userId: string,
   status: AppointmentStatus = "open",
+  minDurationMinutes: number | null = null,
 ) {
   const { id, universal_token } = await db
     .insertInto("appointment")
@@ -20,6 +22,7 @@ async function seedSurvey(
       // A confirmed appointment needs its slot, so it is confirmed once the slots exist.
       status: status === "confirmed" ? "open" : status,
       universal_token: randomUUID(),
+      min_duration_minutes: minDurationMinutes,
     })
     .returning(["id", "universal_token"])
     .executeTakeFirstOrThrow();
@@ -46,6 +49,39 @@ async function seedSurvey(
   }
   return { id, token: universal_token!, slotIds: slots.map((slot) => slot.id) };
 }
+
+// The answers of an earlier participant. A "yes" covers the whole slot unless a window is given.
+async function seedResponses(
+  db: Kysely<Database>,
+  participantId: string,
+  answers: Array<{ slotId: string; status: "yes" | "no"; window?: [string, string] }>,
+) {
+  for (const { slotId, status, window } of answers) {
+    const { id } = await db
+      .insertInto("participant_response")
+      .values({ participant_id: participantId, slot_id: slotId, status })
+      .returning("id")
+      .executeTakeFirstOrThrow();
+    if (status === "no") continue;
+    const slot = await db
+      .selectFrom("time_slot")
+      .select(["start_time", "end_time"])
+      .where("id", "=", slotId)
+      .executeTakeFirstOrThrow();
+    await db
+      .insertInto("participant_response_window")
+      .values({
+        response_id: id,
+        start_time: window?.[0] ?? slot.start_time,
+        end_time: window?.[1] ?? slot.end_time!,
+      })
+      .execute();
+  }
+}
+
+// The key of an availability window, as the survey form submits it.
+const key = (slotId: string, start: string, end: string) =>
+  windowKey({ slotId, start: new Date(start), end: new Date(end) });
 
 const ANSWER_SUBJECT = "Neue Antwort auf Ihre Terminumfrage";
 
@@ -396,14 +432,11 @@ test("a window another participant has no time for is not offered", async ({ pag
     .values({ appointment_id: id, name: "Guest E", type: "universal" })
     .returning("id")
     .executeTakeFirstOrThrow();
-  await db
-    .insertInto("participant_response")
-    .values([
-      { participant_id: other, slot_id: slotIds[0]!, status: "no" },
-      { participant_id: other, slot_id: slotIds[1]!, status: "yes" },
-      { participant_id: other, slot_id: slotIds[2]!, status: "yes" },
-    ])
-    .execute();
+  await seedResponses(db, other, [
+    { slotId: slotIds[0]!, status: "no" },
+    { slotId: slotIds[1]!, status: "yes" },
+    { slotId: slotIds[2]!, status: "yes" },
+  ]);
 
   await page.goto(`${BASE_PATH}/umfrage/${token}`);
   await expect(page.getByRole("checkbox", { name: /^Verfügbar/ })).toHaveCount(2);
@@ -439,12 +472,11 @@ test("a guest sees the sorry page right away when every window is ruled out", as
     .values({ appointment_id: id, name: "Guest E", type: "universal" })
     .returning("id")
     .executeTakeFirstOrThrow();
-  await db
-    .insertInto("participant_response")
-    .values(
-      slotIds.map((slotId) => ({ participant_id: other, slot_id: slotId, status: "no" as const })),
-    )
-    .execute();
+  await seedResponses(
+    db,
+    other,
+    slotIds.map((slotId) => ({ slotId, status: "no" as const })),
+  );
 
   await page.goto(`${BASE_PATH}/umfrage/${token}`);
 
@@ -505,4 +537,299 @@ test("answering a survey that closed in the meantime stores nothing", async ({
   expect(
     await db.selectFrom("participant").select("id").where("appointment_id", "=", id).execute(),
   ).toEqual([]);
+});
+
+test("a smaller availability window is stored and narrows the slot for the next guest", async ({
+  page,
+  browser,
+  users,
+  db,
+}) => {
+  const judge = await users.create({ roles: ["richter"] });
+  const { id, token, slotIds } = await seedSurvey(db, judge.id, "open", 60);
+
+  // Guest C is available from 16:00 to 17:00 and from 16:30 to 17:30 in the first slot, which
+  // become one window, and for all of the second slot.
+  const search = new URLSearchParams([
+    ["name", "Guest C"],
+    ["verfuegbar", key(slotIds[0]!, "2099-11-09T15:00:00Z", "2099-11-09T16:00:00Z")],
+    ["verfuegbar", key(slotIds[0]!, "2099-11-09T15:30:00Z", "2099-11-09T16:30:00Z")],
+    ["verfuegbar", key(slotIds[1]!, "2099-11-13T08:00:00Z", "2099-11-13T12:00:00Z")],
+  ]);
+  await page.goto(`${BASE_PATH}/umfrage/${token}/zusammenfassung?${search}`);
+  await expect(page.getByText("15:30 bis 18:00 – teilweise verfügbar")).toBeVisible();
+  await expect(page.getByText("16:00 bis 17:30 – verfügbar")).toBeVisible();
+  await expect(page.getByText("09:00 bis 13:00 – verfügbar")).toBeVisible();
+  await expect(page.getByText("15:00 bis 17:00 – nicht verfügbar")).toBeVisible();
+  await page.getByRole("button", { name: "Terminumfrage abschließen" }).click();
+
+  // The result names the exact window to keep free.
+  await expect(page).toHaveURL(new RegExp(`/umfrage/${token}/naechste-schritte`));
+  await expect(page.getByText("16:00 bis 17:30", { exact: true })).toBeVisible();
+
+  const windows = await db
+    .selectFrom("participant_response_window")
+    .innerJoin(
+      "participant_response",
+      "participant_response.id",
+      "participant_response_window.response_id",
+    )
+    .innerJoin("participant", "participant.id", "participant_response.participant_id")
+    .select([
+      "participant_response.slot_id",
+      "participant_response_window.start_time",
+      "participant_response_window.end_time",
+    ])
+    .where("participant.appointment_id", "=", id)
+    .orderBy("participant_response_window.start_time")
+    .execute();
+  expect(windows).toEqual([
+    {
+      slot_id: slotIds[0],
+      start_time: new Date("2099-11-09T15:00:00Z"),
+      end_time: new Date("2099-11-09T16:30:00Z"),
+    },
+    {
+      slot_id: slotIds[1],
+      start_time: new Date("2099-11-13T08:00:00Z"),
+      end_time: new Date("2099-11-13T12:00:00Z"),
+    },
+  ]);
+
+  // The judge reads the exact window, and the calendar event shrinks to it.
+  const mail = await readMail(page.request, judge.email, ANSWER_SUBJECT);
+  expect(mail.text).toContain("16:00 bis 17:30 Uhr: verfügbar: Guest C");
+  const calendar = mail.attachments["terminumfrage.ics"]!;
+  expect(eventStatuses(calendar)).toEqual(["TENTATIVE", "TENTATIVE", "CANCELLED"]);
+  expect(calendar).toContain("DTSTART:20991109T150000Z");
+  expect(calendar).toContain("DTEND:20991109T163000Z");
+
+  // Guest D is offered what is left: the first slot from 16:00 to 17:30 only.
+  const guest = await browser.newPage();
+  await guest.goto(`${BASE_PATH}/umfrage/${token}`);
+  await expect(guest.getByRole("checkbox", { name: /^Verfügbar/ })).toHaveCount(2);
+  await expect(
+    guest.getByRole("checkbox", { name: "Verfügbar am 9. November 2099, 16:00 bis 17:30" }),
+  ).toBeVisible();
+  await expect(guest.getByRole("checkbox", { name: FIRST })).toHaveCount(0);
+
+  // The whole slot cannot be answered any more, and neither can a window shorter than the
+  // minimum duration: both go back to the form.
+  for (const stale of [
+    key(slotIds[0]!, "2099-11-09T14:30:00Z", "2099-11-09T17:00:00Z"),
+    key(slotIds[0]!, "2099-11-09T15:00:00Z", "2099-11-09T15:59:00Z"),
+  ]) {
+    await guest.goto(
+      `${BASE_PATH}/umfrage/${token}/zusammenfassung?name=Guest+D&verfuegbar=${stale}`,
+    );
+    await expect(guest).toHaveURL(new RegExp(`/umfrage/${token}\\?name=Guest\\+D`));
+  }
+  await guest.close();
+
+  expect(
+    await db.selectFrom("participant").select("id").where("appointment_id", "=", id).execute(),
+  ).toHaveLength(1);
+});
+
+test("the appointment is cancelled when the guests have no time in common that is long enough", async ({
+  page,
+  users,
+  db,
+}) => {
+  const judge = await users.create({ roles: ["richter"] });
+  const { id, token, slotIds } = await seedSurvey(db, judge.id, "open", 60);
+  const { id: other } = await db
+    .insertInto("participant")
+    .values({ appointment_id: id, name: "Guest E", type: "universal" })
+    .returning("id")
+    .executeTakeFirstOrThrow();
+  // Guest E can only attend the first slot, from 15:30 to 17:00.
+  await seedResponses(db, other, [
+    {
+      slotId: slotIds[0]!,
+      status: "yes",
+      window: ["2099-11-09T14:30:00Z", "2099-11-09T16:00:00Z"],
+    },
+    { slotId: slotIds[1]!, status: "no" },
+    { slotId: slotIds[2]!, status: "no" },
+  ]);
+
+  // Guest C is offered that window and can attend its first hour only. Together with a second
+  // guest who can attend the last hour only, nothing would be left.
+  await page.goto(`${BASE_PATH}/umfrage/${token}`);
+  await expect(page.getByRole("checkbox", { name: /^Verfügbar/ })).toHaveCount(1);
+  const firstHour = key(slotIds[0]!, "2099-11-09T14:30:00Z", "2099-11-09T15:30:00Z");
+  await page.goto(
+    `${BASE_PATH}/umfrage/${token}/zusammenfassung?name=Guest+C&verfuegbar=${firstHour}`,
+  );
+  await page.getByRole("button", { name: "Terminumfrage abschließen" }).click();
+  await expect(page).toHaveURL(new RegExp(`/umfrage/${token}/naechste-schritte`));
+
+  const status = () =>
+    db
+      .selectFrom("appointment")
+      .select("status")
+      .where("id", "=", id)
+      .executeTakeFirstOrThrow()
+      .then((row) => row.status);
+  expect(await status()).toBe("open");
+
+  // Guest D can only attend from 16:15, which leaves 15 minutes with Guest C: less than the
+  // minimum duration, so the answer is not accepted as it stands. The form still shows the window,
+  // so Guest D can remove it. Saying no then cancels the appointment.
+  const lastPart = key(slotIds[0]!, "2099-11-09T15:15:00Z", "2099-11-09T15:30:00Z");
+  await page.goto(
+    `${BASE_PATH}/umfrage/${token}/zusammenfassung?name=Guest+D&verfuegbar=${lastPart}`,
+  );
+  await expect(page).toHaveURL(new RegExp(`/umfrage/${token}\\?name=Guest\\+D`));
+  await expect(page.getByText("16:15 bis 16:30 – verfügbar")).toBeVisible();
+  await page.getByRole("button", { name: /^Zeitfenster 16:15 bis 16:30 .* löschen$/ }).click();
+  await expect(page.getByText("16:15 bis 16:30 – verfügbar")).toHaveCount(0);
+  await page.getByRole("checkbox", { name: "Kein Zeitfenster passt" }).check();
+  await page.getByRole("button", { name: "Weiter" }).click();
+  await page.getByRole("button", { name: "Terminumfrage abschließen" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Es gibt leider kein Zeitfenster, dass allen Verfahrensbeteiligten passt.",
+  );
+  expect(await status()).toBe("cancelled");
+});
+
+test("a guest adds, changes and removes smaller windows and finishes with them", async ({
+  page,
+  users,
+  db,
+}) => {
+  const judge = await users.create({ roles: ["richter"] });
+  const { id, token } = await seedSurvey(db, judge.id, "open", 60);
+  const add = (window: string) =>
+    page.getByRole("button", { name: `Kleineres Zeitfenster hinzufügen am ${window}` });
+  const fill = async (start: string, end: string) => {
+    const [startHour, startMinute, endHour, endMinute] = [...start.split(":"), ...end.split(":")];
+    const fields = page.getByRole("textbox");
+    await fields.nth(0).fill(startHour!);
+    await fields.nth(1).fill(startMinute!);
+    await fields.nth(2).fill(endHour!);
+    await fields.nth(3).fill(endMinute!);
+  };
+
+  await page.goto(`${BASE_PATH}/umfrage/${token}`);
+  await page.getByRole("textbox", { name: "Ihr Name" }).fill("Guest C");
+  await page.getByRole("checkbox", { name: FIRST }).check();
+  await add("9. November 2099, 15:30 bis 18:00").click();
+
+  // The page starts with the whole offered window.
+  await expect(page).toHaveURL(new RegExp(`/umfrage/${token}/zeitfenster\\?`));
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Geben Sie ein kleineres Zeitfenster an",
+  );
+  await expect(
+    page.getByRole("heading", { level: 2, name: "9. November 2099 von 15:30 bis 18:00" }),
+  ).toBeVisible();
+  await expect(page.getByRole("textbox").nth(0)).toHaveValue("15");
+  await expect(page.getByRole("textbox").nth(3)).toHaveValue("00");
+
+  // A window shorter than the minimum duration is rejected.
+  await fill("16:00", "16:30");
+  await page.getByRole("button", { name: "Speichern" }).click();
+  await expect(
+    page.getByText("Das Zeitfenster muss mindestens 60 Minuten lang sein."),
+  ).toBeVisible();
+
+  await fill("16:00", "17:15");
+  await page.getByRole("button", { name: "Speichern" }).click();
+
+  // Back on the survey, the window replaces the tick, and the name is kept.
+  await expect(page).toHaveURL(new RegExp(`/umfrage/${token}\\?`));
+  await expect(page.getByRole("textbox", { name: "Ihr Name" })).toHaveValue("Guest C");
+  await expect(page.getByText("Teilweise verfügbar")).toBeVisible();
+  await expect(page.getByText("16:00 bis 17:15 – verfügbar")).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: FIRST })).toHaveCount(0);
+
+  // Changing it starts from its own times.
+  await page
+    .getByRole("button", {
+      name: "Zeitfenster 16:00 bis 17:15 am 9. November 2099, 15:30 bis 18:00 ändern",
+    })
+    .click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Ändern Sie das kleinere Zeitfenster",
+  );
+  await expect(page.getByRole("textbox").nth(0)).toHaveValue("16");
+  await expect(page.getByRole("textbox").nth(3)).toHaveValue("15");
+  await fill("16:15", "17:15");
+  await page.getByRole("button", { name: "Speichern" }).click();
+  await expect(page.getByText("16:15 bis 17:15 – verfügbar")).toBeVisible();
+
+  // A second window that touches the first becomes one with it.
+  await add("9. November 2099, 15:30 bis 18:00").click();
+  await fill("17:15", "18:00");
+  await page.getByRole("button", { name: "Speichern" }).click();
+  await expect(page.getByText("16:15 bis 18:00 – verfügbar")).toBeVisible();
+  await expect(page.getByText(/– verfügbar$/)).toHaveCount(1);
+
+  // A window that is removed again leaves the box empty.
+  await add("13. November 2099, 15:00 bis 17:00").click();
+  await fill("15:00", "16:00");
+  await page.getByRole("button", { name: "Speichern" }).click();
+  await page
+    .getByRole("button", {
+      name: "Zeitfenster 15:00 bis 16:00 am 13. November 2099, 15:00 bis 17:00 löschen",
+    })
+    .click();
+  await expect(page.getByRole("checkbox", { name: THIRD })).not.toBeChecked();
+  await expect(page.getByText("Teilweise verfügbar")).toHaveCount(1);
+
+  // Cancelling the page keeps the draft as it was.
+  await add("13. November 2099, 09:00 bis 13:00").click();
+  await page.getByRole("link", { name: "Abbrechen" }).click();
+  await expect(page.getByText("16:15 bis 18:00 – verfügbar")).toBeVisible();
+
+  await page.getByRole("checkbox", { name: SECOND }).check();
+  await page.getByRole("button", { name: "Weiter" }).click();
+  await expect(page.getByText("15:30 bis 18:00 – teilweise verfügbar")).toBeVisible();
+  await expect(page.getByText("16:15 bis 18:00 – verfügbar")).toBeVisible();
+  await expect(page.getByText("09:00 bis 13:00 – verfügbar")).toBeVisible();
+  await page.getByRole("button", { name: "Terminumfrage abschließen" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Danke für das Angeben Ihrer Verfügbarkeiten.",
+  );
+
+  const windows = await db
+    .selectFrom("participant_response_window")
+    .innerJoin(
+      "participant_response",
+      "participant_response.id",
+      "participant_response_window.response_id",
+    )
+    .innerJoin("participant", "participant.id", "participant_response.participant_id")
+    .select(["participant_response_window.start_time", "participant_response_window.end_time"])
+    .where("participant.appointment_id", "=", id)
+    .orderBy("participant_response_window.start_time")
+    .execute();
+  expect(windows).toEqual([
+    { start_time: new Date("2099-11-09T15:15:00Z"), end_time: new Date("2099-11-09T17:00:00Z") },
+    { start_time: new Date("2099-11-13T08:00:00Z"), end_time: new Date("2099-11-13T12:00:00Z") },
+  ]);
+});
+
+test("the survey names the weekday of every date, and cancelling throws the draft away", async ({
+  page,
+  users,
+  db,
+}) => {
+  const judge = await users.create({ roles: ["richter"] });
+  const { token } = await seedSurvey(db, judge.id);
+
+  await page.goto(`${BASE_PATH}/umfrage/${token}`);
+  // 9 and 13 November 2099 are a Monday and a Friday.
+  await expect(page.getByText("Montag", { exact: true })).toBeVisible();
+  await expect(page.getByText("Freitag", { exact: true })).toBeVisible();
+
+  await page.getByRole("textbox", { name: "Ihr Name" }).fill("Guest C");
+  await page.getByRole("checkbox", { name: FIRST }).check();
+  await page.getByRole("link", { name: "Abbrechen" }).click();
+
+  await expect(page).toHaveURL(new RegExp(`/umfrage/${token}$`));
+  await expect(page.getByRole("textbox", { name: "Ihr Name" })).toHaveValue("");
+  await expect(page.getByRole("checkbox", { name: FIRST })).not.toBeChecked();
 });

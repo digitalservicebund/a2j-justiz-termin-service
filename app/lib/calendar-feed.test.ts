@@ -2,17 +2,24 @@
 import ICAL from "ical.js";
 import { describe, expect, it } from "vitest";
 
+import { toAnsweredSlot } from "../adapters/appointments/availability.server";
 import type { FeedAppointment } from "../adapters/appointments/calendar-feed.server";
+import type { TimeRange } from "../core/domain/time/time-range";
 import { calendarFeedPath, createCalendarFeed } from "./calendar-feed";
 
 const now = new Date("2026-10-13T12:00:00Z");
 const baseUrl = "http://localhost:3000";
 
-const response = (name: string, available: boolean) => ({
+// Available for the given windows, and not at all without any.
+const response = (name: string, ...windows: TimeRange[]) => ({
   participantId: `p-${name}`,
   name,
-  available,
+  available: windows.length > 0,
+  windows,
 });
+
+const s1 = { start: new Date("2026-11-02T08:00:00Z"), end: new Date("2026-11-02T09:00:00Z") };
+const s2 = { start: new Date("2026-11-03T08:00:00Z"), end: new Date("2026-11-03T09:00:00Z") };
 
 const open: FeedAppointment = {
   id: "a1",
@@ -20,18 +27,8 @@ const open: FeedAppointment = {
   calendarSequence: 4,
   confirmed: null,
   slots: [
-    {
-      id: "s1",
-      start: new Date("2026-11-02T08:00:00Z"),
-      end: new Date("2026-11-02T09:00:00Z"),
-      responses: [response("Guest A", true)],
-    },
-    {
-      id: "s2",
-      start: new Date("2026-11-03T08:00:00Z"),
-      end: new Date("2026-11-03T09:00:00Z"),
-      responses: [response("Guest A", true), response("Guest B", false)],
-    },
+    toAnsweredSlot({ id: "s1", ...s1 }, [response("Guest A", s1)]),
+    toAnsweredSlot({ id: "s2", ...s2 }, [response("Guest A", s2), response("Guest B")]),
   ],
 };
 
@@ -45,12 +42,10 @@ const confirmed: FeedAppointment = {
     end: new Date("2026-11-04T09:00:00Z"),
   },
   slots: [
-    {
-      id: "s3",
-      start: new Date("2026-11-04T08:00:00Z"),
-      end: new Date("2026-11-04T10:00:00Z"),
-      responses: [],
-    },
+    toAnsweredSlot(
+      { id: "s3", start: new Date("2026-11-04T08:00:00Z"), end: new Date("2026-11-04T10:00:00Z") },
+      [],
+    ),
   ],
 };
 
@@ -75,6 +70,51 @@ describe("createCalendarFeed", () => {
     expect(first!.getFirstPropertyValue("description")).toContain("Verfügbar: Guest A");
     expect(second!.getFirstPropertyValue("uid")).toBe("timeslot-s2");
     expect(second!.getFirstPropertyValue("status")).toBe("CANCELLED");
+  });
+
+  it("shrinks the event of a slot to what the answers leave of it", () => {
+    // 09:00 bis 17:00 in Berlin. Guest A can only attend early and late, Guest B not before 10:00.
+    const day = { start: new Date("2026-11-05T08:00:00Z"), end: new Date("2026-11-05T16:00:00Z") };
+    const early = { start: day.start, end: new Date("2026-11-05T11:00:00Z") };
+    const late = { start: new Date("2026-11-05T14:00:00Z"), end: day.end };
+    const fromTen = { start: new Date("2026-11-05T09:00:00Z"), end: day.end };
+    const partial: FeedAppointment = {
+      ...open,
+      slots: [
+        toAnsweredSlot({ id: "s4", ...day }, [
+          response("Guest A", early, late),
+          response("Guest B", fromTen),
+        ]),
+      ],
+    };
+
+    const [event] = events(createCalendarFeed([partial], baseUrl, now));
+    const ical = new ICAL.Event(event!);
+    expect(ical.uid).toBe("timeslot-s4");
+    expect(ical.startDate.toJSDate()).toEqual(fromTen.start);
+    expect(ical.endDate.toJSDate()).toEqual(day.end);
+    expect(event!.getFirstPropertyValue("status")).toBe("TENTATIVE");
+    const description = String(event!.getFirstPropertyValue("description"));
+    expect(description).toContain("Verfügbar: Guest A, Guest B");
+    expect(description).toContain("Mögliche Zeiträume: 10:00 bis 12:00, 15:00 bis 17:00");
+  });
+
+  it("cancels a slot in which the participants have no time in common", () => {
+    const morning = { start: s1.start, end: new Date("2026-11-02T08:30:00Z") };
+    const later = { start: morning.end, end: s1.end };
+    const disjoint: FeedAppointment = {
+      ...open,
+      slots: [
+        toAnsweredSlot({ id: "s1", ...s1 }, [
+          response("Guest A", morning),
+          response("Guest B", later),
+        ]),
+      ],
+    };
+
+    const [event] = events(createCalendarFeed([disjoint], baseUrl, now));
+    expect(event!.getFirstPropertyValue("status")).toBe("CANCELLED");
+    expect(new ICAL.Event(event!).startDate.toJSDate()).toEqual(s1.start);
   });
 
   it("adds one confirmed event for the chosen window of a confirmed appointment", () => {

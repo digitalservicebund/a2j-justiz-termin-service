@@ -8,6 +8,7 @@ import {
   formatRangeLong,
   formatSynchronizedAt,
   formatTime,
+  formatWeekday,
 } from "./format";
 
 // 15:30 to 18:00 Berlin time in September.
@@ -20,12 +21,14 @@ describe("formatters", () => {
   it("show instants in German and Berlin time", () => {
     expect(formatDay(range.start)).toBe("17. September 2026");
     expect(formatTime(range.start)).toBe("15:30");
+    expect(formatWeekday(range.start)).toBe("Donnerstag");
     expect(formatInstant(range.start)).toBe("Donnerstag, 17. September 2026 um 15:30");
   });
 
   it("move an instant just before midnight UTC to the next Berlin day", () => {
     const instant = new Date("2026-09-17T22:30:00Z");
     expect(formatDay(instant)).toBe("18. September 2026");
+    expect(formatWeekday(instant)).toBe("Freitag");
     expect(formatTime(instant)).toBe("00:30");
   });
 

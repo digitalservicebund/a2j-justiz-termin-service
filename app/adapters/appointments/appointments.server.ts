@@ -2,9 +2,11 @@ import { randomBytes } from "node:crypto";
 
 import { sql, type Kysely } from "kysely";
 
+import { contains, isLongEnough } from "../../core/domain/availability.ts";
 import { confirmedWindow, rowToRange, type TimeRange } from "../../core/domain/time/time-range.ts";
 import type { AppointmentStatus, Database } from "../../database/types.ts";
 import { logInfo } from "../../lib/logging.ts";
+import { readAvailability, remainingOf } from "./availability.server.ts";
 
 // A stored time slot. Its id stays the same as long as the slot is not replaced.
 export type AppointmentSlot = TimeRange & { id: string };
@@ -224,32 +226,38 @@ export async function getAppointment(
   };
 }
 
-// Confirms the window, which has to lie within one of the proposed slots, for an open appointment.
-// Returns false when the user has no such open appointment or no slot contains the window.
+// Confirms the window for an open appointment. The window has to lie within a remaining window, so
+// that every participant who answered is available, and be long enough for the appointment.
+// Returns false when the user has no such open appointment or the window does not fit.
 export async function confirmAppointment(
   db: Kysely<Database>,
   userId: string,
   id: string,
-  { start, end }: TimeRange,
+  window: TimeRange,
 ): Promise<boolean> {
+  const { start, end } = window;
   const confirmed = await db.transaction().execute(async (trx) => {
-    const slot = await trx
-      .selectFrom("time_slot")
-      .innerJoin("appointment", "appointment.id", "time_slot.appointment_id")
-      .select("time_slot.id")
-      .where("appointment.id", "=", id)
-      .where("appointment.user_id", "=", userId)
-      .where("appointment.status", "=", "open")
-      .where("time_slot.start_time", "<=", start)
-      .where("time_slot.end_time", ">=", end)
+    // Answers are saved under a lock on the same row, so none can arrive between the check and the
+    // confirmation.
+    const open = await trx
+      .selectFrom("appointment")
+      .select("id")
+      .where("id", "=", id)
+      .where("user_id", "=", userId)
+      .where("status", "=", "open")
+      .forUpdate()
       .executeTakeFirst();
-    if (!slot) return false;
+    if (!open) return false;
+
+    const availability = await readAvailability(trx, id);
+    const slot = remainingOf(availability).find((remaining) => contains(remaining, window));
+    if (!slot || !isLongEnough(window, availability.minDurationMinutes)) return false;
 
     const updated = await trx
       .updateTable("appointment")
       .set({
         status: "confirmed",
-        confirmed_slot_id: slot.id,
+        confirmed_slot_id: slot.slotId,
         confirmed_start_time: start,
         confirmed_end_time: end,
         updated_at: new Date(),

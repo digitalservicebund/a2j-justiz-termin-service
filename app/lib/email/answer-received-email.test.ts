@@ -2,7 +2,9 @@
 import ICAL from "ical.js";
 import { describe, expect, it } from "vitest";
 
+import { toAnsweredSlot } from "~/adapters/appointments/availability.server";
 import type { ResponseOverview } from "~/adapters/appointments/survey.server";
+import type { TimeRange } from "~/core/domain/time/time-range";
 
 import { renderAnswerReceivedEmail } from "./answer-received-email";
 
@@ -17,9 +19,18 @@ const times = {
 const guestA = { participantId: "p1", name: "Guest A" };
 const guestB = { participantId: "p2", name: "Guest B" };
 
+type Guest = typeof guestA;
+
+// What a guest answered for a slot: all of it, nothing of it, or the given windows.
+const answer = (guest: Guest, slot: TimeRange, answered: boolean | TimeRange[]) => {
+  const windows = answered === true ? [slot] : answered === false ? [] : answered;
+  return { ...guest, available: windows.length > 0, windows };
+};
+
 // Guest A was available for s1 and s2 and ruled s3 out. Guest B then saw only s1 and s2.
 function overview(
-  guestBAnswers: Record<"s1" | "s2", boolean> = { s1: true, s2: true },
+  guestBAnswers: Record<"s1" | "s2", boolean | TimeRange[]> = { s1: true, s2: true },
+  minDurationMinutes: number | null = null,
 ): ResponseOverview {
   return {
     appointmentId: "a1",
@@ -27,30 +38,27 @@ function overview(
     judgeEmail: "judge.a@example.com",
     calendarSequence: 7,
     slots: [
-      {
-        id: "s1",
-        ...times.s1,
-        responses: [
-          { ...guestA, available: true },
-          { ...guestB, available: guestBAnswers.s1 },
-        ],
-      },
-      {
-        id: "s2",
-        ...times.s2,
-        responses: [
-          { ...guestA, available: true },
-          { ...guestB, available: guestBAnswers.s2 },
-        ],
-      },
-      { id: "s3", ...times.s3, responses: [{ ...guestA, available: false }] },
+      toAnsweredSlot(
+        { id: "s1", ...times.s1 },
+        [answer(guestA, times.s1, true), answer(guestB, times.s1, guestBAnswers.s1)],
+        minDurationMinutes,
+      ),
+      toAnsweredSlot(
+        { id: "s2", ...times.s2 },
+        [answer(guestA, times.s2, true), answer(guestB, times.s2, guestBAnswers.s2)],
+        minDurationMinutes,
+      ),
+      toAnsweredSlot({ id: "s3", ...times.s3 }, [answer(guestA, times.s3, false)]),
     ],
   };
 }
 
-const render = (guestBAnswers?: Record<"s1" | "s2", boolean>) =>
+const render = (
+  guestBAnswers?: Record<"s1" | "s2", boolean | TimeRange[]>,
+  minDurationMinutes: number | null = null,
+) =>
   renderAnswerReceivedEmail({
-    overview: overview(guestBAnswers),
+    overview: overview(guestBAnswers, minDurationMinutes),
     responder: { id: "p2", name: "Guest B" },
     terminUrl,
     organizerEmail: "sender@example.com",
@@ -86,6 +94,41 @@ describe("renderAnswerReceivedEmail", () => {
     const { text } = render();
     expect(text).toContain("09:00 bis 10:30 Uhr: verfügbar: Guest A, Guest B");
     expect(text).toContain("16:00 bis 17:00 Uhr: abgesagt");
+  });
+
+  describe("with a smaller availability window", () => {
+    // Guest B can only attend s1 from 09:30 to 10:30.
+    const smaller = { start: new Date("2026-09-17T07:30:00Z"), end: times.s1.end };
+
+    it("lists the exact window of the responder, not the whole slot", () => {
+      const { text } = render({ s1: [smaller], s2: false });
+      const [, available] = text.split(/Verfügbar:\n|Nicht verfügbar:\n/);
+      expect(available).toContain("Donnerstag, 17.09.2026, 09:30 bis 10:30 Uhr");
+      expect(available).not.toContain("09:00");
+    });
+
+    it("shows what is left of the slot as its state", () => {
+      const { text } = render({ s1: [smaller], s2: true });
+      expect(text).toContain(
+        "Donnerstag, 17.09.2026, 09:30 bis 10:30 Uhr: verfügbar: Guest A, Guest B",
+      );
+      expect(text).not.toContain("09:00 bis 10:30 Uhr: verfügbar");
+    });
+
+    it("shrinks the calendar event to what is left", () => {
+      const [s1] = events(render({ s1: [smaller], s2: true }));
+      const ical = new ICAL.Event(s1!);
+      expect(ical.startDate.toJSDate()).toEqual(smaller.start);
+      expect(ical.endDate.toJSDate()).toEqual(smaller.end);
+      expect(s1!.getFirstPropertyValue("status")).toBe("TENTATIVE");
+    });
+
+    it("cancels the slot when what is left is shorter than the minimum duration", () => {
+      const mail = render({ s1: [smaller], s2: false }, 90);
+      expect(mail.text).toContain("09:00 bis 10:30 Uhr: abgesagt");
+      expect(mail.text).toContain("Es ist kein Zeitfenster mehr möglich.");
+      expect(events(mail)[0]!.getFirstPropertyValue("status")).toBe("CANCELLED");
+    });
   });
 
   it("says so when no window is left", () => {

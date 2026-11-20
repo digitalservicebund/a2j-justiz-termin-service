@@ -7,7 +7,9 @@ import type { UserRole } from "../core/domain/user.ts";
 // "confirmed": a given time_slot has been chosen
 // "cancelled": no time_slot was possible for all participants
 export type AppointmentStatus = "draft" | "open" | "confirmed" | "cancelled";
-type ResponseStatus = "yes" | "no" | "maybe";
+// "yes": available in the windows of the response, which lie within the slot
+// "no": not available at any time in the slot
+type ResponseStatus = "yes" | "no";
 type LinkType = "individual" | "universal";
 
 type AppointmentsTable = {
@@ -56,6 +58,14 @@ type ParticipantResponsesTable = {
   status: ResponseStatus;
   created_at: Generated<Date>;
   updated_at: Generated<Date>;
+};
+
+type ParticipantResponseWindowsTable = {
+  id: Generated<string>;
+  response_id: string;
+  start_time: Date | string;
+  end_time: Date | string;
+  created_at: Generated<Date>;
 };
 
 type Timestamps = {
@@ -116,4 +126,5 @@ export type Database = {
   time_slot: TimeSlotsTable;
   participant: ParticipantsTable;
   participant_response: ParticipantResponsesTable;
+  participant_response_window: ParticipantResponseWindowsTable;
 };

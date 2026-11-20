@@ -270,9 +270,10 @@ The initial schema is split deliberately:
   sets `emailVerified` to `false`; email normalization happens in the application.
   Role names are validated in the application, not constrained in the database.
 
-Migrations `0003` to `0011` add the appointment, time slot and participant tables, the confirmed
+Migrations `0003` to `0012` add the appointment, time slot and participant tables, the confirmed
 window, survey tokens, allowed domains, the calendar sequence and token, participant e-mail
-addresses, and the minimum duration of an appointment. Read the files for the details.
+addresses, the minimum duration of an appointment, and the availability windows of a response.
+Read the files for the details.
 
 Keep historical migrations unchanged after deployment; generate new migrations
 when upgrading Better Auth or changing the application schema.
@@ -439,8 +440,31 @@ the copy they hold.
 - Only a `richter` (or `admin`) creates and manages Terminumfragen and confirms the final slot.
 - Participants answer without signing in, through a survey link. A personal link answers once;
   the universal link of an appointment starts a new participant every time.
-- The `richter` explicitly confirms one slot as the final appointment.
 - Every Terminumfrage has a minimum duration in minutes. No proposed time slot may be shorter.
+- A participant answers each slot with the times they are available in it: all of it, none of
+  it, or one or more smaller windows. A window is at least the minimum duration long. Windows of
+  one slot that overlap or touch are merged, in the survey and in the database.
+- What is left of a slot is the time at which every participant who answered is available, in
+  stretches of at least the minimum duration. Later participants are only offered what is left,
+  and can only answer within it.
+- Once nothing is left of any slot, the Terminumfrage is cancelled. It makes no difference
+  whether a participant ruled a slot out or the participants have no time in common.
+- The `richter` explicitly confirms the final appointment: a start time within what is left of
+  one slot. The appointment runs until that remaining window ends and is at least the minimum
+  duration long.
+- What is left of a slot is never stored. It is worked out from the answers by
+  `remainingWindows()` in `app/core/domain/availability.ts`, read through
+  `app/adapters/appointments/availability.server.ts`. Answers and the confirmation are checked
+  against it under a lock on the appointment row.
+
+### Glossary
+
+| Term                | German                  | Meaning                                                                                 |
+| ------------------- | ----------------------- | --------------------------------------------------------------------------------------- |
+| slot                | Zeitfenster             | A time range the `richter` proposed.                                                    |
+| availability window | (kleineres) Zeitfenster | A time range a participant is available in. It lies within a slot and may be all of it. |
+| remaining window    | –                       | What is left of a slot once every answer is taken into account.                         |
+| confirmed window    | Termin                  | The final appointment. It lies within a remaining window.                               |
 
 ## Code Style & Formatting
 

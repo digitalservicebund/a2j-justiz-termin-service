@@ -1,6 +1,7 @@
 import { data, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
 
 import { getAppointment } from "~/adapters/appointments/appointments.server";
+import { readAvailability, remainingOf } from "~/adapters/appointments/availability.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { FlowPage } from "~/components/shared/FlowPage";
@@ -18,6 +19,7 @@ import { KernGrid, KernGridCol } from "~/components/shared/kern/KernGrid";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { classNames, resetClassName } from "~/components/shared/kern/layout";
+import { windowKey } from "~/core/domain/availability";
 import { formatRangeLong } from "~/core/domain/time/format";
 import { getDb } from "~/database/database";
 
@@ -30,32 +32,43 @@ type Params = { params: { appointmentId?: string } };
 
 const notFound = () => data("Not found", { status: 404 });
 
-// Only an open appointment has proposed windows to choose from.
+// Only an open appointment has windows to choose from: what the answers so far left of the
+// proposed slots.
 async function loadOpenAppointment(request: Request, { params }: Params) {
   const user = await requireRole(request, "richter");
   const id = params.appointmentId ?? "";
   const appointment = await getAppointment(getDb(), user.id, id);
   if (!appointment) throw notFound();
   if (appointment.status !== "open") throw redirect(`/overview/${encodeURIComponent(id)}`);
-  return { user, id, appointment };
+  const availability = await readAvailability(getDb(), id);
+  return {
+    user,
+    id,
+    appointment,
+    remaining: remainingOf(availability),
+    minDurationMinutes: availability.minDurationMinutes,
+  };
 }
 
 export async function loader({ request, params }: { request: Request } & Params) {
-  const { user, appointment } = await loadOpenAppointment(request, { params });
+  const { user, appointment, remaining } = await loadOpenAppointment(request, { params });
   return {
     user,
     aktenzeichen: appointment.aktenzeichen,
-    windows: appointment.slots.map(formatRangeLong),
+    windows: remaining.map((window) => ({
+      key: windowKey(window),
+      label: formatRangeLong(window),
+    })),
     // Going back from the review brings the earlier choice along.
     values: readValues(new URL(request.url).searchParams),
   };
 }
 
 export async function action({ request, params }: { request: Request } & Params) {
-  const { id, appointment } = await loadOpenAppointment(request, { params });
+  const { id, remaining, minDurationMinutes } = await loadOpenAppointment(request, { params });
   const values = readValues(await request.formData());
 
-  const result = validateSelection(values, appointment.slots);
+  const result = validateSelection(values, remaining, minDurationMinutes);
   if (!result.success) return data({ values, errors: result.errors }, { status: 400 });
   return redirect(`/overview/${encodeURIComponent(id)}/select/confirm?${selectionSearch(values)}`);
 }
@@ -91,15 +104,15 @@ export default function OverviewSelect() {
                 className={classNames("overview-select__fieldset", resetClassName)}
                 error={errors.slot}
               >
-                {windows.map((label, index) => (
+                {windows.map(({ key, label }, index) => (
                   <KernFormCheck
-                    key={label}
+                    key={key}
                     id={`fenster-${index}`}
                     type="radio"
                     label={label}
                     name="fenster"
-                    value={String(index)}
-                    defaultChecked={values.slot === String(index)}
+                    value={key}
+                    defaultChecked={values.slot === key}
                     invalid={Boolean(errors.slot)}
                   />
                 ))}
