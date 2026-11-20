@@ -456,7 +456,7 @@ async function addPerson(email: string, name = "", safeId = "") {
   const typist = user();
   await typist.click(await screen.findByRole("button", { name: "Person hinzufügen" }));
   await screen.findByRole("heading", { name: "Wie erreichen Sie die Person?" });
-  if (email) await typist.type(screen.getByRole("textbox", { name: "E-Mail-Adresse" }), email);
+  if (email) await typist.type(screen.getByRole("textbox", { name: /^E-Mail-Adresse/ }), email);
   if (safeId) await typist.type(screen.getByRole("textbox", { name: /^SAFE-ID/ }), safeId);
   if (name) await typist.type(screen.getByRole("textbox", { name: /^Name/ }), name);
   await typist.click(screen.getByRole("button", { name: "Speichern" }));
@@ -569,13 +569,13 @@ describe("CreateTermin participants", () => {
     expect(
       await screen.findByText("Geben Sie eine E-Mail-Adresse oder eine SAFE-ID an."),
     ).toBeVisible();
-    expect(screen.getByRole("textbox", { name: "E-Mail-Adresse" })).toBeInvalid();
+    expect(screen.getByRole("textbox", { name: /^E-Mail-Adresse/ })).toBeInvalid();
     expect(drafts.get("abc")!.participants).toHaveLength(0);
 
-    await user().type(screen.getByRole("textbox", { name: "E-Mail-Adresse" }), "nope");
+    await user().type(screen.getByRole("textbox", { name: /^E-Mail-Adresse/ }), "nope");
     await user().click(screen.getByRole("button", { name: "Speichern" }));
     expect(await screen.findByText("Geben Sie eine gültige E-Mail-Adresse an.")).toBeVisible();
-    expect(screen.getByRole("textbox", { name: "E-Mail-Adresse" })).toHaveValue("nope");
+    expect(screen.getByRole("textbox", { name: /^E-Mail-Adresse/ })).toHaveValue("nope");
   });
 
   it("describes the name field and marks it as optional", async () => {
@@ -586,6 +586,15 @@ describe("CreateTermin participants", () => {
     expect(name).toHaveAccessibleName("Name - Optional");
     expect(name).toHaveAccessibleDescription(
       /weder eine persönliche E-Mail-Adresse noch eine SAFE-ID/,
+    );
+  });
+
+  it("marks the e-mail address as optional, since a SAFE-ID or a name will do", async () => {
+    seedDraft("A 1");
+    renderPage("/overview/abc/verfahrensbeteiligte/neu");
+
+    expect(await screen.findByRole("textbox", { name: /^E-Mail-Adresse/ })).toHaveAccessibleName(
+      "E-Mail-Adresse - Optional",
     );
   });
 
@@ -620,7 +629,7 @@ describe("CreateTermin participants", () => {
       await screen.findByRole("button", { name: "Person person.a@example.com bearbeiten" }),
     );
 
-    const email = await screen.findByRole("textbox", { name: "E-Mail-Adresse" });
+    const email = await screen.findByRole("textbox", { name: /^E-Mail-Adresse/ });
     expect(email).toHaveValue("person.a@example.com");
     const safeId = screen.getByRole("textbox", { name: /^SAFE-ID/ });
     expect(safeId).toHaveValue("DE.Example.a1");
@@ -656,7 +665,7 @@ describe("CreateTermin participants", () => {
     seedDraft("A 1");
     renderPage("/overview/abc/verfahrensbeteiligte/neu");
     await user().type(
-      await screen.findByRole("textbox", { name: "E-Mail-Adresse" }),
+      await screen.findByRole("textbox", { name: /^E-Mail-Adresse/ }),
       "a@example.com",
     );
 

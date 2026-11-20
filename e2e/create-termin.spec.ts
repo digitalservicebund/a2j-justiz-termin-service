@@ -750,7 +750,9 @@ test("the page of a person flags what is wrong in place and saves nothing", asyn
       .execute(),
   ).toEqual([]);
 
-  // The SAFE-ID and name fields are optional and explain themselves.
+  // Each field is optional on its own, as long as one is filled in. SAFE-ID and name explain
+  // themselves.
+  await expect(page.getByRole("textbox", { name: "E-Mail-Adresse - Optional" })).toBeVisible();
   await expect(
     page.getByRole("textbox", { name: "SAFE-ID - Optional" }),
   ).toHaveAccessibleDescription(/elektronisches Postfach/);

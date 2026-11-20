@@ -126,7 +126,11 @@ export default function CreateTerminParticipant() {
                 id="email"
                 name="email"
                 type="email"
-                label="E-Mail-Adresse"
+                label={
+                  <>
+                    E-Mail-Adresse <span className="create-termin__optional">- Optional</span>
+                  </>
+                }
                 error={errors.email}
                 autoComplete="off"
                 defaultValue={values.email}
