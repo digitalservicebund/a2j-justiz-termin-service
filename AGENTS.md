@@ -2,6 +2,14 @@
 
 See [README.md](README.md) for the stack, project structure and styling rules.
 
+## Before starting a task
+
+Run `git fetch origin` first. Without it the checkout does not know about PRs that were merged on GitHub, and work starts from a stale `main`.
+
+- **New task:** start a new branch from the fetched main: `git switch --no-track -c <branch> origin/main`. A new worktree starts from `origin/main` as well.
+- **Continuing the current task:** stay on the current branch. If its PR is already merged (`gh pr view --json state`), the task is finished, so treat the request as a new task.
+- **Unclear whether it is a new task:** ask the user before you change branches.
+
 ## Before every commit and push
 
 Run these from the repository root. All of them must pass; CI runs the same checks and fails the build otherwise.
