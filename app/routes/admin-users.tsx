@@ -122,6 +122,9 @@ export default function AdminUsersRoute() {
   return (
     <AppShell breadcrumbs={[{ label: "Benutzerverwaltung", href: "#" }]} user={user}>
       <DefaultPage>
+        <KernHeading size="large" level={1}>
+          Benutzerverwaltung
+        </KernHeading>
         <KernBody>
           Hinterlegte E‑Mail-Adressen und Adressen{" "}
           <Link className="kern-link" to="/admin/domains">
