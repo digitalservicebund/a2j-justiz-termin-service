@@ -37,8 +37,9 @@ const draft = (status: "draft" | "open" = "draft") => ({
 });
 
 const people = [
-  { id: "p1", email: "person.a@example.com", name: null },
-  { id: "p2", email: null, name: "Person B" },
+  { id: "p1", email: "person.a@example.com", safeId: null, name: null },
+  { id: "p2", email: null, safeId: null, name: "Person B" },
+  { id: "p3", email: null, safeId: "DE.Example.c1", name: null },
 ];
 
 const url = (id: string) => `http://localhost/overview/d1/verfahrensbeteiligte/${id}`;
@@ -104,16 +105,22 @@ describe("create-termin participant route", () => {
     it("starts a new person empty and links back to the form", async () => {
       expect(await loader(get("neu"))).toMatchObject({
         cancelHref: "/overview/new?entwurf=d1",
-        values: { email: "", name: "" },
+        values: { email: "", safeId: "", name: "" },
       });
     });
 
-    it("opens a person with the saved values, whichever of the two is missing", async () => {
+    it("opens a person with the saved values, whichever are missing", async () => {
       expect((await loader(get("p1"))).values).toEqual({
         email: "person.a@example.com",
+        safeId: "",
         name: "",
       });
-      expect((await loader(get("p2"))).values).toEqual({ email: "", name: "Person B" });
+      expect((await loader(get("p2"))).values).toEqual({ email: "", safeId: "", name: "Person B" });
+      expect((await loader(get("p3"))).values).toEqual({
+        email: "",
+        safeId: "DE.Example.c1",
+        name: "",
+      });
     });
 
     it("answers 404 for a person that is not in the draft", async () => {
@@ -124,11 +131,16 @@ describe("create-termin participant route", () => {
   describe("saving a new person", () => {
     it("adds the person and returns to the form", async () => {
       const response = await action(
-        post("neu", { email: " Person.C@Example.com ", name: " Person C " }),
+        post("neu", {
+          email: " Person.C@Example.com ",
+          safeId: " DE.Example.C2 ",
+          name: " Person C ",
+        }),
       );
 
       expect(addDraftParticipant).toHaveBeenCalledWith({ db: true }, "1", "d1", {
         email: "person.c@example.com",
+        safeId: "DE.Example.C2",
         name: "Person C",
       });
       expect(location(response)).toBe("/overview/new?entwurf=d1");
@@ -139,8 +151,20 @@ describe("create-termin participant route", () => {
 
       expect(addDraftParticipant).toHaveBeenCalledWith({ db: true }, "1", "d1", {
         email: null,
+        safeId: null,
         name: "Person C",
       });
+    });
+
+    it("adds a person who only has a SAFE-ID", async () => {
+      const response = await action(post("neu", { email: "", safeId: "DE.Example.c2", name: "" }));
+
+      expect(addDraftParticipant).toHaveBeenCalledWith({ db: true }, "1", "d1", {
+        email: null,
+        safeId: "DE.Example.c2",
+        name: null,
+      });
+      expect(location(response)).toBe("/overview/new?entwurf=d1");
     });
 
     it("lets several people share an e-mail address or a name", async () => {
@@ -158,16 +182,28 @@ describe("create-termin participant route", () => {
       )) as unknown as DataResponse;
 
       expect(response.init?.status).toBe(400);
-      expect(response.data.values).toEqual({ email: "nope", name: "Person C" });
+      expect(response.data.values).toEqual({ email: "nope", safeId: "", name: "Person C" });
       expect(response.data.errors.email).toBe("Geben Sie eine gültige E-Mail-Adresse an.");
       expect(addDraftParticipant).not.toHaveBeenCalled();
     });
 
-    it("asks for an e-mail address when the form is empty", async () => {
+    it("asks for an e-mail address or a SAFE-ID when the form is empty", async () => {
       const response = (await action(post("neu", {}))) as unknown as DataResponse;
 
       expect(response.init?.status).toBe(400);
-      expect(response.data.errors.email).toBe("Geben Sie eine E-Mail-Adresse an.");
+      expect(response.data.errors.email).toBe(
+        "Geben Sie eine E-Mail-Adresse oder eine SAFE-ID an.",
+      );
+    });
+
+    it("rejects a SAFE-ID that is too long, keeping what was typed", async () => {
+      const safeId = "a".repeat(256);
+      const response = (await action(post("neu", { safeId }))) as unknown as DataResponse;
+
+      expect(response.init?.status).toBe(400);
+      expect(response.data.values).toEqual({ email: "", safeId, name: "" });
+      expect(response.data.errors.safeId).toBe("Die SAFE-ID darf höchstens 255 Zeichen lang sein.");
+      expect(addDraftParticipant).not.toHaveBeenCalled();
     });
 
     it("refuses a person beyond the maximum", async () => {
@@ -175,6 +211,7 @@ describe("create-termin participant route", () => {
         Array.from({ length: MAX_PARTICIPANTS }, (_, index) => ({
           id: `p${index}`,
           email: `person.${index}@example.com`,
+          safeId: null,
           name: null,
         })),
       );
@@ -202,11 +239,12 @@ describe("create-termin participant route", () => {
   describe("saving an existing person", () => {
     it("replaces the person and returns to the form", async () => {
       const response = await action(
-        post("p2", { email: "person.b@example.com", name: "Person B" }),
+        post("p2", { email: "person.b@example.com", safeId: "DE.Example.b1", name: "Person B" }),
       );
 
       expect(updateDraftParticipant).toHaveBeenCalledWith({ db: true }, "1", "d1", "p2", {
         email: "person.b@example.com",
+        safeId: "DE.Example.b1",
         name: "Person B",
       });
       expect(addDraftParticipant).not.toHaveBeenCalled();

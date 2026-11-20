@@ -10,16 +10,23 @@ import { groupSlotsByDay } from "./slot-days";
 
 import "./draft.css";
 
-// "a@example.com", "Person A" or "a@example.com, Person A".
-const describePerson = ({ email, name }: { email: string | null; name: string | null }) =>
-  [email, name].filter(Boolean).join(", ");
+type ReviewPerson = {
+  id: string;
+  email: string | null;
+  safeId: string | null;
+  name: string | null;
+};
+
+// "a@example.com", "Person A" or "a@example.com, SAFE-ID: DE.Example.1, Person A".
+const describePerson = ({ email, safeId, name }: ReviewPerson) =>
+  [email, safeId && `SAFE-ID: ${safeId}`, name].filter(Boolean).join(", ");
 
 export function CreateTerminReview({
   values,
   participants,
 }: Readonly<{
   values: CreateTerminValues;
-  participants: Array<{ id: string; email: string | null; name: string | null }>;
+  participants: ReviewPerson[];
 }>) {
   return (
     <ReviewPage

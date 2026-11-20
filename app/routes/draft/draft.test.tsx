@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -17,7 +17,7 @@ import { MAX_SLOTS } from "./schema";
 import CreateTerminSlot, { action as slotAction, loader as slotLoader } from "./slot";
 
 type Slot = { id: string; start: Date; end: Date };
-type Person = { id: string; email: string | null; name: string | null };
+type Person = { id: string; email: string | null; safeId: string | null; name: string | null };
 type Draft = {
   id: string;
   status: string;
@@ -452,28 +452,39 @@ describe("CreateTermin form", () => {
   });
 });
 
-async function addPerson(email: string, name = "") {
+async function addPerson(email: string, name = "", safeId = "") {
   const typist = user();
   await typist.click(await screen.findByRole("button", { name: "Person hinzufügen" }));
-  await screen.findByRole("heading", { name: "Wie lautet die E-Mail-Adresse der Person?" });
+  await screen.findByRole("heading", { name: "Wie erreichen Sie die Person?" });
   if (email) await typist.type(screen.getByRole("textbox", { name: "E-Mail-Adresse" }), email);
+  if (safeId) await typist.type(screen.getByRole("textbox", { name: /^SAFE-ID/ }), safeId);
   if (name) await typist.type(screen.getByRole("textbox", { name: /^Name/ }), name);
   await typist.click(screen.getByRole("button", { name: "Speichern" }));
 }
 
 describe("CreateTermin participants", () => {
-  const personA = { id: "a", email: "person.a@example.com", name: null };
-  const personB = { id: "b", email: null, name: "Person B" };
+  const personA = { id: "a", email: "person.a@example.com", safeId: null, name: null };
+  const personB = { id: "b", email: null, safeId: null, name: "Person B" };
+  const personC = { id: "c", email: null, safeId: "DE.Example.c1", name: null };
 
-  it("lists the people with their address and name, and edit and delete actions", async () => {
-    seedDraft("A 1", [], [personA, personB]);
+  it("lists the people with their address, SAFE-ID and name, and edit and delete actions", async () => {
+    seedDraft("A 1", [], [personA, personB, personC]);
     renderPage("/overview/new?entwurf=abc");
 
-    await screen.findByRole("table", { name: "Verfahrensbeteiligte" });
+    const table = await screen.findByRole("table", { name: "Verfahrensbeteiligte" });
+    expect(
+      within(table)
+        .getAllByRole("columnheader")
+        .map((header) => header.textContent),
+    ).toEqual(["E-Mail-Adresse", "SAFE-ID", "Name", "Aktionen"]);
     expect(personRows().map((row) => row.textContent)).toEqual([
       expect.stringContaining("person.a@example.com"),
       expect.stringContaining("Person B"),
+      expect.stringContaining("DE.Example.c1"),
     ]);
+    expect(
+      within(personRows()[2]!).getByRole("button", { name: "Person DE.Example.c1 bearbeiten" }),
+    ).toBeEnabled();
     const first = within(personRows()[0]!);
     expect(
       first.getByRole("button", { name: "Person person.a@example.com bearbeiten" }),
@@ -509,6 +520,34 @@ describe("CreateTermin participants", () => {
     expect(personRows().map((row) => row.textContent)).toEqual(["Person C"]);
   });
 
+  it("adds a person with a SAFE-ID and keeps its case", async () => {
+    seedDraft("A 1");
+    renderPage("/overview/new?entwurf=abc");
+
+    await addPerson("person.c@example.com", "Person C", "DE.Example.C1");
+
+    await screen.findByRole("table", { name: "Verfahrensbeteiligte" });
+    const row = within(personRows()[0]!);
+    expect(row.getByText("person.c@example.com")).toBeInTheDocument();
+    expect(row.getByText("DE.Example.C1")).toBeInTheDocument();
+    expect(row.getByText("Person C")).toBeInTheDocument();
+    expect(drafts.get("abc")!.participants[0]).toMatchObject({
+      email: "person.c@example.com",
+      safeId: "DE.Example.C1",
+      name: "Person C",
+    });
+  });
+
+  it("adds a person who only has a SAFE-ID", async () => {
+    seedDraft("A 1");
+    renderPage("/overview/new?entwurf=abc");
+
+    await addPerson("", "", "DE.Example.c1");
+
+    await screen.findByRole("table", { name: "Verfahrensbeteiligte" });
+    expect(personRows().map((row) => row.textContent)).toEqual(["DE.Example.c1"]);
+  });
+
   it("lets several people share an address and a name", async () => {
     seedDraft("A 1", [], [personA]);
     renderPage("/overview/new?entwurf=abc");
@@ -523,11 +562,13 @@ describe("CreateTermin participants", () => {
   it("explains a missing address in place and keeps what was typed", async () => {
     seedDraft("A 1");
     renderPage("/overview/abc/verfahrensbeteiligte/neu");
-    await screen.findByRole("heading", { name: "Wie lautet die E-Mail-Adresse der Person?" });
+    await screen.findByRole("heading", { name: "Wie erreichen Sie die Person?" });
 
     await user().click(screen.getByRole("button", { name: "Speichern" }));
 
-    expect(await screen.findByText("Geben Sie eine E-Mail-Adresse an.")).toBeVisible();
+    expect(
+      await screen.findByText("Geben Sie eine E-Mail-Adresse oder eine SAFE-ID an."),
+    ).toBeVisible();
     expect(screen.getByRole("textbox", { name: "E-Mail-Adresse" })).toBeInvalid();
     expect(drafts.get("abc")!.participants).toHaveLength(0);
 
@@ -543,11 +584,37 @@ describe("CreateTermin participants", () => {
 
     const name = await screen.findByRole("textbox", { name: /^Name/ });
     expect(name).toHaveAccessibleName("Name - Optional");
-    expect(name).toHaveAccessibleDescription(/keine persönliche E-Mail-Adresse/);
+    expect(name).toHaveAccessibleDescription(
+      /weder eine persönliche E-Mail-Adresse noch eine SAFE-ID/,
+    );
+  });
+
+  it("describes the SAFE-ID field and marks it as optional", async () => {
+    seedDraft("A 1");
+    renderPage("/overview/abc/verfahrensbeteiligte/neu");
+
+    const safeId = await screen.findByRole("textbox", { name: /^SAFE-ID/ });
+    expect(safeId).toHaveAccessibleName("SAFE-ID - Optional");
+    expect(safeId).toHaveAccessibleDescription(/elektronisches Postfach/);
+  });
+
+  it("explains a SAFE-ID that is too long in place", async () => {
+    seedDraft("A 1");
+    renderPage("/overview/abc/verfahrensbeteiligte/neu");
+    const safeId = await screen.findByRole("textbox", { name: /^SAFE-ID/ });
+
+    fireEvent.change(safeId, { target: { value: "a".repeat(256) } });
+    await user().click(screen.getByRole("button", { name: "Speichern" }));
+
+    expect(
+      await screen.findByText("Die SAFE-ID darf höchstens 255 Zeichen lang sein."),
+    ).toBeVisible();
+    expect(screen.getByRole("textbox", { name: /^SAFE-ID/ })).toBeInvalid();
+    expect(drafts.get("abc")!.participants).toHaveLength(0);
   });
 
   it("opens a person for editing with the saved values and replaces them", async () => {
-    seedDraft("A 1", [], [personA]);
+    seedDraft("A 1", [], [{ ...personA, safeId: "DE.Example.a1" }]);
     renderPage("/overview/new?entwurf=abc");
     await user().click(
       await screen.findByRole("button", { name: "Person person.a@example.com bearbeiten" }),
@@ -555,14 +622,19 @@ describe("CreateTermin participants", () => {
 
     const email = await screen.findByRole("textbox", { name: "E-Mail-Adresse" });
     expect(email).toHaveValue("person.a@example.com");
+    const safeId = screen.getByRole("textbox", { name: /^SAFE-ID/ });
+    expect(safeId).toHaveValue("DE.Example.a1");
     await user().clear(email);
     await user().type(email, "person.d@example.com");
+    await user().clear(safeId);
+    await user().type(safeId, "DE.Example.d1");
     await user().type(screen.getByRole("textbox", { name: /^Name/ }), "Person D");
     await user().click(screen.getByRole("button", { name: "Speichern" }));
 
     await screen.findByRole("table", { name: "Verfahrensbeteiligte" });
     expect(personRows()).toHaveLength(1);
     expect(personRows()[0]!.textContent).toContain("person.d@example.com");
+    expect(personRows()[0]!.textContent).toContain("DE.Example.d1");
     expect(personRows()[0]!.textContent).toContain("Person D");
   });
 
@@ -619,7 +691,7 @@ describe("CreateTermin participants", () => {
         [5, 9, 10],
         [6, 9, 10],
       ],
-      [{ ...personA, name: "Person A" }, personB],
+      [{ ...personA, name: "Person A" }, personB, { ...personC, email: "person.c@example.com" }],
     );
     renderPage("/overview/new?entwurf=abc");
 
@@ -630,7 +702,11 @@ describe("CreateTermin participants", () => {
       within(section)
         .getAllByRole("listitem")
         .map((item) => item.textContent),
-    ).toEqual(["person.a@example.com, Person A", "Person B"]);
+    ).toEqual([
+      "person.a@example.com, Person A",
+      "Person B",
+      "person.c@example.com, SAFE-ID: DE.Example.c1",
+    ]);
   });
 
   it("stops offering new people at the maximum", async () => {
@@ -640,6 +716,7 @@ describe("CreateTermin participants", () => {
       Array.from({ length: MAX_PARTICIPANTS }, (_, index) => ({
         id: `p${index}`,
         email: `person.${index}@example.com`,
+        safeId: null,
         name: null,
       })),
     );

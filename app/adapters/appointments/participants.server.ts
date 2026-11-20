@@ -5,14 +5,13 @@ import { sql, type Kysely } from "kysely";
 import type { Database } from "../../database/types.ts";
 import { logInfo } from "../../lib/logging.ts";
 
-// What a person is called wherever the app shows one: the name, or the address of a person who has
-// no name. Select it as `name`. The row always has one of them.
-export const participantName = sql<string>`COALESCE(participant.name, participant.email)`.as(
-  "name",
-);
+// What a person is called wherever the app shows one: the name, else the e-mail address, else the
+// SAFE-ID. Select it as `name`. The row always has one of them.
+export const participantName =
+  sql<string>`COALESCE(participant.name, participant.email, participant.safe_id)`.as("name");
 
-// A person has an e-mail address, a name or both; the form needs one of them.
-export type ParticipantInput = { email: string | null; name: string | null };
+// A person has an e-mail address, a SAFE-ID, a name or several of them; the form needs one.
+export type ParticipantInput = { email: string | null; safeId: string | null; name: string | null };
 
 export type DraftParticipant = ParticipantInput & { id: string };
 
@@ -38,7 +37,12 @@ export async function listParticipants(
   return db
     .selectFrom("participant")
     .innerJoin("appointment", "appointment.id", "participant.appointment_id")
-    .select(["participant.id", "participant.email", "participant.name"])
+    .select([
+      "participant.id",
+      "participant.email",
+      "participant.safe_id as safeId",
+      "participant.name",
+    ])
     .where("appointment.id", "=", appointmentId)
     .where("appointment.user_id", "=", userId)
     .orderBy("participant.created_at")
@@ -52,7 +56,7 @@ export async function addDraftParticipant(
   db: Kysely<Database>,
   userId: string,
   id: string,
-  { email, name }: ParticipantInput,
+  { email, safeId, name }: ParticipantInput,
 ): Promise<boolean> {
   return db.transaction().execute(async (trx) => {
     if (!(await ownDraft(trx, userId, id).executeTakeFirst())) return false;
@@ -61,6 +65,7 @@ export async function addDraftParticipant(
       .values({
         appointment_id: id,
         email,
+        safe_id: safeId,
         name,
         type: "individual",
         token: randomBytes(24).toString("base64url"),
@@ -77,13 +82,13 @@ export async function updateDraftParticipant(
   userId: string,
   id: string,
   participantId: string,
-  { email, name }: ParticipantInput,
+  { email, safeId, name }: ParticipantInput,
 ): Promise<boolean> {
   return db.transaction().execute(async (trx) => {
     if (!(await ownDraft(trx, userId, id).executeTakeFirst())) return false;
     const updated = await trx
       .updateTable("participant")
-      .set({ email, name, updated_at: new Date() })
+      .set({ email, safe_id: safeId, name, updated_at: new Date() })
       .where("id", "=", participantId)
       .where("appointment_id", "=", id)
       .returning("id")

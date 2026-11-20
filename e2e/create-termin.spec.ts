@@ -95,10 +95,14 @@ const personRows = (page: Page) =>
   page.getByRole("table", { name: "Verfahrensbeteiligte" }).locator("tbody tr");
 
 // Adds a person on the page of its own, the way a user does without JavaScript.
-async function addPerson(page: Page, { email = "", name = "" }: { email?: string; name?: string }) {
+async function addPerson(
+  page: Page,
+  { email = "", safeId = "", name = "" }: { email?: string; safeId?: string; name?: string },
+) {
   await page.getByRole("button", { name: "Person hinzufügen" }).click();
   await expect(page).toHaveURL(/\/verfahrensbeteiligte\/neu$/);
   if (email) await page.getByRole("textbox", { name: "E-Mail-Adresse" }).fill(email);
+  if (safeId) await page.getByRole("textbox", { name: /^SAFE-ID/ }).fill(safeId);
   if (name) await page.getByRole("textbox", { name: /^Name/ }).fill(name);
   await page.getByRole("button", { name: "Speichern" }).click();
 }
@@ -725,7 +729,7 @@ test("the page of a person flags what is wrong in place and saves nothing", asyn
 
   await page.getByRole("button", { name: "Speichern" }).click();
 
-  await expect(page.getByText("Geben Sie eine E-Mail-Adresse an.")).toBeVisible();
+  await expect(page.getByText("Geben Sie eine E-Mail-Adresse oder eine SAFE-ID an.")).toBeVisible();
   await expect(page.getByRole("textbox", { name: "E-Mail-Adresse" })).toHaveAttribute(
     "aria-invalid",
     "true",
@@ -746,10 +750,74 @@ test("the page of a person flags what is wrong in place and saves nothing", asyn
       .execute(),
   ).toEqual([]);
 
-  // The name field is optional and explains itself.
+  // The SAFE-ID and name fields are optional and explain themselves.
+  await expect(
+    page.getByRole("textbox", { name: "SAFE-ID - Optional" }),
+  ).toHaveAccessibleDescription(/elektronisches Postfach/);
   await expect(page.getByRole("textbox", { name: "Name - Optional" })).toHaveAccessibleDescription(
-    /keine persönliche E-Mail-Adresse/,
+    /weder eine persönliche E-Mail-Adresse noch eine SAFE-ID/,
   );
+});
+
+test("a person can have a SAFE-ID next to an e-mail address or instead of one", async ({
+  page,
+  db,
+}) => {
+  await page.getByRole("textbox", { name: "Aktenzeichen" }).fill("574 C 65412/26");
+  await minDuration(page).fill("60");
+  await addPerson(page, { email: "person.a@example.com", safeId: " DE.Example.A1 " });
+  await addPerson(page, { safeId: "DE.Example.b2" });
+  await expect(personRows(page)).toHaveCount(2);
+  await expect(personRows(page).first()).toContainText("person.a@example.com");
+  await expect(personRows(page).first()).toContainText("DE.Example.A1");
+  await expect(personRows(page).nth(1)).toHaveText("DE.Example.b2");
+  const id = appointmentId(page);
+
+  // The SAFE-ID is stored as typed, apart from the spaces around it.
+  expect(
+    await db
+      .selectFrom("participant")
+      .select(["email", "safe_id", "name"])
+      .where("appointment_id", "=", id)
+      .orderBy("created_at")
+      .execute(),
+  ).toEqual([
+    { email: "person.a@example.com", safe_id: "DE.Example.A1", name: null },
+    { email: null, safe_id: "DE.Example.b2", name: null },
+  ]);
+
+  // Edit: the page starts with the saved SAFE-ID, and saving replaces it.
+  await personRows(page)
+    .first()
+    .getByRole("button", { name: /bearbeiten$/ })
+    .click();
+  await expect(page.getByRole("textbox", { name: /^SAFE-ID/ })).toHaveValue("DE.Example.A1");
+  await page.getByRole("textbox", { name: /^SAFE-ID/ }).fill("DE.Example.a3");
+  await page.getByRole("button", { name: "Speichern" }).click();
+  await expect(personRows(page).first()).toContainText("DE.Example.a3");
+
+  // A SAFE-ID that is too long is flagged in place.
+  await personRows(page)
+    .nth(1)
+    .getByRole("button", { name: /bearbeiten$/ })
+    .click();
+  await page.getByRole("textbox", { name: /^SAFE-ID/ }).fill("a".repeat(256));
+  await page.getByRole("button", { name: "Speichern" }).click();
+  await expect(page.getByText("Die SAFE-ID darf höchstens 255 Zeichen lang sein.")).toBeVisible();
+  await expect(page.getByRole("textbox", { name: /^SAFE-ID/ })).toHaveAttribute(
+    "aria-invalid",
+    "true",
+  );
+  await page.getByRole("link", { name: "Abbrechen" }).click();
+
+  await addSlot(page, nextWeek[0]!);
+  await addSlot(page, nextWeek[1]!);
+  await page.getByRole("button", { name: "Weiter" }).click();
+  const people = page.getByRole("group", { name: "Verfahrensbeteiligte", exact: true });
+  await expect(people.getByRole("listitem")).toHaveText([
+    "person.a@example.com, SAFE-ID: DE.Example.a3",
+    "SAFE-ID: DE.Example.b2",
+  ]);
 });
 
 test("the form stops offering people at twenty", async ({ page, db }) => {

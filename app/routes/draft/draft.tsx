@@ -252,6 +252,7 @@ export default function CreateTermin() {
                 <KernTableHead>
                   <KernRow>
                     <KernColumn>E-Mail-Adresse</KernColumn>
+                    <KernColumn>SAFE-ID</KernColumn>
                     <KernColumn>Name</KernColumn>
                     <KernColumn variant="action">Aktionen</KernColumn>
                   </KernRow>
@@ -260,11 +261,12 @@ export default function CreateTermin() {
                   {participants.length === 0 ? (
                     <EmptyRow>Sie haben keine Verfahrensbeteiligten angegeben.</EmptyRow>
                   ) : (
-                    participants.map(({ id, email, name }) => {
-                      const label = `Person ${email ?? name}`;
+                    participants.map(({ id, email, safeId, name }) => {
+                      const label = `Person ${email ?? safeId ?? name}`;
                       return (
                         <KernRow key={id}>
                           <KernCell>{email}</KernCell>
+                          <KernCell className="create-termin__safe-id">{safeId}</KernCell>
                           <KernCell>{name}</KernCell>
                           <KernCell variant="action">
                             <KernCluster wrap={false} gap="sm" justify="center">
