@@ -1,0 +1,232 @@
+import { useState, type ReactNode } from "react";
+import { useNavigation } from "react-router";
+
+import type { BreadcrumbItem } from "~/components/shared/Breadcrumb";
+import { FlowPage } from "~/components/shared/FlowPage";
+import { FormActions, FormStack } from "~/components/shared/FormLayout";
+import { KernBody } from "~/components/shared/kern/KernBody";
+import { KernButton } from "~/components/shared/kern/KernButton";
+import { KernCluster } from "~/components/shared/kern/KernCluster";
+import {
+  KernDescriptionList,
+  KernDescriptionListItem,
+} from "~/components/shared/kern/KernDescriptionList";
+import { KernHeading } from "~/components/shared/kern/KernHeading";
+import { KernIcon } from "~/components/shared/kern/KernIcon";
+import { formatCalendarDate } from "~/core/domain/time/format";
+import { useHydrated } from "~/lib/use-hydrated";
+
+import { formatMinutes, isEmptySlot, type CreateTerminValues, type SlotInput } from "./schema";
+
+import "./draft.css";
+import "./review.css";
+
+const pad = (value: string) => value.padStart(2, "0");
+
+export const createTerminBreadcrumbs = [
+  { label: "Erstellen der Terminumfrage" },
+] satisfies BreadcrumbItem[];
+
+export type DayWindows = { key: string; label: string; times: string[] };
+
+// Expects slots that passed validation. Windows on the same day share one entry.
+export function groupSlotsByDay(slots: SlotInput[]): DayWindows[] {
+  const windows = slots
+    .filter((slot) => !isEmptySlot(slot))
+    .map((slot) => {
+      const key = `${slot.year}-${pad(slot.month)}-${pad(slot.day)}`;
+      const start = `${pad(slot.startHour)}:${pad(slot.startMinute)}`;
+      const end = `${pad(slot.endHour)}:${pad(slot.endMinute)}`;
+      const label = formatCalendarDate(Number(slot.year), Number(slot.month), Number(slot.day));
+      return { key, label, start, time: `${start} bis ${end}` };
+    })
+    .sort((a, b) => a.key.localeCompare(b.key) || a.start.localeCompare(b.start));
+
+  const days: DayWindows[] = [];
+  for (const { key, label, time } of windows) {
+    const last = days.at(-1);
+    if (last?.key === key) last.times.push(time);
+    else days.push({ key, label, times: [time] });
+  }
+  return days;
+}
+
+type ReviewSectionProps = {
+  id: string;
+  title: string;
+  // Sections offer to go back and edit unless this is turned off.
+  editable?: boolean;
+  children: ReactNode;
+};
+
+function Section({
+  id,
+  title,
+  editable = true,
+  open,
+  onToggle,
+  children,
+}: Readonly<ReviewSectionProps & { open: boolean; onToggle: (open: boolean) => void }>) {
+  return (
+    <details
+      className="kern-accordion"
+      aria-labelledby={`review-${id}`}
+      open={open}
+      onToggle={(event) => onToggle(event.currentTarget.open)}
+    >
+      <summary className="kern-accordion__header">
+        <KernHeading size="title" level={2} id={`review-${id}`}>
+          {title}
+        </KernHeading>
+      </summary>
+      <div className="kern-accordion__body">
+        <div className="kern-summary__body create-termin-review__summary">
+          {children}
+          {editable && (
+            <button type="submit" name="intent" value="back" className="kern-link">
+              <KernIcon name="edit" />
+              Bearbeiten <span className="kern-sr-only">{title}</span>
+            </button>
+          )}
+        </div>
+      </div>
+    </details>
+  );
+}
+
+// A form that lists the sections for a last check. Every edit button and "Zurück" submit
+// the intent "back"; the main button submits the given intent.
+export function ReviewPage({
+  sections,
+  submit,
+  wide = false,
+  children,
+}: Readonly<{
+  sections: ReviewSectionProps[];
+  // The survey and overview reviews are wider than the create-termin review, and sit closer to
+  // the breadcrumb.
+  wide?: boolean;
+  submit: { label: string; intent: string };
+  // Hidden inputs the action needs.
+  children?: ReactNode;
+}>) {
+  const pending = useNavigation().state !== "idle";
+  const hydrated = useHydrated();
+  const [open, setOpen] = useState<Record<string, boolean>>({});
+  const isOpen = (id: string) => open[id] ?? true;
+  const setAll = (value: boolean) =>
+    setOpen(Object.fromEntries(sections.map(({ id }) => [id, value])));
+
+  return (
+    <FlowPage width={wide ? "default" : "narrow"} spacing={wide ? "review" : "form"}>
+      <FormStack method="post">
+        {children}
+        <KernHeading size="large" level={1}>
+          Bitte überprüfen Sie Ihre Angaben
+        </KernHeading>
+
+        {/* The sections are plain <details>; opening them all at once needs JavaScript. */}
+        {hydrated && (
+          <KernCluster gap="md">
+            <KernButton type="button" style="secondary" onClick={() => setAll(true)}>
+              Alle einblenden
+            </KernButton>
+            <KernButton type="button" style="secondary" onClick={() => setAll(false)}>
+              Alle ausblenden
+            </KernButton>
+          </KernCluster>
+        )}
+
+        <div>
+          {sections.map(({ id, children: content, ...section }) => (
+            <Section
+              key={id}
+              id={id}
+              {...section}
+              open={isOpen(id)}
+              onToggle={(value) => setOpen((current) => ({ ...current, [id]: value }))}
+            >
+              {content}
+            </Section>
+          ))}
+        </div>
+
+        <FormActions>
+          <KernButton type="submit" name="intent" value="back" style="secondary">
+            Zurück
+          </KernButton>
+          <KernButton type="submit" name="intent" value={submit.intent} disabled={pending}>
+            {submit.label}
+          </KernButton>
+        </FormActions>
+      </FormStack>
+    </FlowPage>
+  );
+}
+
+// "a@example.com", "Person A" or "a@example.com, Person A".
+const describePerson = ({ email, name }: { email: string | null; name: string | null }) =>
+  [email, name].filter(Boolean).join(", ");
+
+export function CreateTerminReview({
+  values,
+  participants,
+}: Readonly<{
+  values: CreateTerminValues;
+  participants: Array<{ id: string; email: string | null; name: string | null }>;
+}>) {
+  return (
+    <ReviewPage
+      sections={[
+        {
+          id: "verhandlungsdaten",
+          title: "Verhandlungsdaten",
+          children: (
+            <KernDescriptionList>
+              <KernDescriptionListItem label="Aktenzeichen">
+                {values.aktenzeichen}
+              </KernDescriptionListItem>
+              {values.minDurationMinutes !== null && (
+                <KernDescriptionListItem label="Mindestdauer">
+                  {formatMinutes(values.minDurationMinutes)}
+                </KernDescriptionListItem>
+              )}
+            </KernDescriptionList>
+          ),
+        },
+        {
+          id: "verfahrensbeteiligte",
+          title: "Verfahrensbeteiligte",
+          children:
+            participants.length === 0 ? (
+              <KernBody>Sie haben keine Verfahrensbeteiligten angegeben.</KernBody>
+            ) : (
+              <ul className="create-termin-review__times">
+                {participants.map((person) => (
+                  <li key={person.id}>{describePerson(person)}</li>
+                ))}
+              </ul>
+            ),
+        },
+        {
+          id: "zeitfenster",
+          title: "Zeitfenster",
+          children: (
+            <KernDescriptionList>
+              {groupSlotsByDay(values.slots).map(({ key, label, times }) => (
+                <KernDescriptionListItem key={key} label={label}>
+                  <ul className="create-termin-review__times">
+                    {times.map((time) => (
+                      <li key={time}>{time}</li>
+                    ))}
+                  </ul>
+                </KernDescriptionListItem>
+              ))}
+            </KernDescriptionList>
+          ),
+        },
+      ]}
+      submit={{ label: "Terminumfrage erstellen", intent: "create" }}
+    />
+  );
+}
