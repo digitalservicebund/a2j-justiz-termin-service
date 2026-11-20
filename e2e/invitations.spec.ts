@@ -68,7 +68,7 @@ test("the judge invites each guest by e-mail, by ERV or records an invitation", 
   const personA = page.getByRole("group", { name: "Person A einladen" });
   await expect(personA.getByRole("button", { name: "Per ERV" })).toHaveCount(0);
   await personA.getByRole("button", { name: "Per E-Mail" }).click();
-  await expect(page).toHaveURL(`${baseURL}/overview/${id}`);
+  await expect(page).toHaveURL(`${baseURL}/overview/${id}#verfahrensbeteiligte`);
   await expect(page.getByRole("row", { name: /Person A/ })).toContainText("Per E-Mail eingeladen");
   const mail = await readMail(page.request, guestEmail, "Einladung zur Terminumfrage");
   expect(mail.text).toContain(`${baseURL}/umfrage/${token}`);
@@ -108,6 +108,44 @@ test("the judge invites each guest by e-mail, by ERV or records an invitation", 
     .orderBy("participant_invitation.created_at")
     .execute();
   expect(invitations.map(({ channel }) => channel)).toEqual(["email", "erv", "manual", "manual"]);
+});
+
+test("the judge invites the guests right after creating the Terminumfrage", async ({
+  page,
+  users,
+  db,
+}) => {
+  const judge = await users.create({ roles: ["richter"] });
+  const guestEmail = users.email();
+  const { id, token } = await seed(db, judge.id, guestEmail);
+
+  await signIn(page, judge);
+  await page.goto(`${BASE_PATH}/overview/${id}/created`);
+
+  const step = page.getByRole("listitem").filter({
+    has: page.getByRole("heading", {
+      name: "Laden Sie die Verfahrensbeteiligten zur Terminumfrage ein.",
+    }),
+  });
+  await expect(step.getByRole("textbox", { name: "Link zur Terminumfrage" })).toBeVisible();
+
+  await step
+    .getByRole("group", { name: "Person A einladen" })
+    .getByRole("button", { name: "Per E-Mail" })
+    .click();
+  // The page shows again, at the guest list.
+  await expect(page).toHaveURL(`${baseURL}/overview/${id}/created#verfahrensbeteiligte`);
+  await expect(page.getByRole("row", { name: /Person A/ })).toContainText("Per E-Mail eingeladen");
+  const mail = await readMail(page.request, guestEmail, "Einladung zur Terminumfrage");
+  expect(mail.text).toContain(`${baseURL}/umfrage/${token}`);
+
+  await page
+    .getByRole("group", { name: "DE.Example.1 einladen" })
+    .getByRole("button", { name: "Per ERV" })
+    .click();
+  await expect(page.getByRole("row", { name: /DE\.Example\.1/ })).toContainText(
+    "Per ERV eingeladen",
+  );
 });
 
 test("a closed Terminumfrage shows the guests but cannot invite them", async ({

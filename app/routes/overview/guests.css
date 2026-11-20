@@ -1,0 +1,34 @@
+/* The guest table scrolls sideways on a narrow screen instead of widening the page. */
+.guests__table-scroll {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.guests__table .kern-table__header,
+.guests__table .kern-table__cell {
+  vertical-align: top;
+}
+
+.guests__muted {
+  color: var(--kern-color-layout-text-muted);
+}
+
+/* A SAFE-ID is one long word without spaces, so it may break anywhere instead of widening the
+   table. */
+.guests__safe-id {
+  overflow-wrap: anywhere;
+}
+
+/* The invite buttons of a guest are a fieldset for its name, without a fieldset's frame. */
+.guests__invite {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.guests__invitations {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
