@@ -1,3 +1,4 @@
+import { appointmentUrl } from "../paths.ts";
 import { deliverEmail } from "./deliver-email.ts";
 import { renderTerminCreatedEmail, type TerminCreatedEmail } from "./termin-created-email.ts";
 
@@ -10,9 +11,9 @@ type Notification = Omit<TerminCreatedEmail, "terminUrl" | "organizerEmail"> & {
 export function sendTerminCreatedEmail({ to, appointmentId, ...termin }: Notification) {
   return deliverEmail({
     to,
-    appointmentId,
+    link: (baseUrl) => appointmentUrl(baseUrl, appointmentId),
     failure: "Failed to send Terminumfrage-created email",
-    render: ({ terminUrl, from }) =>
-      renderTerminCreatedEmail({ ...termin, terminUrl, organizerEmail: from }),
+    render: ({ url, from }) =>
+      renderTerminCreatedEmail({ ...termin, terminUrl: url, organizerEmail: from }),
   });
 }

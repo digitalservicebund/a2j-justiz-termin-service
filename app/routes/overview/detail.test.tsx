@@ -1,15 +1,31 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getAppointment } from "~/adapters/appointments/appointments.server";
+import {
+  findInvitee,
+  listGuests,
+  recordInvitation,
+  type Guest,
+  type Invitee,
+} from "~/adapters/appointments/invitations.server";
 import { requireRole } from "~/adapters/session/session";
 import type { AuthUser } from "~/core/domain/user";
+import { sendInvitationEmail } from "~/lib/email/send-invitation-email";
+import { sendErvInvitation } from "~/lib/erv/send-erv-invitation";
 
-import OverviewDetail, { loader } from "./detail";
+import OverviewDetail, { action, loader } from "./detail";
 
 vi.mock("~/adapters/session/session", () => ({ requireRole: vi.fn() }));
 vi.mock("~/adapters/appointments/appointments.server", () => ({ getAppointment: vi.fn() }));
+vi.mock("~/adapters/appointments/invitations.server", () => ({
+  listGuests: vi.fn(),
+  findInvitee: vi.fn(),
+  recordInvitation: vi.fn(),
+}));
+vi.mock("~/lib/email/send-invitation-email", () => ({ sendInvitationEmail: vi.fn() }));
+vi.mock("~/lib/erv/send-erv-invitation", () => ({ sendErvInvitation: vi.fn() }));
 vi.mock("~/database/database", () => ({ getDb: () => ({ db: true }) }));
 
 const judge: AuthUser = {
@@ -29,12 +45,13 @@ const slots = [
   { id: "s3", start: new Date("2026-09-24T07:00:00Z"), end: new Date("2026-09-24T09:00:00Z") },
 ];
 
-describe("overview detail route", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(requireRole).mockResolvedValue(judge);
-  });
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.mocked(requireRole).mockResolvedValue(judge);
+  vi.mocked(listGuests).mockResolvedValue([]);
+});
 
+describe("overview detail route", () => {
   it("requires the richter role", async () => {
     const forbidden = new Response("Forbidden", { status: 403 });
     vi.mocked(requireRole).mockRejectedValue(forbidden);
@@ -359,5 +376,279 @@ describe("OverviewDetail", () => {
     expect(screen.getByText("17. September 2026")).toBeVisible();
     expect(screen.getByText("09:00 bis 11:00")).toBeVisible();
     expect(screen.getByText("14:00 bis 17:00")).toBeVisible();
+  });
+});
+
+// 10:15 Berlin time in November is 09:15 UTC; Friday 20 November 2026. Newest first.
+const guests: Guest[] = [
+  {
+    id: "p1",
+    email: "person.a@example.com",
+    safeId: null,
+    name: "Person A",
+    invitations: [
+      { channel: "manual", at: new Date("2026-11-20T09:15:00Z") },
+      { channel: "email", at: new Date("2026-11-19T07:00:00Z") },
+    ],
+  },
+  { id: "p2", email: null, safeId: "DE.Example.1", name: null, invitations: [] },
+];
+
+const invitee: Invitee = {
+  id: "p1",
+  name: "Person A",
+  email: "person.a@example.com",
+  safeId: "DE.Example.1",
+  token: "tok-p1",
+  aktenzeichen: "574 C 65412/26",
+  slots,
+};
+
+const invite = (intent: string) =>
+  action({
+    request: new Request("http://localhost:3000/overview/a1", {
+      method: "POST",
+      body: new URLSearchParams({ intent }),
+    }),
+    params,
+  });
+
+describe("guest invitations", () => {
+  beforeEach(() => {
+    vi.mocked(findInvitee).mockResolvedValue(invitee);
+    vi.mocked(recordInvitation).mockResolvedValue(true);
+    vi.mocked(sendInvitationEmail).mockResolvedValue(true);
+    vi.mocked(sendErvInvitation).mockResolvedValue(true);
+  });
+
+  it("lists the guests with every invitation and its time, in every state", async () => {
+    vi.mocked(listGuests).mockResolvedValue(guests);
+    vi.mocked(getAppointment).mockResolvedValue({
+      id: "a1",
+      status: "cancelled",
+      aktenzeichen: "574 C 65412/26",
+      slots,
+    });
+
+    const result = await loader({ request: request(), params });
+
+    expect(listGuests).toHaveBeenCalledWith({ db: true }, "1", "a1");
+    expect(result.guests).toEqual([
+      {
+        id: "p1",
+        email: "person.a@example.com",
+        safeId: null,
+        name: "Person A",
+        invitations: [
+          {
+            label: "Manuell eingeladen",
+            at: expect.stringMatching(/^\p{L}+, 20\. November 2026 um 10:15$/u),
+          },
+          {
+            label: "Per E-Mail eingeladen",
+            at: expect.stringMatching(/^\p{L}+, 19\. November 2026 um 08:00$/u),
+          },
+        ],
+      },
+      { id: "p2", email: null, safeId: "DE.Example.1", name: null, invitations: [] },
+    ]);
+  });
+
+  it("requires the richter role", async () => {
+    const forbidden = new Response("Forbidden", { status: 403 });
+    vi.mocked(requireRole).mockRejectedValue(forbidden);
+
+    await expect(invite("invite-manual:p1")).rejects.toBe(forbidden);
+    expect(recordInvitation).not.toHaveBeenCalled();
+  });
+
+  it("answers 400 for an unknown intent", async () => {
+    await expect(invite("invite-fax:p1")).rejects.toMatchObject({ init: { status: 400 } });
+    expect(findInvitee).not.toHaveBeenCalled();
+  });
+
+  it("answers 404 for a guest who cannot be invited", async () => {
+    // Another user's guest, one of an appointment that is no longer open, or an unknown id.
+    vi.mocked(findInvitee).mockResolvedValue(undefined);
+
+    await expect(invite("invite-manual:p9")).rejects.toMatchObject({ init: { status: 404 } });
+    expect(findInvitee).toHaveBeenCalledWith({ db: true }, "1", "a1", "p9");
+    expect(recordInvitation).not.toHaveBeenCalled();
+  });
+
+  it("mails the personal link, records the invitation and shows the page again", async () => {
+    const response = (await invite("invite-email:p1")) as Response;
+
+    expect(sendInvitationEmail).toHaveBeenCalledWith({
+      to: "person.a@example.com",
+      token: "tok-p1",
+      aktenzeichen: "574 C 65412/26",
+      slots,
+    });
+    expect(recordInvitation).toHaveBeenCalledWith({ db: true }, "1", "a1", "p1", "email");
+    expect(response.status).toBe(302);
+    expect(response.headers.get("Location")).toBe("/overview/a1");
+  });
+
+  it("does not record an e-mail that could not be sent and says so", async () => {
+    vi.mocked(sendInvitationEmail).mockResolvedValue(false);
+
+    const result = await invite("invite-email:p1");
+
+    expect(result).toMatchObject({ data: { notSent: "Person A" }, init: { status: 502 } });
+    expect(recordInvitation).not.toHaveBeenCalled();
+  });
+
+  it("answers 400 for an e-mail invitation of a guest without an address", async () => {
+    vi.mocked(findInvitee).mockResolvedValue({ ...invitee, email: null });
+
+    await expect(invite("invite-email:p1")).rejects.toMatchObject({ init: { status: 400 } });
+    expect(sendInvitationEmail).not.toHaveBeenCalled();
+    expect(recordInvitation).not.toHaveBeenCalled();
+  });
+
+  it("hands an ERV invitation to the ERV and records it", async () => {
+    const response = (await invite("invite-erv:p1")) as Response;
+
+    expect(sendErvInvitation).toHaveBeenCalledWith({
+      appointmentId: "a1",
+      participantId: "p1",
+      safeId: "DE.Example.1",
+    });
+    expect(recordInvitation).toHaveBeenCalledWith({ db: true }, "1", "a1", "p1", "erv");
+    expect(response.status).toBe(302);
+  });
+
+  it("answers 400 for an ERV invitation of a guest without a SAFE-ID", async () => {
+    vi.mocked(findInvitee).mockResolvedValue({ ...invitee, safeId: null });
+
+    await expect(invite("invite-erv:p1")).rejects.toMatchObject({ init: { status: 400 } });
+    expect(sendErvInvitation).not.toHaveBeenCalled();
+  });
+
+  it("records a manual invitation without sending anything", async () => {
+    const response = (await invite("invite-manual:p1")) as Response;
+
+    expect(sendInvitationEmail).not.toHaveBeenCalled();
+    expect(sendErvInvitation).not.toHaveBeenCalled();
+    expect(recordInvitation).toHaveBeenCalledWith({ db: true }, "1", "a1", "p1", "manual");
+    expect(response.status).toBe(302);
+  });
+
+  it("answers 404 when the appointment closed before the invitation was recorded", async () => {
+    vi.mocked(recordInvitation).mockResolvedValue(false);
+
+    await expect(invite("invite-manual:p1")).rejects.toMatchObject({ init: { status: 404 } });
+  });
+
+  it("offers each open guest the ways that reach them and shows how and when they were invited", async () => {
+    vi.mocked(listGuests).mockResolvedValue(guests);
+    vi.mocked(getAppointment).mockResolvedValue({
+      id: "a1",
+      status: "open",
+      universalToken: "tok1",
+      aktenzeichen: "574 C 65412/26",
+      slots,
+    });
+    const Stub = createRoutesStub([
+      { path: "/overview/:appointmentId", Component: OverviewDetail, loader },
+    ]);
+
+    render(<Stub initialEntries={["/overview/a1"]} />);
+
+    const table = await screen.findByRole("table", { name: "Verfahrensbeteiligte" });
+    const [, first, second] = within(table).getAllByRole("row");
+
+    // Every invitation with its channel and time, newest first.
+    const sent = within(first!).getAllByRole("listitem");
+    expect(sent).toHaveLength(2);
+    expect(sent[0]).toHaveTextContent(
+      /^Manuell eingeladenam \p{L}+, 20\. November 2026 um 10:15$/u,
+    );
+    expect(sent[1]).toHaveTextContent(
+      /^Per E-Mail eingeladenam \p{L}+, 19\. November 2026 um 08:00$/u,
+    );
+    const firstActions = within(first!).getByRole("group", { name: "Person A einladen" });
+    expect(within(firstActions).getByRole("button", { name: "Per E-Mail" })).toHaveAttribute(
+      "value",
+      "invite-email:p1",
+    );
+    expect(within(firstActions).queryByRole("button", { name: "Per ERV" })).toBeNull();
+    expect(
+      within(firstActions).getByRole("button", { name: "Als eingeladen markieren" }),
+    ).toBeVisible();
+
+    expect(within(second!).getByText("Nicht eingeladen")).toBeVisible();
+    expect(within(second!).getByText("SAFE-ID: DE.Example.1")).toBeVisible();
+    const secondActions = within(second!).getByRole("group", { name: "DE.Example.1 einladen" });
+    expect(within(secondActions).queryByRole("button", { name: "Per E-Mail" })).toBeNull();
+    expect(within(secondActions).getByRole("button", { name: "Per ERV" })).toHaveAttribute(
+      "value",
+      "invite-erv:p2",
+    );
+  });
+
+  it("shows the guests of a closed Terminumfrage without invite buttons", async () => {
+    vi.mocked(listGuests).mockResolvedValue(guests);
+    vi.mocked(getAppointment).mockResolvedValue({
+      id: "a1",
+      status: "cancelled",
+      aktenzeichen: "574 C 65412/26",
+      slots,
+    });
+    const Stub = createRoutesStub([
+      { path: "/overview/:appointmentId", Component: OverviewDetail, loader },
+    ]);
+
+    render(<Stub initialEntries={["/overview/a1"]} />);
+
+    expect(await screen.findByRole("table", { name: "Verfahrensbeteiligte" })).toBeVisible();
+    expect(screen.getByText("Per E-Mail eingeladen")).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Manuell eingeladen" })).toBeNull();
+    expect(screen.queryByRole("columnheader", { name: "Einladen" })).toBeNull();
+  });
+
+  it("says when there are no guests", async () => {
+    vi.mocked(getAppointment).mockResolvedValue({
+      id: "a1",
+      status: "open",
+      universalToken: "tok1",
+      aktenzeichen: "574 C 65412/26",
+      slots,
+    });
+    const Stub = createRoutesStub([
+      { path: "/overview/:appointmentId", Component: OverviewDetail, loader },
+    ]);
+
+    render(<Stub initialEntries={["/overview/a1"]} />);
+
+    expect(
+      await screen.findByText("Sie haben keine Verfahrensbeteiligten angegeben."),
+    ).toBeVisible();
+    expect(screen.queryByRole("table", { name: "Verfahrensbeteiligte" })).toBeNull();
+  });
+
+  it("reports an e-mail that could not be sent", async () => {
+    vi.mocked(listGuests).mockResolvedValue(guests);
+    vi.mocked(sendInvitationEmail).mockResolvedValue(false);
+    vi.mocked(getAppointment).mockResolvedValue({
+      id: "a1",
+      status: "open",
+      universalToken: "tok1",
+      aktenzeichen: "574 C 65412/26",
+      slots,
+    });
+    const Stub = createRoutesStub([
+      { path: "/overview/:appointmentId", Component: OverviewDetail, loader, action },
+    ]);
+
+    render(<Stub initialEntries={["/overview/a1"]} />);
+    const group = await screen.findByRole("group", { name: "Person A einladen" });
+    fireEvent.click(within(group).getByRole("button", { name: "Per E-Mail" }));
+
+    expect(
+      await screen.findByText("Die Einladung an Person A konnte nicht gesendet werden."),
+    ).toBeVisible();
+    expect(recordInvitation).not.toHaveBeenCalled();
   });
 });

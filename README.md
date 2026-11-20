@@ -201,7 +201,7 @@ app/
 │   ├── health/             # Readiness, database and SMTP checks
 │   └── auth.ts             # Better Auth API handler
 ├── database/               # Kysely, connection pool, migrations (see "Database")
-├── lib/                    # Env, secrets, logging, base path, URL paths, route guards, calendar feed, e-mail
+├── lib/                    # Env, secrets, logging, base path, URL paths, route guards, calendar feed, e-mail, ERV (stub)
 ├── components/             # Reusable UI components
 │   └── shared/             # AppShell, Breadcrumb, FlowPage, ReviewPage, NextSteps, ...
 │       └── kern/           # KERN wrappers: KernAlert, KernBadge, KernButton, KernIcon, KernLink, ...
@@ -283,9 +283,10 @@ The initial schema is split deliberately:
   sets `emailVerified` to `false`; email normalization happens in the application.
   Role names are validated in the application, not constrained in the database.
 
-Migrations `0003` to `0012` add the appointment, time slot and participant tables, the confirmed
+Migrations `0003` to `0014` add the appointment, time slot and participant tables, the confirmed
 window, survey tokens, allowed domains, the calendar sequence and token, participant e-mail
-addresses, the minimum duration of an appointment, and the availability windows of a response.
+addresses, the minimum duration of an appointment, the availability windows of a response,
+participant SAFE-IDs, and the invitations sent to participants.
 Read the files for the details.
 
 Keep historical migrations unchanged after deployment; generate new migrations
