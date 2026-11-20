@@ -17,38 +17,3 @@
 .overview-detail__windows .kern-description-list-item__key {
   white-space: nowrap;
 }
-
-/* The guest table scrolls sideways on a narrow screen instead of widening the page. */
-.overview-detail__table-scroll {
-  overflow-x: auto;
-  width: 100%;
-}
-
-.overview-detail__guests .kern-table__header,
-.overview-detail__guests .kern-table__cell {
-  vertical-align: top;
-}
-
-.overview-detail__muted {
-  color: var(--kern-color-layout-text-muted);
-}
-
-/* A SAFE-ID is one long word without spaces, so it may break anywhere instead of widening the
-   table. */
-.overview-detail__safe-id {
-  overflow-wrap: anywhere;
-}
-
-/* The invite buttons of a guest are a fieldset for its name, without a fieldset's frame. */
-.overview-detail__invite {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  min-inline-size: 0;
-}
-
-.overview-detail__invitations {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
