@@ -1,6 +1,6 @@
-import { data, redirect, useLoaderData } from "react-router";
+import { redirect, useLoaderData } from "react-router";
 
-import { confirmAppointment, getAppointment } from "~/adapters/appointments/appointments.server";
+import { confirmAppointment } from "~/adapters/appointments/appointments.server";
 import { readAvailability, remainingOf } from "~/adapters/appointments/availability.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
@@ -12,6 +12,13 @@ import {
 import { ReviewPage } from "~/components/shared/ReviewPage";
 import { formatInstant } from "~/core/domain/time/format";
 import { getDb } from "~/database/database";
+import {
+  appointmentIdOf,
+  getOwnAppointment,
+  requireOwnAppointment,
+} from "~/lib/appointment-guard.server";
+import { appointmentPath, selectedPath, selectPath } from "~/lib/paths";
+import { badRequest } from "~/lib/responses";
 
 import { readValues, selectBreadcrumbs, selectionSearch } from "./select.schema";
 import { validateSelection } from "./select.validate.server";
@@ -20,16 +27,11 @@ import "./select.css";
 
 type Params = { params: { appointmentId?: string } };
 
-const notFound = () => data("Not found", { status: 404 });
-
-const detailUrl = (id: string) => `/overview/${encodeURIComponent(id)}`;
-
 export async function loader({ request, params }: { request: Request } & Params) {
-  const user = await requireRole(request, "richter");
-  const id = params.appointmentId ?? "";
-  const appointment = await getAppointment(getDb(), user.id, id);
-  if (!appointment) throw notFound();
-  if (appointment.status !== "open") throw redirect(detailUrl(id));
+  const { user, id, appointment } = await requireOwnAppointment(request, params, {
+    status: "open",
+    otherwise: appointmentPath,
+  });
 
   // Without a valid choice there is nothing to review, so the judge picks again.
   const values = readValues(new URL(request.url).searchParams);
@@ -39,7 +41,7 @@ export async function loader({ request, params }: { request: Request } & Params)
     remainingOf(availability),
     availability.minDurationMinutes,
   );
-  if (!result.success) throw redirect(`${detailUrl(id)}/select?${selectionSearch(values)}`);
+  if (!result.success) throw redirect(selectPath(id, selectionSearch(values)));
 
   return {
     user,
@@ -51,29 +53,28 @@ export async function loader({ request, params }: { request: Request } & Params)
 
 export async function action({ request, params }: { request: Request } & Params) {
   const user = await requireRole(request, "richter");
-  const id = params.appointmentId ?? "";
+  const id = appointmentIdOf(params);
   const form = await request.formData();
   const intent = form.get("intent");
   const values = readValues(form);
 
-  if (intent === "back") return redirect(`${detailUrl(id)}/select?${selectionSearch(values)}`);
-  if (intent !== "confirm") throw data("Bad request", { status: 400 });
+  if (intent === "back") return redirect(selectPath(id, selectionSearch(values)));
+  if (intent !== "confirm") throw badRequest();
 
-  const appointment = await getAppointment(getDb(), user.id, id);
-  if (!appointment) throw notFound();
+  await getOwnAppointment(user.id, id);
   const availability = await readAvailability(getDb(), id);
   const result = validateSelection(
     values,
     remainingOf(availability),
     availability.minDurationMinutes,
   );
-  if (!result.success) return redirect(`${detailUrl(id)}/select?${selectionSearch(values)}`);
+  if (!result.success) return redirect(selectPath(id, selectionSearch(values)));
   if (!(await confirmAppointment(getDb(), user.id, id, result.window))) {
     // It was confirmed or cancelled in the meantime, or an answer just took the window away; the
     // detail page shows where the appointment stands.
-    return redirect(detailUrl(id));
+    return redirect(appointmentPath(id));
   }
-  return redirect(`${detailUrl(id)}/selected`);
+  return redirect(selectedPath(id));
 }
 
 export default function OverviewSelectConfirm() {

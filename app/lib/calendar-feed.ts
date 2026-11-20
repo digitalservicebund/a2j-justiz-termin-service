@@ -1,6 +1,7 @@
 import type { FeedAppointment } from "../adapters/appointments/calendar-feed.server.ts";
 import { BASE_PATH } from "./base-path.ts";
 import { createTerminEvents, toCalendarSlot, wrapCalendar } from "./email/termin-calendar.ts";
+import { appointmentUrl } from "./paths.ts";
 
 export const CALENDAR_FEED_NAME = "Verhandlungstermin-Finder";
 
@@ -19,7 +20,7 @@ export function createCalendarFeed(
   const events = appointments.flatMap(({ id, aktenzeichen, calendarSequence, confirmed, slots }) =>
     createTerminEvents({
       aktenzeichen,
-      terminUrl: `${baseUrl}${BASE_PATH}/overview/${encodeURIComponent(id)}`,
+      terminUrl: appointmentUrl(baseUrl, id),
       // Read, not raised: only mails take a new number.
       sequence: calendarSequence,
       now,

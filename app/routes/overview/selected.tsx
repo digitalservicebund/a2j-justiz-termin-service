@@ -1,28 +1,25 @@
-import { data, redirect, useLoaderData } from "react-router";
+import { redirect, useLoaderData } from "react-router";
 
-import { getAppointment } from "~/adapters/appointments/appointments.server";
-import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { CopyButton } from "~/components/shared/CopyButton";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernStack } from "~/components/shared/kern/KernStack";
 import { NextSteps, Step, SuccessBanner } from "~/components/shared/NextSteps";
 import { formatInstant } from "~/core/domain/time/format";
-import { getDb } from "~/database/database";
+import { requireOwnAppointment } from "~/lib/appointment-guard.server";
+import { appointmentPath } from "~/lib/paths";
 
 import { selectBreadcrumbs } from "./select.schema";
 
 type Params = { params: { appointmentId?: string } };
 
 export async function loader({ request, params }: { request: Request } & Params) {
-  const user = await requireRole(request, "richter");
-  const id = params.appointmentId ?? "";
-  const appointment = await getAppointment(getDb(), user.id, id);
-  if (!appointment) throw data("Not found", { status: 404 });
   // Until a Termin is confirmed there is nothing to announce; the detail page handles every state.
-  if (appointment.status !== "confirmed" || !appointment.confirmedSlot) {
-    throw redirect(`/overview/${encodeURIComponent(id)}`);
-  }
+  const { user, id, appointment } = await requireOwnAppointment(request, params, {
+    status: "confirmed",
+    otherwise: appointmentPath,
+  });
+  if (!appointment.confirmedSlot) throw redirect(appointmentPath(id));
 
   return {
     user,

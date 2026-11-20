@@ -1,12 +1,10 @@
 import { data, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
 
-import { getAppointment } from "~/adapters/appointments/appointments.server";
 import {
   addDraftParticipant,
   listParticipants,
   updateDraftParticipant,
 } from "~/adapters/appointments/participants.server";
-import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { FlowPage } from "~/components/shared/FlowPage";
 import { FieldColumn, FormActions, FormStack } from "~/components/shared/FormLayout";
@@ -18,6 +16,9 @@ import { KernLabel } from "~/components/shared/kern/KernLabel";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { KernStack } from "~/components/shared/kern/KernStack";
 import { getDb } from "~/database/database";
+import { requireOwnAppointment } from "~/lib/appointment-guard.server";
+import { draftPath, NEW_ITEM, OVERVIEW_PATH } from "~/lib/paths";
+import { notFound } from "~/lib/responses";
 
 import { createTerminBreadcrumbs } from "./breadcrumbs";
 import {
@@ -29,33 +30,33 @@ import {
   type ParticipantErrors,
   type ParticipantFields,
 } from "./participant.schema";
-import { draftHref, NEW_SLOT } from "./paths";
 
 import "./draft.css";
 
 type Params = { params: { appointmentId?: string; participantId?: string } };
 
-const notFound = () => data("Not found", { status: 404 });
-
 // Only a draft can be changed.
 async function loadDraft(request: Request, { params }: Params) {
-  const user = await requireRole(request, "richter");
-  const db = getDb();
-  const appointment = await getAppointment(db, user.id, params.appointmentId ?? "");
-  if (!appointment) throw notFound();
-  if (appointment.status !== "draft") throw redirect("/overview");
-  return { user, appointment, participants: await listParticipants(db, user.id, appointment.id) };
+  const { user, appointment } = await requireOwnAppointment(request, params, {
+    status: "draft",
+    otherwise: OVERVIEW_PATH,
+  });
+  return {
+    user,
+    appointment,
+    participants: await listParticipants(getDb(), user.id, appointment.id),
+  };
 }
 
 export async function loader({ request, params }: { request: Request } & Params) {
   const { user, appointment, participants } = await loadDraft(request, { params });
-  const isNew = params.participantId === NEW_SLOT;
+  const isNew = params.participantId === NEW_ITEM;
   const person = participants.find((candidate) => candidate.id === params.participantId);
   if (!isNew && !person) throw notFound();
 
   return {
     user,
-    cancelHref: draftHref(appointment.id),
+    cancelHref: draftPath(appointment.id),
     values: { email: person?.email ?? "", name: person?.name ?? "" } satisfies ParticipantFields,
   };
 }
@@ -65,7 +66,7 @@ type ActionResult = { values: ParticipantFields; errors: ParticipantErrors };
 export async function action({ request, params }: { request: Request } & Params) {
   const { user, appointment, participants } = await loadDraft(request, { params });
   const db = getDb();
-  const isNew = params.participantId === NEW_SLOT;
+  const isNew = params.participantId === NEW_ITEM;
   const values = parseParticipantForm(await request.formData());
   const reject = (errors: ParticipantErrors) =>
     data({ values, errors } satisfies ActionResult, { status: 400 });
@@ -90,7 +91,7 @@ export async function action({ request, params }: { request: Request } & Params)
         result.value,
       );
   if (!saved) throw notFound();
-  return redirect(draftHref(appointment.id));
+  return redirect(draftPath(appointment.id));
 }
 
 export default function CreateTerminParticipant() {

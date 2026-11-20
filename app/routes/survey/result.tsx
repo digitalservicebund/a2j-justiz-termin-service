@@ -1,6 +1,6 @@
-import { data, redirect, useLoaderData } from "react-router";
+import { redirect, useLoaderData } from "react-router";
 
-import { findSurvey, getSavedAnswer } from "~/adapters/appointments/survey.server";
+import { getSavedAnswer } from "~/adapters/appointments/survey.server";
 import { getSessionUser } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { DefaultPage } from "~/components/shared/DefaultPage";
@@ -15,23 +15,17 @@ import { NextStepsSection, Step } from "~/components/shared/NextSteps";
 import { ResultBanner } from "~/components/shared/ResultBanner";
 import { SidebarPage } from "~/components/shared/SidebarPage";
 import { getDb } from "~/database/database";
+import { surveyPath } from "~/lib/paths";
+import { requireSurvey } from "~/lib/survey-guard.server";
 
-import {
-  groupWindows,
-  noMatchBreadcrumbs,
-  surveyBreadcrumbs,
-  surveyPath,
-  type SurveyDay,
-} from "./schema";
+import { groupWindows, noMatchBreadcrumbs, surveyBreadcrumbs, type SurveyDay } from "./schema";
 
 import "./survey.css";
 
 type Params = { params: { token?: string } };
 
 export async function loader({ request, params }: { request: Request } & Params) {
-  const token = params.token ?? "";
-  const survey = await findSurvey(getDb(), token);
-  if (!survey) throw data("Not found", { status: 404 });
+  const { token, survey } = await requireSurvey(params);
 
   // Whoever has not answered yet is sent to the form; the participant id is only known after saving.
   const participantId = new URL(request.url).searchParams.get("teilnehmer") ?? "";

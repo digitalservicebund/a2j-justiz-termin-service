@@ -1,7 +1,5 @@
-import { data, redirect, useLoaderData } from "react-router";
+import { useLoaderData } from "react-router";
 
-import { getAppointment } from "~/adapters/appointments/appointments.server";
-import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import {
@@ -11,8 +9,9 @@ import {
 import { KernStack } from "~/components/shared/kern/KernStack";
 import { NextSteps, Step, SuccessBanner } from "~/components/shared/NextSteps";
 import { SurveyLinkField } from "~/components/shared/SurveyLinkField";
-import { getDb } from "~/database/database";
-import { BASE_PATH } from "~/lib/base-path";
+import { PUBLISHED, requireOwnAppointment } from "~/lib/appointment-guard.server";
+import { confirmDraftPath, surveyUrl } from "~/lib/paths";
+import { notFound } from "~/lib/responses";
 
 import { createTerminBreadcrumbs } from "./breadcrumbs";
 import { groupSlotsByDay } from "./slot-days";
@@ -21,21 +20,20 @@ import { rangeToSlot } from "./slots";
 type Params = { params: { appointmentId?: string } };
 
 export async function loader({ request, params }: { request: Request } & Params) {
-  const user = await requireRole(request, "richter");
-  const id = params.appointmentId ?? "";
-  const appointment = await getAppointment(getDb(), user.id, id);
-  if (!appointment) throw data("Not found", { status: 404 });
   // A draft has not been published yet, so there is nothing to share.
-  if (appointment.status === "draft") throw redirect(`/overview/${encodeURIComponent(id)}/confirm`);
+  const { user, appointment } = await requireOwnAppointment(request, params, {
+    status: PUBLISHED,
+    otherwise: confirmDraftPath,
+  });
 
   // Published appointments always have their token.
-  if (!appointment.universalToken) throw data("Not found", { status: 404 });
+  if (!appointment.universalToken) throw notFound();
 
   const { origin } = new URL(request.url);
   return {
     user,
     days: groupSlotsByDay(appointment.slots.map(rangeToSlot)),
-    surveyUrl: `${origin}${BASE_PATH}/umfrage/${encodeURIComponent(appointment.universalToken)}`,
+    surveyUrl: surveyUrl(origin, appointment.universalToken),
   };
 }
 

@@ -39,9 +39,6 @@ export type SurveyValues = { name: string; available: string[]; none: boolean };
 
 type SurveyErrors = { name?: string; slots?: string };
 
-export const surveyPath = (token: string, page = "") =>
-  `/umfrage/${encodeURIComponent(token)}${page}`;
-
 export function readValues(source: URLSearchParams | FormData): SurveyValues {
   const name = source.get("name");
   return {

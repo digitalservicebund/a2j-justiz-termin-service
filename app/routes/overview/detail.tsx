@@ -1,7 +1,5 @@
-import { data, Link, redirect, useLoaderData } from "react-router";
+import { Link, useLoaderData } from "react-router";
 
-import { getAppointment } from "~/adapters/appointments/appointments.server";
-import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import {
   KernDescriptionList,
@@ -17,8 +15,15 @@ import { ResultBanner } from "~/components/shared/ResultBanner";
 import { SidebarPage } from "~/components/shared/SidebarPage";
 import { SurveyLinkField } from "~/components/shared/SurveyLinkField";
 import { formatInstant } from "~/core/domain/time/format";
-import { getDb } from "~/database/database";
-import { BASE_PATH } from "~/lib/base-path";
+import { PUBLISHED, requireOwnAppointment } from "~/lib/appointment-guard.server";
+import {
+  confirmDraftPath,
+  NEW_APPOINTMENT_PATH,
+  OVERVIEW_PATH,
+  selectPath,
+  surveyUrl,
+} from "~/lib/paths";
+import { notFound } from "~/lib/responses";
 
 import { groupSlotsByDay, type DayWindows } from "../draft/slot-days";
 import { rangeToSlot } from "../draft/slots";
@@ -29,17 +34,17 @@ import "./detail.css";
 type Params = { params: { appointmentId?: string } };
 
 export async function loader({ request, params }: { request: Request } & Params) {
-  const user = await requireRole(request, "richter");
-  const id = params.appointmentId ?? "";
-  const appointment = await getAppointment(getDb(), user.id, id);
-  if (!appointment) throw data("Not found", { status: 404 });
-  if (appointment.status === "draft") throw redirect(`/overview/${encodeURIComponent(id)}/confirm`);
+  // A draft has not been published yet, so it is reviewed first.
+  const { user, id, appointment } = await requireOwnAppointment(request, params, {
+    status: PUBLISHED,
+    otherwise: confirmDraftPath,
+  });
   const { aktenzeichen, confirmedSlot } = appointment;
   const days = groupSlotsByDay(appointment.slots.map(rangeToSlot));
 
   if (appointment.status === "confirmed") {
     // A confirmed appointment always has its slot; without it there is nothing to show.
-    if (!confirmedSlot) throw data("Not found", { status: 404 });
+    if (!confirmedSlot) throw notFound();
     return {
       user,
       aktenzeichen,
@@ -53,15 +58,15 @@ export async function loader({ request, params }: { request: Request } & Params)
   }
 
   if (appointment.status === "open") {
-    if (!appointment.universalToken) throw data("Not found", { status: 404 });
+    if (!appointment.universalToken) throw notFound();
     const { origin } = new URL(request.url);
     return {
       user,
       aktenzeichen,
       state: "open" as const,
-      selectUrl: `/overview/${encodeURIComponent(id)}/select`,
+      selectUrl: selectPath(id),
       days,
-      surveyUrl: `${origin}${BASE_PATH}/umfrage/${encodeURIComponent(appointment.universalToken)}`,
+      surveyUrl: surveyUrl(origin, appointment.universalToken),
     };
   }
 
@@ -80,7 +85,7 @@ function BackLink({ children = "Zurück zu den Terminumfragen" }: Readonly<{ chi
         "kern-link",
         clusterClassName({ inline: true, wrap: false, gap: "xxs", align: "center" }),
       )}
-      to="/overview"
+      to={OVERVIEW_PATH}
     >
       <KernIcon name="arrow-back" size="small" />
       {children}
@@ -131,7 +136,7 @@ export default function OverviewDetail() {
   return (
     <AppShell
       user={user}
-      breadcrumbs={[{ label: "Übersicht", href: "/overview" }, { label: "Terminumfrage" }]}
+      breadcrumbs={[{ label: "Übersicht", href: OVERVIEW_PATH }, { label: "Terminumfrage" }]}
     >
       <SidebarPage current="overview">
         <KernStack gap="xl" align="start" className="overview-detail">
@@ -212,7 +217,7 @@ function NoOptionWorks({
         title="Es gibt leider kein Zeitfenster, dass allen Verfahrensbeteiligten passt."
         message="Starten Sie eine neue Terminumfrage."
         actions={
-          <KernLinkButton to="/overview/new">
+          <KernLinkButton to={NEW_APPOINTMENT_PATH}>
             <KernIcon name="add" />
             <KernLabel>Terminumfrage erstellen</KernLabel>
           </KernLinkButton>

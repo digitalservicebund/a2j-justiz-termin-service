@@ -22,6 +22,7 @@ import { classNames, clusterClassName } from "~/components/shared/kern/layout";
 import { SidebarPage } from "~/components/shared/SidebarPage";
 import { getDb } from "~/database/database";
 import type { AppointmentStatus } from "~/database/types";
+import { appointmentPath, draftPath, NEW_APPOINTMENT_PATH } from "~/lib/paths";
 
 import {
   applyOverviewQuery,
@@ -38,9 +39,8 @@ import "./overview.css";
 const NO_AKTENZEICHEN = "Ohne Aktenzeichen";
 
 function detailHref(id: string, status: AppointmentStatus): string {
-  const encoded = encodeURIComponent(id);
   // A draft may be incomplete, so it reopens in the form, not in the review.
-  return status === "draft" ? `/overview/new?entwurf=${encoded}` : `/overview/${encoded}`;
+  return status === "draft" ? draftPath(id) : appointmentPath(id);
 }
 
 export async function loader({ request }: { request: Request }) {
@@ -82,7 +82,7 @@ export default function Overview() {
       <SidebarPage current="overview" spacing="roomy">
         <KernStack gap="xl" align="start" className="overview__content">
           <h1 className="kern-sr-only">Übersicht</h1>
-          <KernLinkButton to="/overview/new">
+          <KernLinkButton to={NEW_APPOINTMENT_PATH}>
             <KernIcon name="add" />
             <KernLabel>Terminumfrage erstellen</KernLabel>
           </KernLinkButton>

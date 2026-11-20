@@ -1,7 +1,8 @@
 import type { BreadcrumbItem } from "~/components/shared/Breadcrumb";
+import { OVERVIEW_PATH } from "~/lib/paths";
 
 export const selectBreadcrumbs = [
-  { label: "Übersicht", href: "/overview" },
+  { label: "Übersicht", href: OVERVIEW_PATH },
   { label: "Auswahl des Termins" },
 ] satisfies BreadcrumbItem[];
 

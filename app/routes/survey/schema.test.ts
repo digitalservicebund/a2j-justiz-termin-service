@@ -12,7 +12,6 @@ import {
   readValues,
   removeWindow,
   setSmallerWindow,
-  surveyPath,
   surveySearch,
   validateSurvey,
 } from "./schema";
@@ -62,11 +61,6 @@ describe("survey values", () => {
 
     expect(readValues(form)).toEqual({ name: "Guest C", available: ["s2"], none: true });
     expect(readValues(new FormData())).toEqual({ name: "", available: [], none: false });
-  });
-
-  it("builds survey paths with an encoded token", () => {
-    expect(surveyPath("a/b")).toBe("/umfrage/a%2Fb");
-    expect(surveyPath("a1", "/zusammenfassung")).toBe("/umfrage/a1/zusammenfassung");
   });
 });
 

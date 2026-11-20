@@ -1,12 +1,7 @@
 import { Fragment } from "react";
 import { data, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
 
-import {
-  addDraftSlot,
-  getAppointment,
-  updateDraftSlot,
-} from "~/adapters/appointments/appointments.server";
-import { requireRole } from "~/adapters/session/session";
+import { addDraftSlot, updateDraftSlot } from "~/adapters/appointments/appointments.server";
 import { AppShell } from "~/components/shared/AppShell";
 import { ErrorMessage } from "~/components/shared/ErrorMessage";
 import { FlowPage } from "~/components/shared/FlowPage";
@@ -21,9 +16,11 @@ import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { KernStack } from "~/components/shared/kern/KernStack";
 import { classNames, clusterClassName } from "~/components/shared/kern/layout";
 import { getDb } from "~/database/database";
+import { requireOwnAppointment } from "~/lib/appointment-guard.server";
+import { draftPath, NEW_ITEM, OVERVIEW_PATH } from "~/lib/paths";
+import { notFound } from "~/lib/responses";
 
 import { createTerminBreadcrumbs } from "./breadcrumbs";
-import { draftHref, NEW_SLOT } from "./paths";
 import {
   emptySlot,
   MAX_SLOTS,
@@ -43,20 +40,13 @@ import "./slot.css";
 
 type Params = { params: { appointmentId?: string; slotId?: string } };
 
-const notFound = () => data("Not found", { status: 404 });
-
 // Only a draft can be changed. The slot is a draft exactly when its appointment is.
-async function loadDraft(request: Request, { params }: Params) {
-  const user = await requireRole(request, "richter");
-  const appointment = await getAppointment(getDb(), user.id, params.appointmentId ?? "");
-  if (!appointment) throw notFound();
-  if (appointment.status !== "draft") throw redirect("/overview");
-  return { user, appointment };
-}
+const loadDraft = (request: Request, { params }: Params) =>
+  requireOwnAppointment(request, params, { status: "draft", otherwise: OVERVIEW_PATH });
 
 export async function loader({ request, params }: { request: Request } & Params) {
   const { user, appointment } = await loadDraft(request, { params });
-  const isNew = params.slotId === NEW_SLOT;
+  const isNew = params.slotId === NEW_ITEM;
   // A copy starts from the values of the slot it copies; an edit from the slot itself.
   const sourceId = isNew ? new URL(request.url).searchParams.get("kopie") : params.slotId;
   const source = appointment.slots.find((slot) => slot.id === sourceId);
@@ -65,7 +55,7 @@ export async function loader({ request, params }: { request: Request } & Params)
   return {
     user,
     isNew,
-    cancelHref: draftHref(appointment.id),
+    cancelHref: draftPath(appointment.id),
     minDurationMinutes: appointment.minDurationMinutes ?? null,
     values: source ? rangeToSlot(source) : emptySlot,
   };
@@ -76,7 +66,7 @@ type ActionResult = { values: SlotInput; errors: SlotErrors };
 export async function action({ request, params }: { request: Request } & Params) {
   const { user, appointment } = await loadDraft(request, { params });
   const db = getDb();
-  const isNew = params.slotId === NEW_SLOT;
+  const isNew = params.slotId === NEW_ITEM;
   const values = parseSlotForm(await request.formData());
   const reject = (errors: SlotErrors) =>
     data({ values, errors } satisfies ActionResult, { status: 400 });
@@ -95,7 +85,7 @@ export async function action({ request, params }: { request: Request } & Params)
     ? await addDraftSlot(db, user.id, appointment.id, range)
     : await updateDraftSlot(db, user.id, appointment.id, params.slotId ?? "", range);
   if (!saved) throw notFound();
-  return redirect(draftHref(appointment.id));
+  return redirect(draftPath(appointment.id));
 }
 
 // KERN only offers input width modifiers for 2 and 4 characters, which is all we need.

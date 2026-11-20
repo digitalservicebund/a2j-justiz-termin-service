@@ -21,6 +21,7 @@ import { getDb } from "~/database/database";
 import { getAuth } from "~/lib/auth.server";
 import { AUTH_BASE_PATH, BASE_PATH } from "~/lib/base-path";
 import { logError } from "~/lib/logging";
+import { OVERVIEW_PATH } from "~/lib/paths";
 
 import "./welcome.css";
 
@@ -116,7 +117,7 @@ export default function Welcome() {
             </KernStack>
             {user ? (
               <div>
-                <KernLinkButton to="/overview">
+                <KernLinkButton to={OVERVIEW_PATH}>
                   <KernLabel>Verhandlungstermin-Finder</KernLabel>
                   <KernIcon name="arrow-forward" />
                 </KernLinkButton>

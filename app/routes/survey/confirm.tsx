@@ -1,10 +1,6 @@
-import { data, redirect, useLoaderData } from "react-router";
+import { redirect, useLoaderData } from "react-router";
 
-import {
-  findSurvey,
-  issueResponseOverview,
-  saveAnswer,
-} from "~/adapters/appointments/survey.server";
+import { issueResponseOverview, saveAnswer } from "~/adapters/appointments/survey.server";
 import { AppShell } from "~/components/shared/AppShell";
 import {
   KernDescriptionList,
@@ -13,12 +9,14 @@ import {
 import { ReviewPage } from "~/components/shared/ReviewPage";
 import { getDb } from "~/database/database";
 import { sendAnswerReceivedEmail } from "~/lib/email/send-answer-received-email";
+import { surveyPath, surveyResultPath } from "~/lib/paths";
+import { badRequest } from "~/lib/responses";
+import { requireSurvey } from "~/lib/survey-guard.server";
 
 import {
   describeAnswers,
   readValues,
   surveyBreadcrumbs,
-  surveyPath,
   surveySearch,
   validateSurvey,
 } from "./schema";
@@ -27,15 +25,8 @@ import "./survey.css";
 
 type Params = { params: { token?: string } };
 
-async function loadSurvey({ params }: Params) {
-  const token = params.token ?? "";
-  const survey = await findSurvey(getDb(), token);
-  if (!survey) throw data("Not found", { status: 404 });
-  return { token, survey };
-}
-
 export async function loader({ request, params }: { request: Request } & Params) {
-  const { token, survey } = await loadSurvey({ params });
+  const { token, survey } = await requireSurvey(params);
   // Nothing can be answered without a window; the form page says so.
   if (survey.slots.length === 0) throw redirect(surveyPath(token));
   const values = readValues(new URL(request.url).searchParams);
@@ -47,7 +38,7 @@ export async function loader({ request, params }: { request: Request } & Params)
     offered: survey.slots,
     minDurationMinutes: survey.minDurationMinutes,
   });
-  if (!result.success) throw redirect(`${surveyPath(token)}?${surveySearch(values)}`);
+  if (!result.success) throw redirect(surveyPath(token, surveySearch(values)));
 
   return {
     values,
@@ -68,15 +59,15 @@ async function notifyJudge(appointmentId: string, responder: { id: string; name:
 }
 
 export async function action({ request, params }: { request: Request } & Params) {
-  const { token, survey } = await loadSurvey({ params });
+  const { token, survey } = await requireSurvey(params);
   if (survey.slots.length === 0) return redirect(surveyPath(token));
   const form = await request.formData();
   const intent = form.get("intent");
   const values = readValues(form);
-  const back = `${surveyPath(token)}?${surveySearch(values)}`;
+  const back = surveyPath(token, surveySearch(values));
 
   if (intent === "back") return redirect(back);
-  if (intent !== "finish") throw data("Bad request", { status: 400 });
+  if (intent !== "finish") throw badRequest();
 
   const result = validateSurvey(values, {
     needsName: !survey.participant,
@@ -96,9 +87,7 @@ export async function action({ request, params }: { request: Request } & Params)
   // what is left, or the page is gone.
   if (!saved.saved) return redirect(back);
   await notifyJudge(survey.appointmentId, { id: saved.participantId, name });
-  return redirect(
-    `${surveyPath(token, "/naechste-schritte")}?teilnehmer=${encodeURIComponent(saved.participantId)}`,
-  );
+  return redirect(surveyResultPath(token, saved.participantId));
 }
 
 export default function SurveyConfirm() {

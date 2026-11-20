@@ -34,10 +34,19 @@ import {
 } from "~/components/shared/kern/KernTable";
 import { classNames } from "~/components/shared/kern/layout";
 import { getDb } from "~/database/database";
+import { getOwnAppointment } from "~/lib/appointment-guard.server";
+import {
+  confirmDraftPath,
+  draftPath,
+  NEW_ITEM,
+  OVERVIEW_PATH,
+  participantPath,
+  slotPath,
+} from "~/lib/paths";
+import { badRequest, notFound } from "~/lib/responses";
 
 import { createTerminBreadcrumbs } from "./breadcrumbs";
 import { MAX_PARTICIPANTS } from "./participant.schema";
-import { draftHref, NEW_SLOT, participantHref, slotHref } from "./paths";
 import {
   aktenzeichenProblem,
   MAX_SLOTS,
@@ -55,17 +64,17 @@ export async function loader({ request }: { request: Request }) {
   if (!draftId) return { user, draft: null };
 
   // The draft is the only place the entered data lives, so every visit reads it from there.
-  const db = getDb();
-  const appointment = await getAppointment(db, user.id, draftId);
-  if (!appointment) throw data("Not found", { status: 404 });
-  if (appointment.status !== "draft") throw redirect("/overview");
+  const appointment = await getOwnAppointment(user.id, draftId, {
+    status: "draft",
+    otherwise: OVERVIEW_PATH,
+  });
   return {
     user,
     draft: {
       id: appointment.id,
       aktenzeichen: appointment.aktenzeichen,
       minDurationMinutes: appointment.minDurationMinutes ?? null,
-      participants: await listParticipants(db, user.id, appointment.id),
+      participants: await listParticipants(getDb(), user.id, appointment.id),
       slots: appointment.slots.map((slot) => ({
         id: slot.id,
         ...describeSlot(slot),
@@ -103,7 +112,7 @@ export async function action({ request }: { request: Request }) {
 
   if (command === "cancel") {
     if (draftId) await deleteDraftIfEmpty(db, user.id, draftId);
-    return redirect("/overview");
+    return redirect(OVERVIEW_PATH);
   }
 
   const final = command === "next";
@@ -120,9 +129,7 @@ export async function action({ request }: { request: Request }) {
   const details = { aktenzeichen: aktenzeichen.trim(), minDurationMinutes: duration.minutes };
   let id = draftId;
   if (id) {
-    if (!(await updateDraftDetails(db, user.id, id, details))) {
-      throw data("Not found", { status: 404 });
-    }
+    if (!(await updateDraftDetails(db, user.id, id, details))) throw notFound();
   } else if (final) {
     // Nothing was entered, so there is no draft; the checks below report what is missing.
   } else {
@@ -131,24 +138,21 @@ export async function action({ request }: { request: Request }) {
 
   switch (command) {
     case "add-slot":
-      return redirect(slotHref(id, NEW_SLOT));
+      return redirect(slotPath(id, NEW_ITEM));
     case "edit-slot":
-      return redirect(slotHref(id, rowId));
+      return redirect(slotPath(id, rowId));
     case "copy-slot":
-      return redirect(slotHref(id, NEW_SLOT, rowId));
+      return redirect(slotPath(id, NEW_ITEM, rowId));
     case "delete-slot":
-      if (!(await deleteDraftSlot(db, user.id, id, rowId)))
-        throw data("Not found", { status: 404 });
-      return redirect(draftHref(id));
+      if (!(await deleteDraftSlot(db, user.id, id, rowId))) throw notFound();
+      return redirect(draftPath(id));
     case "add-person":
-      return redirect(participantHref(id, NEW_SLOT));
+      return redirect(participantPath(id, NEW_ITEM));
     case "edit-person":
-      return redirect(participantHref(id, rowId));
+      return redirect(participantPath(id, rowId));
     case "delete-person":
-      if (!(await deleteDraftParticipant(db, user.id, id, rowId))) {
-        throw data("Not found", { status: 404 });
-      }
-      return redirect(draftHref(id));
+      if (!(await deleteDraftParticipant(db, user.id, id, rowId))) throw notFound();
+      return redirect(draftPath(id));
     case "next": {
       const appointment = id ? await getAppointment(db, user.id, id) : undefined;
       const result = validateCreateTermin({
@@ -162,10 +166,10 @@ export async function action({ request }: { request: Request }) {
           status: 400,
         });
       }
-      return redirect(`/overview/${encodeURIComponent(id)}/confirm`);
+      return redirect(confirmDraftPath(id));
     }
     default:
-      throw data("Bad request", { status: 400 });
+      throw badRequest();
   }
 }
 

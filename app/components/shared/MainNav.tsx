@@ -1,3 +1,5 @@
+import { OVERVIEW_PATH } from "~/lib/paths";
+
 import { A2JIcon } from "./a2j/A2JIcon";
 import { KernIcon } from "./kern/KernIcon";
 import { SideNav } from "./SideNav";
@@ -16,7 +18,7 @@ export function MainNav({ current }: Readonly<MainNavProps>) {
         {
           label: "Übersicht",
           icon: <KernIcon name="home" size="large" />,
-          to: "/overview",
+          to: OVERVIEW_PATH,
           current: current === "overview",
         },
         {

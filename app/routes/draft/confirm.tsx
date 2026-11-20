@@ -1,4 +1,4 @@
-import { data, redirect, useLoaderData } from "react-router";
+import { redirect, useLoaderData } from "react-router";
 
 import {
   getAppointment,
@@ -10,17 +10,21 @@ import { listParticipants } from "~/adapters/appointments/participants.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { getDb } from "~/database/database";
+import {
+  appointmentIdOf,
+  getOwnAppointment,
+  requireOwnAppointment,
+} from "~/lib/appointment-guard.server";
 import { sendTerminCreatedEmail } from "~/lib/email/send-termin-created-email";
+import { createdPath, draftPath, OVERVIEW_PATH } from "~/lib/paths";
+import { badRequest, notFound } from "~/lib/responses";
 
 import { createTerminBreadcrumbs } from "./breadcrumbs";
-import { draftHref } from "./paths";
 import { CreateTerminReview } from "./review";
 import { validateCreateTermin, type CreateTerminValues } from "./schema";
 import { rangeToSlot } from "./slots";
 
 type Params = { params: { appointmentId?: string } };
-
-const notFound = () => data("Not found", { status: 404 });
 
 const draftValues = (appointment: Appointment): CreateTerminValues => ({
   aktenzeichen: appointment.aktenzeichen,
@@ -29,15 +33,15 @@ const draftValues = (appointment: Appointment): CreateTerminValues => ({
 });
 
 export async function loader({ request, params }: { request: Request } & Params) {
-  const user = await requireRole(request, "richter");
-  const appointment = await getAppointment(getDb(), user.id, params.appointmentId ?? "");
-  if (!appointment) throw notFound();
   // Only drafts are reviewed; a published appointment has nothing left to confirm.
-  if (appointment.status !== "draft") throw redirect("/overview");
+  const { user, appointment } = await requireOwnAppointment(request, params, {
+    status: "draft",
+    otherwise: OVERVIEW_PATH,
+  });
 
   // A draft can be saved half-finished, so it is only reviewed once it is complete.
   const values = draftValues(appointment);
-  if (!validateCreateTermin(values).success) throw redirect(draftHref(appointment.id));
+  if (!validateCreateTermin(values).success) throw redirect(draftPath(appointment.id));
   return { user, values, participants: await listParticipants(getDb(), user.id, appointment.id) };
 }
 
@@ -57,25 +61,24 @@ async function notifyJudge(userId: string, email: string, id: string) {
 
 export async function action({ request, params }: { request: Request } & Params) {
   const user = await requireRole(request, "richter");
-  const id = params.appointmentId ?? "";
+  const id = appointmentIdOf(params);
   const intent = (await request.formData()).get("intent");
 
   if (intent === "back") {
-    return redirect(draftHref(id));
+    return redirect(draftPath(id));
   }
   if (intent === "create") {
     // The draft may have changed since it was reviewed, so it is checked again before publishing.
-    const appointment = await getAppointment(getDb(), user.id, id);
-    if (!appointment) throw notFound();
+    const appointment = await getOwnAppointment(user.id, id);
     const values = draftValues(appointment);
     if (appointment.status === "draft" && !validateCreateTermin(values).success) {
-      return redirect(draftHref(id));
+      return redirect(draftPath(id));
     }
     if (!(await publishAppointment(getDb(), user.id, id))) throw notFound();
     await notifyJudge(user.id, user.email, id);
-    return redirect(`/overview/${encodeURIComponent(id)}/created`);
+    return redirect(createdPath(id));
   }
-  throw data("Bad request", { status: 400 });
+  throw badRequest();
 }
 
 export default function CreateTerminConfirm() {

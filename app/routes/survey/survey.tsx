@@ -7,7 +7,6 @@ import {
   useNavigation,
 } from "react-router";
 
-import { findSurvey } from "~/adapters/appointments/survey.server";
 import { AppShell } from "~/components/shared/AppShell";
 import { FlowPage } from "~/components/shared/FlowPage";
 import { FieldColumn, FormActions, FormStack } from "~/components/shared/FormLayout";
@@ -28,7 +27,8 @@ import { KernLabel } from "~/components/shared/kern/KernLabel";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { KernStack } from "~/components/shared/kern/KernStack";
 import { classNames, resetClassName, stackClassName } from "~/components/shared/kern/layout";
-import { getDb } from "~/database/database";
+import { surveyPath, surveyResultPath, surveySummaryPath } from "~/lib/paths";
+import { requireSurvey } from "~/lib/survey-guard.server";
 
 import { NoOption } from "./result";
 import {
@@ -38,7 +38,6 @@ import {
   readValues,
   removeWindow,
   surveyBreadcrumbs,
-  surveyPath,
   surveySearch,
   validateSurvey,
   type OfferView,
@@ -49,21 +48,11 @@ import "./survey.css";
 
 type Params = { params: { token?: string } };
 
-// Only an open survey can be answered. Unknown links look the same as closed ones.
-async function loadSurvey({ params }: Params) {
-  const token = params.token ?? "";
-  const survey = await findSurvey(getDb(), token);
-  if (!survey) throw data("Not found", { status: 404 });
-  return { token, survey };
-}
-
 export async function loader({ request, params }: { request: Request } & Params) {
-  const { token, survey } = await loadSurvey({ params });
+  const { token, survey } = await requireSurvey(params);
   // A personal link answers once.
   if (survey.answered && survey.participant) {
-    throw redirect(
-      `${surveyPath(token, "/naechste-schritte")}?teilnehmer=${encodeURIComponent(survey.participant.id)}`,
-    );
+    throw redirect(surveyResultPath(token, survey.participant.id));
   }
 
   return {
@@ -80,7 +69,7 @@ export async function loader({ request, params }: { request: Request } & Params)
 }
 
 export async function action({ request, params }: { request: Request } & Params) {
-  const { token, survey } = await loadSurvey({ params });
+  const { token, survey } = await requireSurvey(params);
   // Nothing can be answered without a window; the form page says so.
   if (survey.slots.length === 0) return redirect(surveyPath(token));
   const form = await request.formData();
@@ -102,7 +91,7 @@ export async function action({ request, params }: { request: Request } & Params)
     minDurationMinutes: survey.minDurationMinutes,
   });
   if (!result.success) return data({ values, errors: result.errors }, { status: 400 });
-  return redirect(`${surveyPath(token, "/zusammenfassung")}?${surveySearch(values)}`);
+  return redirect(surveySummaryPath(token, surveySearch(values)));
 }
 
 export default function Survey() {

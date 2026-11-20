@@ -6,6 +6,7 @@ import { KernLabel } from "~/components/shared/kern/KernLabel";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { KernStack } from "~/components/shared/kern/KernStack";
 import { ResultBanner } from "~/components/shared/ResultBanner";
+import { OVERVIEW_PATH } from "~/lib/paths";
 
 import "./NextSteps.css";
 
@@ -39,7 +40,7 @@ export function SuccessBanner({
             <KernIcon name="arrow-down" />
           </a>
           {overviewLink && (
-            <KernLinkButton style="secondary" to="/overview">
+            <KernLinkButton style="secondary" to={OVERVIEW_PATH}>
               <KernLabel>Zu den Terminumfragen</KernLabel>
               <KernIcon name="arrow-forward" />
             </KernLinkButton>

@@ -1,7 +1,6 @@
 import { Fragment } from "react";
 import { data, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
 
-import { findSurvey } from "~/adapters/appointments/survey.server";
 import { AppShell } from "~/components/shared/AppShell";
 import { ErrorMessage } from "~/components/shared/ErrorMessage";
 import { FlowPage } from "~/components/shared/FlowPage";
@@ -23,9 +22,10 @@ import { classNames, clusterClassName } from "~/components/shared/kern/layout";
 import { contains, parseWindowKey, type SlotWindow } from "~/core/domain/availability";
 import { formatRangeLong, formatTime } from "~/core/domain/time/format";
 import type { TimeRange } from "~/core/domain/time/time-range";
-import { getDb } from "~/database/database";
+import { surveyPath } from "~/lib/paths";
+import { requireSurvey } from "~/lib/survey-guard.server";
 
-import { readValues, setSmallerWindow, surveyBreadcrumbs, surveyPath } from "./schema";
+import { readValues, setSmallerWindow, surveyBreadcrumbs } from "./schema";
 import { draftPath } from "./window.paths";
 import {
   validateSmallerWindow,
@@ -41,9 +41,7 @@ type Params = { params: { token?: string } };
 // The offered window the guest adds a smaller one to, and the window being changed, if any. A
 // window that is no longer offered sends the guest back to the survey, which shows what is left.
 async function loadOffer(request: Request, { params }: Params) {
-  const token = params.token ?? "";
-  const survey = await findSurvey(getDb(), token);
-  if (!survey) throw data("Not found", { status: 404 });
+  const { token, survey } = await requireSurvey(params);
 
   const search = new URL(request.url).searchParams;
   const values = readValues(search);

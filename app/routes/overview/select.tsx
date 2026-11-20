@@ -1,8 +1,6 @@
 import { data, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
 
-import { getAppointment } from "~/adapters/appointments/appointments.server";
 import { readAvailability, remainingOf } from "~/adapters/appointments/availability.server";
-import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { FlowPage } from "~/components/shared/FlowPage";
 import { FormActions, FormStack } from "~/components/shared/FormLayout";
@@ -22,6 +20,8 @@ import { classNames, resetClassName } from "~/components/shared/kern/layout";
 import { windowKey } from "~/core/domain/availability";
 import { formatRangeLong } from "~/core/domain/time/format";
 import { getDb } from "~/database/database";
+import { requireOwnAppointment } from "~/lib/appointment-guard.server";
+import { appointmentPath, confirmSelectionPath, OVERVIEW_PATH } from "~/lib/paths";
 
 import { readValues, selectBreadcrumbs, selectionSearch } from "./select.schema";
 import { validateSelection } from "./select.validate.server";
@@ -30,16 +30,13 @@ import "./select.css";
 
 type Params = { params: { appointmentId?: string } };
 
-const notFound = () => data("Not found", { status: 404 });
-
 // Only an open appointment has windows to choose from: what the answers so far left of the
 // proposed slots.
 async function loadOpenAppointment(request: Request, { params }: Params) {
-  const user = await requireRole(request, "richter");
-  const id = params.appointmentId ?? "";
-  const appointment = await getAppointment(getDb(), user.id, id);
-  if (!appointment) throw notFound();
-  if (appointment.status !== "open") throw redirect(`/overview/${encodeURIComponent(id)}`);
+  const { user, id, appointment } = await requireOwnAppointment(request, params, {
+    status: "open",
+    otherwise: appointmentPath,
+  });
   const availability = await readAvailability(getDb(), id);
   return {
     user,
@@ -70,7 +67,7 @@ export async function action({ request, params }: { request: Request } & Params)
 
   const result = validateSelection(values, remaining, minDurationMinutes);
   if (!result.success) return data({ values, errors: result.errors }, { status: 400 });
-  return redirect(`/overview/${encodeURIComponent(id)}/select/confirm?${selectionSearch(values)}`);
+  return redirect(confirmSelectionPath(id, selectionSearch(values)));
 }
 
 export default function OverviewSelect() {
@@ -156,7 +153,7 @@ export default function OverviewSelect() {
               </KernFieldset>
 
               <FormActions>
-                <KernLinkButton style="secondary" to="/overview">
+                <KernLinkButton style="secondary" to={OVERVIEW_PATH}>
                   Abbrechen
                 </KernLinkButton>
                 <KernButton type="submit" disabled={pending}>
