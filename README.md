@@ -119,6 +119,8 @@ Tests in [`e2e/`](e2e/) cover:
   `domain:add` CLI.
 - Anonymous access, each scheduling role, admin access, privilege escalation,
   profile updates, and cross-origin management requests.
+- Accessibility: every page, including its error states, passes axe-core's WCAG 2.2 AA rules in
+  the light and the dark colour scheme ([`e2e/accessibility.spec.ts`](e2e/accessibility.spec.ts)).
 - CLI administrator provisioning, duplicate rejection, browser-driven user
   creation/editing/deletion, granting/revoking admin rights, session revocation,
   self-removal prevention, and invalidation of deleted users' outstanding links.
@@ -210,7 +212,10 @@ utilities are permitted when their native stylesheet is loaded; Tailwind and
 custom utility frameworks are not. Put application-specific rules in a
 colocated, component-prefixed stylesheet imported by its owning component.
 The application follows the system light/dark preference using KERN's native
-theme tokens.
+theme tokens. Use the semantic tokens (`--kern-color-layout-*`, `--kern-color-feedback-*`,
+`--kern-color-action-*`): palette colours such as `--kern-color-neutral-050` look the same in both
+schemes, so text on them becomes unreadable in one of them. If the design needs a colour KERN has
+no semantic token for, define one in `app/app.css` for both schemes, like `--app-color-layout-band`.
 
 ## Database
 

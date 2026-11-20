@@ -3,7 +3,7 @@
 }
 
 .welcome__hero {
-  background-color: var(--kern-color-neutral-050);
+  background-color: var(--app-color-layout-band);
 }
 
 /* The padding of the sections is beyond the largest spacing helper. */

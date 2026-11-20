@@ -3,6 +3,16 @@
 
 :root {
   color-scheme: light dark;
+  /* The grey band of the design behind the breadcrumbs and the welcome hero, also the line above
+     the footer. KERN has no semantic token for it, and its palette colours stay the same in both
+     schemes, so this one switches like KERN's own layout tokens do. */
+  --app-color-layout-band: var(--kern-color-neutral-050);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --app-color-layout-band: var(--kern-color-neutral-900);
+  }
 }
 
 body {

@@ -33,7 +33,7 @@
 
 /* The extra pixels match the breadcrumb height in the Figma design (67px). */
 .page-shell__breadcrumbs {
-  background-color: var(--kern-color-neutral-050);
+  background-color: var(--app-color-layout-band);
   padding-block: calc(var(--kern-metric-space-default) + 1px)
     calc(var(--kern-metric-space-default) + 2px);
 }
@@ -41,7 +41,7 @@
 /* The paddings and the space between the rows are beyond the largest spacing helper. */
 .page-shell__footer {
   background-color: var(--kern-color-layout-background-default);
-  border-top: var(--kern-metric-border-width-light) solid var(--kern-color-neutral-050);
+  border-top: var(--kern-metric-border-width-light) solid var(--app-color-layout-band);
   padding-block: var(--kern-metric-space-3x-large) var(--kern-metric-space-6x-large);
 }
 
