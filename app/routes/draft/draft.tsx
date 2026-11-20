@@ -259,7 +259,9 @@ export default function CreateTermin() {
                 </KernTableHead>
                 <KernTableBody>
                   {participants.length === 0 ? (
-                    <EmptyRow>Sie haben keine Verfahrensbeteiligten angegeben.</EmptyRow>
+                    <EmptyRow columns={4}>
+                      Sie haben keine Verfahrensbeteiligten angegeben.
+                    </EmptyRow>
                   ) : (
                     participants.map(({ id, email, safeId, name }) => {
                       const label = `Person ${email ?? safeId ?? name}`;
@@ -326,7 +328,7 @@ export default function CreateTermin() {
                 </KernTableHead>
                 <KernTableBody>
                   {slots.length === 0 ? (
-                    <EmptyRow>Sie haben keine Zeitfenster angegeben.</EmptyRow>
+                    <EmptyRow columns={3}>Sie haben keine Zeitfenster angegeben.</EmptyRow>
                   ) : (
                     slots.map(({ id, date, time }, index) => {
                       const label = `${date}, ${time}`;
@@ -392,11 +394,11 @@ export default function CreateTermin() {
   );
 }
 
-// The table keeps its header when it is empty and says so in a white row.
-function EmptyRow({ children }: Readonly<{ children: string }>) {
+// The table keeps its header when it is empty and says so in a white row that spans every column.
+function EmptyRow({ columns, children }: Readonly<{ columns: number; children: string }>) {
   return (
     <KernRow>
-      <KernCell colSpan={3} className="create-termin__empty">
+      <KernCell colSpan={columns} className="create-termin__empty">
         {children}
       </KernCell>
     </KernRow>
