@@ -97,9 +97,6 @@ const steps: Array<{ icon: ReactNode; label: string }> = [
 
 const CONTACT_EMAIL = "a2j-jts@digitalservice.bund.de";
 
-// Target for this link is not defined in the design yet.
-const TODO_HREF = "#";
-
 export default function Welcome() {
   const { user, invalidLink } = useLoaderData<typeof loader>();
   const result = useActionData<typeof action>();
@@ -205,7 +202,7 @@ export default function Welcome() {
           <A2JInlineNotice
             type="information"
             title="Gestalten Sie die digitalen Angebote der Justiz mit"
-            link={{ href: TODO_HREF, label: "Jetzt für die Teilnahme anmelden" }}
+            link={{ href: `mailto:${CONTACT_EMAIL}`, label: "Jetzt für die Teilnahme anmelden" }}
           >
             Wir wollen digitale Justiz-Angebote entwickeln, die für alle Menschen gut funktionieren.
             Ihre Hilfe ist dabei sehr wichtig. In kurzen Online-Gesprächen können Sie Ihre
