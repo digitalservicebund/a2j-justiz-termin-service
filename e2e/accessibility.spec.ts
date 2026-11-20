@@ -16,12 +16,12 @@ const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 type ColorScheme = "light" | "dark";
 
 // axe-core is a script, but every spec runs with JavaScript switched off, and Playwright cannot run
-// a script in such a page. So axe checks a copy: the page's current markup without the app's
-// scripts, served at the same address to a page that runs scripts, in the same colour scheme and
-// size. The app's styles load from the server as usual. axe sees the page as it is without
-// JavaScript.
+// a script in such a page. So axe checks a copy: the page's current markup, served at the same
+// address to a page that runs scripts, in the same colour scheme and size. A content security policy
+// keeps the app's own scripts from running there; axe, which Playwright injects, is not affected.
+// The app's styles load from the server as usual. axe sees the page as it is without JavaScript.
 async function analyze(page: Page, colorScheme: ColorScheme) {
-  const html = (await page.content()).replace(/<script\b[\s\S]*?<\/script>/gi, "");
+  const html = await page.content();
   const url = page.url();
   const context = await page
     .context()
@@ -36,7 +36,12 @@ async function analyze(page: Page, colorScheme: ColorScheme) {
     const copy = await context.newPage();
     await copy.route(
       (address) => address.href === url,
-      (route) => route.fulfill({ contentType: "text/html", body: html }),
+      (route) =>
+        route.fulfill({
+          contentType: "text/html",
+          headers: { "Content-Security-Policy": "script-src 'none'" },
+          body: html,
+        }),
     );
     await copy.goto(url);
     return await new AxeBuilder({ page: copy }).withTags(WCAG_TAGS).analyze();
