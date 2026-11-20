@@ -1,0 +1,154 @@
+import { redirect, useLoaderData } from "react-router";
+
+import { issueResponseOverview, saveAnswer } from "~/adapters/appointments/survey.server";
+import { AppShell } from "~/components/shared/AppShell";
+import {
+  KernDescriptionList,
+  KernDescriptionListItem,
+} from "~/components/shared/kern/KernDescriptionList";
+import { ReviewPage } from "~/components/shared/ReviewPage";
+import { getDb } from "~/database/database";
+import { sendAnswerReceivedEmail } from "~/lib/email/send-answer-received-email";
+import { surveyPath, surveyResultPath } from "~/lib/paths";
+import { badRequest } from "~/lib/responses";
+import { requireSurvey } from "~/lib/survey-guard.server";
+
+import {
+  describeAnswers,
+  readValues,
+  surveyBreadcrumbs,
+  surveySearch,
+  validateSurvey,
+} from "./schema";
+
+import "./survey.css";
+
+type Params = { params: { token?: string } };
+
+export async function loader({ request, params }: { request: Request } & Params) {
+  const { token, survey } = await requireSurvey(params);
+  // Nothing can be answered without a window; the form page says so.
+  if (survey.slots.length === 0) throw redirect(surveyPath(token));
+  const values = readValues(new URL(request.url).searchParams);
+  const needsName = !survey.participant;
+
+  // Without a valid answer there is nothing to review, so the guest answers again.
+  const result = validateSurvey(values, {
+    needsName,
+    offered: survey.slots,
+    minDurationMinutes: survey.minDurationMinutes,
+  });
+  if (!result.success) throw redirect(surveyPath(token, surveySearch(values)));
+
+  return {
+    values,
+    needsName,
+    aktenzeichen: survey.aktenzeichen,
+    name: survey.participant?.name ?? result.name,
+    answers: describeAnswers(survey.slots, result.availability),
+    // Which design the review follows: without any window the guest is not available at all.
+    none: result.availability.length === 0,
+  };
+}
+
+// Tells the judge about the answer and where the appointment stands now. The answer is saved
+// either way.
+async function notifyJudge(appointmentId: string, responder: { id: string; name: string }) {
+  const overview = await issueResponseOverview(getDb(), appointmentId);
+  if (overview) await sendAnswerReceivedEmail(overview, responder);
+}
+
+export async function action({ request, params }: { request: Request } & Params) {
+  const { token, survey } = await requireSurvey(params);
+  if (survey.slots.length === 0) return redirect(surveyPath(token));
+  const form = await request.formData();
+  const intent = form.get("intent");
+  const values = readValues(form);
+  const back = surveyPath(token, surveySearch(values));
+
+  if (intent === "back") return redirect(back);
+  if (intent !== "finish") throw badRequest();
+
+  const result = validateSurvey(values, {
+    needsName: !survey.participant,
+    offered: survey.slots,
+    minDurationMinutes: survey.minDurationMinutes,
+  });
+  if (!result.success) return redirect(back);
+
+  const name = survey.participant?.name ?? result.name;
+  const saved = await saveAnswer(getDb(), {
+    appointmentId: survey.appointmentId,
+    name,
+    participantId: survey.participant?.id,
+    availability: result.availability,
+  });
+  // Another answer ruled a window out in the meantime, or the survey closed: the form shows
+  // what is left, or the page is gone.
+  if (!saved.saved) return redirect(back);
+  await notifyJudge(survey.appointmentId, { id: saved.participantId, name });
+  return redirect(surveyResultPath(token, saved.participantId));
+}
+
+export default function SurveyConfirm() {
+  const { values, needsName, aktenzeichen, name, answers } = useLoaderData<typeof loader>();
+  return (
+    <AppShell breadcrumbs={surveyBreadcrumbs}>
+      <ReviewPage
+        wide
+        sections={[
+          {
+            id: "verhandlungsdaten",
+            title: "Verhandlungsdaten",
+            editable: false,
+            children: (
+              <KernDescriptionList>
+                <KernDescriptionListItem label="Aktenzeichen">
+                  {aktenzeichen}
+                </KernDescriptionListItem>
+              </KernDescriptionList>
+            ),
+          },
+          // A personal link already names the guest, and the review has nothing to check there.
+          ...(needsName
+            ? [
+                {
+                  id: "teilnehmer",
+                  title: "Ihre Daten",
+                  children: (
+                    <KernDescriptionList>
+                      <KernDescriptionListItem label="Name">{name}</KernDescriptionListItem>
+                    </KernDescriptionList>
+                  ),
+                },
+              ]
+            : []),
+          {
+            id: "zeitfenster",
+            title: "Zeitfenster",
+            children: (
+              <KernDescriptionList>
+                {answers.map(({ key, label, lines }) => (
+                  <KernDescriptionListItem key={key} label={label}>
+                    <ul className="review-page__list">
+                      {lines.map((line) => (
+                        <li key={line}>{line}</li>
+                      ))}
+                    </ul>
+                  </KernDescriptionListItem>
+                ))}
+              </KernDescriptionList>
+            ),
+          },
+        ]}
+        submit={{ label: "Terminumfrage abschließen", intent: "finish" }}
+      >
+        {needsName && <input type="hidden" name="name" value={values.name} />}
+        {values.available.map((id) => (
+          <input key={id} type="hidden" name="verfuegbar" value={id} />
+        ))}
+        {values.none && <input type="hidden" name="keines" value="1" />}
+      </ReviewPage>
+    </AppShell>
+  );
+}

@@ -1,0 +1,78 @@
+import { KernBody } from "~/components/shared/kern/KernBody";
+import {
+  KernDescriptionList,
+  KernDescriptionListItem,
+} from "~/components/shared/kern/KernDescriptionList";
+import { ReviewPage } from "~/components/shared/ReviewPage";
+
+import { formatMinutes, type CreateTerminValues } from "./schema";
+import { groupSlotsByDay } from "./slot-days";
+
+import "./draft.css";
+
+// "a@example.com", "Person A" or "a@example.com, Person A".
+const describePerson = ({ email, name }: { email: string | null; name: string | null }) =>
+  [email, name].filter(Boolean).join(", ");
+
+export function CreateTerminReview({
+  values,
+  participants,
+}: Readonly<{
+  values: CreateTerminValues;
+  participants: Array<{ id: string; email: string | null; name: string | null }>;
+}>) {
+  return (
+    <ReviewPage
+      sections={[
+        {
+          id: "verhandlungsdaten",
+          title: "Verhandlungsdaten",
+          children: (
+            <KernDescriptionList>
+              <KernDescriptionListItem label="Aktenzeichen">
+                {values.aktenzeichen}
+              </KernDescriptionListItem>
+              {values.minDurationMinutes !== null && (
+                <KernDescriptionListItem label="Mindestdauer">
+                  {formatMinutes(values.minDurationMinutes)}
+                </KernDescriptionListItem>
+              )}
+            </KernDescriptionList>
+          ),
+        },
+        {
+          id: "verfahrensbeteiligte",
+          title: "Verfahrensbeteiligte",
+          children:
+            participants.length === 0 ? (
+              <KernBody>Sie haben keine Verfahrensbeteiligten angegeben.</KernBody>
+            ) : (
+              <ul className="review-page__list">
+                {participants.map((person) => (
+                  <li key={person.id}>{describePerson(person)}</li>
+                ))}
+              </ul>
+            ),
+        },
+        {
+          id: "zeitfenster",
+          title: "Zeitfenster",
+          children: (
+            <KernDescriptionList>
+              {groupSlotsByDay(values.slots).map(({ key, label, times }) => (
+                <KernDescriptionListItem key={key} label={label}>
+                  <ul className="review-page__list">
+                    {times.map((time) => (
+                      <li key={time}>{time}</li>
+                    ))}
+                  </ul>
+                </KernDescriptionListItem>
+              ))}
+            </KernDescriptionList>
+          ),
+        },
+      ]}
+      submit={{ label: "Terminumfrage erstellen", intent: "create" }}
+    />
+  );
+}

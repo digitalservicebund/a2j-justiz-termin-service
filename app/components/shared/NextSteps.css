@@ -1,0 +1,56 @@
+/* The column that holds the banner and the steps. The gaps and the space below are beyond the
+   largest spacing helper. */
+.next-steps__page {
+  gap: var(--kern-metric-space-4x-large);
+  padding-block: var(--kern-metric-space-large) var(--kern-metric-space-6x-large);
+}
+
+.next-steps__list {
+  gap: var(--kern-metric-space-3x-large);
+  counter-reset: step;
+}
+
+.next-steps__step {
+  counter-increment: step;
+}
+
+.next-steps__step::before {
+  content: counter(step);
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--kern-metric-dimension-x-large);
+  height: var(--kern-metric-dimension-x-large);
+  border-radius: 50%;
+  background-color: var(--kern-color-layout-text-default);
+  color: var(--kern-color-layout-background-default);
+  font-weight: var(--kern-typography-font-weight-medium);
+}
+
+.next-steps__step-body {
+  min-width: 0;
+}
+
+/* Date and times side by side without the date wrapping. */
+.next-steps__step-body .kern-description-list {
+  width: 100%;
+}
+
+.next-steps__step-body .kern-description-list-item {
+  flex-wrap: wrap;
+}
+
+.next-steps__step-body .kern-description-list-item__key {
+  flex: 1 1 12rem;
+  white-space: nowrap;
+}
+
+.next-steps__step-body .kern-description-list-item__value {
+  flex: 1 1 12rem;
+}
+
+/* A list of times inside a step, without the list's indent. */
+.next-steps__times {
+  margin: 0;
+  padding: 0;
+}

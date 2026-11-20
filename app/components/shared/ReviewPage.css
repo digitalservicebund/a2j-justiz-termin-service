@@ -1,0 +1,24 @@
+/* The summary sits on a white surface in the flow-page design. */
+.review-page__summary {
+  align-items: flex-start;
+  background-color: var(--kern-color-layout-background-default);
+}
+
+.review-page__summary .kern-description-list {
+  width: 100%;
+}
+
+.review-page__summary .kern-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* A list of times or people inside a section, without the list's indent. */
+.review-page__list {
+  margin: 0;
+  padding: 0;
+}
