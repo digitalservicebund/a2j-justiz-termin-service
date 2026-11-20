@@ -201,7 +201,7 @@ app/
 │   ├── health/             # Readiness, database and SMTP checks
 │   └── auth.ts             # Better Auth API handler
 ├── database/               # Kysely, connection pool, migrations (see "Database")
-├── lib/                    # Env, secrets, logging, base path, calendar feed, e-mail
+├── lib/                    # Env, secrets, logging, base path, URL paths, route guards, calendar feed, e-mail
 ├── components/             # Reusable UI components
 │   └── shared/             # AppShell, Breadcrumb, FlowPage, ReviewPage, NextSteps, ...
 │       └── kern/           # KERN wrappers: KernAlert, KernBadge, KernButton, KernIcon, KernLink, ...
