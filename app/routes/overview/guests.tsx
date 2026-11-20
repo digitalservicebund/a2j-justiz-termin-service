@@ -1,5 +1,6 @@
 import { Form, useNavigation } from "react-router";
 
+import { KernAlert } from "~/components/shared/kern/KernAlert";
 import { KernBadge } from "~/components/shared/kern/KernBadge";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernButton } from "~/components/shared/kern/KernButton";
@@ -20,6 +21,8 @@ import {
 import type { InvitationChannel } from "~/database/types";
 
 import { inviteIntent } from "./invitation";
+
+import "./guests.css";
 
 // A guest as the detail page shows them. The invitations, newest first, are already worded for
 // display.
@@ -65,44 +68,68 @@ function InvitationStatus({ invitations }: Readonly<{ invitations: GuestRow["inv
     return <KernBadge type="custom-grey">Nicht eingeladen</KernBadge>;
   }
   return (
-    <KernStack as="ul" gap="sm" className="overview-detail__invitations">
+    <KernStack as="ul" gap="sm" className="guests__invitations">
       {invitations.map(({ label, at }) => (
         <KernStack as="li" key={`${label} ${at}`} gap="xxs" align="start">
           <KernBadge type="success">{label}</KernBadge>
-          <span className="overview-detail__muted">am {at}</span>
+          <span className="guests__muted">am {at}</span>
         </KernStack>
       ))}
     </KernStack>
   );
 }
 
+// Where an invitation leads back to, so the judge sees the guest they just invited.
+export const GUESTS_ANCHOR = "verfahrensbeteiligte";
+
 // The people the judge listed, whether and how each was invited, and, while the survey is open,
 // buttons to invite them. E-mail needs an address and the ERV a SAFE-ID, so a guest only gets the
 // buttons that can reach them; marking an invitation sent outside the app is always possible.
+// Inside a page section that has its own heading, the list goes without one.
 export function Guests({
   guests,
   canInvite,
-}: Readonly<{ guests: GuestRow[]; canInvite: boolean }>) {
+  heading = true,
+  notSent,
+}: Readonly<{
+  guests: GuestRow[];
+  canInvite: boolean;
+  heading?: boolean;
+  // The name of a guest whose e-mail could not be sent.
+  notSent?: string;
+}>) {
   const pending = useNavigation().state !== "idle";
   return (
     <KernStack
       as="section"
       gap="sm"
-      aria-labelledby="detail-verfahrensbeteiligte"
+      id={GUESTS_ANCHOR}
+      {...(heading
+        ? { "aria-labelledby": "guests-heading" }
+        : { "aria-label": "Verfahrensbeteiligte" })}
       className="kern-w-full"
     >
-      <KernHeading size="medium" level={2} id="detail-verfahrensbeteiligte">
-        Verfahrensbeteiligte
-      </KernHeading>
+      {heading && (
+        <KernHeading size="medium" level={2} id="guests-heading">
+          Verfahrensbeteiligte
+        </KernHeading>
+      )}
+      {notSent && (
+        <KernAlert
+          type="error"
+          title={`Die Einladung an ${notSent} konnte nicht gesendet werden.`}
+          message="Versuchen Sie es später erneut oder laden Sie die Person auf anderem Weg ein."
+        />
+      )}
       {guests.length === 0 ? (
         <KernBody>Sie haben keine Verfahrensbeteiligten angegeben.</KernBody>
       ) : (
-        <Form method="post" className="overview-detail__table-scroll">
+        <Form method="post" className="guests__table-scroll">
           <KernTable
             caption="Verfahrensbeteiligte"
             hideCaption
             striped
-            className="overview-detail__guests kern-w-full"
+            className="guests__table kern-w-full"
           >
             <KernTableHead>
               <KernRow>
@@ -121,7 +148,7 @@ export function Guests({
                         {guest.name && <span>{guest.name}</span>}
                         {guest.email && <span>{guest.email}</span>}
                         {guest.safeId && (
-                          <span className="overview-detail__safe-id">SAFE-ID: {guest.safeId}</span>
+                          <span className="guests__safe-id">SAFE-ID: {guest.safeId}</span>
                         )}
                       </KernStack>
                     </KernRowHeader>
@@ -130,7 +157,7 @@ export function Guests({
                     </KernCell>
                     {canInvite && (
                       <KernCell>
-                        <KernCluster as="fieldset" gap="xs" className="overview-detail__invite">
+                        <KernCluster as="fieldset" gap="xs" className="guests__invite">
                           <legend className="kern-sr-only">{who} einladen</legend>
                           {guest.email && (
                             <InviteButton

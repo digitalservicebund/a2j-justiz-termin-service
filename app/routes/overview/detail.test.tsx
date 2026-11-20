@@ -487,7 +487,7 @@ describe("guest invitations", () => {
     });
     expect(recordInvitation).toHaveBeenCalledWith({ db: true }, "1", "a1", "p1", "email");
     expect(response.status).toBe(302);
-    expect(response.headers.get("Location")).toBe("/overview/a1");
+    expect(response.headers.get("Location")).toBe("/overview/a1#verfahrensbeteiligte");
   });
 
   it("does not record an e-mail that could not be sent and says so", async () => {
