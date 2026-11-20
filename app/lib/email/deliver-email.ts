@@ -2,7 +2,6 @@ import type { Attachment } from "nodemailer/lib/mailer/index.js";
 
 import { requireEnv } from "../env.ts";
 import { logError } from "../logging.ts";
-import { appointmentUrl } from "../paths.ts";
 import { requireSecret } from "../secrets.ts";
 import { createSmtpTransport } from "../smtp.ts";
 
@@ -10,25 +9,21 @@ type Rendered = { subject: string; text: string; html: string; attachments: Atta
 
 type Delivery = {
   to: string;
-  appointmentId: string;
+  // The full URL of the page the mail links to, built from BASE_URL.
+  link: (baseUrl: string) => string;
   // What went wrong, for the log.
   failure: string;
-  render: (context: { terminUrl: string; from: string }) => Rendered;
+  render: (context: { url: string; from: string }) => Rendered;
 };
 
-// Mails the judge about an appointment, with a link to open it. A mail problem never undoes what
+// Mails someone about an appointment, with a link into the app. A mail problem never undoes what
 // triggered it, so failures are logged, not thrown.
-export async function deliverEmail({
-  to,
-  appointmentId,
-  failure,
-  render,
-}: Delivery): Promise<boolean> {
+export async function deliverEmail({ to, link, failure, render }: Delivery): Promise<boolean> {
   let transport: ReturnType<typeof createSmtpTransport> | undefined;
   try {
-    const terminUrl = appointmentUrl(requireEnv("BASE_URL"), appointmentId);
+    const url = link(requireEnv("BASE_URL"));
     const from = requireSecret("smtp", "SMTP_USER");
-    const { subject, text, html, attachments } = render({ terminUrl, from });
+    const { subject, text, html, attachments } = render({ url, from });
     transport = createSmtpTransport();
     await transport.sendMail({
       from,

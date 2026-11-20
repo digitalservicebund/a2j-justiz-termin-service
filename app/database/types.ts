@@ -70,6 +70,18 @@ type ParticipantResponseWindowsTable = {
   created_at: Generated<Date>;
 };
 
+// "email": mailed by the app
+// "erv": sent through the electronic legal transport to the SAFE-ID
+// "manual": the judge invited the person outside the app and recorded it
+export type InvitationChannel = "email" | "erv" | "manual";
+
+type ParticipantInvitationsTable = {
+  id: Generated<string>;
+  participant_id: string;
+  channel: InvitationChannel;
+  created_at: Generated<Date>;
+};
+
 type Timestamps = {
   createdAt: Generated<Date>;
   updatedAt: Date;
@@ -129,4 +141,5 @@ export type Database = {
   participant: ParticipantsTable;
   participant_response: ParticipantResponsesTable;
   participant_response_window: ParticipantResponseWindowsTable;
+  participant_invitation: ParticipantInvitationsTable;
 };

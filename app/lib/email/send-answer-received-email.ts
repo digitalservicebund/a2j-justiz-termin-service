@@ -1,4 +1,5 @@
 import type { ResponseOverview } from "../../adapters/appointments/survey.server.ts";
+import { appointmentUrl } from "../paths.ts";
 import { renderAnswerReceivedEmail } from "./answer-received-email.ts";
 import { deliverEmail } from "./deliver-email.ts";
 
@@ -9,9 +10,9 @@ export function sendAnswerReceivedEmail(
 ) {
   return deliverEmail({
     to: overview.judgeEmail,
-    appointmentId: overview.appointmentId,
+    link: (baseUrl) => appointmentUrl(baseUrl, overview.appointmentId),
     failure: "Failed to send answer-received email",
-    render: ({ terminUrl, from }) =>
-      renderAnswerReceivedEmail({ overview, responder, terminUrl, organizerEmail: from }),
+    render: ({ url, from }) =>
+      renderAnswerReceivedEmail({ overview, responder, terminUrl: url, organizerEmail: from }),
   });
 }

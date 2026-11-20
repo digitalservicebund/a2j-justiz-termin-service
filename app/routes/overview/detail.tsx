@@ -1,6 +1,14 @@
-import { Link, useLoaderData } from "react-router";
+import { data, Link, redirect, useActionData, useLoaderData } from "react-router";
 
+import {
+  findInvitee,
+  listGuests,
+  recordInvitation,
+  type Guest,
+} from "~/adapters/appointments/invitations.server";
+import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
+import { KernAlert } from "~/components/shared/kern/KernAlert";
 import {
   KernDescriptionList,
   KernDescriptionListItem,
@@ -15,23 +23,37 @@ import { ResultBanner } from "~/components/shared/ResultBanner";
 import { SidebarPage } from "~/components/shared/SidebarPage";
 import { SurveyLinkField } from "~/components/shared/SurveyLinkField";
 import { formatInstant } from "~/core/domain/time/format";
-import { PUBLISHED, requireOwnAppointment } from "~/lib/appointment-guard.server";
+import { getDb } from "~/database/database";
+import { appointmentIdOf, PUBLISHED, requireOwnAppointment } from "~/lib/appointment-guard.server";
+import { sendInvitationEmail } from "~/lib/email/send-invitation-email";
+import { sendErvInvitation } from "~/lib/erv/send-erv-invitation";
 import {
+  appointmentPath,
   confirmDraftPath,
   NEW_APPOINTMENT_PATH,
   OVERVIEW_PATH,
   selectPath,
   surveyUrl,
 } from "~/lib/paths";
-import { notFound } from "~/lib/responses";
+import { badRequest, notFound } from "~/lib/responses";
 
 import { groupSlotsByDay, type DayWindows } from "../draft/slot-days";
 import { rangeToSlot } from "../draft/slots";
+import { Guests, type GuestRow } from "./guests";
+import { invitedLabel, parseInviteIntent } from "./invitation";
 import { describeStatus } from "./status";
 
 import "./detail.css";
 
 type Params = { params: { appointmentId?: string } };
+
+const toGuestRow = ({ invitations, ...guest }: Guest): GuestRow => ({
+  ...guest,
+  invitations: invitations.map(({ channel, at }) => ({
+    label: invitedLabel[channel],
+    at: formatInstant(at),
+  })),
+});
 
 export async function loader({ request, params }: { request: Request } & Params) {
   // A draft has not been published yet, so it is reviewed first.
@@ -41,6 +63,7 @@ export async function loader({ request, params }: { request: Request } & Params)
   });
   const { aktenzeichen, confirmedSlot } = appointment;
   const days = groupSlotsByDay(appointment.slots.map(rangeToSlot));
+  const guests = (await listGuests(getDb(), user.id, id)).map(toGuestRow);
 
   if (appointment.status === "confirmed") {
     // A confirmed appointment always has its slot; without it there is nothing to show.
@@ -54,6 +77,7 @@ export async function loader({ request, params }: { request: Request } & Params)
       badge: describeStatus({ status: appointment.status, confirmedSlot }),
       termin: formatInstant(confirmedSlot.start),
       days,
+      guests,
     };
   }
 
@@ -66,11 +90,46 @@ export async function loader({ request, params }: { request: Request } & Params)
       state: "open" as const,
       selectUrl: selectPath(id),
       days,
+      guests,
       surveyUrl: surveyUrl(origin, appointment.universalToken),
     };
   }
 
-  return { user, aktenzeichen, state: "cancelled" as const, days };
+  return { user, aktenzeichen, state: "cancelled" as const, days, guests };
+}
+
+// Invites one guest of an open Terminumfrage by e-mail or ERV, or records that the judge invited
+// them outside the app. Only a sent invitation is recorded.
+export async function action({ request, params }: { request: Request } & Params) {
+  const user = await requireRole(request, "richter");
+  const id = appointmentIdOf(params);
+  const invite = parseInviteIntent((await request.formData()).get("intent"));
+  if (!invite) throw badRequest();
+
+  const db = getDb();
+  const invitee = await findInvitee(db, user.id, id, invite.participantId);
+  if (!invitee) throw notFound();
+
+  if (invite.channel === "email") {
+    if (!invitee.email) throw badRequest();
+    const sent = await sendInvitationEmail({
+      to: invitee.email,
+      token: invitee.token,
+      aktenzeichen: invitee.aktenzeichen,
+      slots: invitee.slots,
+    });
+    if (!sent) return data({ notSent: invitee.name }, { status: 502 });
+  } else if (invite.channel === "erv") {
+    if (!invitee.safeId) throw badRequest();
+    await sendErvInvitation({
+      appointmentId: id,
+      participantId: invitee.id,
+      safeId: invitee.safeId,
+    });
+  }
+
+  if (!(await recordInvitation(db, user.id, id, invitee.id, invite.channel))) throw notFound();
+  return redirect(appointmentPath(id));
 }
 
 // "Montag, 3. August 2026 um 13:30" becomes "Montag, dem 3. August 2026 um 13:30" for the sentence.
@@ -132,7 +191,8 @@ function Zeitfenster({ days }: Readonly<{ days: DayWindows[] }>) {
 
 export default function OverviewDetail() {
   const detail = useLoaderData<typeof loader>();
-  const { user, aktenzeichen } = detail;
+  const result = useActionData<typeof action>();
+  const { user, aktenzeichen, guests } = detail;
   return (
     <AppShell
       user={user}
@@ -140,6 +200,13 @@ export default function OverviewDetail() {
     >
       <SidebarPage current="overview">
         <KernStack gap="xl" align="start" className="overview-detail">
+          {result?.notSent && (
+            <KernAlert
+              type="error"
+              title={`Die Einladung an ${result.notSent} konnte nicht gesendet werden.`}
+              message="Versuchen Sie es später erneut oder laden Sie die Person auf anderem Weg ein."
+            />
+          )}
           {detail.state === "confirmed" && detail.past ? (
             <>
               <ResultBanner
@@ -149,6 +216,7 @@ export default function OverviewDetail() {
               />
               <BackLink>Zur Übersicht</BackLink>
               <Verhandlungsdaten aktenzeichen={aktenzeichen} />
+              <Guests guests={guests} canInvite={false} />
               <Zeitfenster days={detail.days} />
             </>
           ) : detail.state === "confirmed" ? (
@@ -156,17 +224,19 @@ export default function OverviewDetail() {
               <ResultBanner inline type="success" title={`Der Termin ist am ${detail.termin}.`} />
               <BackLink>Zur Übersicht</BackLink>
               <Verhandlungsdaten aktenzeichen={aktenzeichen} />
+              <Guests guests={guests} canInvite={false} />
               <Zeitfenster days={detail.days} />
             </>
           ) : detail.state === "open" ? (
             <OpenForReplies
               aktenzeichen={aktenzeichen}
+              guests={guests}
               days={detail.days}
               selectUrl={detail.selectUrl}
               surveyUrl={detail.surveyUrl}
             />
           ) : (
-            <NoOptionWorks aktenzeichen={aktenzeichen} days={detail.days} />
+            <NoOptionWorks aktenzeichen={aktenzeichen} guests={guests} days={detail.days} />
           )}
         </KernStack>
       </SidebarPage>
@@ -176,10 +246,17 @@ export default function OverviewDetail() {
 
 function OpenForReplies({
   aktenzeichen,
+  guests,
   days,
   selectUrl,
   surveyUrl,
-}: Readonly<{ aktenzeichen: string; days: DayWindows[]; selectUrl: string; surveyUrl: string }>) {
+}: Readonly<{
+  aktenzeichen: string;
+  guests: GuestRow[];
+  days: DayWindows[];
+  selectUrl: string;
+  surveyUrl: string;
+}>) {
   return (
     <>
       <ResultBanner
@@ -200,6 +277,7 @@ function OpenForReplies({
       <SurveyLinkField id="survey-link" url={surveyUrl} />
 
       <Verhandlungsdaten aktenzeichen={aktenzeichen} />
+      <Guests guests={guests} canInvite />
       <Zeitfenster days={days} />
     </>
   );
@@ -207,8 +285,9 @@ function OpenForReplies({
 
 function NoOptionWorks({
   aktenzeichen,
+  guests,
   days,
-}: Readonly<{ aktenzeichen: string; days: DayWindows[] }>) {
+}: Readonly<{ aktenzeichen: string; guests: GuestRow[]; days: DayWindows[] }>) {
   return (
     <>
       <ResultBanner
@@ -226,7 +305,7 @@ function NoOptionWorks({
       <BackLink>Zur Übersicht</BackLink>
 
       <Verhandlungsdaten aktenzeichen={aktenzeichen} />
-
+      <Guests guests={guests} canInvite={false} />
       <Zeitfenster days={days} />
     </>
   );
