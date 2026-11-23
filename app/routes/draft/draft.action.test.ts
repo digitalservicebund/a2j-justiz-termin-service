@@ -521,9 +521,26 @@ describe("create-termin route", () => {
     });
   });
 
-  it("answers 400 for an unknown intent", async () => {
-    await expect(
-      action({ request: post({ intent: "explode", aktenzeichen: "A", appointmentId: "d1" }) }),
-    ).rejects.toMatchObject({ init: { status: 400 } });
+  describe("a request no button can send", () => {
+    it.each([
+      ["an unknown intent", { intent: "explode" }],
+      ["no intent", {}],
+      ["a row button without a row", { intent: "delete-slot:" }],
+      ["a row id on a button that has none", { intent: "next:s5" }],
+      ["an unknown row command", { intent: "explode:s5" }],
+    ])("answers 400 for %s and saves nothing", async (_case, fields: Record<string, string>) => {
+      await expect(
+        action({ request: post({ ...fields, aktenzeichen: "A", appointmentId: "d1" }) }),
+      ).rejects.toMatchObject({ init: { status: 400 } });
+      expect(updateDraftDetails).not.toHaveBeenCalled();
+      expect(deleteDraftSlot).not.toHaveBeenCalled();
+    });
+
+    it("does not create a draft for an unknown intent", async () => {
+      await expect(
+        action({ request: post({ intent: "explode", aktenzeichen: "A" }) }),
+      ).rejects.toMatchObject({ init: { status: 400 } });
+      expect(createDraftAppointment).not.toHaveBeenCalled();
+    });
   });
 });
