@@ -1,6 +1,7 @@
 import type { Kysely } from "kysely";
 
-import { checkAvailability, windowKey, type SlotWindow } from "../../core/domain/availability.ts";
+import { windowKey, type SlotWindow } from "../../core/domain/availability.ts";
+import { stateAfterAnswer, type SurveyState } from "../../core/domain/survey.ts";
 import { rowToRange } from "../../core/domain/time/time-range.ts";
 import type { Database } from "../../database/types.ts";
 import { logInfo } from "../../lib/logging.ts";
@@ -89,41 +90,59 @@ export type SaveResult =
   | { saved: true; participantId: string }
   | { saved: false; reason: "closed" | "answered" | "unavailable" };
 
+// What the rules in stateAfterAnswer() need. Call it in the transaction that saves the answer: it
+// locks the appointment row, so no other answer can change what is left meanwhile.
+async function readSurveyState(trx: Executor, answer: Answer): Promise<SurveyState> {
+  const nothing = { minDurationMinutes: null, slots: [], answers: [] };
+  const open = await trx
+    .selectFrom("appointment")
+    .select("id")
+    .where("id", "=", answer.appointmentId)
+    .where("status", "=", "open")
+    .forUpdate()
+    .executeTakeFirst();
+  if (!open) return { open: false, alreadyAnswered: false, ...nothing };
+
+  if (answer.participantId) {
+    const known = await trx
+      .selectFrom("participant")
+      .select("id")
+      .where("id", "=", answer.participantId)
+      .where("appointment_id", "=", answer.appointmentId)
+      .forUpdate()
+      .executeTakeFirst();
+    const responded = await trx
+      .selectFrom("participant_response")
+      .select("id")
+      .where("participant_id", "=", answer.participantId)
+      .executeTakeFirst();
+    if (!known || responded) return { open: true, alreadyAnswered: true, ...nothing };
+  }
+
+  const { minDurationMinutes, slots } = await readAvailability(
+    trx,
+    answer.appointmentId,
+    answer.participantId,
+  );
+  return {
+    open: true,
+    alreadyAnswered: false,
+    minDurationMinutes,
+    slots: slots.map(({ id, start, end }) => ({ id, start, end })),
+    answers: slots.flatMap(({ id, responses }) =>
+      responses.map(({ windows }) => ({ slotId: id, windows })),
+    ),
+  };
+}
+
 // Stores one yes or no per slot that still has a remaining window, and the availability windows of
 // every yes. Without a participantId a new participant is created,
 // which is what the universal link does.
 export async function saveAnswer(db: Executor, answer: Answer): Promise<SaveResult> {
   const result = await db.transaction().execute(async (trx): Promise<SaveResult> => {
-    const open = await trx
-      .selectFrom("appointment")
-      .select("id")
-      .where("id", "=", answer.appointmentId)
-      .where("status", "=", "open")
-      .forUpdate()
-      .executeTakeFirst();
-    if (!open) return { saved: false, reason: "closed" };
-
-    if (answer.participantId) {
-      const known = await trx
-        .selectFrom("participant")
-        .select("id")
-        .where("id", "=", answer.participantId)
-        .where("appointment_id", "=", answer.appointmentId)
-        .forUpdate()
-        .executeTakeFirst();
-      const responded = await trx
-        .selectFrom("participant_response")
-        .select("id")
-        .where("participant_id", "=", answer.participantId)
-        .executeTakeFirst();
-      if (!known || responded) return { saved: false, reason: "answered" };
-    }
-
-    // The appointment row is locked, so no other answer can change what is left meanwhile.
-    const before = await readAvailability(trx, answer.appointmentId, answer.participantId);
-    const offered = remainingOf(before);
-    const checked = checkAvailability(answer.availability, offered, before.minDurationMinutes);
-    if (!checked.ok) return { saved: false, reason: "unavailable" };
+    const outcome = stateAfterAnswer(await readSurveyState(trx, answer), answer.availability);
+    if (!outcome.ok) return { saved: false, reason: outcome.reason };
+    const { responses, windows, cancelled } = outcome.answer;
 
     const participantId =
       answer.participantId ??
@@ -135,27 +154,25 @@ export async function saveAnswer(db: Executor, answer: Answer): Promise<SaveResu
           .executeTakeFirstOrThrow()
       ).id;
 
-    const slotIds = [...new Set(offered.map(({ slotId }) => slotId))];
-    if (slotIds.length > 0) {
-      const available = new Set(checked.windows.map(({ slotId }) => slotId));
-      const responses = await trx
+    if (responses.length > 0) {
+      const saved = await trx
         .insertInto("participant_response")
         .values(
-          slotIds.map((slotId) => ({
+          responses.map(({ slotId, available }) => ({
             participant_id: participantId,
             slot_id: slotId,
-            status: available.has(slotId) ? ("yes" as const) : ("no" as const),
+            status: available ? ("yes" as const) : ("no" as const),
           })),
         )
         .returning(["id", "slot_id"])
         .execute();
 
-      if (checked.windows.length > 0) {
-        const responseIds = new Map(responses.map(({ id, slot_id }) => [slot_id, id]));
+      if (windows.length > 0) {
+        const responseIds = new Map(saved.map(({ id, slot_id }) => [slot_id, id]));
         await trx
           .insertInto("participant_response_window")
           .values(
-            checked.windows.map(({ slotId, start, end }) => ({
+            windows.map(({ slotId, start, end }) => ({
               response_id: responseIds.get(slotId)!,
               start_time: start,
               end_time: end,
@@ -165,8 +182,7 @@ export async function saveAnswer(db: Executor, answer: Answer): Promise<SaveResu
       }
     }
 
-    // Without a window everyone can attend, the appointment is off.
-    if (remainingOf(await readAvailability(trx, answer.appointmentId)).length === 0) {
+    if (cancelled) {
       await trx
         .updateTable("appointment")
         .set({ status: "cancelled", updated_at: new Date() })
