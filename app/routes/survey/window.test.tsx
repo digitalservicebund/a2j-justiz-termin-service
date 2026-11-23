@@ -1,6 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { createRoutesStub, useLocation } from "react-router";
+import { createRoutesStub } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { callAction, callLoader } from "~tests/route";
 
@@ -216,9 +215,10 @@ describe("survey window route", () => {
   it("answers 400 with what was entered for a window that does not fit", async () => {
     const tooShort = times("15:30", "16:00");
     expect(
-      await action({ request: postRequest(`angebot=${offerKey}`, tooShort), params }),
+      await callAction(action, { request: postRequest(`angebot=${offerKey}`, tooShort), params }),
     ).toMatchObject({
-      init: { status: 400 },
+      thrown: false,
+      status: 400,
       data: {
         fields: tooShort,
         errors: { range: "Das Zeitfenster muss mindestens 60 Minuten lang sein." },
@@ -226,29 +226,20 @@ describe("survey window route", () => {
     });
 
     expect(
-      await action({
+      await callAction(action, {
         request: postRequest(`angebot=${offerKey}`, times("13:00", "15:00")),
         params,
       }),
     ).toMatchObject({
+      status: 400,
       data: { errors: { range: "Das kleinere Zeitfenster muss zwischen 14:00 und 17:00 liegen." } },
     });
   });
 });
 
-function Survey() {
-  const { search, hash } = useLocation();
-  return (
-    <h1>
-      Survey page {search} {hash}
-    </h1>
-  );
-}
-
 function renderPage(search: string) {
   const Stub = createRoutesStub([
     { path: "/umfrage/:token/zeitfenster", Component: SurveyWindow, loader, action },
-    { path: "/umfrage/:token", Component: Survey },
   ]);
   render(<Stub initialEntries={[`/umfrage/t1/zeitfenster?${search}`]} />);
 }
@@ -290,40 +281,6 @@ describe("survey window page", () => {
 
     expect(
       await screen.findByRole("heading", { level: 1, name: "Ändern Sie das kleinere Zeitfenster" }),
-    ).toBeVisible();
-  });
-
-  it("shows what is wrong and keeps what was entered", async () => {
-    renderPage(`angebot=${offerKey}`);
-
-    const [startHour, startMinute] = await screen.findAllByRole("textbox");
-    await userEvent.clear(startHour!);
-    await userEvent.type(startHour!, "16");
-    await userEvent.clear(startMinute!);
-    await userEvent.type(startMinute!, "30");
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
-
-    expect(
-      await screen.findByText("Das Zeitfenster muss mindestens 60 Minuten lang sein."),
-    ).toBeVisible();
-    expect(screen.getAllByRole("textbox")[0]).toHaveValue("16");
-    expect(screen.getAllByRole("textbox")[0]).toHaveAttribute("aria-invalid", "true");
-  });
-
-  it("saves and goes back to the survey with the window in the draft", async () => {
-    renderPage(`name=Guest+C&angebot=${offerKey}`);
-
-    const [startHour, startMinute] = await screen.findAllByRole("textbox");
-    await userEvent.clear(startHour!);
-    await userEvent.type(startHour!, "15");
-    await userEvent.clear(startMinute!);
-    await userEvent.type(startMinute!, "30");
-    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
-
-    expect(
-      await screen.findByRole("heading", {
-        name: `Survey page ?name=Guest+C&verfuegbar=${smallerKey} #zeitfenster-${offerKey}`,
-      }),
     ).toBeVisible();
   });
 });

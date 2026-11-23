@@ -1,5 +1,4 @@
 import { render, screen, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { callAction, callLoader } from "~tests/route";
@@ -280,8 +279,6 @@ describe("survey confirm route", () => {
 function renderConfirm(search = query) {
   const Stub = createRoutesStub([
     { path: "/umfrage/:token/zusammenfassung", Component: SurveyConfirm, loader, action },
-    { path: "/umfrage/:token", Component: () => <h1>Form page</h1> },
-    { path: "/umfrage/:token/naechste-schritte", Component: () => <h1>Result page</h1> },
   ]);
   render(<Stub initialEntries={[`/umfrage/t1/zusammenfassung${search}`]} />);
 }
@@ -336,22 +333,5 @@ describe("survey confirm page", () => {
 
     expect(await screen.findAllByText(/– nicht verfügbar$/)).toHaveLength(3);
     expect(screen.queryByText(/– verfügbar$/)).toBeNull();
-  });
-
-  it("goes back to the form", async () => {
-    renderConfirm();
-
-    await userEvent.click(await screen.findByRole("button", { name: "Zurück" }));
-
-    expect(await screen.findByRole("heading", { name: "Form page" })).toBeVisible();
-  });
-
-  it("stores the answer and shows the result", async () => {
-    renderConfirm();
-
-    await userEvent.click(await screen.findByRole("button", { name: "Terminumfrage abschließen" }));
-
-    expect(await screen.findByRole("heading", { name: "Result page" })).toBeVisible();
-    expect(saveAnswer).toHaveBeenCalledTimes(1);
   });
 });

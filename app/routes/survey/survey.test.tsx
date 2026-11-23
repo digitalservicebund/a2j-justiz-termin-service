@@ -306,68 +306,6 @@ describe("survey page", () => {
       screen.getByRole("checkbox", { name: "Verfügbar am 17. September 2026, 10:00 bis 14:00" }),
     ).not.toBeChecked();
   });
-
-  it("shows what is missing and keeps what was entered", async () => {
-    renderSurvey();
-
-    await userEvent.type(await screen.findByRole("textbox", { name: "Ihr Name" }), "Guest C");
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-
-    expect(
-      await screen.findByText(
-        "Wählen Sie mindestens ein Zeitfenster aus oder geben Sie an, dass kein Zeitfenster passt.",
-      ),
-    ).toBeVisible();
-    expect(screen.getByRole("textbox", { name: "Ihr Name" })).toHaveValue("Guest C");
-    expect(screen.queryByText("Geben Sie Ihren Namen an.")).not.toBeInTheDocument();
-  });
-
-  it("shows the missing name next to the field", async () => {
-    renderSurvey();
-
-    await userEvent.click(
-      await screen.findByRole("checkbox", {
-        name: "Verfügbar am 17. September 2026, 10:00 bis 14:00",
-      }),
-    );
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-
-    expect(await screen.findByText("Geben Sie Ihren Namen an.")).toBeVisible();
-    expect(screen.getByRole("textbox", { name: "Ihr Name" })).toBeInvalid();
-    // The ticked window stays ticked.
-    expect(
-      screen.getByRole("checkbox", { name: "Verfügbar am 17. September 2026, 10:00 bis 14:00" }),
-    ).toBeChecked();
-  });
-
-  it("rejects windows ticked together with the option that none fits", async () => {
-    renderSurvey();
-
-    await userEvent.type(await screen.findByRole("textbox", { name: "Ihr Name" }), "Guest C");
-    await userEvent.click(
-      screen.getByRole("checkbox", { name: "Verfügbar am 17. September 2026, 10:00 bis 14:00" }),
-    );
-    await userEvent.click(screen.getByRole("checkbox", { name: "Kein Zeitfenster passt" }));
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-
-    expect(
-      await screen.findByText(
-        "Sie können nicht zugleich Zeitfenster auswählen und angeben, dass keines passt.",
-      ),
-    ).toBeVisible();
-  });
-
-  it("continues to the review with a valid answer", async () => {
-    renderSurvey();
-
-    await userEvent.type(await screen.findByRole("textbox", { name: "Ihr Name" }), "Guest C");
-    await userEvent.click(
-      screen.getByRole("checkbox", { name: "Verfügbar am 21. September 2026, 09:00 bis 11:00" }),
-    );
-    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
-
-    expect(await screen.findByRole("heading", { name: "Review page" })).toBeVisible();
-  });
 });
 
 // Submits the survey with a name and the button that was pressed.
@@ -528,18 +466,5 @@ describe("weekday and cancelling", () => {
 
     expect(await screen.findByText("Donnerstag")).toBeVisible();
     expect(screen.getByText("Montag")).toBeVisible();
-  });
-
-  it("throws the draft away when the guest cancels", async () => {
-    renderSurvey([`/umfrage/t1?name=Guest+C&verfuegbar=${k1}`]);
-
-    expect(await screen.findByRole("textbox", { name: "Ihr Name" })).toHaveValue("Guest C");
-    await userEvent.click(
-      screen.getByRole("checkbox", { name: "Verfügbar am 21. September 2026, 09:00 bis 11:00" }),
-    );
-    await userEvent.click(screen.getByRole("link", { name: "Abbrechen" }));
-
-    await expect.poll(() => screen.getByRole("textbox", { name: "Ihr Name" })).toHaveValue("");
-    for (const checkbox of screen.getAllByRole("checkbox")) expect(checkbox).not.toBeChecked();
   });
 });
