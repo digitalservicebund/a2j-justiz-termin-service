@@ -41,7 +41,7 @@ services:
 
   # Local RabbitMQ broker without TLS. No volume: queues and messages are lost with the container.
   rabbitmq:
-    image: rabbitmq:4.3.6-management-alpine
+    image: rabbitmq:4.4.1-management-alpine
     container_name: ${COMPOSE_PROJECT_NAME:-a2j-justiz-termin-service}-rabbitmq
     restart: unless-stopped
     environment:
