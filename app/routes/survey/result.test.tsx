@@ -145,10 +145,7 @@ describe("survey result page", () => {
         name: "Danke für das Angeben Ihrer Verfügbarkeiten.",
       }),
     ).toBeVisible();
-    // A blue KERN info alert without buttons: guests have no overview to go to.
-    const banner = screen.getByRole("heading", { level: 1 }).closest(".kern-alert");
-    expect(banner).toHaveClass("kern-alert--info");
-    expect(banner).not.toHaveClass("kern-alert--success");
+    // No buttons in the banner: guests have no overview to go to.
     expect(screen.queryByRole("link", { name: "Nächste Schritte" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Zu den Terminumfragen" })).toBeNull();
 

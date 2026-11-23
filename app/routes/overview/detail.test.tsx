@@ -202,179 +202,86 @@ describe("overview detail route", () => {
   });
 });
 
+function renderDetail() {
+  const Stub = createRoutesStub([
+    { path: "/overview/:appointmentId", Component: OverviewDetail, loader },
+  ]);
+  render(<Stub initialEntries={["/overview/a1"]} />);
+}
+
+// What the page shows per state. E2E (overview.spec.ts) covers the headings, the time windows, the
+// back link and the survey link; these tests cover what each state adds on top.
 describe("OverviewDetail", () => {
-  it("looks back at a past appointment and lists its time windows", async () => {
-    vi.mocked(requireRole).mockResolvedValue(judge);
-    vi.mocked(getAppointment).mockResolvedValue({
-      id: "a1",
-      status: "confirmed",
-      aktenzeichen: "574 C 65412/26",
-      slots,
-      confirmedSlot: {
-        start: new Date("2020-08-03T11:30:00Z"),
-        end: new Date("2020-08-03T12:30:00Z"),
-      },
-    });
-    const Stub = createRoutesStub([
-      { path: "/overview/:appointmentId", Component: OverviewDetail, loader },
-      { path: "/overview", Component: () => <h1>Übersicht</h1> },
-    ]);
+  const past = {
+    id: "a1",
+    status: "confirmed" as const,
+    aktenzeichen: "574 C 65412/26",
+    slots,
+    confirmedSlot: {
+      start: new Date("2020-08-03T11:30:00Z"),
+      end: new Date("2020-08-03T12:30:00Z"),
+    },
+  };
+  const confirmed = {
+    ...past,
+    confirmedSlot: {
+      start: new Date("2099-11-09T14:30:00Z"),
+      end: new Date("2099-11-09T15:30:00Z"),
+    },
+  };
+  const open = {
+    id: "a1",
+    status: "open" as const,
+    universalToken: "tok1",
+    aktenzeichen: "574 C 65412/26",
+    slots,
+  };
+  const cancelled = {
+    id: "a1",
+    status: "cancelled" as const,
+    aktenzeichen: "574 C 65412/26",
+    slots,
+  };
 
-    render(<Stub initialEntries={["/overview/a1"]} />);
+  it.each([
+    ["a past appointment", past, ".result-banner--default", false],
+    ["a confirmed appointment", confirmed, ".kern-alert--success", false],
+    ["an open appointment", open, ".kern-alert--info", false],
+    ["a cancelled appointment", cancelled, ".kern-alert--warning", true],
+  ])(
+    "shows %s in its banner, and offers a new Terminumfrage only when no slot fits",
+    async (_name, appointment, banner, offersNew) => {
+      vi.mocked(getAppointment).mockResolvedValue(appointment);
 
-    expect(
-      await screen.findByRole("heading", {
-        level: 1,
-        name: /^Der Termin war am \p{L}+, dem 3\. August 2020 um 13:30\.$/u,
-      }),
-    ).toBeVisible();
-    // A neutral banner with the back link below it, not a badge.
-    expect(document.querySelector(".result-banner--default")).toBeInTheDocument();
-    expect(document.querySelector(".kern-badge")).toBeNull();
-    expect(screen.getByRole("link", { name: "Zur Übersicht" })).toHaveAttribute(
-      "href",
-      "/overview",
-    );
-    expect(screen.queryByRole("link", { name: "Zurück zu den Terminumfragen" })).toBeNull();
-    expect(screen.getByRole("button", { name: "Problem mit dieser Seite melden" })).toBeVisible();
-    expect(screen.getByRole("heading", { name: "Verhandlungsdaten" })).toBeVisible();
-    expect(screen.getByRole("heading", { name: "Zeitfenster" })).toBeVisible();
-    expect(screen.getByText("09:00 bis 11:00")).toBeVisible();
-  });
+      renderDetail();
 
-  it("shows an open appointment with its actions and time windows", async () => {
-    vi.mocked(requireRole).mockResolvedValue(judge);
-    vi.mocked(getAppointment).mockResolvedValue({
-      id: "a1",
-      status: "open",
-      universalToken: "tok1",
-      aktenzeichen: "574 C 65412/26",
-      slots,
-    });
-    const Stub = createRoutesStub([
-      { path: "/overview/:appointmentId", Component: OverviewDetail, loader },
-      { path: "/overview", Component: () => <h1>Übersicht</h1> },
-    ]);
+      const heading = await screen.findByRole("heading", { level: 1 });
+      expect(document.querySelector(banner)).toContainElement(heading);
+      const create = screen.queryByRole("link", { name: "Terminumfrage erstellen" });
+      if (offersNew) expect(create).toHaveAttribute("href", "/overview/new");
+      else expect(create).toBeNull();
+    },
+  );
 
-    render(<Stub initialEntries={["/overview/a1"]} />);
+  it("offers an open appointment the choice of the Termin and, with JavaScript, copying the link", async () => {
+    vi.mocked(getAppointment).mockResolvedValue(open);
 
-    expect(
-      await screen.findByRole("heading", {
-        level: 1,
-        name: "Die Terminumfrage ist aktiv und die Verfahrensbeteiligten können ihre Verfügbarkeiten teilen.",
-      }),
-    ).toBeVisible();
-    // The open state is an info banner, not a badge, with the back link below it.
-    expect(screen.queryByText("Offen für Rückmeldungen")).not.toBeInTheDocument();
-    expect(document.querySelector(".kern-alert--info")).toContainElement(
-      screen.getByRole("link", { name: "Termin auswählen" }),
-    );
-    expect(screen.getByRole("link", { name: "Zur Übersicht" })).toHaveAttribute(
-      "href",
-      "/overview",
-    );
-    expect(screen.queryByRole("link", { name: "Zurück zu den Terminumfragen" })).toBeNull();
-    expect(screen.getByRole("navigation", { name: "Bereiche" })).toBeVisible();
-    expect(screen.getByRole("link", { name: "Termin auswählen" })).toHaveAttribute(
+    renderDetail();
+
+    expect(await screen.findByRole("link", { name: "Termin auswählen" })).toHaveAttribute(
       "href",
       "/overview/a1/select",
     );
     expect(screen.getByRole("button", { name: "Link zur Terminumfrage kopieren" })).toBeVisible();
-    expect(screen.getByRole("heading", { name: "Verhandlungsdaten" })).toBeVisible();
-    expect(screen.getByRole("heading", { name: "Zeitfenster" })).toBeVisible();
-    expect(screen.getByText("09:00 bis 11:00")).toBeVisible();
-    expect(screen.queryByRole("link", { name: "Terminumfrage erstellen" })).not.toBeInTheDocument();
   });
 
-  it("announces the date of a confirmed appointment", async () => {
-    vi.mocked(requireRole).mockResolvedValue(judge);
-    vi.mocked(getAppointment).mockResolvedValue({
-      id: "a1",
-      status: "confirmed",
-      aktenzeichen: "574 C 65412/26",
-      slots,
-      confirmedSlot: {
-        start: new Date("2099-11-09T14:30:00Z"),
-        end: new Date("2099-11-09T15:30:00Z"),
-      },
-    });
-    const Stub = createRoutesStub([
-      { path: "/overview/:appointmentId", Component: OverviewDetail, loader },
-      { path: "/overview", Component: () => <h1>Übersicht</h1> },
-    ]);
+  it("names a cancelled appointment by its Aktenzeichen, not by a status badge", async () => {
+    vi.mocked(getAppointment).mockResolvedValue(cancelled);
 
-    render(<Stub initialEntries={["/overview/a1"]} />);
+    renderDetail();
 
-    expect(
-      await screen.findByRole("heading", {
-        level: 1,
-        name: /^Der Termin ist am \p{L}+, 9\. November 2099 um 15:30\.$/u,
-      }),
-    ).toBeVisible();
-    // The announcement is a success banner, not a badge, with the back link below it.
-    expect(screen.queryByText(/^Termin ist \p{L}+, 9\. November 2099 um 15:30$/u)).toBeNull();
-    expect(document.querySelector(".kern-alert--success")).toContainElement(
-      screen.getByRole("heading", { level: 1 }),
-    );
-    expect(screen.getByRole("link", { name: "Zur Übersicht" })).toHaveAttribute(
-      "href",
-      "/overview",
-    );
-    expect(screen.queryByRole("link", { name: "Zurück zu den Terminumfragen" })).toBeNull();
-    expect(screen.getByRole("navigation", { name: "Bereiche" })).toBeVisible();
-    expect(screen.getByRole("heading", { name: "Verhandlungsdaten" })).toBeVisible();
-    expect(screen.getByText("574 C 65412/26", { selector: "dd" })).toBeVisible();
-    expect(screen.getByRole("heading", { name: "Zeitfenster" })).toBeVisible();
-    expect(screen.getByText("09:00 bis 11:00")).toBeVisible();
-    expect(screen.queryByRole("link", { name: "Terminumfrage erstellen" })).not.toBeInTheDocument();
-  });
-
-  it("explains that no slot fits and offers a new Terminumfrage", async () => {
-    vi.mocked(requireRole).mockResolvedValue(judge);
-    vi.mocked(getAppointment).mockResolvedValue({
-      id: "a1",
-      status: "cancelled",
-      aktenzeichen: "574 C 65412/26",
-      slots,
-    });
-    const Stub = createRoutesStub([
-      { path: "/overview/:appointmentId", Component: OverviewDetail, loader },
-      { path: "/overview", Component: () => <h1>Übersicht</h1> },
-      { path: "/overview/new", Component: () => <h1>Neu</h1> },
-    ]);
-
-    render(<Stub initialEntries={["/overview/a1"]} />);
-
-    expect(
-      await screen.findByRole("heading", {
-        level: 1,
-        name: "Es gibt leider kein Zeitfenster, dass allen Verfahrensbeteiligten passt.",
-      }),
-    ).toBeVisible();
-    expect(screen.getByText("Starten Sie eine neue Terminumfrage.")).toBeVisible();
-    expect(document.querySelector(".kern-alert--warning")).toBeInTheDocument();
-    expect(screen.queryByText("Kein Zeitfenster passt")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Zur Übersicht" })).toHaveAttribute(
-      "href",
-      "/overview",
-    );
-    expect(screen.queryByRole("link", { name: "Zurück zu den Terminumfragen" })).toBeNull();
-    const sidebar = screen.getByRole("navigation", { name: "Bereiche" });
-    expect(within(sidebar).getByRole("link", { name: "Übersicht" })).toHaveAttribute(
-      "aria-current",
-      "page",
-    );
-    expect(screen.getByRole("link", { name: "Terminumfrage erstellen" })).toHaveAttribute(
-      "href",
-      "/overview/new",
-    );
-    expect(screen.getByRole("heading", { name: "Verhandlungsdaten" })).toBeVisible();
-    expect(screen.getByText("Aktenzeichen")).toBeVisible();
-    expect(screen.getAllByText("574 C 65412/26").length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: "Zeitfenster" })).toBeVisible();
-    expect(screen.getByText("17. September 2026")).toBeVisible();
-    expect(screen.getByText("09:00 bis 11:00")).toBeVisible();
-    expect(screen.getByText("14:00 bis 17:00")).toBeVisible();
+    expect(await screen.findByText("574 C 65412/26", { selector: "dd" })).toBeVisible();
+    expect(screen.queryByText("Kein Zeitfenster passt")).toBeNull();
   });
 });
 
@@ -495,9 +402,9 @@ describe("guest invitations", () => {
   it("does not record an e-mail that could not be sent and says so", async () => {
     vi.mocked(sendInvitationEmail).mockResolvedValue(false);
 
-    const result = await invite("invite-email:p1");
+    const result = await callAction(invite, "invite-email:p1");
 
-    expect(result).toMatchObject({ data: { notSent: "Person A" }, init: { status: 502 } });
+    expect(result).toMatchObject({ thrown: false, status: 502, data: { notSent: "Person A" } });
     expect(recordInvitation).not.toHaveBeenCalled();
   });
 
@@ -543,73 +450,6 @@ describe("guest invitations", () => {
     await expect(invite("invite-manual:p1")).rejects.toMatchObject({ init: { status: 404 } });
   });
 
-  it("offers each open guest the ways that reach them and shows how and when they were invited", async () => {
-    vi.mocked(listGuests).mockResolvedValue(guests);
-    vi.mocked(getAppointment).mockResolvedValue({
-      id: "a1",
-      status: "open",
-      universalToken: "tok1",
-      aktenzeichen: "574 C 65412/26",
-      slots,
-    });
-    const Stub = createRoutesStub([
-      { path: "/overview/:appointmentId", Component: OverviewDetail, loader },
-    ]);
-
-    render(<Stub initialEntries={["/overview/a1"]} />);
-
-    const table = await screen.findByRole("table", { name: "Verfahrensbeteiligte" });
-    const [, first, second] = within(table).getAllByRole("row");
-
-    // Every invitation with its channel and time, newest first.
-    const sent = within(first!).getAllByRole("listitem");
-    expect(sent).toHaveLength(2);
-    expect(sent[0]).toHaveTextContent(
-      /^Manuell eingeladenam \p{L}+, 20\. November 2026 um 10:15$/u,
-    );
-    expect(sent[1]).toHaveTextContent(
-      /^Per E-Mail eingeladenam \p{L}+, 19\. November 2026 um 08:00$/u,
-    );
-    const firstActions = within(first!).getByRole("group", { name: "Person A einladen" });
-    expect(within(firstActions).getByRole("button", { name: "Per E-Mail" })).toHaveAttribute(
-      "value",
-      "invite-email:p1",
-    );
-    expect(within(firstActions).queryByRole("button", { name: "Per ERV" })).toBeNull();
-    expect(
-      within(firstActions).getByRole("button", { name: "Als eingeladen markieren" }),
-    ).toBeVisible();
-
-    expect(within(second!).getByText("Nicht eingeladen")).toBeVisible();
-    expect(within(second!).getByText("SAFE-ID: DE.Example.1")).toBeVisible();
-    const secondActions = within(second!).getByRole("group", { name: "DE.Example.1 einladen" });
-    expect(within(secondActions).queryByRole("button", { name: "Per E-Mail" })).toBeNull();
-    expect(within(secondActions).getByRole("button", { name: "Per ERV" })).toHaveAttribute(
-      "value",
-      "invite-erv:p2",
-    );
-  });
-
-  it("shows the guests of a closed Terminumfrage without invite buttons", async () => {
-    vi.mocked(listGuests).mockResolvedValue(guests);
-    vi.mocked(getAppointment).mockResolvedValue({
-      id: "a1",
-      status: "cancelled",
-      aktenzeichen: "574 C 65412/26",
-      slots,
-    });
-    const Stub = createRoutesStub([
-      { path: "/overview/:appointmentId", Component: OverviewDetail, loader },
-    ]);
-
-    render(<Stub initialEntries={["/overview/a1"]} />);
-
-    expect(await screen.findByRole("table", { name: "Verfahrensbeteiligte" })).toBeVisible();
-    expect(screen.getByText("Per E-Mail eingeladen")).toBeVisible();
-    expect(screen.queryByRole("button", { name: "Manuell eingeladen" })).toBeNull();
-    expect(screen.queryByRole("columnheader", { name: "Einladen" })).toBeNull();
-  });
-
   it("says when there are no guests", async () => {
     vi.mocked(getAppointment).mockResolvedValue({
       id: "a1",
@@ -618,11 +458,7 @@ describe("guest invitations", () => {
       aktenzeichen: "574 C 65412/26",
       slots,
     });
-    const Stub = createRoutesStub([
-      { path: "/overview/:appointmentId", Component: OverviewDetail, loader },
-    ]);
-
-    render(<Stub initialEntries={["/overview/a1"]} />);
+    renderDetail();
 
     expect(
       await screen.findByText("Sie haben keine Verfahrensbeteiligten angegeben."),

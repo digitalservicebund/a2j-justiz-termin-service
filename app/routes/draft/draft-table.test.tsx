@@ -46,7 +46,6 @@ describe("DraftTable", () => {
     expect(within(table).getByRole("columnheader", { name: "Aktionen" })).toBeInTheDocument();
     const empty = within(table).getByRole("cell", { name: "Keine Personen." });
     expect(empty).toHaveAttribute("colspan", "2");
-    expect(table).not.toHaveClass("kern-table--striped");
   });
 
   it("renders a row per entry with buttons that submit the row's intent", () => {
@@ -58,7 +57,6 @@ describe("DraftTable", () => {
     });
 
     const table = screen.getByRole("table", { name: "Personen" });
-    expect(table).toHaveClass("kern-table--striped");
     expect(within(table).getByRole("cell", { name: "Person A" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Person A bearbeiten" })).toHaveAttribute(
       "value",

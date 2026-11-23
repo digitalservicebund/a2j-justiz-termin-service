@@ -52,7 +52,7 @@ Several agents can work at the same time, each in its own git worktree (`git wor
 - Add or update tests for every behaviour change, including the failure cases.
 - Each layer owns its own kind of check, so a fact is asserted in one place:
   - **Unit tests** own pure logic: schemas, domain functions, and what a loader or action answers (status, redirect target, returned data, which adapter it called).
-  - **Component tests** own what a page shows for a given loader or action result: texts, error messages, links. Find elements by role and accessible name, the way a user does.
+  - **Component tests** own what a page shows for a given loader or action result: texts, error messages, links. Find elements by role and accessible name, the way a user does. Assert a class name only for a choice the page makes that has no accessible equivalent, such as a warning banner instead of a success banner. How a variant looks belongs to the test of the shared component.
   - **E2E specs** own flows across pages and requests, without JavaScript, against the real database.
 - Call loaders and actions in tests with `callLoader()` and `callAction()` from `~tests/route`. They give one plain outcome (`thrown`, `status`, `location`, `headers`, `data`) for redirects, `data()` and plain objects, returned or thrown.
 
