@@ -39,5 +39,24 @@ services:
       timeout: 5s
       retries: 10
 
+  # Local RabbitMQ broker without TLS. No volume: queues and messages are lost with the container.
+  rabbitmq:
+    image: rabbitmq:4.3.6-management-alpine
+    container_name: ${COMPOSE_PROJECT_NAME:-a2j-justiz-termin-service}-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: jts
+      RABBITMQ_DEFAULT_PASS: jts
+    ports:
+      # 5673 and 15673 on the host so it can run next to other projects' RabbitMQ on 5672 and 15672.
+      - "${COMPOSE_BIND_ADDRESS:-127.0.0.1}:${RABBITMQ_HOST_PORT:-5673}:5672"
+      # Management UI.
+      - "${COMPOSE_BIND_ADDRESS:-127.0.0.1}:${RABBITMQ_MANAGEMENT_HOST_PORT:-15673}:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
 volumes:
   postgres_data:

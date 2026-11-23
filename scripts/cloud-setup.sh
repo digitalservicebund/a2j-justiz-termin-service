@@ -5,7 +5,7 @@
 #   bash scripts/cloud-setup.sh
 #
 # It installs what the checks in AGENTS.md need: the pinned Node.js, pnpm, the dependencies and
-# the Playwright browser. Postgres and Mailpit are only started when Docker works, because
+# the Playwright browser. Postgres, Mailpit and RabbitMQ are only started when Docker works, because
 # `pnpm test:e2e` and `pnpm dev` need them. Without Docker, lint, typecheck and unit tests
 # still run, and the E2E tests are left to CI.
 set -euo pipefail
@@ -47,7 +47,7 @@ if command -v lefthook >/dev/null 2>&1; then lefthook install; fi
 if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
   docker compose up --detach --wait
 else
-  echo "Docker is not available: skipping Postgres and Mailpit."
+  echo "Docker is not available: skipping Postgres, Mailpit and RabbitMQ."
   echo "Lint, typecheck and unit tests work. pnpm dev and pnpm test:e2e need Docker."
 fi
 

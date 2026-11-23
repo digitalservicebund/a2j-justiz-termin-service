@@ -4,7 +4,7 @@
 #   scripts/worktree-setup.sh [slot] [--no-services]
 #
 # Each worktree gets a slot (1-9). The slot picks its own ports and Docker Compose project, so
-# every worktree has a separate Postgres, Mailpit and dev server. The main checkout is slot 0 and
+# every worktree has a separate Postgres, Mailpit, RabbitMQ and dev server. The main checkout is slot 0 and
 # keeps the default ports. Without a slot argument the lowest slot no other worktree uses is taken.
 set -eu
 
@@ -69,10 +69,13 @@ COMPOSE_BIND_ADDRESS=127.0.0.1
 POSTGRES_HOST_PORT=$((5433 + slot))
 SMTP_HOST_PORT=$((2525 + slot))
 MAILPIT_HOST_PORT=$((8125 + slot))
+RABBITMQ_HOST_PORT=$((5673 + slot))
+RABBITMQ_MANAGEMENT_HOST_PORT=$((15673 + slot))
 PORT=$app_port
 BASE_URL=http://localhost:$app_port
 DATABASE_PORT=$((5433 + slot))
 SMTP_PORT=$((2525 + slot))
+RABBITMQ_PORT=$((5673 + slot))
 EOF
 
 # Personal overrides (for example credentials injected locally) are shared, not copied.
@@ -86,7 +89,7 @@ if [ "$services" = yes ]; then
   if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
     docker compose up --detach --wait
   else
-    printf '%s\n' "Docker is not available, so Postgres and Mailpit were not started."
+    printf '%s\n' "Docker is not available, so Postgres, Mailpit and RabbitMQ were not started."
   fi
 fi
 
@@ -96,5 +99,6 @@ Worktree slot $slot is ready:
   app      http://localhost:$app_port/verhandlungstermin-finder/   (pnpm dev)
   mailpit  http://localhost:$((8125 + slot))
   postgres localhost:$((5433 + slot))
+  rabbitmq localhost:$((5673 + slot)), management UI http://localhost:$((15673 + slot))
   e2e      pnpm test:e2e runs in its own Compose project (jts-e2e-$slot)
 EOF

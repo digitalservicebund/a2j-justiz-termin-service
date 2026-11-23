@@ -27,5 +27,6 @@ export default [
   route("health", "routes/health/health.ts"),
   route("health/database", "routes/health/database.ts"),
   route("health/smtp", "routes/health/smtp.ts"),
+  route("health/rabbitmq", "routes/health/rabbitmq.ts"),
   route("api/calendars/:token/feed.ics", "routes/calendar/feed.ts"),
 ] satisfies RouteConfig;

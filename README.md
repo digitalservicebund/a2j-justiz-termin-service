@@ -36,7 +36,7 @@ already provisioned in the database and addresses on an allowed domain can sign 
 
 ```bash
 pnpm install
-docker compose up -d   # local PostgreSQL and SMTP mock, see "Database" and "Local SMTP mock" below
+docker compose up -d   # local PostgreSQL, SMTP mock and RabbitMQ, see "Database", "Local SMTP mock" and "Local RabbitMQ" below
 pnpm dev
 ```
 
@@ -92,11 +92,13 @@ It contains public test-only dummy credentials, never real secrets.
 The runner starts the dedicated `jts-e2e` Compose project from
 the root [`docker-compose.yml`](docker-compose.yml), builds the production app,
 and lets Playwright start the server and wait for `/verhandlungstermin-finder/health`. It uses PostgreSQL
-on **5544**, SMTP on **1026**, Mailpit on **8026**, and the app on **3109**.
+on **5544**, SMTP on **1026**, Mailpit on **8026**, RabbitMQ on **5684** (management UI
+**15684**), and the app on **3109**.
 These ports must be free. Container names and the database volume are scoped to
 the `jts-e2e` project, separate from development. The runner overrides
-`COMPOSE_BIND_ADDRESS`, `POSTGRES_HOST_PORT`, `SMTP_HOST_PORT`, and
-`MAILPIT_HOST_PORT`; normal development keeps the root file's default ports.
+`COMPOSE_BIND_ADDRESS`, `POSTGRES_HOST_PORT`, `SMTP_HOST_PORT`, `MAILPIT_HOST_PORT`,
+`RABBITMQ_HOST_PORT` and `RABBITMQ_MANAGEMENT_HOST_PORT`; normal development keeps the root
+file's default ports.
 Tests ignore local/deployed credentials,
 use a public test-only signing value, and send mail only to the isolated Mailpit.
 The runner removes its containers and database volume after success or failure.
@@ -142,8 +144,8 @@ E2E failures block image publication and deployment.
 ### Parallel work with git worktrees
 
 Several people or agents can work on separate branches at the same time, each in its own
-[git worktree](https://git-scm.com/docs/git-worktree), without sharing a database, mail catcher
-or port:
+[git worktree](https://git-scm.com/docs/git-worktree), without sharing a database, mail catcher,
+message broker or port:
 
 ```bash
 git worktree add ../jts-feature-a -b feat/feature-a
@@ -156,10 +158,10 @@ dependencies and starts that worktree's Compose project. `pnpm dev`, `pnpm db:mi
 `docker compose` pick the file up automatically. The main checkout is slot 0 and keeps the
 default ports.
 
-| Slot | App    | Postgres | SMTP   | Mailpit | Compose project             | `pnpm test:e2e` ports (app / Postgres / SMTP / Mailpit) |
-| ---- | ------ | -------- | ------ | ------- | --------------------------- | ------------------------------------------------------- |
-| 0    | 3000   | 5433     | 2525   | 8025    | `a2j-justiz-termin-service` | 3109 / 5544 / 1026 / 8026, project `jts-e2e`            |
-| N    | 3000+N | 5433+N   | 2525+N | 8125+N  | `jts-slot-N`                | 3109+N / 5544+N / 1026+N / 8026+N, project `jts-e2e-N`  |
+| Slot | App    | Postgres | SMTP   | Mailpit | RabbitMQ (UI)    | Compose project             | `pnpm test:e2e` ports (app / Postgres / SMTP / Mailpit / RabbitMQ / UI)   |
+| ---- | ------ | -------- | ------ | ------- | ---------------- | --------------------------- | ------------------------------------------------------------------------- |
+| 0    | 3000   | 5433     | 2525   | 8025    | 5673 (15673)     | `a2j-justiz-termin-service` | 3109 / 5544 / 1026 / 8026 / 5684 / 15684, project `jts-e2e`               |
+| N    | 3000+N | 5433+N   | 2525+N | 8125+N  | 5673+N (15673+N) | `jts-slot-N`                | 3109+N / 5544+N / 1026+N / 8026+N / 5684+N / 15684+N, project `jts-e2e-N` |
 
 `e2e/run.sh` reads the slot from `.env` (or `E2E_SLOT=N pnpm test:e2e`), so E2E runs in different
 worktrees do not collide. Each run still starts a full Docker stack, so run only a few at once.
@@ -170,7 +172,7 @@ the same number, the one merged second is rebased and renumbered.
 
 [`scripts/cloud-setup.sh`](scripts/cloud-setup.sh) prepares a clean Linux machine, such as a Claude
 Code cloud environment: it installs the pinned Node.js, pnpm, the dependencies and the Playwright
-browser, and starts Postgres and Mailpit when Docker is available.
+browser, and starts Postgres, Mailpit and RabbitMQ when Docker is available.
 
 ### Code Quality
 
@@ -262,11 +264,15 @@ the prefix.
 | `SMTP_HOST`, `SMTP_PORT`             | Mail server address                                                                         |
 | `SMTP_USER`, `SMTP_PASSWORD`         | Mail credentials, injected locally (see below for deployed)                                 |
 | `SMTP_REQUIRE_TLS`                   | `false` skips the STARTTLS requirement (local mock)                                         |
+| `RABBITMQ_HOST`, `RABBITMQ_PORT`     | Message broker address                                                                      |
+| `RABBITMQ_VHOST`                     | Virtual host on the broker                                                                  |
+| `RABBITMQ_USER`, `RABBITMQ_PASSWORD` | Broker credentials, injected locally (see below for deployed)                               |
+| `RABBITMQ_TLS`                       | `false` connects without TLS (local broker), otherwise AMQPS                                |
 | `SECRETS_FILE_PATH`                  | If set, credentials are read from files instead of env                                      |
 | `BASE_URL`                           | Canonical public origin without a trailing slash (local default: `http://localhost:3000`)   |
 | `BETTER_AUTH_SECRET`                 | Public local-only dummy by default; deployed signing secret mounted from the secret manager |
 
-In deployed environments the credentials are mounted from the secrets manager as `$SECRETS_FILE_PATH/database/jts_user` and `jts_password`, and the host, port and name come from the ConfigMap generated by the infra repo's Terraform. The SMTP credentials are mounted the same way as `$SECRETS_FILE_PATH/smtp/SMTP_USER` and `SMTP_PASSWORD`, while `SMTP_HOST` and `SMTP_PORT` come from a ConfigMap in the staging overlay.
+In deployed environments the credentials are mounted from the secrets manager as `$SECRETS_FILE_PATH/database/jts_user` and `jts_password`, and the host, port and name come from the ConfigMap generated by the infra repo's Terraform. The SMTP credentials are mounted the same way as `$SECRETS_FILE_PATH/smtp/SMTP_USER` and `SMTP_PASSWORD`, while `SMTP_HOST` and `SMTP_PORT` come from a ConfigMap in the staging overlay. RabbitMQ follows the same pattern: `$SECRETS_FILE_PATH/rabbitmq/RABBITMQ_USER` and `RABBITMQ_PASSWORD` from the secret `rabbitmq` (properties `username` and `password`), and `RABBITMQ_HOST`, `RABBITMQ_PORT` and `RABBITMQ_VHOST` from the `rabbitmq-config` ConfigMap in each overlay of the infra repo.
 
 ### Migrations
 
@@ -316,6 +322,8 @@ curl localhost:3000/verhandlungstermin-finder/health/database
 
 `GET /verhandlungstermin-finder/health/smtp` connects to the SMTP server and authenticates (`verify()`), without sending any mail. It returns `{"status":"ok"}` or `503` with `{"status":"error"}`, and logs the details. Locally it checks the SMTP mock below.
 
+`GET /verhandlungstermin-finder/health/rabbitmq` opens a connection to the RabbitMQ broker, which includes the login, and closes it again. It returns `{"status":"ok"}` or `503` with `{"status":"error"}`, and logs the details. Locally it checks the broker below.
+
 ### Local SMTP mock
 
 `docker compose up -d` also starts [Mailpit](https://mailpit.axllent.org/), a catch-all SMTP server that keeps every mail it receives inside the container and never relays anything. `.env.defaults` points the app at it (`localhost:2525`, any credentials, no STARTTLS), so nothing you send locally leaves your machine.
@@ -327,6 +335,17 @@ curl localhost:3000/verhandlungstermin-finder/health/database
 To use a real server instead, override the non-secret `SMTP_HOST`, `SMTP_PORT`
 and `SMTP_REQUIRE_TLS` settings in `.env.local`. Inject `SMTP_USER` and
 `SMTP_PASSWORD` from 1Password, using the same CLI pattern as the auth secret below.
+
+### Local RabbitMQ
+
+`docker compose up -d` also starts a [RabbitMQ](https://www.rabbitmq.com/) broker with the management plugin. `.env.defaults` points the app at it (`localhost:5673`, vhost `/`, user `jts` / password `jts`, no TLS). It has no volume, so queues and messages are lost when the container is removed.
+
+- Management UI: http://localhost:15673 (log in as `jts` / `jts`)
+- Check the connection: `curl localhost:3000/verhandlungstermin-finder/health/rabbitmq`
+
+To use a real broker instead, override the non-secret `RABBITMQ_HOST`, `RABBITMQ_PORT`,
+`RABBITMQ_VHOST` and `RABBITMQ_TLS` settings in `.env.local`. Inject `RABBITMQ_USER` and
+`RABBITMQ_PASSWORD` from 1Password, using the same CLI pattern as the auth secret below.
 
 ## Authentication
 
