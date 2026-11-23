@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { confirmedWindow, rowToRange } from "./time-range";
+import { confirmedWindow, rowToRange } from "./time-range.ts";
 
 describe("rowToRange", () => {
   it("reads dates and strings alike", () => {

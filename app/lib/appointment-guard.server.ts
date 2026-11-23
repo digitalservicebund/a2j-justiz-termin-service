@@ -1,12 +1,11 @@
 import { redirect } from "react-router";
 
-import { getAppointment, type Appointment } from "~/adapters/appointments/appointments.server";
-import { requireRole } from "~/adapters/session/session";
-import type { AuthUser } from "~/core/domain/user";
-import { getDb } from "~/database/database";
-import type { AppointmentStatus } from "~/database/types";
-
-import { notFound } from "./responses";
+import { getAppointment, type Appointment } from "../adapters/appointments/appointments.server.ts";
+import { requireRole } from "../adapters/session/session.ts";
+import type { AuthUser } from "../core/domain/user.ts";
+import { getDb } from "../database/database.ts";
+import type { AppointmentStatus } from "../database/types.ts";
+import { notFound } from "./responses.ts";
 
 type AppointmentParams = { appointmentId?: string };
 

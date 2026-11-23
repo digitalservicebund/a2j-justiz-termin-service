@@ -2,11 +2,10 @@
 import ICAL from "ical.js";
 import { describe, expect, it } from "vitest";
 
-import { toAnsweredSlot } from "~/adapters/appointments/availability.server";
-import type { ResponseOverview } from "~/adapters/appointments/survey.server";
-import type { TimeRange } from "~/core/domain/time/time-range";
-
-import { renderAnswerReceivedEmail } from "./answer-received-email";
+import { toAnsweredSlot } from "../../adapters/appointments/availability.server.ts";
+import type { ResponseOverview } from "../../adapters/appointments/survey.server.ts";
+import type { TimeRange } from "../../core/domain/time/time-range.ts";
+import { renderAnswerReceivedEmail } from "./answer-received-email.ts";
 
 const terminUrl = "http://localhost:3000/overview/a1";
 

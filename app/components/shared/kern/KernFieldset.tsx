@@ -1,6 +1,7 @@
 import type { FieldsetHTMLAttributes, ReactNode } from "react";
 
-import { ErrorMessage } from "../ErrorMessage";
+import { ErrorMessage } from "~/components/shared/ErrorMessage";
+
 import { classNames } from "./layout";
 
 export type KernFieldsetProps = Omit<FieldsetHTMLAttributes<HTMLFieldSetElement>, "id"> & {

@@ -1,8 +1,8 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 
-import { toWallClock, wallClockToInstant } from "./berlin.server";
-import { checkWallClock, type WallClock } from "./wall-clock";
+import { toWallClock, wallClockToInstant } from "./berlin.server.ts";
+import { checkWallClock, type WallClock } from "./wall-clock.ts";
 
 const at = (year: number, month: number, day: number, hour: number, minute: number) => ({
   year,

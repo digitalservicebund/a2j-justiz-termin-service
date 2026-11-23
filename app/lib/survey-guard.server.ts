@@ -1,7 +1,6 @@
-import { findSurvey } from "~/adapters/appointments/survey.server";
-import { getDb } from "~/database/database";
-
-import { notFound } from "./responses";
+import { findSurvey } from "../adapters/appointments/survey.server.ts";
+import { getDb } from "../database/database.ts";
+import { notFound } from "./responses.ts";
 
 // The survey a guest's link points to. Only an open survey can be answered, and unknown links look
 // the same as closed ones.

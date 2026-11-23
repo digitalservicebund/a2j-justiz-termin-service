@@ -4,7 +4,7 @@ import { createServer } from "node:http";
 import morgan from "morgan";
 import { describe, expect, it } from "vitest";
 
-import { accessLogFormat } from "./access-log";
+import { accessLogFormat } from "./access-log.ts";
 
 describe("access logging", () => {
   it.each([

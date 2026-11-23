@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getAuthSecret } from "./auth-secret";
-import { requireSecret } from "./secrets";
+import { getAuthSecret } from "./auth-secret.ts";
+import { requireSecret } from "./secrets.ts";
 
-vi.mock("./secrets", () => ({ requireSecret: vi.fn() }));
+vi.mock("./secrets.ts", () => ({ requireSecret: vi.fn() }));
 
 describe("auth signing secret", () => {
   beforeEach(() => {

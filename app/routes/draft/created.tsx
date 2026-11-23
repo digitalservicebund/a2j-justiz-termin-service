@@ -12,9 +12,9 @@ import { SurveyLinkField } from "~/components/shared/SurveyLinkField";
 import { PUBLISHED, requireOwnAppointment } from "~/lib/appointment-guard.server";
 import { confirmDraftPath, createdPath, surveyUrl } from "~/lib/paths";
 import { notFound } from "~/lib/responses";
+import { Guests } from "~/routes/overview/guests";
+import { inviteGuest, loadGuestRows } from "~/routes/overview/invite.server";
 
-import { Guests } from "../overview/guests";
-import { inviteGuest, loadGuestRows } from "../overview/invite.server";
 import { createTerminBreadcrumbs } from "./breadcrumbs";
 import { groupSlotsByDay } from "./slot-days";
 import { rangeToSlot } from "./slots";

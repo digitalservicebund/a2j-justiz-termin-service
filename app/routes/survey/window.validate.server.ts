@@ -2,8 +2,7 @@ import { contains, isLongEnough, mergeWindows, type SlotWindow } from "~/core/do
 import { toWallClock, wallClockToInstant } from "~/core/domain/time/berlin.server";
 import { formatTime } from "~/core/domain/time/format";
 import { checkWallClock } from "~/core/domain/time/wall-clock";
-
-import { messages as slotMessages } from "../draft/schema";
+import { messages as slotMessages } from "~/routes/draft/schema";
 
 export const messages = {
   start: slotMessages.start,

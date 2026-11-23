@@ -1,7 +1,7 @@
 import { createTransport } from "nodemailer";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createSmtpTransport } from "./smtp";
+import { createSmtpTransport } from "./smtp.ts";
 
 vi.mock("nodemailer", () => ({ createTransport: vi.fn() }));
 

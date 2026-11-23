@@ -1,6 +1,7 @@
 import type { InputHTMLAttributes, ReactNode } from "react";
 
-import { ErrorMessage } from "../ErrorMessage";
+import { ErrorMessage } from "~/components/shared/ErrorMessage";
+
 import { KernLabel } from "./KernLabel";
 import { classNames } from "./layout";
 

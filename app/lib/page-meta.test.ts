@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { PAGE_DESCRIPTION, PAGE_TITLE, pageMeta } from "./page-meta";
+import { PAGE_DESCRIPTION, PAGE_TITLE, pageMeta } from "./page-meta.ts";
 
 describe("pageMeta", () => {
   it("describes the page for search engines and link previews", () => {

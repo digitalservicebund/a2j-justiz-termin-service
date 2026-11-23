@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getDBConfig } from "./config";
+import { getDBConfig } from "./config.ts";
 
 describe("getDBConfig", () => {
   beforeEach(() => {

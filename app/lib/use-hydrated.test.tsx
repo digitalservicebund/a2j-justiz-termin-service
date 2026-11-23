@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { useHydrated } from "~/lib/use-hydrated";
+import { useHydrated } from "./use-hydrated.ts";
 
 function Probe() {
   return <p>{useHydrated() ? "hydrated" : "server"}</p>;

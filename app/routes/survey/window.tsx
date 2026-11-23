@@ -33,7 +33,7 @@ import {
   type WindowValues,
 } from "./window.validate.server";
 
-import "../draft/slot.css";
+import "~/routes/draft/slot.css";
 import "./survey.css";
 
 type Params = { params: { token?: string } };

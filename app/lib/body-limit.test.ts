@@ -2,7 +2,7 @@
 import type { Request, Response } from "express";
 import { describe, expect, it, vi } from "vitest";
 
-import { limitRequestBody, MAX_BODY_BYTES } from "./body-limit";
+import { limitRequestBody, MAX_BODY_BYTES } from "./body-limit.ts";
 
 function request(headers: Record<string, string>) {
   return { headers } as Request;

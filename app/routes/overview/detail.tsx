@@ -25,9 +25,9 @@ import {
   surveyUrl,
 } from "~/lib/paths";
 import { notFound } from "~/lib/responses";
+import { groupSlotsByDay, type DayWindows } from "~/routes/draft/slot-days";
+import { rangeToSlot } from "~/routes/draft/slots";
 
-import { groupSlotsByDay, type DayWindows } from "../draft/slot-days";
-import { rangeToSlot } from "../draft/slots";
 import { Guests, type GuestRow } from "./guests";
 import { inviteGuest, loadGuestRows } from "./invite.server";
 import { describeStatus } from "./status";

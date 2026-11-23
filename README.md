@@ -215,6 +215,11 @@ doc/adr/                    # Architecture decision records
 Unit tests live next to their source as `*.test.ts(x)` (e.g. `components/shared/FlowPage.test.tsx`).
 Shared test helpers live in `tests/` and are imported with `~tests/…`.
 
+Each layer has one import style, enforced by oxlint:
+
+- `adapters`, `core`, `database`, `lib`, `scripts` and `server.js`: relative imports with the `.ts` extension (`../database/database.ts`), never `~/`. Node loads this code directly and does not resolve `~/`.
+- `routes`, `components` and the files in `app/` itself: `~/` for other folders (`~/lib/env`), `./` for the same folder, no `../` and no `.ts` extension.
+
 ### Styling
 
 Use documented `@kern-ux/native` component markup and native tokens. KERN-provided
@@ -310,7 +315,7 @@ To add one:
 3. Add the matching table type to `app/database/types.ts`.
 4. Run `pnpm db:migrate`.
 
-The migration files and `server.js` are run directly by Node's TypeScript support, so stick to erasable syntax (no enums or parameter properties) and use `.ts` extensions in imports inside `app/database` and `app/lib`.
+The migration files and `server.js` are run directly by Node's TypeScript support, so stick to erasable syntax (no enums or parameter properties) and follow the import style for their layer (see "Project Structure").
 
 ### Verifying the connection
 
@@ -518,6 +523,7 @@ This project uses **oxfmt** and **oxlint** with automatic fixes on save (Intelli
 - TypeScript strict mode
 - React/JSX best practices
 - A11y (accessibility) rules
+- One import style per layer (see "Project Structure")
 - Configured in `.oxlintrc.json`
 
 **Run format + lint together:**

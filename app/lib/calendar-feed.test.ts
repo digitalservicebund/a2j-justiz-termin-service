@@ -2,10 +2,10 @@
 import ICAL from "ical.js";
 import { describe, expect, it } from "vitest";
 
-import { toAnsweredSlot } from "../adapters/appointments/availability.server";
-import type { FeedAppointment } from "../adapters/appointments/calendar-feed.server";
-import type { TimeRange } from "../core/domain/time/time-range";
-import { calendarFeedPath, createCalendarFeed } from "./calendar-feed";
+import { toAnsweredSlot } from "../adapters/appointments/availability.server.ts";
+import type { FeedAppointment } from "../adapters/appointments/calendar-feed.server.ts";
+import type { TimeRange } from "../core/domain/time/time-range.ts";
+import { calendarFeedPath, createCalendarFeed } from "./calendar-feed.ts";
 
 const now = new Date("2026-10-13T12:00:00Z");
 const baseUrl = "http://localhost:3000";

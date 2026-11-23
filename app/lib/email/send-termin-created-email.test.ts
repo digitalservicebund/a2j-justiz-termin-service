@@ -1,16 +1,16 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { logError } from "../logging";
-import { createSmtpTransport } from "../smtp";
-import { sendTerminCreatedEmail } from "./send-termin-created-email";
+import { logError } from "../logging.ts";
+import { createSmtpTransport } from "../smtp.ts";
+import { sendTerminCreatedEmail } from "./send-termin-created-email.ts";
 
 const { sendMail, close } = vi.hoisted(() => ({ sendMail: vi.fn(), close: vi.fn() }));
 
-vi.mock("../smtp", () => ({ createSmtpTransport: vi.fn(() => ({ sendMail, close })) }));
-vi.mock("../env", () => ({ requireEnv: () => "http://localhost:3000" }));
-vi.mock("../secrets", () => ({ requireSecret: () => "sender@example.com" }));
-vi.mock("../logging", () => ({ logError: vi.fn() }));
+vi.mock("../smtp.ts", () => ({ createSmtpTransport: vi.fn(() => ({ sendMail, close })) }));
+vi.mock("../env.ts", () => ({ requireEnv: () => "http://localhost:3000" }));
+vi.mock("../secrets.ts", () => ({ requireSecret: () => "sender@example.com" }));
+vi.mock("../logging.ts", () => ({ logError: vi.fn() }));
 
 const notification = {
   to: " Judge.A@Example.com ",

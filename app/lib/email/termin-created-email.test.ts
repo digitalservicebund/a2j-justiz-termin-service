@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 
-import { renderTerminCreatedEmail } from "./termin-created-email";
+import { renderTerminCreatedEmail } from "./termin-created-email.ts";
 
 const terminUrl = "http://localhost:3000/overview/a1";
 const email = {

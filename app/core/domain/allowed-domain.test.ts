@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { AllowedDomainSchema, emailDomain } from "./allowed-domain";
+import { AllowedDomainSchema, emailDomain } from "./allowed-domain.ts";
 
 describe("AllowedDomainSchema", () => {
   it.each([
