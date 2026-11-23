@@ -2,6 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { callAction, callLoader } from "~tests/route";
 
 import {
   findSurvey,
@@ -58,8 +59,6 @@ const overview: ResponseOverview = {
   calendarSequence: 1,
   slots: [],
 };
-
-const locationOf = (response: unknown) => (response as Response).headers.get("Location");
 
 function postRequest(fields: Array<[string, string]>) {
   const form = new FormData();
@@ -138,14 +137,14 @@ describe("survey confirm route", () => {
   it("sends the guest to the form, which says sorry, when no window is left", async () => {
     vi.mocked(findSurvey).mockResolvedValue({ ...universal, slots: [] });
 
-    const thrown = (await loader({
+    const thrown = await callLoader(loader, {
       request: new Request(`${url}?name=Guest+C&keines=1`),
       params,
-    }).catch((error: Response) => error)) as Response;
-    expect(thrown.headers.get("Location")).toBe("/umfrage/t1");
+    });
+    expect(thrown).toMatchObject({ thrown: true, location: "/umfrage/t1" });
 
-    const response = await action({ request: postRequest(finish), params });
-    expect(locationOf(response)).toBe("/umfrage/t1");
+    const response = await callAction(action, { request: postRequest(finish), params });
+    expect(response.location).toBe("/umfrage/t1");
     expect(saveAnswer).not.toHaveBeenCalled();
   });
 
@@ -157,21 +156,19 @@ describe("survey confirm route", () => {
       `?name=Guest+C&verfuegbar=${k1}&keines=1`,
       "?name=Guest+C&verfuegbar=hidden",
     ]) {
-      const thrown = (await loader({ request: new Request(url + search), params }).catch(
-        (error: Response) => error,
-      )) as Response;
-      expect(thrown.status).toBe(302);
-      expect(thrown.headers.get("Location")).toMatch(/^\/umfrage\/t1\?/);
+      const thrown = await callLoader(loader, { request: new Request(url + search), params });
+      expect(thrown).toMatchObject({ thrown: true, status: 302 });
+      expect(thrown.location).toMatch(/^\/umfrage\/t1\?/);
     }
   });
 
   it("goes back to the form with the answer", async () => {
-    const response = await action({
+    const response = await callAction(action, {
       request: postRequest([["intent", "back"], ...finish.slice(1)]),
       params,
     });
 
-    expect(locationOf(response)).toBe(`/umfrage/t1?name=Guest+C&verfuegbar=${k1}&verfuegbar=${k3}`);
+    expect(response.location).toBe(`/umfrage/t1?name=Guest+C&verfuegbar=${k1}&verfuegbar=${k3}`);
     expect(saveAnswer).not.toHaveBeenCalled();
   });
 
@@ -182,7 +179,7 @@ describe("survey confirm route", () => {
   });
 
   it("stores the answer of the universal link under the entered name", async () => {
-    const response = await action({ request: postRequest(finish), params });
+    const response = await callAction(action, { request: postRequest(finish), params });
 
     expect(saveAnswer).toHaveBeenCalledWith(
       { db: true },
@@ -193,7 +190,7 @@ describe("survey confirm route", () => {
         availability: [range(w1), range(w3)],
       },
     );
-    expect(locationOf(response)).toBe("/umfrage/t1/naechste-schritte?teilnehmer=p9");
+    expect(response.location).toBe("/umfrage/t1/naechste-schritte?teilnehmer=p9");
   });
 
   it("tells the judge about the answer after it is stored, under the entered name", async () => {
@@ -215,10 +212,10 @@ describe("survey confirm route", () => {
   it("sends nothing when the appointment is gone after saving", async () => {
     vi.mocked(issueResponseOverview).mockResolvedValue(undefined);
 
-    const response = await action({ request: postRequest(finish), params });
+    const response = await callAction(action, { request: postRequest(finish), params });
 
     expect(sendAnswerReceivedEmail).not.toHaveBeenCalled();
-    expect(locationOf(response)).toBe("/umfrage/t1/naechste-schritte?teilnehmer=p9");
+    expect(response.location).toBe("/umfrage/t1/naechste-schritte?teilnehmer=p9");
   });
 
   it("stores the answer of a personal link for its participant and ignores a submitted name", async () => {
@@ -254,7 +251,7 @@ describe("survey confirm route", () => {
   });
 
   it("stores nothing for an invalid answer", async () => {
-    const response = await action({
+    const response = await callAction(action, {
       request: postRequest([
         ["intent", "finish"],
         ["name", "Guest C"],
@@ -264,7 +261,7 @@ describe("survey confirm route", () => {
 
     expect(saveAnswer).not.toHaveBeenCalled();
     expect(sendAnswerReceivedEmail).not.toHaveBeenCalled();
-    expect(locationOf(response)).toBe("/umfrage/t1?name=Guest+C");
+    expect(response.location).toBe("/umfrage/t1?name=Guest+C");
   });
 
   it.each(["closed", "answered", "unavailable"] as const)(
@@ -272,11 +269,9 @@ describe("survey confirm route", () => {
     async (reason) => {
       vi.mocked(saveAnswer).mockResolvedValue({ saved: false, reason });
 
-      const response = await action({ request: postRequest(finish), params });
+      const response = await callAction(action, { request: postRequest(finish), params });
 
-      expect(locationOf(response)).toBe(
-        `/umfrage/t1?name=Guest+C&verfuegbar=${k1}&verfuegbar=${k3}`,
-      );
+      expect(response.location).toBe(`/umfrage/t1?name=Guest+C&verfuegbar=${k1}&verfuegbar=${k3}`);
       expect(sendAnswerReceivedEmail).not.toHaveBeenCalled();
     },
   );

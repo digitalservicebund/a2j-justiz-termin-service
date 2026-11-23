@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { callAction } from "~tests/route";
 
 import { getAppointment } from "~/adapters/appointments/appointments.server";
 import {
@@ -53,10 +54,6 @@ const get = (id: string) => ({
   request: new Request(url(id)),
   params: { appointmentId: "d1", participantId: id },
 });
-
-type DataResponse = { data: Record<string, any>; init: { status?: number } | null };
-const location = (response: unknown) => (response as Response).headers.get("Location");
-
 describe("create-termin participant route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -130,7 +127,8 @@ describe("create-termin participant route", () => {
 
   describe("saving a new person", () => {
     it("adds the person and returns to the form", async () => {
-      const response = await action(
+      const response = await callAction(
+        action,
         post("neu", {
           email: " Person.C@Example.com ",
           safeId: " DE.Example.C2 ",
@@ -143,7 +141,7 @@ describe("create-termin participant route", () => {
         safeId: "DE.Example.C2",
         name: "Person C",
       });
-      expect(location(response)).toBe("/overview/new?entwurf=d1");
+      expect(response.location).toBe("/overview/new?entwurf=d1");
     });
 
     it("adds a person who only has a name", async () => {
@@ -157,52 +155,62 @@ describe("create-termin participant route", () => {
     });
 
     it("adds a person who only has a SAFE-ID", async () => {
-      const response = await action(post("neu", { email: "", safeId: "DE.Example.c2", name: "" }));
+      const response = await callAction(
+        action,
+        post("neu", { email: "", safeId: "DE.Example.c2", name: "" }),
+      );
 
       expect(addDraftParticipant).toHaveBeenCalledWith({ db: true }, "1", "d1", {
         email: null,
         safeId: "DE.Example.c2",
         name: null,
       });
-      expect(location(response)).toBe("/overview/new?entwurf=d1");
+      expect(response.location).toBe("/overview/new?entwurf=d1");
     });
 
     it("lets several people share an e-mail address or a name", async () => {
-      const response = await action(
+      const response = await callAction(
+        action,
         post("neu", { email: "person.a@example.com", name: "Person B" }),
       );
 
-      expect(location(response)).toBe("/overview/new?entwurf=d1");
+      expect(response.location).toBe("/overview/new?entwurf=d1");
       expect(addDraftParticipant).toHaveBeenCalledOnce();
     });
 
     it("answers 400 with the problem and what was typed, saving nothing", async () => {
-      const response = (await action(
-        post("neu", { email: "nope", name: "Person C" }),
-      )) as unknown as DataResponse;
+      const response = await callAction(action, post("neu", { email: "nope", name: "Person C" }));
 
-      expect(response.init?.status).toBe(400);
-      expect(response.data.values).toEqual({ email: "nope", safeId: "", name: "Person C" });
-      expect(response.data.errors.email).toBe("Geben Sie eine gültige E-Mail-Adresse an.");
+      expect(response).toMatchObject({
+        status: 400,
+        data: {
+          values: { email: "nope", safeId: "", name: "Person C" },
+          errors: { email: "Geben Sie eine gültige E-Mail-Adresse an." },
+        },
+      });
       expect(addDraftParticipant).not.toHaveBeenCalled();
     });
 
     it("asks for an e-mail address or a SAFE-ID when the form is empty", async () => {
-      const response = (await action(post("neu", {}))) as unknown as DataResponse;
+      const response = await callAction(action, post("neu", {}));
 
-      expect(response.init?.status).toBe(400);
-      expect(response.data.errors.email).toBe(
-        "Geben Sie eine E-Mail-Adresse oder eine SAFE-ID an.",
-      );
+      expect(response).toMatchObject({
+        status: 400,
+        data: { errors: { email: "Geben Sie eine E-Mail-Adresse oder eine SAFE-ID an." } },
+      });
     });
 
     it("rejects a SAFE-ID that is too long, keeping what was typed", async () => {
       const safeId = "a".repeat(256);
-      const response = (await action(post("neu", { safeId }))) as unknown as DataResponse;
+      const response = await callAction(action, post("neu", { safeId }));
 
-      expect(response.init?.status).toBe(400);
-      expect(response.data.values).toEqual({ email: "", safeId, name: "" });
-      expect(response.data.errors.safeId).toBe("Die SAFE-ID darf höchstens 255 Zeichen lang sein.");
+      expect(response).toMatchObject({
+        status: 400,
+        data: {
+          values: { email: "", safeId, name: "" },
+          errors: { safeId: "Die SAFE-ID darf höchstens 255 Zeichen lang sein." },
+        },
+      });
       expect(addDraftParticipant).not.toHaveBeenCalled();
     });
 
@@ -216,14 +224,12 @@ describe("create-termin participant route", () => {
         })),
       );
 
-      const response = (await action(
-        post("neu", { email: "person.z@example.com" }),
-      )) as unknown as DataResponse;
+      const response = await callAction(action, post("neu", { email: "person.z@example.com" }));
 
-      expect(response.init?.status).toBe(400);
-      expect(response.data.errors.email).toBe(
-        `Sie können höchstens ${MAX_PARTICIPANTS} Personen angeben.`,
-      );
+      expect(response).toMatchObject({
+        status: 400,
+        data: { errors: { email: `Sie können höchstens ${MAX_PARTICIPANTS} Personen angeben.` } },
+      });
       expect(addDraftParticipant).not.toHaveBeenCalled();
     });
 
@@ -238,7 +244,8 @@ describe("create-termin participant route", () => {
 
   describe("saving an existing person", () => {
     it("replaces the person and returns to the form", async () => {
-      const response = await action(
+      const response = await callAction(
+        action,
         post("p2", { email: "person.b@example.com", safeId: "DE.Example.b1", name: "Person B" }),
       );
 
@@ -248,7 +255,7 @@ describe("create-termin participant route", () => {
         name: "Person B",
       });
       expect(addDraftParticipant).not.toHaveBeenCalled();
-      expect(location(response)).toBe("/overview/new?entwurf=d1");
+      expect(response.location).toBe("/overview/new?entwurf=d1");
     });
 
     it("answers 404 for a person that is not in the draft", async () => {

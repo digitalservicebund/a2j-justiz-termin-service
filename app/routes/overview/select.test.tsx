@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { callAction, callLoader } from "~tests/route";
 
 import { getAppointment } from "~/adapters/appointments/appointments.server";
 import type * as AvailabilityModule from "~/adapters/appointments/availability.server";
@@ -89,12 +90,15 @@ describe("overview select route", () => {
       vi.mocked(getAppointment).mockResolvedValue({ ...open, status });
 
       for (const run of [
-        () => loader({ request: new Request(url), params }),
-        () => action({ request: postRequest({ fenster: K0, stunde: "16", minute: "0" }), params }),
+        () => callLoader(loader, { request: new Request(url), params }),
+        () =>
+          callAction(action, {
+            request: postRequest({ fenster: K0, stunde: "16", minute: "0" }),
+            params,
+          }),
       ]) {
-        const thrown = await run().catch((error: Response) => error);
-        expect(thrown).toBeInstanceOf(Response);
-        expect((thrown as Response).headers.get("Location")).toBe("/overview/a1");
+        const thrown = await run();
+        expect(thrown).toMatchObject({ thrown: true, location: "/overview/a1" });
       }
     },
   );
@@ -135,10 +139,10 @@ describe("overview select route", () => {
       init: { status: 400 },
       data: { errors: { start: expect.stringContaining("16:30") } },
     });
-    const fits = (await action({
+    const fits = await callAction(action, {
       request: postRequest({ fenster: key, stunde: "16", minute: "30" }),
       params,
-    })) as Response;
+    });
     expect(fits.status).toBe(302);
   });
 
@@ -159,15 +163,13 @@ describe("overview select route", () => {
   });
 
   it("continues to the review with a valid choice", async () => {
-    const response = (await action({
+    const response = await callAction(action, {
       request: postRequest({ fenster: K0, stunde: "16", minute: "30" }),
       params,
-    })) as Response;
+    });
 
     expect(response.status).toBe(302);
-    expect(response.headers.get("Location")).toBe(
-      `/overview/a1/select/confirm?fenster=${K0}&stunde=16&minute=30`,
-    );
+    expect(response.location).toBe(`/overview/a1/select/confirm?fenster=${K0}&stunde=16&minute=30`);
   });
 
   it("answers 400 with the entered values when the start lies outside the window", async () => {

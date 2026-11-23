@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { callAction, callLoader } from "~tests/route";
 
 import { getAppointment } from "~/adapters/appointments/appointments.server";
 import {
@@ -174,11 +175,9 @@ describe("overview detail route", () => {
       slots: [],
     });
 
-    const thrown = await loader({ request: request(), params }).catch((error: Response) => error);
+    const thrown = await callLoader(loader, { request: request(), params });
 
-    expect(thrown).toBeInstanceOf(Response);
-    expect((thrown as Response).status).toBe(302);
-    expect((thrown as Response).headers.get("Location")).toBe("/overview/a1/confirm");
+    expect(thrown).toMatchObject({ thrown: true, status: 302, location: "/overview/a1/confirm" });
   });
 
   it("returns the Aktenzeichen and the windows per day for a cancelled appointment", async () => {
@@ -477,7 +476,7 @@ describe("guest invitations", () => {
   });
 
   it("mails the personal link, records the invitation and shows the page again", async () => {
-    const response = (await invite("invite-email:p1")) as Response;
+    const response = await callAction(invite, "invite-email:p1");
 
     expect(sendInvitationEmail).toHaveBeenCalledWith({
       to: "person.a@example.com",
@@ -486,8 +485,11 @@ describe("guest invitations", () => {
       slots,
     });
     expect(recordInvitation).toHaveBeenCalledWith({ db: true }, "1", "a1", "p1", "email");
-    expect(response.status).toBe(302);
-    expect(response.headers.get("Location")).toBe("/overview/a1#verfahrensbeteiligte");
+    expect(response).toMatchObject({
+      thrown: false,
+      status: 302,
+      location: "/overview/a1#verfahrensbeteiligte",
+    });
   });
 
   it("does not record an e-mail that could not be sent and says so", async () => {
@@ -508,7 +510,7 @@ describe("guest invitations", () => {
   });
 
   it("hands an ERV invitation to the ERV and records it", async () => {
-    const response = (await invite("invite-erv:p1")) as Response;
+    const response = await callAction(invite, "invite-erv:p1");
 
     expect(sendErvInvitation).toHaveBeenCalledWith({
       appointmentId: "a1",
@@ -527,7 +529,7 @@ describe("guest invitations", () => {
   });
 
   it("records a manual invitation without sending anything", async () => {
-    const response = (await invite("invite-manual:p1")) as Response;
+    const response = await callAction(invite, "invite-manual:p1");
 
     expect(sendInvitationEmail).not.toHaveBeenCalled();
     expect(sendErvInvitation).not.toHaveBeenCalled();

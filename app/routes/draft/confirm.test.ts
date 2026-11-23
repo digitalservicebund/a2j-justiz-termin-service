@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { callAction, callLoader } from "~tests/route";
 
 import {
   getAppointment,
@@ -144,14 +145,11 @@ describe("create-termin confirm route", () => {
     ])("sends the user back to the form for a draft that %s", async (_name, change) => {
       vi.mocked(getAppointment).mockResolvedValue({ ...completeDraft, ...change });
 
-      await expect(loader({ request: new Request(url), params })).rejects.toMatchObject({
+      expect(await callLoader(loader, { request: new Request(url), params })).toMatchObject({
+        thrown: true,
         status: 302,
-        headers: expect.objectContaining({}),
+        location: "/overview/new?entwurf=d1",
       });
-      const thrown = await loader({ request: new Request(url), params }).catch(
-        (error: Response) => error,
-      );
-      expect((thrown as Response).headers.get("Location")).toBe("/overview/new?entwurf=d1");
     });
 
     it("answers 404 for an unknown appointment or one of another user", async () => {
@@ -178,20 +176,18 @@ describe("create-termin confirm route", () => {
 
   describe("submitting", () => {
     it("goes back to the form with the saved draft", async () => {
-      const response = (await action({ request: postRequest("back"), params })) as Response;
+      const response = await callAction(action, { request: postRequest("back"), params });
 
-      expect(response.status).toBe(302);
-      expect(response.headers.get("Location")).toBe("/overview/new?entwurf=d1");
+      expect(response).toMatchObject({ status: 302, location: "/overview/new?entwurf=d1" });
       expect(publishAppointment).not.toHaveBeenCalled();
     });
 
     it("publishes the draft and shows the next steps", async () => {
       vi.mocked(getAppointment).mockResolvedValue(completeDraft);
-      const response = (await action({ request: postRequest("create"), params })) as Response;
+      const response = await callAction(action, { request: postRequest("create"), params });
 
       expect(publishAppointment).toHaveBeenCalledWith({ db: true }, "1", "d1");
-      expect(response.status).toBe(302);
-      expect(response.headers.get("Location")).toBe("/overview/d1/created");
+      expect(response).toMatchObject({ status: 302, location: "/overview/d1/created" });
     });
 
     it("does not publish a draft that is no longer complete, but sends it back to the form", async () => {
@@ -200,9 +196,9 @@ describe("create-termin confirm route", () => {
         slots: completeDraft.slots.slice(1),
       });
 
-      const response = (await action({ request: postRequest("create"), params })) as Response;
+      const response = await callAction(action, { request: postRequest("create"), params });
 
-      expect(response.headers.get("Location")).toBe("/overview/new?entwurf=d1");
+      expect(response.location).toBe("/overview/new?entwurf=d1");
       expect(publishAppointment).not.toHaveBeenCalled();
       expect(sendTerminCreatedEmail).not.toHaveBeenCalled();
     });
@@ -232,9 +228,9 @@ describe("create-termin confirm route", () => {
     it("sends no e-mail when the appointment cannot be read after publishing", async () => {
       vi.mocked(nextCalendarSequence).mockResolvedValue(undefined);
 
-      const response = (await action({ request: postRequest("create"), params })) as Response;
+      const response = await callAction(action, { request: postRequest("create"), params });
 
-      expect(response.headers.get("Location")).toBe("/overview/d1/created");
+      expect(response.location).toBe("/overview/d1/created");
       expect(sendTerminCreatedEmail).not.toHaveBeenCalled();
     });
 

@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { callAction } from "~tests/route";
 
 import { action } from "./welcome";
 
@@ -87,11 +88,8 @@ describe("login action", () => {
         headers: { "Set-Cookie": "session=; Max-Age=0; Path=/" },
       }),
     );
-    const response = await action({ request: request({ intent: "logout" }) });
-    expect(response).toBeInstanceOf(Response);
-    if (!(response instanceof Response)) throw new Error("Expected a logout redirect");
-    expect(response.status).toBe(302);
-    expect(response.headers.get("Location")).toBe("/");
+    const response = await callAction(action, { request: request({ intent: "logout" }) });
+    expect(response).toMatchObject({ thrown: false, status: 302, location: "/" });
     expect(response.headers.getSetCookie()).toEqual(["session=; Max-Age=0; Path=/"]);
     const forwarded: Request = handler.mock.calls[0]![0];
     expect(forwarded.url).toBe("http://localhost/verhandlungstermin-finder/api/auth/sign-out");

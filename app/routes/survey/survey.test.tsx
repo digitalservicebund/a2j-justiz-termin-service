@@ -2,6 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { callAction, callLoader } from "~tests/route";
 
 import { findSurvey, type Survey } from "~/adapters/appointments/survey.server";
 import { windowKey } from "~/core/domain/availability";
@@ -97,26 +98,27 @@ describe("survey route", () => {
   it("sends a personal link that has answered to its result", async () => {
     vi.mocked(findSurvey).mockResolvedValue({ ...personal, answered: true });
 
-    const thrown = (await loader({ request: new Request(url), params }).catch(
-      (error: Response) => error,
-    )) as Response;
+    const thrown = await callLoader(loader, { request: new Request(url), params });
 
-    expect(thrown.status).toBe(302);
-    expect(thrown.headers.get("Location")).toBe("/umfrage/t1/naechste-schritte?teilnehmer=p1");
+    expect(thrown).toMatchObject({
+      thrown: true,
+      status: 302,
+      location: "/umfrage/t1/naechste-schritte?teilnehmer=p1",
+    });
   });
 
   it("continues to the review with a valid answer", async () => {
-    const response = (await action({
+    const response = await callAction(action, {
       request: postRequest([
         ["name", "Guest C"],
         ["verfuegbar", k1],
         ["verfuegbar", k3],
       ]),
       params,
-    })) as Response;
+    });
 
     expect(response.status).toBe(302);
-    expect(response.headers.get("Location")).toBe(
+    expect(response.location).toBe(
       `/umfrage/t1/zusammenfassung?name=Guest+C&verfuegbar=${k1}&verfuegbar=${k3}`,
     );
   });
@@ -124,38 +126,36 @@ describe("survey route", () => {
   it("does not continue to the review when no window is left", async () => {
     vi.mocked(findSurvey).mockResolvedValue({ ...universal, slots: [] });
 
-    const response = (await action({
+    const response = await callAction(action, {
       request: postRequest([
         ["name", "Guest C"],
         ["keines", "1"],
       ]),
       params,
-    })) as Response;
+    });
 
-    expect(response.headers.get("Location")).toBe("/umfrage/t1");
+    expect(response.location).toBe("/umfrage/t1");
   });
 
   it("continues to the review when no window fits", async () => {
-    const response = (await action({
+    const response = await callAction(action, {
       request: postRequest([
         ["name", "Guest C"],
         ["keines", "1"],
       ]),
       params,
-    })) as Response;
+    });
 
-    expect(response.headers.get("Location")).toBe(
-      "/umfrage/t1/zusammenfassung?name=Guest+C&keines=1",
-    );
+    expect(response.location).toBe("/umfrage/t1/zusammenfassung?name=Guest+C&keines=1");
   });
 
   it("answers 400 with the entered values when the name is missing", async () => {
-    const response = (await action({
+    const response = await callAction(action, {
       request: postRequest([["verfuegbar", k1]]),
       params,
-    })) as { init: { status: number }; data: unknown };
+    });
 
-    expect(response.init.status).toBe(400);
+    expect(response.status).toBe(400);
     expect(response.data).toEqual({
       values: { name: "", available: [k1], none: false },
       errors: { name: "Geben Sie Ihren Namen an." },
@@ -165,13 +165,13 @@ describe("survey route", () => {
   it("answers 400 for a window that is no longer offered", async () => {
     vi.mocked(findSurvey).mockResolvedValue(personal);
 
-    const response = (await action({
+    const response = await callAction(action, {
       request: postRequest([["verfuegbar", "hidden"]]),
       params,
-    })) as { init: { status: number }; data: { errors: unknown } };
+    });
 
-    expect(response.init.status).toBe(400);
-    expect(response.data.errors).toEqual({
+    expect(response.status).toBe(400);
+    expect(response.data).toHaveProperty("errors", {
       slots: "Mindestens ein Zeitfenster steht nicht mehr zur Auswahl.",
     });
   });
@@ -179,12 +179,12 @@ describe("survey route", () => {
   it("does not need a name for a personal link", async () => {
     vi.mocked(findSurvey).mockResolvedValue(personal);
 
-    const response = (await action({
+    const response = await callAction(action, {
       request: postRequest([["verfuegbar", k2]]),
       params,
-    })) as Response;
+    });
 
-    expect(response.headers.get("Location")).toBe(`/umfrage/t1/zusammenfassung?verfuegbar=${k2}`);
+    expect(response.location).toBe(`/umfrage/t1/zusammenfassung?verfuegbar=${k2}`);
   });
 });
 
@@ -372,10 +372,10 @@ describe("survey page", () => {
 
 // Submits the survey with a name and the button that was pressed.
 const submit = async (intent: string, extra: Array<[string, string]> = []) =>
-  (await action({
+  await callAction(action, {
     request: postRequest([["name", "Guest C"], ["intent", intent], ...extra]),
     params,
-  })) as Response;
+  });
 
 describe("smaller windows on the survey", () => {
   // 11:00 to 12:30 and 13:00 to 14:00 Berlin time within the first offered window.
@@ -397,7 +397,7 @@ describe("smaller windows on the survey", () => {
     const response = await submit(`add:${k1}`, [["verfuegbar", k2]]);
 
     expect(response.status).toBe(302);
-    expect(response.headers.get("Location")).toBe(
+    expect(response.location).toBe(
       `/umfrage/t1/zeitfenster?name=Guest+C&verfuegbar=${k2}&angebot=${k1}`,
     );
   });
@@ -405,7 +405,7 @@ describe("smaller windows on the survey", () => {
   it("goes to the page of a smaller window to change it", async () => {
     const response = await submit(`edit:${k1}:${earlyKey}`, [["verfuegbar", earlyKey]]);
 
-    expect(response.headers.get("Location")).toBe(
+    expect(response.location).toBe(
       `/umfrage/t1/zeitfenster?name=Guest+C&verfuegbar=${earlyKey}&angebot=${k1}&fenster=${earlyKey}`,
     );
   });
@@ -416,15 +416,16 @@ describe("smaller windows on the survey", () => {
       ["verfuegbar", k3],
     ]);
 
-    expect(response.headers.get("Location")).toBe(
-      `/umfrage/t1?name=Guest+C&verfuegbar=${k3}#zeitfenster-${k1}`,
-    );
+    expect(response.location).toBe(`/umfrage/t1?name=Guest+C&verfuegbar=${k3}#zeitfenster-${k1}`);
   });
 
   it("checks the answer as before when the guest continues", async () => {
-    const response = await action({ request: postRequest([["intent", "next"]]), params });
+    const response = await callAction(action, {
+      request: postRequest([["intent", "next"]]),
+      params,
+    });
 
-    expect(response).toMatchObject({ init: { status: 400 } });
+    expect(response).toMatchObject({ thrown: false, status: 400 });
   });
 
   it("shows a partly answered window with its smaller windows instead of the box", async () => {

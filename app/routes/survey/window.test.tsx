@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub, useLocation } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { callAction, callLoader } from "~tests/route";
 
 import { findSurvey, type Survey } from "~/adapters/appointments/survey.server";
 import { windowKey } from "~/core/domain/availability";
@@ -61,8 +62,6 @@ const times = (start: string, end: string) => {
   };
 };
 
-const locationOf = (response: unknown) => (response as Response).headers.get("Location");
-
 describe("survey window route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -114,10 +113,8 @@ describe("survey window route", () => {
 
   it("sends the guest back to the survey when the window is no longer offered", async () => {
     for (const search of [`${draft}&angebot=${other}`, draft]) {
-      const thrown = await loader({ request: new Request(url(search)), params }).catch(
-        (error: Response) => error,
-      );
-      expect(locationOf(thrown)).toBe(`/umfrage/t1?${draft}`);
+      const thrown = await callLoader(loader, { request: new Request(url(search)), params });
+      expect(thrown).toMatchObject({ thrown: true, location: `/umfrage/t1?${draft}` });
     }
   });
 
@@ -128,15 +125,15 @@ describe("survey window route", () => {
       answered: true,
     });
 
-    const thrown = await loader({
+    const thrown = await callLoader(loader, {
       request: new Request(url(`angebot=${offerKey}`)),
       params,
-    }).catch((error: Response) => error);
-    expect(locationOf(thrown)).toBe("/umfrage/t1");
+    });
+    expect(thrown).toMatchObject({ thrown: true, location: "/umfrage/t1" });
   });
 
   it("adds the window to the draft in place of the tick and goes back to the survey", async () => {
-    const response = await action({
+    const response = await callAction(action, {
       request: postRequest(
         `name=Guest+C&verfuegbar=${offerKey}&angebot=${offerKey}`,
         times("15:30", "17:00"),
@@ -144,13 +141,13 @@ describe("survey window route", () => {
       params,
     });
 
-    expect(locationOf(response)).toBe(
+    expect(response.location).toBe(
       `/umfrage/t1?name=Guest+C&verfuegbar=${smallerKey}#zeitfenster-${offerKey}`,
     );
   });
 
   it("merges the window with one it overlaps", async () => {
-    const response = await action({
+    const response = await callAction(action, {
       request: postRequest(`verfuegbar=${smallerKey}&angebot=${offerKey}`, times("15:00", "16:00")),
       params,
     });
@@ -160,12 +157,12 @@ describe("survey window route", () => {
       start: new Date("2026-09-24T13:00:00Z"),
       end: window.end,
     });
-    expect(locationOf(response)).toBe(`/umfrage/t1?verfuegbar=${merged}#zeitfenster-${offerKey}`);
+    expect(response.location).toBe(`/umfrage/t1?verfuegbar=${merged}#zeitfenster-${offerKey}`);
   });
 
   it("accepts a short window that becomes long enough with one it touches", async () => {
     // 15:30 to 17:00 is there already; 15:00 to 15:30 alone is shorter than an hour.
-    const response = await action({
+    const response = await callAction(action, {
       request: postRequest(`verfuegbar=${smallerKey}&angebot=${offerKey}`, times("15:00", "15:30")),
       params,
     });
@@ -175,20 +172,20 @@ describe("survey window route", () => {
       start: new Date("2026-09-24T13:00:00Z"),
       end: window.end,
     });
-    expect(locationOf(response)).toBe(`/umfrage/t1?verfuegbar=${merged}#zeitfenster-${offerKey}`);
+    expect(response.location).toBe(`/umfrage/t1?verfuegbar=${merged}#zeitfenster-${offerKey}`);
   });
 
   it("does not count a tick of the whole offered window towards the length", async () => {
-    const response = await action({
+    const response = await callAction(action, {
       request: postRequest(`verfuegbar=${offerKey}&angebot=${offerKey}`, times("16:00", "16:30")),
       params,
     });
 
-    expect(response).toMatchObject({ init: { status: 400 } });
+    expect(response).toMatchObject({ thrown: false, status: 400 });
   });
 
   it("does not count the window being changed towards its own length", async () => {
-    const response = await action({
+    const response = await callAction(action, {
       request: postRequest(
         `verfuegbar=${smallerKey}&angebot=${offerKey}&fenster=${smallerKey}`,
         times("16:30", "17:00"),
@@ -196,11 +193,11 @@ describe("survey window route", () => {
       params,
     });
 
-    expect(response).toMatchObject({ init: { status: 400 } });
+    expect(response).toMatchObject({ thrown: false, status: 400 });
   });
 
   it("replaces the window that is changed", async () => {
-    const response = await action({
+    const response = await callAction(action, {
       request: postRequest(
         `verfuegbar=${smallerKey}&angebot=${offerKey}&fenster=${smallerKey}`,
         times("14:00", "15:00"),
@@ -213,7 +210,7 @@ describe("survey window route", () => {
       start: window.start,
       end: new Date("2026-09-24T13:00:00Z"),
     });
-    expect(locationOf(response)).toBe(`/umfrage/t1?verfuegbar=${changed}#zeitfenster-${offerKey}`);
+    expect(response.location).toBe(`/umfrage/t1?verfuegbar=${changed}#zeitfenster-${offerKey}`);
   });
 
   it("answers 400 with what was entered for a window that does not fit", async () => {

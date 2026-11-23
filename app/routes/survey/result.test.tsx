@@ -1,6 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { callLoader } from "~tests/route";
 
 import {
   findSurvey,
@@ -102,23 +103,21 @@ describe("survey result route", () => {
   });
 
   it("sends visitors without a participant to the form", async () => {
-    const thrown = (await loader({ request: new Request(url), params }).catch(
-      (error: Response) => error,
-    )) as Response;
+    const thrown = await callLoader(loader, { request: new Request(url), params });
 
-    expect(thrown.headers.get("Location")).toBe("/umfrage/t1");
+    expect(thrown).toMatchObject({ thrown: true, location: "/umfrage/t1" });
     expect(getSavedAnswer).not.toHaveBeenCalled();
   });
 
   it("sends visitors with an unknown participant or one that has not answered to the form", async () => {
     vi.mocked(getSavedAnswer).mockResolvedValue(undefined);
 
-    const thrown = (await loader({ request: new Request(`${url}?teilnehmer=other`), params }).catch(
-      (error: Response) => error,
-    )) as Response;
+    const thrown = await callLoader(loader, {
+      request: new Request(`${url}?teilnehmer=other`),
+      params,
+    });
 
-    expect(thrown.status).toBe(302);
-    expect(thrown.headers.get("Location")).toBe("/umfrage/t1");
+    expect(thrown).toMatchObject({ thrown: true, status: 302, location: "/umfrage/t1" });
   });
 });
 
