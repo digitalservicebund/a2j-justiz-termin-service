@@ -60,7 +60,7 @@
     "@vitest/coverage-istanbul": "5.1.0",
     "ical.js": "2.2.1",
     "jsdom": "31.0.1",
-    "knip": "6.45.1",
+    "knip": "6.47.0",
     "oxfmt": "0.79.0",
     "oxlint": "1.94.0",
     "typescript": "7.0.2",
