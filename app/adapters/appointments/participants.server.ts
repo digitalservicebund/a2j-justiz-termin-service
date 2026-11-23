@@ -4,6 +4,7 @@ import { sql, type Kysely } from "kysely";
 
 import type { Database } from "../../database/types.ts";
 import { logInfo } from "../../lib/logging.ts";
+import { ownDraft, touch } from "./drafts.server.ts";
 
 // What a person is called wherever the app shows one: the name, else the e-mail address, else the
 // SAFE-ID. Select it as `name`. The row always has one of them.
@@ -14,18 +15,6 @@ export const participantName =
 export type ParticipantInput = { email: string | null; safeId: string | null; name: string | null };
 
 export type DraftParticipant = ParticipantInput & { id: string };
-
-// Only the user's own drafts can be changed.
-const ownDraft = (db: Kysely<Database>, userId: string, id: string) =>
-  db
-    .selectFrom("appointment")
-    .select("id")
-    .where("id", "=", id)
-    .where("user_id", "=", userId)
-    .where("status", "=", "draft");
-
-const touch = (db: Kysely<Database>, id: string) =>
-  db.updateTable("appointment").set({ updated_at: new Date() }).where("id", "=", id).execute();
 
 // The people of the user's own appointment in the order they were added. Several can share an
 // address or a name. Empty for an appointment that is not the user's.

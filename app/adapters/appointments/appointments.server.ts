@@ -7,6 +7,7 @@ import { confirmedWindow, rowToRange, type TimeRange } from "../../core/domain/t
 import type { AppointmentStatus, Database } from "../../database/types.ts";
 import { logInfo } from "../../lib/logging.ts";
 import { readAvailability, remainingOf } from "./availability.server.ts";
+import { ownDraft, touch } from "./drafts.server.ts";
 
 // A stored time slot. Its id stays the same as long as the slot is not replaced.
 export type AppointmentSlot = TimeRange & { id: string };
@@ -48,15 +49,6 @@ export async function createDraftAppointment(
   return id;
 }
 
-// Only the user's own drafts can be changed; a time slot is a draft exactly when its appointment is.
-const ownDraft = (db: Kysely<Database>, userId: string, id: string) =>
-  db
-    .selectFrom("appointment")
-    .select("id")
-    .where("id", "=", id)
-    .where("user_id", "=", userId)
-    .where("status", "=", "draft");
-
 // Returns false when the user has no such draft.
 export async function updateDraftDetails(
   db: Kysely<Database>,
@@ -88,11 +80,7 @@ export async function addDraftSlot(
       .insertInto("time_slot")
       .values({ appointment_id: id, start_time: start, end_time: end })
       .execute();
-    await trx
-      .updateTable("appointment")
-      .set({ updated_at: new Date() })
-      .where("id", "=", id)
-      .execute();
+    await touch(trx, id);
     return true;
   });
 }
@@ -115,11 +103,7 @@ export async function updateDraftSlot(
       .returning("id")
       .executeTakeFirst();
     if (!updated) return false;
-    await trx
-      .updateTable("appointment")
-      .set({ updated_at: new Date() })
-      .where("id", "=", id)
-      .execute();
+    await touch(trx, id);
     return true;
   });
 }
@@ -140,11 +124,7 @@ export async function deleteDraftSlot(
       .returning("id")
       .executeTakeFirst();
     if (!deleted) return false;
-    await trx
-      .updateTable("appointment")
-      .set({ updated_at: new Date() })
-      .where("id", "=", id)
-      .execute();
+    await touch(trx, id);
     return true;
   });
 }
