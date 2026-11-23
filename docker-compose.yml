@@ -21,7 +21,7 @@ services:
 
   # Local SMTP mock: accepts any mail and keeps it in the container only, nothing is relayed.
   mailpit:
-    image: axllent/mailpit:v1.33.1
+    image: axllent/mailpit:v1.34.0
     container_name: ${COMPOSE_PROJECT_NAME:-a2j-justiz-termin-service}-mailpit
     restart: unless-stopped
     environment:
