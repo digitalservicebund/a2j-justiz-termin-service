@@ -1,9 +1,9 @@
 import { createElement, type ReactNode } from "react";
 
-import { KernIcon } from "../kern/KernIcon";
-import { KernLink } from "../kern/KernLink";
-import { KernStack } from "../kern/KernStack";
-import { classNames, clusterClassName } from "../kern/layout";
+import { KernIcon } from "~/components/shared/kern/KernIcon";
+import { KernLink } from "~/components/shared/kern/KernLink";
+import { KernStack } from "~/components/shared/kern/KernStack";
+import { classNames, clusterClassName } from "~/components/shared/kern/layout";
 
 import "./A2JInlineNotice.css";
 

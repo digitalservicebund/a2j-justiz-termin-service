@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 
-import { renderMagicLinkEmail } from "./magic-link-email";
+import { renderMagicLinkEmail } from "./magic-link-email.ts";
 
 // The formatter indents the templates and wraps long tags, which does not change how a mail renders.
 const squash = (html: string) => html.replace(/\s+/g, " ").replace(/\s+>/g, ">");

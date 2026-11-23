@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 
-import { renderInvitationEmail } from "./invitation-email";
+import { renderInvitationEmail } from "./invitation-email.ts";
 
 const surveyUrl = "http://localhost:3000/verhandlungstermin-finder/umfrage/tok-1";
 const email = {

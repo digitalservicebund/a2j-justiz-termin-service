@@ -1,7 +1,7 @@
 import { connect } from "amqplib";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { connectRabbitMq } from "./rabbitmq";
+import { connectRabbitMq } from "./rabbitmq.ts";
 
 vi.mock("amqplib", () => ({ connect: vi.fn() }));
 

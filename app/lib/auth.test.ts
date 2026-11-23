@@ -3,8 +3,8 @@ import { betterAuth } from "better-auth";
 import { magicLink } from "better-auth/plugins";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getAuth } from "./auth.server";
-import { requireEnv } from "./env";
+import { getAuth } from "./auth.server.ts";
+import { requireEnv } from "./env.ts";
 
 const { canSignIn, userExists, isEmailDomainAllowed, sendMail, close } = vi.hoisted(() => ({
   canSignIn: vi.fn(),
@@ -18,15 +18,15 @@ vi.mock("better-auth", () => ({ betterAuth: vi.fn((options) => ({ options })) })
 vi.mock("better-auth/plugins", () => ({
   magicLink: vi.fn(() => ({ id: "magic-link" })),
 }));
-vi.mock("~/database/database", () => ({ getDb: () => ({ name: "db" }) }));
-vi.mock("~/adapters/users/users.server", () => ({ canSignIn, userExists }));
-vi.mock("~/adapters/users/allowed-domains.server", () => ({ isEmailDomainAllowed }));
-vi.mock("~/lib/smtp", () => ({
+vi.mock("../database/database.ts", () => ({ getDb: () => ({ name: "db" }) }));
+vi.mock("../adapters/users/users.server.ts", () => ({ canSignIn, userExists }));
+vi.mock("../adapters/users/allowed-domains.server.ts", () => ({ isEmailDomainAllowed }));
+vi.mock("./smtp.ts", () => ({
   createSmtpTransport: () => ({ sendMail, close }),
 }));
-vi.mock("~/lib/env", () => ({ requireEnv: vi.fn(() => "http://localhost:3000") }));
-vi.mock("~/lib/secrets", () => ({ requireSecret: () => "sender@example.com" }));
-vi.mock("~/lib/logging", () => ({ logError: vi.fn() }));
+vi.mock("./env.ts", () => ({ requireEnv: vi.fn(() => "http://localhost:3000") }));
+vi.mock("./secrets.ts", () => ({ requireSecret: () => "sender@example.com" }));
+vi.mock("./logging.ts", () => ({ logError: vi.fn() }));
 
 getAuth();
 const options = vi.mocked(betterAuth).mock.calls[0]![0]!;

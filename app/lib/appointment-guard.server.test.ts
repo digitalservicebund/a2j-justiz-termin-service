@@ -1,20 +1,19 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getAppointment, type Appointment } from "~/adapters/appointments/appointments.server";
-import { requireRole } from "~/adapters/session/session";
-import type { AuthUser } from "~/core/domain/user";
-
+import { getAppointment, type Appointment } from "../adapters/appointments/appointments.server.ts";
+import { requireRole } from "../adapters/session/session.ts";
+import type { AuthUser } from "../core/domain/user.ts";
 import {
   appointmentIdOf,
   getOwnAppointment,
   PUBLISHED,
   requireOwnAppointment,
-} from "./appointment-guard.server";
+} from "./appointment-guard.server.ts";
 
-vi.mock("~/adapters/session/session", () => ({ requireRole: vi.fn() }));
-vi.mock("~/adapters/appointments/appointments.server", () => ({ getAppointment: vi.fn() }));
-vi.mock("~/database/database", () => ({ getDb: () => ({ db: true }) }));
+vi.mock("../adapters/session/session.ts", () => ({ requireRole: vi.fn() }));
+vi.mock("../adapters/appointments/appointments.server.ts", () => ({ getAppointment: vi.fn() }));
+vi.mock("../database/database.ts", () => ({ getDb: () => ({ db: true }) }));
 
 const judge: AuthUser = {
   id: "u1",

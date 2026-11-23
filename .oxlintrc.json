@@ -36,5 +36,48 @@
     "vitest/require-mock-type-parameters": "off",
     "jsx-a11y/control-has-associated-label": "off"
   },
+  "overrides": [
+    {
+      "files": [
+        "app/adapters/**",
+        "app/core/**",
+        "app/database/**",
+        "app/lib/**",
+        "scripts/**",
+        "server.js"
+      ],
+      "rules": {
+        "import/extensions": ["error", "always", { "ignorePackages": true }],
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^~/",
+                "message": "Node loads this layer directly: use a relative import with the .ts extension."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["app/routes/**", "app/components/**", "app/*.ts", "app/*.tsx"],
+      "rules": {
+        "import/extensions": ["error", "ignorePackages", { "ts": "never", "tsx": "never" }],
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^\\.\\./",
+                "message": "Routes and components import from other folders with ~/, not ../."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
   "ignorePatterns": ["build", ".react-router", "node_modules"]
 }

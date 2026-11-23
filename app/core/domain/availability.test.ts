@@ -11,7 +11,7 @@ import {
   parseWindowKey,
   remainingWindows,
   windowKey,
-} from "./availability";
+} from "./availability.ts";
 
 // Times on one day, as UTC hours and minutes: at("11:30").
 const at = (time: string) => new Date(`2026-09-17T${time}:00Z`);

@@ -17,7 +17,7 @@ import {
   surveyResultPath,
   surveySummaryPath,
   surveyUrl,
-} from "./paths";
+} from "./paths.ts";
 
 describe("appointment paths", () => {
   it("builds the pages of a Terminumfrage with an encoded id", () => {

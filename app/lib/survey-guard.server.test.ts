@@ -1,12 +1,11 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { findSurvey, type Survey } from "~/adapters/appointments/survey.server";
+import { findSurvey, type Survey } from "../adapters/appointments/survey.server.ts";
+import { requireSurvey } from "./survey-guard.server.ts";
 
-import { requireSurvey } from "./survey-guard.server";
-
-vi.mock("~/adapters/appointments/survey.server", () => ({ findSurvey: vi.fn() }));
-vi.mock("~/database/database", () => ({ getDb: () => ({ db: true }) }));
+vi.mock("../adapters/appointments/survey.server.ts", () => ({ findSurvey: vi.fn() }));
+vi.mock("../database/database.ts", () => ({ getDb: () => ({ db: true }) }));
 
 const survey = { appointmentId: "a1", aktenzeichen: "Az. 1" } as Survey;
 

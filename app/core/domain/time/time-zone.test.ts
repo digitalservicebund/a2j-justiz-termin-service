@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { berlinDay } from "./time-zone";
+import { berlinDay } from "./time-zone.ts";
 
 describe("berlinDay", () => {
   it.each([

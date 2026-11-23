@@ -1,15 +1,15 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getSessionUser, requireAdmin, requireRole } from "./session";
+import { getSessionUser, requireAdmin, requireRole } from "./session.ts";
 
 const { getSession, findUser } = vi.hoisted(() => ({
   getSession: vi.fn(),
   findUser: vi.fn(),
 }));
 
-vi.mock("~/lib/auth.server", () => ({ getAuth: () => ({ api: { getSession } }) }));
-vi.mock("~/database/database", () => ({
+vi.mock("../../lib/auth.server.ts", () => ({ getAuth: () => ({ api: { getSession } }) }));
+vi.mock("../../database/database.ts", () => ({
   getDb: () => ({
     selectFrom: () => ({
       select: () => ({ where: () => ({ executeTakeFirst: findUser }) }),

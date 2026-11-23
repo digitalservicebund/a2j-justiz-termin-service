@@ -1,4 +1,4 @@
-import { BASE_PATH } from "~/lib/base-path";
+import { BASE_PATH } from "./base-path.ts";
 
 export const PAGE_TITLE = "Verhandlungstermin-Finder | Justiz-Services";
 

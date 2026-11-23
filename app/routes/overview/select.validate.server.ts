@@ -3,8 +3,8 @@ import { toWallClock, wallClockToInstant } from "~/core/domain/time/berlin.serve
 import { formatTime } from "~/core/domain/time/format";
 import type { TimeRange } from "~/core/domain/time/time-range";
 import { checkWallClock } from "~/core/domain/time/wall-clock";
+import { formatMinutes } from "~/routes/draft/schema";
 
-import { formatMinutes } from "../draft/schema";
 import { messages, type SelectErrors, type SelectValues } from "./select.schema";
 
 const parts = (value: string, pattern: RegExp, max: number) =>

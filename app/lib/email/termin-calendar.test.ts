@@ -2,7 +2,7 @@
 import ICAL from "ical.js";
 import { describe, expect, it } from "vitest";
 
-import { createTerminCalendar, createTerminEvents, wrapCalendar } from "./termin-calendar";
+import { createTerminCalendar, createTerminEvents, wrapCalendar } from "./termin-calendar.ts";
 
 const terminUrl = "http://localhost:3000/overview/a1";
 const organizerEmail = "sender@example.com";

@@ -9,7 +9,7 @@ import {
   formatSynchronizedAt,
   formatTime,
   formatWeekday,
-} from "./format";
+} from "./format.ts";
 
 // 15:30 to 18:00 Berlin time in September.
 const range = {

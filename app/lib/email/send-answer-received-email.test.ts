@@ -1,18 +1,17 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { toAnsweredSlot } from "~/adapters/appointments/availability.server";
-import type { ResponseOverview } from "~/adapters/appointments/survey.server";
-
-import { logError } from "../logging";
-import { sendAnswerReceivedEmail } from "./send-answer-received-email";
+import { toAnsweredSlot } from "../../adapters/appointments/availability.server.ts";
+import type { ResponseOverview } from "../../adapters/appointments/survey.server.ts";
+import { logError } from "../logging.ts";
+import { sendAnswerReceivedEmail } from "./send-answer-received-email.ts";
 
 const { sendMail, close } = vi.hoisted(() => ({ sendMail: vi.fn(), close: vi.fn() }));
 
-vi.mock("../smtp", () => ({ createSmtpTransport: vi.fn(() => ({ sendMail, close })) }));
-vi.mock("../env", () => ({ requireEnv: () => "http://localhost:3000" }));
-vi.mock("../secrets", () => ({ requireSecret: () => "sender@example.com" }));
-vi.mock("../logging", () => ({ logError: vi.fn() }));
+vi.mock("../smtp.ts", () => ({ createSmtpTransport: vi.fn(() => ({ sendMail, close })) }));
+vi.mock("../env.ts", () => ({ requireEnv: () => "http://localhost:3000" }));
+vi.mock("../secrets.ts", () => ({ requireSecret: () => "sender@example.com" }));
+vi.mock("../logging.ts", () => ({ logError: vi.fn() }));
 
 const s1 = { start: new Date("2026-09-17T07:00:00Z"), end: new Date("2026-09-17T08:30:00Z") };
 

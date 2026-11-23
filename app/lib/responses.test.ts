@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 
-import { badRequest, notFound } from "./responses";
+import { badRequest, notFound } from "./responses.ts";
 
 describe("responses", () => {
   it("answers not found with 404", () => {
