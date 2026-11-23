@@ -489,6 +489,9 @@ the copy they hold.
   `remainingWindows()` in `app/core/domain/availability.ts`, read through
   `app/adapters/appointments/availability.server.ts`. Answers and the confirmation are checked
   against it under a lock on the appointment row.
+- Whether an answer is taken, what it leaves of the slots and whether the Terminumfrage is
+  cancelled is decided by `stateAfterAnswer()` in `app/core/domain/survey.ts`, without a database.
+  `app/adapters/appointments/survey.server.ts` only reads and writes the rows.
 
 ### Glossary
 
