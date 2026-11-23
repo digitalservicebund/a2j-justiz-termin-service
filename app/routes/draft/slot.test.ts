@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { callAction } from "~tests/route";
 
 import {
   addDraftSlot,
@@ -65,10 +66,6 @@ const get = (slotId: string, query = "") => ({
   request: new Request(url(slotId, query)),
   params: { appointmentId: "d1", slotId },
 });
-
-type DataResponse = { data: Record<string, any>; init: { status?: number } | null };
-const location = (response: unknown) => (response as Response).headers.get("Location");
-
 describe("create-termin slot route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -155,56 +152,71 @@ describe("create-termin slot route", () => {
 
   describe("saving a new slot", () => {
     it("adds it and returns to the form", async () => {
-      const response = await action(post("neu", fields("7")));
+      const response = await callAction(action, post("neu", fields("7")));
 
       expect(addDraftSlot).toHaveBeenCalledWith({ db: true }, "1", "d1", {
         start: new Date("2099-01-07T10:00:00Z"),
         end: new Date("2099-01-07T11:30:00Z"),
       });
-      expect(location(response)).toBe("/overview/new?entwurf=d1");
+      expect(response.location).toBe("/overview/new?entwurf=d1");
     });
 
     it("answers 400 with the problems and the typed values, saving nothing", async () => {
       const typed = fields("40", { endHour: "9" });
-      const response = (await action(post("neu", typed))) as unknown as DataResponse;
+      const response = await callAction(action, post("neu", typed));
 
-      expect(response.init?.status).toBe(400);
-      expect(response.data.values).toEqual(typed);
-      expect(response.data.errors.date).toBe("Geben Sie ein gültiges Datum an.");
-      expect(response.data.errors.range).toBe("Die Endzeit muss nach der Startzeit liegen.");
+      expect(response).toMatchObject({
+        status: 400,
+        data: {
+          values: typed,
+          errors: {
+            date: "Geben Sie ein gültiges Datum an.",
+            range: "Die Endzeit muss nach der Startzeit liegen.",
+          },
+        },
+      });
       expect(addDraftSlot).not.toHaveBeenCalled();
     });
 
     it("answers 400 for an empty form", async () => {
-      const response = (await action(post("neu", {}))) as unknown as DataResponse;
+      const response = await callAction(action, post("neu", {}));
 
-      expect(response.init?.status).toBe(400);
-      expect(Object.keys(response.data.errors)).toEqual(
-        expect.arrayContaining(["date", "start", "end"]),
-      );
+      expect(response).toMatchObject({
+        status: 400,
+        data: {
+          errors: { date: expect.any(String), start: expect.any(String), end: expect.any(String) },
+        },
+      });
     });
 
     it("names the slot it overlaps with, by date and time", async () => {
-      const response = (await action(
+      const response = await callAction(
+        action,
         post(
           "neu",
           fields("5", { startHour: "9", startMinute: "30", endHour: "10", endMinute: "30" }),
         ),
-      )) as unknown as DataResponse;
-
-      expect(response.init?.status).toBe(400);
-      expect(response.data.errors.overlap).toBe(
-        "Dieses Zeitfenster überschneidet sich mit dem Zeitfenster am 5. Januar 2099, 09:00 bis 10:00.",
       );
+
+      expect(response).toMatchObject({
+        status: 400,
+        data: {
+          errors: {
+            overlap:
+              "Dieses Zeitfenster überschneidet sich mit dem Zeitfenster am 5. Januar 2099, 09:00 bis 10:00.",
+          },
+        },
+      });
       expect(addDraftSlot).not.toHaveBeenCalled();
     });
 
     it("lets a slot start when another one ends", async () => {
-      const response = await action(
+      const response = await callAction(
+        action,
         post("neu", fields("5", { startHour: "10", startMinute: "0", endHour: "11" })),
       );
 
-      expect(location(response)).toBe("/overview/new?entwurf=d1");
+      expect(response.location).toBe("/overview/new?entwurf=d1");
     });
 
     it("refuses a slot beyond the maximum", async () => {
@@ -212,10 +224,12 @@ describe("create-termin slot route", () => {
         draft(Array.from({ length: MAX_SLOTS }, (_, index) => stored(String(index + 1)))),
       );
 
-      const response = (await action(post("neu", fields("30")))) as unknown as DataResponse;
+      const response = await callAction(action, post("neu", fields("30")));
 
-      expect(response.init?.status).toBe(400);
-      expect(response.data.errors.overlap).toBe(`Geben Sie höchstens ${MAX_SLOTS} Zeitfenster an.`);
+      expect(response).toMatchObject({
+        status: 400,
+        data: { errors: { overlap: `Geben Sie höchstens ${MAX_SLOTS} Zeitfenster an.` } },
+      });
       expect(addDraftSlot).not.toHaveBeenCalled();
     });
 
@@ -230,29 +244,35 @@ describe("create-termin slot route", () => {
 
   describe("saving an existing slot", () => {
     it("replaces the slot and returns to the form", async () => {
-      const response = await action(post("s5", fields("8")));
+      const response = await callAction(action, post("s5", fields("8")));
 
       expect(updateDraftSlot).toHaveBeenCalledWith({ db: true }, "1", "d1", "s5", {
         start: new Date("2099-01-08T10:00:00Z"),
         end: new Date("2099-01-08T11:30:00Z"),
       });
       expect(addDraftSlot).not.toHaveBeenCalled();
-      expect(location(response)).toBe("/overview/new?entwurf=d1");
+      expect(response.location).toBe("/overview/new?entwurf=d1");
     });
 
     it("does not overlap with itself", async () => {
-      const response = await action(post("s5", fields("5", { startHour: "9", endHour: "10" })));
+      const response = await callAction(
+        action,
+        post("s5", fields("5", { startHour: "9", endHour: "10" })),
+      );
 
-      expect(location(response)).toBe("/overview/new?entwurf=d1");
+      expect(response.location).toBe("/overview/new?entwurf=d1");
     });
 
     it("still overlaps with the other slots", async () => {
-      const response = (await action(
+      const response = await callAction(
+        action,
         post("s5", fields("6", { startHour: "9", endHour: "10" })),
-      )) as unknown as DataResponse;
+      );
 
-      expect(response.init?.status).toBe(400);
-      expect(response.data.errors.overlap).toContain("6. Januar 2099");
+      expect(response).toMatchObject({
+        status: 400,
+        data: { errors: { overlap: expect.stringContaining("6. Januar 2099") } },
+      });
     });
 
     it("answers 404 for a slot that is not in the draft", async () => {

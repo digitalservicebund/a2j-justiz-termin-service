@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { callAction } from "~tests/route";
 
 import {
   createDraftAppointment,
@@ -52,10 +53,6 @@ function post(fields: Record<string, string>) {
     body: new URLSearchParams(fields),
   });
 }
-
-type DataResponse = { data: Record<string, any>; init: { status?: number } | null };
-
-const location = (response: unknown) => (response as Response).headers.get("Location");
 
 describe("create-termin route", () => {
   beforeEach(() => {
@@ -148,7 +145,7 @@ describe("create-termin route", () => {
 
   describe("leaving for a slot page", () => {
     it("creates the draft with the Aktenzeichen on the first visit to the slot page", async () => {
-      const response = await action({
+      const response = await callAction(action, {
         request: post({ intent: "add-slot", aktenzeichen: "  A 1 " }),
       });
 
@@ -156,21 +153,23 @@ describe("create-termin route", () => {
         aktenzeichen: "A 1",
         minDurationMinutes: null,
       });
-      expect(location(response)).toBe("/overview/new-id/zeitfenster/neu");
+      expect(response.location).toBe("/overview/new-id/zeitfenster/neu");
     });
 
     it("creates a draft even when nothing was typed yet", async () => {
-      const response = await action({ request: post({ intent: "add-slot", aktenzeichen: "" }) });
+      const response = await callAction(action, {
+        request: post({ intent: "add-slot", aktenzeichen: "" }),
+      });
 
       expect(createDraftAppointment).toHaveBeenCalledWith({ db: true }, "1", {
         aktenzeichen: "",
         minDurationMinutes: null,
       });
-      expect(location(response)).toBe("/overview/new-id/zeitfenster/neu");
+      expect(response.location).toBe("/overview/new-id/zeitfenster/neu");
     });
 
     it("saves the typed Aktenzeichen into the existing draft instead of creating another", async () => {
-      const response = await action({
+      const response = await callAction(action, {
         request: post({ intent: "add-slot", aktenzeichen: "A 2", appointmentId: "d1" }),
       });
 
@@ -179,19 +178,19 @@ describe("create-termin route", () => {
         minDurationMinutes: null,
       });
       expect(createDraftAppointment).not.toHaveBeenCalled();
-      expect(location(response)).toBe("/overview/d1/zeitfenster/neu");
+      expect(response.location).toBe("/overview/d1/zeitfenster/neu");
     });
 
     it.each([
       ["edit-slot:s5", "/overview/d1/zeitfenster/s5"],
       ["copy-slot:s5", "/overview/d1/zeitfenster/neu?kopie=s5"],
     ])("%s opens the slot page", async (intent, expected) => {
-      const response = await action({
+      const response = await callAction(action, {
         request: post({ intent, aktenzeichen: "A 1", appointmentId: "d1" }),
       });
 
       expect(updateDraftDetails).toHaveBeenCalledOnce();
-      expect(location(response)).toBe(expected);
+      expect(response.location).toBe(expected);
     });
 
     it("answers 404 when the draft to save into is not the user's draft", async () => {
@@ -203,14 +202,14 @@ describe("create-termin route", () => {
     });
 
     it("refuses an Aktenzeichen that is too long, without saving or leaving", async () => {
-      const response = (await action({
+      const response = await callAction(action, {
         request: post({ intent: "add-slot", aktenzeichen: "A".repeat(51) }),
-      })) as unknown as DataResponse;
+      });
 
-      expect(response.init?.status).toBe(400);
-      expect(response.data.errors.aktenzeichen).toBe(
-        "Das Aktenzeichen darf höchstens 50 Zeichen lang sein.",
-      );
+      expect(response).toMatchObject({
+        status: 400,
+        data: { errors: { aktenzeichen: "Das Aktenzeichen darf höchstens 50 Zeichen lang sein." } },
+      });
       expect(createDraftAppointment).not.toHaveBeenCalled();
     });
   });
@@ -220,7 +219,7 @@ describe("create-termin route", () => {
       ["add-person", "/overview/d1/verfahrensbeteiligte/neu"],
       ["edit-person:p1", "/overview/d1/verfahrensbeteiligte/p1"],
     ])("%s saves the Aktenzeichen and opens the page of the person", async (intent, expected) => {
-      const response = await action({
+      const response = await callAction(action, {
         request: post({ intent, aktenzeichen: "A 2", appointmentId: "d1" }),
       });
 
@@ -228,11 +227,11 @@ describe("create-termin route", () => {
         aktenzeichen: "A 2",
         minDurationMinutes: null,
       });
-      expect(location(response)).toBe(expected);
+      expect(response.location).toBe(expected);
     });
 
     it("creates the draft first when the person is the first thing added", async () => {
-      const response = await action({
+      const response = await callAction(action, {
         request: post({ intent: "add-person", aktenzeichen: "A 1" }),
       });
 
@@ -240,16 +239,16 @@ describe("create-termin route", () => {
         aktenzeichen: "A 1",
         minDurationMinutes: null,
       });
-      expect(location(response)).toBe("/overview/new-id/verfahrensbeteiligte/neu");
+      expect(response.location).toBe("/overview/new-id/verfahrensbeteiligte/neu");
     });
 
     it("deletes a person at once and returns to the form", async () => {
-      const response = await action({
+      const response = await callAction(action, {
         request: post({ intent: "delete-person:p1", aktenzeichen: "A 1", appointmentId: "d1" }),
       });
 
       expect(deleteDraftParticipant).toHaveBeenCalledWith({ db: true }, "1", "d1", "p1");
-      expect(location(response)).toBe("/overview/new?entwurf=d1");
+      expect(response.location).toBe("/overview/new?entwurf=d1");
     });
 
     it("answers 404 for a person that is not in the user's draft", async () => {
@@ -265,7 +264,7 @@ describe("create-termin route", () => {
     it("goes to the review without any person", async () => {
       vi.mocked(listParticipants).mockResolvedValue([]);
 
-      const response = await action({
+      const response = await callAction(action, {
         request: post({
           intent: "next",
           aktenzeichen: "A 1",
@@ -274,18 +273,18 @@ describe("create-termin route", () => {
         }),
       });
 
-      expect(location(response)).toBe("/overview/d1/confirm");
+      expect(response.location).toBe("/overview/d1/confirm");
     });
   });
 
   describe("deleting a slot", () => {
     it("deletes it and returns to the form", async () => {
-      const response = await action({
+      const response = await callAction(action, {
         request: post({ intent: "delete-slot:s5", aktenzeichen: "A 1", appointmentId: "d1" }),
       });
 
       expect(deleteDraftSlot).toHaveBeenCalledWith({ db: true }, "1", "d1", "s5");
-      expect(location(response)).toBe("/overview/new?entwurf=d1");
+      expect(response.location).toBe("/overview/new?entwurf=d1");
     });
 
     it("answers 404 for a slot that is not in the user's draft", async () => {
@@ -301,7 +300,7 @@ describe("create-termin route", () => {
 
   describe("continuing to the review", () => {
     it("goes to the review of a complete draft", async () => {
-      const response = await action({
+      const response = await callAction(action, {
         request: post({
           intent: "next",
           aktenzeichen: "A 1",
@@ -314,22 +313,23 @@ describe("create-termin route", () => {
         aktenzeichen: "A 1",
         minDurationMinutes: 60,
       });
-      expect(location(response)).toBe("/overview/d1/confirm");
+      expect(response.location).toBe("/overview/d1/confirm");
     });
 
     it("needs an Aktenzeichen, and keeps what was typed", async () => {
-      const response = (await action({
+      const response = await callAction(action, {
         request: post({
           intent: "next",
           aktenzeichen: "  ",
           minDuration: "60",
           appointmentId: "d1",
         }),
-      })) as unknown as DataResponse;
+      });
 
-      expect(response.init?.status).toBe(400);
-      expect(response.data.errors.aktenzeichen).toBe("Geben Sie ein Aktenzeichen an.");
-      expect(response.data.aktenzeichen).toBe("  ");
+      expect(response).toMatchObject({
+        status: 400,
+        data: { aktenzeichen: "  ", errors: { aktenzeichen: "Geben Sie ein Aktenzeichen an." } },
+      });
       expect(updateDraftDetails).not.toHaveBeenCalled();
     });
 
@@ -341,26 +341,30 @@ describe("create-termin route", () => {
         slots: [stored("5")],
       });
 
-      const response = (await action({
+      const response = await callAction(action, {
         request: post({
           intent: "next",
           aktenzeichen: "A 1",
           minDuration: "60",
           appointmentId: "d1",
         }),
-      })) as unknown as DataResponse;
+      });
 
-      expect(response.init?.status).toBe(400);
-      expect(response.data.errors.slots).toBe("Geben Sie mindestens zwei Zeitfenster an.");
+      expect(response).toMatchObject({
+        status: 400,
+        data: { errors: { slots: "Geben Sie mindestens zwei Zeitfenster an." } },
+      });
     });
 
     it("reports what is missing when nothing was entered and no draft exists", async () => {
-      const response = (await action({
+      const response = await callAction(action, {
         request: post({ intent: "next", aktenzeichen: "A 1", minDuration: "60" }),
-      })) as unknown as DataResponse;
+      });
 
-      expect(response.init?.status).toBe(400);
-      expect(response.data.errors.slots).toBe("Geben Sie mindestens zwei Zeitfenster an.");
+      expect(response).toMatchObject({
+        status: 400,
+        data: { errors: { slots: "Geben Sie mindestens zwei Zeitfenster an." } },
+      });
       expect(createDraftAppointment).not.toHaveBeenCalled();
       expect(getAppointment).not.toHaveBeenCalled();
     });
@@ -380,19 +384,21 @@ describe("create-termin route", () => {
         ],
       });
 
-      const response = (await action({
+      const response = await callAction(action, {
         request: post({
           intent: "next",
           aktenzeichen: "A 1",
           minDuration: "60",
           appointmentId: "d1",
         }),
-      })) as unknown as DataResponse;
+      });
 
-      expect(response.init?.status).toBe(400);
-      expect(response.data.errors.rows[0].date).toBe(
-        "Das Datum darf nicht in der Vergangenheit liegen.",
-      );
+      expect(response).toMatchObject({
+        status: 400,
+        data: {
+          errors: { rows: { 0: { date: "Das Datum darf nicht in der Vergangenheit liegen." } } },
+        },
+      });
     });
   });
 
@@ -441,55 +447,58 @@ describe("create-termin route", () => {
       ["0", "Geben Sie die Mindestdauer in ganzen Minuten an, zum Beispiel 30."],
       ["1440", "Die Mindestdauer darf höchstens 1439 Minuten betragen."],
     ])("refuses %j without saving or leaving, and keeps what was typed", async (typed, message) => {
-      const response = (await action({
+      const response = await callAction(action, {
         request: post({
           intent: "add-slot",
           aktenzeichen: "A 1",
           minDuration: typed,
           appointmentId: "d1",
         }),
-      })) as unknown as DataResponse;
+      });
 
-      expect(response.init?.status).toBe(400);
-      expect(response.data.errors.minDuration).toBe(message);
-      expect(response.data.minDuration).toBe(typed);
-      expect(response.data.aktenzeichen).toBe("A 1");
+      expect(response).toMatchObject({
+        status: 400,
+        data: { aktenzeichen: "A 1", minDuration: typed, errors: { minDuration: message } },
+      });
       expect(updateDraftDetails).not.toHaveBeenCalled();
     });
 
     it("is needed to continue, and is reported together with a missing Aktenzeichen", async () => {
-      const response = (await action({
+      const response = await callAction(action, {
         request: post({ intent: "next", aktenzeichen: "", minDuration: "", appointmentId: "d1" }),
-      })) as unknown as DataResponse;
+      });
 
-      expect(response.init?.status).toBe(400);
-      expect(response.data.errors).toMatchObject({
-        aktenzeichen: "Geben Sie ein Aktenzeichen an.",
-        minDuration: "Geben Sie eine Mindestdauer an.",
+      expect(response).toMatchObject({
+        status: 400,
+        data: {
+          errors: {
+            aktenzeichen: "Geben Sie ein Aktenzeichen an.",
+            minDuration: "Geben Sie eine Mindestdauer an.",
+          },
+        },
       });
       expect(updateDraftDetails).not.toHaveBeenCalled();
     });
 
     it("flags every saved slot that is shorter, on its row", async () => {
-      const response = (await action({
+      const response = await callAction(action, {
         request: post({
           intent: "next",
           aktenzeichen: "A 1",
           minDuration: "61",
           appointmentId: "d1",
         }),
-      })) as unknown as DataResponse;
+      });
 
-      expect(response.init?.status).toBe(400);
-      expect(response.data.errors.rows).toEqual({
+      expect(response).toMatchObject({ status: 400, data: { minDuration: "61" } });
+      expect(response.data).toHaveProperty("errors.rows", {
         0: { range: "Das Zeitfenster muss mindestens 61 Minuten lang sein." },
         1: { range: "Das Zeitfenster muss mindestens 61 Minuten lang sein." },
       });
-      expect(response.data.minDuration).toBe("61");
     });
 
     it("accepts slots that are exactly as long", async () => {
-      const response = await action({
+      const response = await callAction(action, {
         request: post({
           intent: "next",
           aktenzeichen: "A 1",
@@ -498,26 +507,28 @@ describe("create-termin route", () => {
         }),
       });
 
-      expect(location(response)).toBe("/overview/d1/confirm");
+      expect(response.location).toBe("/overview/d1/confirm");
     });
   });
 
   describe("cancelling", () => {
     it("removes an empty draft and returns to the overview", async () => {
-      const response = await action({
+      const response = await callAction(action, {
         request: post({ intent: "cancel", aktenzeichen: "", appointmentId: "d1" }),
       });
 
       expect(deleteDraftIfEmpty).toHaveBeenCalledWith({ db: true }, "1", "d1");
-      expect(location(response)).toBe("/overview");
+      expect(response.location).toBe("/overview");
     });
 
     it("has nothing to remove before a draft exists", async () => {
-      const response = await action({ request: post({ intent: "cancel", aktenzeichen: "A" }) });
+      const response = await callAction(action, {
+        request: post({ intent: "cancel", aktenzeichen: "A" }),
+      });
 
       expect(deleteDraftIfEmpty).not.toHaveBeenCalled();
       expect(createDraftAppointment).not.toHaveBeenCalled();
-      expect(location(response)).toBe("/overview");
+      expect(response.location).toBe("/overview");
     });
   });
 

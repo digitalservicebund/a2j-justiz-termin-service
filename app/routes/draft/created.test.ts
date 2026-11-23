@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { callAction, callLoader } from "~tests/route";
 
 import { getAppointment } from "~/adapters/appointments/appointments.server";
 import {
@@ -109,11 +110,11 @@ describe("create-termin created route", () => {
       slots: [],
     });
 
-    const thrown = await loader({ request: request(), params }).catch((error: Response) => error);
-
-    expect(thrown).toBeInstanceOf(Response);
-    expect((thrown as Response).status).toBe(302);
-    expect((thrown as Response).headers.get("Location")).toBe("/overview/a1/confirm");
+    expect(await callLoader(loader, { request: request(), params })).toMatchObject({
+      thrown: true,
+      status: 302,
+      location: "/overview/a1/confirm",
+    });
   });
 
   it("lists the guests with their invitations and lets an open survey invite them", async () => {
@@ -179,17 +180,20 @@ describe("create-termin created route", () => {
     });
     vi.mocked(recordInvitation).mockResolvedValue(true);
 
-    const response = (await action({
+    const response = await callAction(action, {
       request: new Request("http://localhost:3000/overview/a1/created", {
         method: "POST",
         body: new URLSearchParams({ intent: "invite-manual:p1" }),
       }),
       params,
-    })) as Response;
+    });
 
     expect(recordInvitation).toHaveBeenCalledWith({ db: true }, "1", "a1", "p1", "manual");
-    expect(response.status).toBe(302);
-    expect(response.headers.get("Location")).toBe("/overview/a1/created#verfahrensbeteiligte");
+    expect(response).toMatchObject({
+      thrown: false,
+      status: 302,
+      location: "/overview/a1/created#verfahrensbeteiligte",
+    });
   });
 
   it("answers 404 for a guest who cannot be invited", async () => {

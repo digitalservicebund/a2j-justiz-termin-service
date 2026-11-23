@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { callAction, callLoader } from "~tests/route";
 
 import { confirmAppointment, getAppointment } from "~/adapters/appointments/appointments.server";
 import type * as AvailabilityModule from "~/adapters/appointments/availability.server";
@@ -50,8 +51,6 @@ const availability = {
 };
 const [K0] = open.slots.map(({ id, start, end }) => windowKey({ slotId: id, start, end }));
 const query = `?fenster=${K0}&stunde=16&minute=30`;
-
-const locationOf = (response: unknown) => (response as Response).headers.get("Location");
 
 function postRequest(fields: Record<string, string>) {
   const form = new FormData();
@@ -107,11 +106,9 @@ describe("overview select confirm route", () => {
   it("sends an appointment that is not open to its detail page", async () => {
     vi.mocked(getAppointment).mockResolvedValue({ ...open, status: "confirmed" });
 
-    const thrown = await loader({ request: new Request(url + query), params }).catch(
-      (error: Response) => error,
-    );
+    const thrown = await callLoader(loader, { request: new Request(url + query), params });
 
-    expect(locationOf(thrown)).toBe("/overview/a1");
+    expect(thrown).toMatchObject({ thrown: true, location: "/overview/a1" });
   });
 
   it("sends the judge back to the choice when the query is missing or out of bounds", async () => {
@@ -120,26 +117,24 @@ describe("overview select confirm route", () => {
       `?fenster=${K0}&stunde=18&minute=0`,
       "?fenster=3&stunde=16&minute=0",
     ]) {
-      const thrown = await loader({ request: new Request(url + search), params }).catch(
-        (error: Response) => error,
-      );
-      expect(thrown).toBeInstanceOf(Response);
-      expect(locationOf(thrown)).toMatch(/^\/overview\/a1\/select\?fenster=/);
+      const thrown = await callLoader(loader, { request: new Request(url + search), params });
+      expect(thrown.thrown).toBe(true);
+      expect(thrown.location).toMatch(/^\/overview\/a1\/select\?fenster=/);
     }
   });
 
   it("goes back to the choice and keeps it", async () => {
-    const response = await action({
+    const response = await callAction(action, {
       request: postRequest({ intent: "back", ...choice }),
       params,
     });
 
-    expect(locationOf(response)).toBe(`/overview/a1/select?fenster=${K0}&stunde=16&minute=30`);
+    expect(response.location).toBe(`/overview/a1/select?fenster=${K0}&stunde=16&minute=30`);
     expect(confirmAppointment).not.toHaveBeenCalled();
   });
 
   it("confirms the window from the chosen start to the end of the slot", async () => {
-    const response = await action({
+    const response = await callAction(action, {
       request: postRequest({ intent: "confirm", ...choice }),
       params,
     });
@@ -148,28 +143,28 @@ describe("overview select confirm route", () => {
       start: new Date("2026-11-09T15:30:00Z"),
       end: new Date("2026-11-09T17:00:00Z"),
     });
-    expect(locationOf(response)).toBe("/overview/a1/selected");
+    expect(response.location).toBe("/overview/a1/selected");
   });
 
   it("does not confirm a start outside the window", async () => {
-    const response = await action({
+    const response = await callAction(action, {
       request: postRequest({ intent: "confirm", fenster: K0, stunde: "14", minute: "0" }),
       params,
     });
 
     expect(confirmAppointment).not.toHaveBeenCalled();
-    expect(locationOf(response)).toBe(`/overview/a1/select?fenster=${K0}&stunde=14&minute=0`);
+    expect(response.location).toBe(`/overview/a1/select?fenster=${K0}&stunde=14&minute=0`);
   });
 
   it("shows the detail page when the appointment was confirmed in the meantime", async () => {
     vi.mocked(confirmAppointment).mockResolvedValue(false);
 
-    const response = await action({
+    const response = await callAction(action, {
       request: postRequest({ intent: "confirm", ...choice }),
       params,
     });
 
-    expect(locationOf(response)).toBe("/overview/a1");
+    expect(response.location).toBe("/overview/a1");
   });
 
   it("rejects an unknown intent", async () => {

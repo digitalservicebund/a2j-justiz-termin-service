@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRoutesStub } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { callLoader } from "~tests/route";
 
 import { getAppointment } from "~/adapters/appointments/appointments.server";
 import { requireRole } from "~/adapters/session/session";
@@ -77,10 +78,9 @@ describe("overview selected route", () => {
     async (patch) => {
       vi.mocked(getAppointment).mockResolvedValue({ ...confirmed, ...patch });
 
-      const thrown = await loader({ request: request(), params }).catch((error: Response) => error);
+      const thrown = await callLoader(loader, { request: request(), params });
 
-      expect(thrown).toBeInstanceOf(Response);
-      expect((thrown as Response).headers.get("Location")).toBe("/overview/a1");
+      expect(thrown).toMatchObject({ thrown: true, location: "/overview/a1" });
     },
   );
 });
