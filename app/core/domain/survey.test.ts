@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { stateAfterAnswer, type SurveyState } from "./survey";
+import { stateAfterAnswer, type SurveyState } from "./survey.ts";
 
 // Times on one day, as UTC hours and minutes: at("11:30").
 const at = (time: string) => new Date(`2026-09-17T${time}:00Z`);
