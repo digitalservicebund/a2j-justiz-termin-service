@@ -79,7 +79,7 @@ export default function Overview() {
     : "Sie haben keine Terminumfrage.";
   return (
     <AppShell user={user} breadcrumbs={[{ label: "Übersicht" }]}>
-      <SidebarPage current="overview" spacing="roomy">
+      <SidebarPage current="overview" user={user} spacing="roomy">
         <KernStack gap="xl" align="start" className="overview__content">
           <h1 className="kern-sr-only">Übersicht</h1>
           <KernLinkButton to={NEW_APPOINTMENT_PATH}>

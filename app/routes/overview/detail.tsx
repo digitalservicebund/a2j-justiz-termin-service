@@ -149,7 +149,7 @@ export default function OverviewDetail() {
       user={user}
       breadcrumbs={[{ label: "Übersicht", href: OVERVIEW_PATH }, { label: "Terminumfrage" }]}
     >
-      <SidebarPage current="overview">
+      <SidebarPage current="overview" user={user}>
         <KernStack gap="xl" align="start" className="overview-detail">
           {detail.state === "confirmed" && detail.past ? (
             <>

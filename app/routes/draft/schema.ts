@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-import { formatCalendarDate } from "~/core/domain/time/format";
+import { formatCalendarDate, formatTimeOfDay } from "~/core/domain/time/format";
+import { parseTimeOfDay } from "~/core/domain/time/time-of-day";
 import { berlinDay } from "~/core/domain/time/time-zone";
 import { checkWallClock, type WallClockKind } from "~/core/domain/time/wall-clock";
 
@@ -98,13 +99,6 @@ function parseDate(slot: SlotInput): string | null {
   return [year, month, day].map((part, i) => String(part).padStart(i === 0 ? 4 : 2, "0")).join("-");
 }
 
-function parseMinutes(hour: string, minute: string): number | null {
-  const h = toNumber(hour, /^\d{1,2}$/);
-  const m = toNumber(minute, /^\d{1,2}$/);
-  if (h === null || m === null || h > 23 || m > 59) return null;
-  return h * 60 + m;
-}
-
 const timeMessage: Record<Exclude<WallClockKind, "ok">, string> = {
   skipped: messages.skippedTime,
   repeated: messages.repeatedTime,
@@ -139,8 +133,8 @@ function checkSlot(
   const add = (group: SlotErrorGroup, message: string) => issues.push({ group, message });
 
   const date = parseDate(slot);
-  const start = parseMinutes(slot.startHour, slot.startMinute);
-  const end = parseMinutes(slot.endHour, slot.endMinute);
+  const start = parseTimeOfDay(slot.startHour, slot.startMinute);
+  const end = parseTimeOfDay(slot.endHour, slot.endMinute);
 
   if (date === null) add("date", messages.date);
   else if (date < berlinDay(now)) add("date", messages.pastDate);
@@ -295,14 +289,10 @@ export function validateCreateTermin(
 
 export type SlotErrors = Partial<Record<SlotErrorGroup, string>>;
 
-const twoDigits = (value: number) => String(value).padStart(2, "0");
-const clock = (minutes: number) =>
-  `${twoDigits(Math.floor(minutes / 60))}:${twoDigits(minutes % 60)}`;
-
 // "am 17. September 2026, 10:00 bis 14:00"
 function describeComplete({ date, start, end }: Omit<CompleteSlot, "index">): string {
   const [year, month, day] = date.split("-").map(Number) as [number, number, number];
-  return `am ${formatCalendarDate(year, month, day)}, ${clock(start)} bis ${clock(end)}`;
+  return `am ${formatCalendarDate(year, month, day)}, ${formatTimeOfDay(start)} bis ${formatTimeOfDay(end)}`;
 }
 
 // Checks the one slot that is being added or changed, against the other slots of the draft and

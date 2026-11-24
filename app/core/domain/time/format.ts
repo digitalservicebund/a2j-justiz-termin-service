@@ -1,3 +1,4 @@
+import { toSqlTime, type TimeOfDay } from "./time-of-day.ts";
 import type { TimeRange } from "./time-range.ts";
 import { berlinDay, TIME_ZONE } from "./time-zone.ts";
 
@@ -41,6 +42,18 @@ const calendarDate = new Intl.DateTimeFormat("de-DE", {
   year: "numeric",
   timeZone: "UTC",
 });
+
+const weekdayOfCalendarDate = new Intl.DateTimeFormat("de-DE", {
+  weekday: "long",
+  timeZone: "UTC",
+});
+
+// "Montag" for 1 to "Sonntag" for 7, the ISO numbering. 1 January 2024 was a Monday.
+export const formatIsoWeekday = (isoWeekday: number) =>
+  weekdayOfCalendarDate.format(new Date(Date.UTC(2024, 0, isoWeekday)));
+
+// "09:00" for a time without a date.
+export const formatTimeOfDay = (time: TimeOfDay) => toSqlTime(time);
 
 // "17. September 2026"
 export const formatDay = (instant: Date) => dayLong.format(instant);

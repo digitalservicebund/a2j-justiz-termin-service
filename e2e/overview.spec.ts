@@ -146,7 +146,7 @@ test("overview ignores an invalid sort and filter", async ({ page, users, db }) 
   await expect(page.getByLabel("Filter")).toHaveValue("none");
 });
 
-test("overview shows the sidebar with the overview and the calendar subscription linked", async ({
+test("overview shows a party the sidebar with the overview and the calendar subscription linked", async ({
   page,
   users,
 }) => {
@@ -160,7 +160,8 @@ test("overview shows the sidebar with the overview and the calendar subscription
   );
   await expect(nav.getByRole("link", { name: "Kalender abonnieren" })).toBeVisible();
   await expect(nav.getByRole("link")).toHaveCount(2);
-  await expect(nav.getByText("Einstellungen")).toBeVisible();
+  // The settings are for judges only.
+  await expect(nav.getByText("Einstellungen")).toHaveCount(0);
 });
 
 test("a richter can open the create-termin page from the overview", async ({ page, users }) => {

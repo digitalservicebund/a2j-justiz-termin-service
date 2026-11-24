@@ -4,6 +4,8 @@ import {
   formatCalendarDate,
   formatDay,
   formatInstant,
+  formatIsoWeekday,
+  formatTimeOfDay,
   formatRange,
   formatRangeLong,
   formatSynchronizedAt,
@@ -23,6 +25,23 @@ describe("formatters", () => {
     expect(formatTime(range.start)).toBe("15:30");
     expect(formatWeekday(range.start)).toBe("Donnerstag");
     expect(formatInstant(range.start)).toBe("Donnerstag, 17. September 2026 um 15:30");
+  });
+
+  it("name the ISO weekdays in German", () => {
+    expect([1, 2, 3, 4, 5, 6, 7].map(formatIsoWeekday)).toEqual([
+      "Montag",
+      "Dienstag",
+      "Mittwoch",
+      "Donnerstag",
+      "Freitag",
+      "Samstag",
+      "Sonntag",
+    ]);
+  });
+
+  it("show a time without a date with two-digit hours and minutes", () => {
+    expect(formatTimeOfDay(9 * 60)).toBe("09:00");
+    expect(formatTimeOfDay(17 * 60 + 5)).toBe("17:05");
   });
 
   it("move an instant just before midnight UTC to the next Berlin day", () => {

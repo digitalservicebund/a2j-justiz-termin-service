@@ -6,3 +6,16 @@
 .sidebar-page--roomy {
   padding-block-end: var(--kern-metric-space-6x-large);
 }
+
+/* A form page: the grey of a flow page, full width, with the inputs on white. */
+.sidebar-page__band {
+  background-color: var(--kern-color-layout-background-hued);
+}
+
+.sidebar-page__band .kern-form-input__input {
+  background-color: var(--kern-color-layout-background-default);
+}
+
+.sidebar-page__band .kern-form-input__input--error {
+  background-color: var(--kern-color-feedback-danger-background);
+}

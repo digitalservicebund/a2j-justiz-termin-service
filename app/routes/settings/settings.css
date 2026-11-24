@@ -1,0 +1,42 @@
+/* The action column is only as wide as its buttons, which sit at its right edge with its title. */
+.settings__table .kern-table__header--action,
+.settings__table .kern-table__cell--action {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* The weekday and the times share the width equally, as in the design. */
+.settings__table .kern-table__header:first-child {
+  width: 50%;
+}
+
+/* KERN stripes the odd rows. The design starts with a white row and stripes the even ones. */
+.settings__table.kern-table--striped
+  .kern-table__body
+  .kern-table__row:nth-child(odd)
+  .kern-table__cell {
+  background-color: var(--kern-color-layout-background-default);
+}
+
+.settings__table.kern-table--striped
+  .kern-table__body
+  .kern-table__row:nth-child(even)
+  .kern-table__cell {
+  background-color: var(--kern-color-layout-background-hued);
+}
+
+/* An empty table says so on a grey surface, as in the design. KERN draws the line under a row as
+   a shadow, and stripes only tables that have rows. */
+.settings__table .kern-table__row .kern-table__cell.settings__empty {
+  padding-block: var(--kern-metric-space-4x-large);
+  background-color: var(--kern-color-layout-background-hued);
+  box-shadow: none;
+  color: var(--kern-color-layout-text-muted);
+  text-align: center;
+}
+
+/* The times line up from row to row. */
+.settings__times {
+  font-variant-numeric: tabular-nums;
+}

@@ -181,7 +181,7 @@ describe("Overview", () => {
     expect(screen.queryByRole("cell", { name: "574 C 1/26" })).not.toBeInTheDocument();
   });
 
-  it("offers the sidebar with the overview and the calendar subscription linked", async () => {
+  it("offers the sidebar with the overview, the calendar subscription and the settings linked", async () => {
     vi.mocked(listAppointments).mockResolvedValue([]);
 
     renderPage();
@@ -196,7 +196,7 @@ describe("Overview", () => {
         .getAllByRole("listitem")
         .map((item) => item.textContent),
     ).toEqual(["Übersicht", "Kalender abonnieren", "Einstellungen"]);
-    expect(within(nav).getAllByRole("link")).toHaveLength(2);
+    expect(within(nav).getAllByRole("link")).toHaveLength(3);
   });
 
   it("shows the report-problem button once, at the width of the content column", async () => {
