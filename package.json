@@ -25,31 +25,31 @@
     "adr:toc": "adr generate toc > doc/adr/README.md && oxfmt doc/adr/README.md"
   },
   "dependencies": {
-    "@kern-ux/native": "2.8.2",
-    "@react-router/express": "8.5.1",
-    "@react-router/node": "8.5.1",
-    "amqplib": "2.4.0",
-    "better-auth": "1.7.25",
+    "@kern-ux/native": "2.9.0",
+    "@react-router/express": "8.5.2",
+    "@react-router/node": "8.5.2",
+    "amqplib": "2.4.1",
+    "better-auth": "1.7.27",
     "compression": "1.8.2",
     "express": "5.3.0",
     "html-template-tag": "5.0.0",
     "isbot": "5.2.3",
     "kysely": "0.29.9",
     "morgan": "1.12.1",
-    "nodemailer": "10.6.0",
+    "nodemailer": "10.6.1",
     "pg": "8.23.1",
     "react": "19.3.1",
     "react-dom": "19.3.1",
-    "react-router": "8.5.1",
+    "react-router": "8.5.2",
     "zod": "4.6.7"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
     "@playwright/test": "1.65.1",
-    "@react-router/dev": "8.5.1",
-    "@testing-library/jest-dom": "7.0.1",
+    "@react-router/dev": "8.5.2",
+    "@testing-library/jest-dom": "8.0.0",
     "@testing-library/react": "16.3.3",
-    "@testing-library/user-event": "14.6.12",
+    "@testing-library/user-event": "14.6.13",
     "@types/express": "5.0.6",
     "@types/morgan": "1.9.10",
     "@types/node": "26.6.6",
@@ -57,19 +57,19 @@
     "@types/pg": "8.23.1",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
-    "@vitest/coverage-istanbul": "5.1.0",
+    "@vitest/coverage-istanbul": "5.1.1",
     "ical.js": "2.2.1",
     "jsdom": "31.0.1",
-    "knip": "6.45.1",
+    "knip": "6.48.0",
     "oxfmt": "0.79.0",
     "oxlint": "1.94.0",
     "typescript": "7.0.2",
     "vite": "8.3.8",
     "vite-plugin-devtools-json": "1.1.2",
-    "vitest": "5.1.0"
+    "vitest": "5.1.1"
   },
   "engines": {
     "node": ">=26.12.1"
   },
-  "packageManager": "pnpm@11.9.0"
+  "packageManager": "pnpm@12.23.0"
 }
