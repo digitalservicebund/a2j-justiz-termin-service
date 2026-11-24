@@ -8,10 +8,10 @@ import {
 import { requireRole } from "~/adapters/session/session";
 import { formatInstant } from "~/core/domain/time/format";
 import { getDb } from "~/database/database";
-import { appointmentIdOf } from "~/lib/appointment-guard.server";
+import { appointmentIdOf } from "~/lib/auth/appointment-guard.server";
 import { sendInvitationEmail } from "~/lib/email/send-invitation-email";
 import { sendErvInvitation } from "~/lib/erv/send-erv-invitation";
-import { badRequest, notFound } from "~/lib/responses";
+import { badRequest, notFound } from "~/lib/web/responses";
 
 import { GUESTS_ANCHOR, type GuestRow } from "./guests";
 import { invitedLabel, parseInviteIntent } from "./invitation";

@@ -5,9 +5,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { callAction, callLoader } from "~tests/route";
 
 import { getAppointment } from "~/adapters/appointments/appointments.server";
-import type * as AvailabilityModule from "~/adapters/appointments/availability.server";
-import { readAvailability, toAnsweredSlot } from "~/adapters/appointments/availability.server";
+import { readAvailability } from "~/adapters/appointments/availability.server";
 import { requireRole } from "~/adapters/session/session";
+import { toAnsweredSlot } from "~/core/domain/availability";
 import { windowKey } from "~/core/domain/availability";
 import type { AuthUser } from "~/core/domain/user";
 
@@ -15,10 +15,7 @@ import OverviewSelect, { action, loader } from "./select";
 
 vi.mock("~/adapters/session/session", () => ({ requireRole: vi.fn() }));
 vi.mock("~/adapters/appointments/appointments.server", () => ({ getAppointment: vi.fn() }));
-vi.mock("~/adapters/appointments/availability.server", async (importOriginal) => ({
-  ...(await importOriginal<typeof AvailabilityModule>()),
-  readAvailability: vi.fn(),
-}));
+vi.mock("~/adapters/appointments/availability.server", () => ({ readAvailability: vi.fn() }));
 vi.mock("~/database/database", () => ({ getDb: () => ({ db: true }) }));
 
 const judge: AuthUser = {

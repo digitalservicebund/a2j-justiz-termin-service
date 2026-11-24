@@ -3,8 +3,9 @@ import { betterAuth } from "better-auth";
 import { magicLink } from "better-auth/plugins";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { requireEnv } from "../infra/env.ts";
+import { logError } from "../infra/logging.ts";
 import { getAuth } from "./auth.server.ts";
-import { requireEnv } from "./env.ts";
 
 const { canSignIn, userExists, isEmailDomainAllowed, sendMail, close } = vi.hoisted(() => ({
   canSignIn: vi.fn(),
@@ -18,15 +19,15 @@ vi.mock("better-auth", () => ({ betterAuth: vi.fn((options) => ({ options })) })
 vi.mock("better-auth/plugins", () => ({
   magicLink: vi.fn(() => ({ id: "magic-link" })),
 }));
-vi.mock("../database/database.ts", () => ({ getDb: () => ({ name: "db" }) }));
-vi.mock("../adapters/users/users.server.ts", () => ({ canSignIn, userExists }));
-vi.mock("../adapters/users/allowed-domains.server.ts", () => ({ isEmailDomainAllowed }));
-vi.mock("./smtp.ts", () => ({
+vi.mock("../../database/database.ts", () => ({ getDb: () => ({ name: "db" }) }));
+vi.mock("../../adapters/users/users.server.ts", () => ({ canSignIn, userExists }));
+vi.mock("../../adapters/users/allowed-domains.server.ts", () => ({ isEmailDomainAllowed }));
+vi.mock("../infra/smtp.ts", () => ({
   createSmtpTransport: () => ({ sendMail, close }),
 }));
-vi.mock("./env.ts", () => ({ requireEnv: vi.fn(() => "http://localhost:3000") }));
-vi.mock("./secrets.ts", () => ({ requireSecret: () => "sender@example.com" }));
-vi.mock("./logging.ts", () => ({ logError: vi.fn() }));
+vi.mock("../infra/env.ts", () => ({ requireEnv: vi.fn(() => "http://localhost:3000") }));
+vi.mock("../infra/secrets.ts", () => ({ requireSecret: () => "sender@example.com" }));
+vi.mock("../infra/logging.ts", () => ({ logError: vi.fn() }));
 
 getAuth();
 const options = vi.mocked(betterAuth).mock.calls[0]![0]!;
@@ -113,6 +114,7 @@ describe("magic-link configuration", () => {
         token: "test",
       }),
     ).rejects.toThrow("SMTP unavailable");
+    expect(logError).toHaveBeenCalledWith("Failed to send magic-link email", expect.any(Error));
     expect(close).toHaveBeenCalledOnce();
   });
 });

@@ -1,5 +1,6 @@
 import html from "html-template-tag";
 
+import { PRODUCT_NAME } from "../web/page-meta.ts";
 import {
   Button,
   Divider,
@@ -7,7 +8,6 @@ import {
   Header,
   Layout,
   COLOR,
-  PRODUCT_NAME,
   TextRow,
   logoAttachment,
   renderFooterText,

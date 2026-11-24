@@ -7,10 +7,9 @@ import {
   findSurvey,
   issueResponseOverview,
   saveAnswer,
-  type ResponseOverview,
   type Survey,
 } from "~/adapters/appointments/survey.server";
-import { windowKey } from "~/core/domain/availability";
+import { windowKey, type ResponseOverview } from "~/core/domain/availability";
 import { sendAnswerReceivedEmail } from "~/lib/email/send-answer-received-email";
 
 import SurveyConfirm, { action, loader } from "./confirm";

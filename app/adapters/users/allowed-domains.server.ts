@@ -2,7 +2,7 @@ import type { Kysely } from "kysely";
 
 import { AllowedDomainSchema, emailDomain } from "../../core/domain/allowed-domain.ts";
 import type { Database } from "../../database/types.ts";
-import { logInfo } from "../../lib/logging.ts";
+import { logInfo } from "../../lib/infra/logging.ts";
 
 export class AllowedDomainError extends Error {}
 

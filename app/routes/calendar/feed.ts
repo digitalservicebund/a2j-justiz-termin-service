@@ -2,9 +2,9 @@ import { redirect, type LoaderFunctionArgs } from "react-router";
 
 import { readCalendarFeed } from "~/adapters/appointments/calendar-feed.server";
 import { getDb } from "~/database/database";
-import { createCalendarFeed } from "~/lib/calendar-feed";
-import { requireEnv } from "~/lib/env";
-import { calendarOpenedInBrowserPath } from "~/lib/paths";
+import { createCalendarFeed } from "~/lib/calendar/calendar-feed";
+import { requireEnv } from "~/lib/infra/env";
+import { calendarOpenedInBrowserPath } from "~/lib/web/paths";
 
 // Browsers send Sec-Fetch-Dest: document when the user opens an address. Calendar apps fetch the
 // feed in the background (Apple, classic Outlook) or from their servers (Google, Exchange) and

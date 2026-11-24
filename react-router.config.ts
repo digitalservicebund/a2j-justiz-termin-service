@@ -1,6 +1,6 @@
 import type { Config } from "@react-router/dev/config";
 
-import { BASE_PATH } from "./app/lib/base-path.ts";
+import { BASE_PATH } from "./app/lib/web/base-path.ts";
 
 export default {
   // Config options...

@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { connectRabbitMq } from "~/lib/rabbitmq";
+import { connectRabbitMq } from "~/lib/infra/rabbitmq";
 
 import { loader } from "./rabbitmq";
 
-vi.mock("~/lib/rabbitmq", () => ({ connectRabbitMq: vi.fn() }));
+vi.mock("~/lib/infra/rabbitmq", () => ({ connectRabbitMq: vi.fn() }));
 
 describe("GET /health/rabbitmq", () => {
   beforeEach(() => {

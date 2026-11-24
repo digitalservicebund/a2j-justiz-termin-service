@@ -1,7 +1,7 @@
 import { redirect, useLoaderData } from "react-router";
 
 import { confirmAppointment } from "~/adapters/appointments/appointments.server";
-import { readAvailability, remainingOf } from "~/adapters/appointments/availability.server";
+import { readAvailability } from "~/adapters/appointments/availability.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { KernBody } from "~/components/shared/kern/KernBody";
@@ -10,15 +10,16 @@ import {
   KernDescriptionListItem,
 } from "~/components/shared/kern/KernDescriptionList";
 import { ReviewPage } from "~/components/shared/ReviewPage";
+import { remainingOf } from "~/core/domain/availability";
 import { formatInstant } from "~/core/domain/time/format";
 import { getDb } from "~/database/database";
 import {
   appointmentIdOf,
   getOwnAppointment,
   requireOwnAppointment,
-} from "~/lib/appointment-guard.server";
-import { appointmentPath, selectedPath, selectPath } from "~/lib/paths";
-import { badRequest } from "~/lib/responses";
+} from "~/lib/auth/appointment-guard.server";
+import { appointmentPath, selectedPath, selectPath } from "~/lib/web/paths";
+import { badRequest } from "~/lib/web/responses";
 
 import { readValues, selectBreadcrumbs, selectionSearch } from "./select.schema";
 import { validateSelection } from "./select.validate.server";

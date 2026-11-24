@@ -1,6 +1,9 @@
 import { BASE_PATH } from "./base-path.ts";
 
-export const PAGE_TITLE = "Verhandlungstermin-Finder | Justiz-Services";
+// The name of the service in pages, mails and calendars.
+export const PRODUCT_NAME = "Verhandlungstermin-Finder";
+
+export const PAGE_TITLE = `${PRODUCT_NAME} | Justiz-Services`;
 
 export const PAGE_DESCRIPTION =
   "Der Verhandlungstermin-Finder vereinfacht die Terminkoordination. Gerichte starten die Terminumfrage, Beteiligte teilen ihre Verfügbarkeiten und der passende Termin wird gewählt.";

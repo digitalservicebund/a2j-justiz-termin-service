@@ -5,10 +5,10 @@ import { callAction } from "~tests/route";
 import { action } from "./welcome";
 
 const { handler, canSignIn } = vi.hoisted(() => ({ handler: vi.fn(), canSignIn: vi.fn() }));
-vi.mock("~/lib/auth.server", () => ({ getAuth: () => ({ handler }) }));
+vi.mock("~/lib/auth/auth.server", () => ({ getAuth: () => ({ handler }) }));
 vi.mock("~/adapters/users/users.server", () => ({ canSignIn }));
 vi.mock("~/database/database", () => ({ getDb: () => ({}) }));
-vi.mock("~/lib/logging", () => ({ logError: vi.fn() }));
+vi.mock("~/lib/infra/logging", () => ({ logError: vi.fn() }));
 
 function request(values: Record<string, string>) {
   return new Request("http://localhost/", {

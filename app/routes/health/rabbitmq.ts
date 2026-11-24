@@ -1,5 +1,5 @@
-import { logError } from "~/lib/logging";
-import { connectRabbitMq } from "~/lib/rabbitmq";
+import { logError } from "~/lib/infra/logging";
+import { connectRabbitMq } from "~/lib/infra/rabbitmq";
 
 // Connects and authenticates against the RabbitMQ broker, then closes the connection.
 // Separate from /health, which backs the readiness probe.

@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 
-import { BASE_PATH } from "~/lib/base-path";
+import { BASE_PATH } from "~/lib/web/base-path";
+import { PRODUCT_NAME } from "~/lib/web/page-meta";
 
 import { KernCluster } from "./kern/KernCluster";
 import { KernIcon } from "./kern/KernIcon";
@@ -10,7 +11,6 @@ import "./Breadcrumb.css";
 import { classNames } from "./kern/layout";
 
 const SERVICE_URL = "https://service.justiz.de/";
-const PRODUCT_NAME = "Verhandlungstermin-Finder";
 const NO_ITEMS: BreadcrumbItem[] = [];
 
 export type BreadcrumbItem = {

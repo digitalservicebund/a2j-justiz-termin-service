@@ -2,22 +2,19 @@ import { randomBytes } from "node:crypto";
 
 import { sql, type Kysely } from "kysely";
 
-import { contains, isLongEnough } from "../../core/domain/availability.ts";
+import { contains, isLongEnough, remainingOf, type Slot } from "../../core/domain/availability.ts";
 import { confirmedWindow, rowToRange, type TimeRange } from "../../core/domain/time/time-range.ts";
 import type { AppointmentStatus, Database } from "../../database/types.ts";
-import { logInfo } from "../../lib/logging.ts";
-import { readAvailability, remainingOf } from "./availability.server.ts";
+import { logInfo } from "../../lib/infra/logging.ts";
+import { readAvailability } from "./availability.server.ts";
 import { ownDraft, touch } from "./drafts.server.ts";
-
-// A stored time slot. Its id stays the same as long as the slot is not replaced.
-export type AppointmentSlot = TimeRange & { id: string };
 
 export type Appointment = {
   id: string;
   aktenzeichen: string;
   // The shortest a time slot may be. Drafts may not have it yet.
   minDurationMinutes?: number | null;
-  slots: AppointmentSlot[];
+  slots: Slot[];
   status: AppointmentStatus;
   // The secret of the universal survey link. Drafts have none; it is set when they are published.
   universalToken?: string | null;

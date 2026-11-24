@@ -3,12 +3,12 @@ import { createRoutesStub, data, useRouteError } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import { NOT_FOUND_TITLE } from "~/components/shared/NotFoundPage";
-import { PAGE_TITLE } from "~/lib/page-meta";
+import { PAGE_TITLE } from "~/lib/web/page-meta";
 
 import { ErrorBoundary, Layout } from "./root";
 
 vi.mock("~/adapters/session/session", () => ({ getSessionUser: vi.fn() }));
-vi.mock("~/lib/env", () => ({ requireEnv: () => "http://localhost:3000" }));
+vi.mock("~/lib/infra/env", () => ({ requireEnv: () => "http://localhost:3000" }));
 
 // The router hands the thrown value to the boundary; the stub does the same through the hook.
 function Boundary() {

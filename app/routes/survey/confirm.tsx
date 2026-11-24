@@ -8,10 +8,10 @@ import {
 } from "~/components/shared/kern/KernDescriptionList";
 import { ReviewPage } from "~/components/shared/ReviewPage";
 import { getDb } from "~/database/database";
+import { requireSurvey } from "~/lib/auth/survey-guard.server";
 import { sendAnswerReceivedEmail } from "~/lib/email/send-answer-received-email";
-import { surveyPath, surveyResultPath } from "~/lib/paths";
-import { badRequest } from "~/lib/responses";
-import { requireSurvey } from "~/lib/survey-guard.server";
+import { surveyPath, surveyResultPath } from "~/lib/web/paths";
+import { badRequest } from "~/lib/web/responses";
 
 import {
   describeAnswers,

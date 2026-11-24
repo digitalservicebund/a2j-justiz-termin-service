@@ -10,8 +10,8 @@ import { insertUser } from "../app/adapters/users/users.server.ts";
 import type { AuthUser, NewUserSchema } from "../app/core/domain/user.ts";
 import { getDb } from "../app/database/database.ts";
 import type { Database } from "../app/database/types.ts";
-import { AUTH_BASE_PATH, BASE_PATH } from "../app/lib/base-path.ts";
-import { requireEnv } from "../app/lib/env.ts";
+import { requireEnv } from "../app/lib/infra/env.ts";
+import { AUTH_BASE_PATH, BASE_PATH } from "../app/lib/web/base-path.ts";
 
 export { BASE_PATH };
 // Where the app is served, to compare with absolute URLs, e.g. `${baseURL}/overview`.

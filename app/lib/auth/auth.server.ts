@@ -1,17 +1,14 @@
 import { betterAuth } from "better-auth";
 import { magicLink } from "better-auth/plugins";
 
-import { isEmailDomainAllowed } from "../adapters/users/allowed-domains.server.ts";
-import { canSignIn, userExists } from "../adapters/users/users.server.ts";
-import { SELF_SIGNUP_ROLES } from "../core/domain/user.ts";
-import { getDb } from "../database/database.ts";
+import { isEmailDomainAllowed } from "../../adapters/users/allowed-domains.server.ts";
+import { canSignIn, userExists } from "../../adapters/users/users.server.ts";
+import { SELF_SIGNUP_ROLES } from "../../core/domain/user.ts";
+import { getDb } from "../../database/database.ts";
+import { sendMagicLinkEmail } from "../email/send-magic-link-email.ts";
+import { requireEnv } from "../infra/env.ts";
+import { AUTH_BASE_PATH, BASE_PATH } from "../web/base-path.ts";
 import { getAuthSecret } from "./auth-secret.ts";
-import { AUTH_BASE_PATH, BASE_PATH } from "./base-path.ts";
-import { renderMagicLinkEmail } from "./email/magic-link-email.ts";
-import { requireEnv } from "./env.ts";
-import { logError } from "./logging.ts";
-import { requireSecret } from "./secrets.ts";
-import { createSmtpTransport } from "./smtp.ts";
 
 function createAuth() {
   return betterAuth({
@@ -69,24 +66,7 @@ function createAuth() {
 
           // An address without an account is being verified for self sign-up.
           const variant = (await userExists(getDb(), email)) ? "login" : "signup";
-          const { subject, text, html, attachments } = renderMagicLinkEmail(variant, url);
-
-          const transport = createSmtpTransport();
-          try {
-            await transport.sendMail({
-              from: requireSecret("smtp", "SMTP_USER"),
-              to: email.trim().toLowerCase(),
-              subject,
-              text,
-              html,
-              attachments,
-            });
-          } catch (error) {
-            logError("Failed to send magic-link email", error);
-            throw error;
-          } finally {
-            transport.close();
-          }
+          await sendMagicLinkEmail({ to: email, variant, url });
         },
       }),
     ],

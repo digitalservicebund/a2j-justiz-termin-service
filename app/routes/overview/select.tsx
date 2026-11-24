@@ -1,6 +1,6 @@
 import { data, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
 
-import { readAvailability, remainingOf } from "~/adapters/appointments/availability.server";
+import { readAvailability } from "~/adapters/appointments/availability.server";
 import { AppShell } from "~/components/shared/AppShell";
 import { FlowPage } from "~/components/shared/FlowPage";
 import { FormActions, FormStack } from "~/components/shared/FormLayout";
@@ -17,11 +17,12 @@ import { KernGrid, KernGridCol } from "~/components/shared/kern/KernGrid";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { classNames, resetClassName } from "~/components/shared/kern/layout";
+import { remainingOf } from "~/core/domain/availability";
 import { windowKey } from "~/core/domain/availability";
 import { formatRangeLong } from "~/core/domain/time/format";
 import { getDb } from "~/database/database";
-import { requireOwnAppointment } from "~/lib/appointment-guard.server";
-import { appointmentPath, confirmSelectionPath, OVERVIEW_PATH } from "~/lib/paths";
+import { requireOwnAppointment } from "~/lib/auth/appointment-guard.server";
+import { appointmentPath, confirmSelectionPath, OVERVIEW_PATH } from "~/lib/web/paths";
 
 import { readValues, selectBreadcrumbs, selectionSearch } from "./select.schema";
 import { validateSelection } from "./select.validate.server";

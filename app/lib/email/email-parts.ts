@@ -1,6 +1,3 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-
 import html from "html-template-tag";
 
 import {
@@ -10,16 +7,15 @@ import {
   pilotLinks,
   type Link,
 } from "../../components/shared/footer-links.ts";
+import { PRODUCT_NAME } from "../web/page-meta.ts";
+// Vite inlines the image into the bundle as a data URL, so the mails do not read files at runtime.
+import logoDataUrl from "./bmjv-logo.png?inline";
 
-export const PRODUCT_NAME = "Verhandlungstermin-Finder";
 const PRODUCT_TAGLINE = "Onlinedienste der Justiz";
 const LOGO_CID = "bmjv-logo@justiz-termin-service";
 // bmjv-logo.png is flattened onto white: clients that darken the page (Gmail, Outlook.com) leave
 // images alone, so the black lettering would otherwise vanish on a dark background.
-// Resolved from the working directory (the project root for the server, the Docker image, tests and
-// batch jobs), because import.meta.url points into build/server/ once the app is bundled.
-const LOGO_PATH = resolve("app/lib/email/bmjv-logo.png");
-let logoPng: Buffer | undefined;
+const LOGO_PNG = Buffer.from(logoDataUrl.slice(logoDataUrl.indexOf(",") + 1), "base64");
 const LOGO_ALT = "Bundesministerium der Justiz und für Verbraucherschutz";
 const ADDRESS =
   "DigitalService GmbH des Bundes, Prinzessinnenstraße 8-14, 10969 Berlin, Berlin, Deutschland.";
@@ -265,7 +261,7 @@ export function renderHeaderText() {
 export function logoAttachment() {
   return {
     filename: "bmjv-logo.png",
-    content: (logoPng ??= readFileSync(LOGO_PATH)),
+    content: LOGO_PNG,
     contentType: "image/png",
     cid: LOGO_CID,
     contentDisposition: "inline" as const,

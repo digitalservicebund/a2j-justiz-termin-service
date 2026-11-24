@@ -24,7 +24,7 @@ import { KernLabel } from "~/components/shared/kern/KernLabel";
 import { KernStack } from "~/components/shared/kern/KernStack";
 import { KernCell } from "~/components/shared/kern/KernTable";
 import { getDb } from "~/database/database";
-import { getOwnAppointment } from "~/lib/appointment-guard.server";
+import { getOwnAppointment } from "~/lib/auth/appointment-guard.server";
 import {
   confirmDraftPath,
   draftPath,
@@ -32,8 +32,8 @@ import {
   OVERVIEW_PATH,
   participantPath,
   slotPath,
-} from "~/lib/paths";
-import { badRequest, notFound } from "~/lib/responses";
+} from "~/lib/web/paths";
+import { badRequest, notFound } from "~/lib/web/responses";
 
 import { createTerminBreadcrumbs } from "./breadcrumbs";
 import { DraftTable } from "./draft-table";

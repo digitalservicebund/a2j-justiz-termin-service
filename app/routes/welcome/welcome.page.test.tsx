@@ -9,8 +9,8 @@ import Welcome, { loader } from "./welcome";
 vi.mock("~/adapters/session/session", () => ({ getSessionUser: vi.fn() }));
 vi.mock("~/adapters/users/users.server", () => ({ canSignIn: vi.fn() }));
 vi.mock("~/database/database", () => ({ getDb: () => ({}) }));
-vi.mock("~/lib/auth.server", () => ({ getAuth: () => ({ handler: vi.fn() }) }));
-vi.mock("~/lib/logging", () => ({ logError: vi.fn() }));
+vi.mock("~/lib/auth/auth.server", () => ({ getAuth: () => ({ handler: vi.fn() }) }));
+vi.mock("~/lib/infra/logging", () => ({ logError: vi.fn() }));
 
 async function renderPage(url = "/") {
   const Stub = createRoutesStub([{ path: "/", Component: Welcome, loader }]);

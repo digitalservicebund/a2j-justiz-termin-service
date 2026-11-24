@@ -1,4 +1,4 @@
-import { surveyUrl } from "../paths.ts";
+import { surveyUrl } from "../web/paths.ts";
 import { deliverEmail } from "./deliver-email.ts";
 import { renderInvitationEmail, type InvitationEmail } from "./invitation-email.ts";
 

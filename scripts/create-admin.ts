@@ -4,7 +4,7 @@ import { insertUser } from "../app/adapters/users/users.server.ts";
 import { NewUserSchema } from "../app/core/domain/user.ts";
 import { getDb } from "../app/database/database.ts";
 import { migrateToLatest } from "../app/database/migrate.ts";
-import { logError, logInfo } from "../app/lib/logging.ts";
+import { logError, logInfo } from "../app/lib/infra/logging.ts";
 
 try {
   const { values } = parseArgs({

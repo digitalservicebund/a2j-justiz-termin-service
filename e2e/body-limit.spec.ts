@@ -1,4 +1,4 @@
-import { MAX_BODY_BYTES } from "../app/lib/body-limit.ts";
+import { MAX_BODY_BYTES } from "../app/lib/infra/body-limit.ts";
 import { BASE_PATH, expect, test } from "./fixtures.ts";
 
 test("a request body over the limit is rejected before the app reads it", async ({ request }) => {

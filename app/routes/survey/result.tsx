@@ -15,8 +15,8 @@ import { NextStepsSection, Step } from "~/components/shared/NextSteps";
 import { ResultBanner } from "~/components/shared/ResultBanner";
 import { SidebarPage } from "~/components/shared/SidebarPage";
 import { getDb } from "~/database/database";
-import { surveyPath } from "~/lib/paths";
-import { requireSurvey } from "~/lib/survey-guard.server";
+import { requireSurvey } from "~/lib/auth/survey-guard.server";
+import { surveyPath } from "~/lib/web/paths";
 
 import { groupWindows, noMatchBreadcrumbs, surveyBreadcrumbs, type SurveyDay } from "./schema";
 

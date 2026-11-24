@@ -1,7 +1,8 @@
 import html from "html-template-tag";
 
-import type { AppointmentSlot } from "../../adapters/appointments/appointments.server.ts";
+import type { Slot } from "../../core/domain/availability.ts";
 import { formatRange } from "../../core/domain/time/format.ts";
+import { createTerminCalendar, TERMIN_CALENDAR_CONTENT_TYPE } from "../calendar/termin-calendar.ts";
 import {
   Button,
   COLOR,
@@ -15,7 +16,6 @@ import {
   renderFooterText,
   renderHeaderText,
 } from "./email-parts.ts";
-import { createTerminCalendar, TERMIN_CALENDAR_CONTENT_TYPE } from "./termin-calendar.ts";
 
 const SUBJECT = "Terminumfrage erstellt: Wir warten auf Rückmeldungen";
 const HEADING = "Ihre Terminumfrage wurde erstellt. Wir warten auf die Rückmeldungen.";
@@ -26,7 +26,7 @@ const CALENDAR_FILENAME = "terminumfrage.ics";
 
 export type TerminCreatedEmail = {
   aktenzeichen: string;
-  slots: AppointmentSlot[];
+  slots: Slot[];
   terminUrl: string;
   // For the calendar file, see createTerminCalendar.
   sequence: number;

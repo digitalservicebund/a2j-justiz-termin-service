@@ -18,10 +18,10 @@ import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { KernStack } from "~/components/shared/kern/KernStack";
 import { LoginForm } from "~/components/shared/LoginForm";
 import { getDb } from "~/database/database";
-import { getAuth } from "~/lib/auth.server";
-import { AUTH_BASE_PATH, BASE_PATH } from "~/lib/base-path";
-import { logError } from "~/lib/logging";
-import { OVERVIEW_PATH } from "~/lib/paths";
+import { getAuth } from "~/lib/auth/auth.server";
+import { logError } from "~/lib/infra/logging";
+import { AUTH_BASE_PATH, BASE_PATH } from "~/lib/web/base-path";
+import { OVERVIEW_PATH } from "~/lib/web/paths";
 
 import "./welcome.css";
 

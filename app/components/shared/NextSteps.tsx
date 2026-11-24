@@ -6,7 +6,7 @@ import { KernLabel } from "~/components/shared/kern/KernLabel";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { KernStack } from "~/components/shared/kern/KernStack";
 import { ResultBanner } from "~/components/shared/ResultBanner";
-import { OVERVIEW_PATH } from "~/lib/paths";
+import { OVERVIEW_PATH } from "~/lib/web/paths";
 
 import "./NextSteps.css";
 

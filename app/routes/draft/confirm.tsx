@@ -14,10 +14,10 @@ import {
   appointmentIdOf,
   getOwnAppointment,
   requireOwnAppointment,
-} from "~/lib/appointment-guard.server";
+} from "~/lib/auth/appointment-guard.server";
 import { sendTerminCreatedEmail } from "~/lib/email/send-termin-created-email";
-import { createdPath, draftPath, OVERVIEW_PATH } from "~/lib/paths";
-import { badRequest, notFound } from "~/lib/responses";
+import { createdPath, draftPath, OVERVIEW_PATH } from "~/lib/web/paths";
+import { badRequest, notFound } from "~/lib/web/responses";
 
 import { createTerminBreadcrumbs } from "./breadcrumbs";
 import { CreateTerminReview } from "./review";

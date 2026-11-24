@@ -1,10 +1,10 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from "vitest";
 
-import { logInfo } from "../logging.ts";
+import { logInfo } from "../infra/logging.ts";
 import { sendErvInvitation } from "./send-erv-invitation.ts";
 
-vi.mock("../logging.ts", () => ({ logInfo: vi.fn() }));
+vi.mock("../infra/logging.ts", () => ({ logInfo: vi.fn() }));
 
 describe("sendErvInvitation", () => {
   it("only logs the invitation, by ids and without the SAFE-ID", async () => {

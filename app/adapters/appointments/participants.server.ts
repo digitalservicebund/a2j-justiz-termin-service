@@ -3,7 +3,7 @@ import { randomBytes } from "node:crypto";
 import { sql, type Kysely } from "kysely";
 
 import type { Database } from "../../database/types.ts";
-import { logInfo } from "../../lib/logging.ts";
+import { logInfo } from "../../lib/infra/logging.ts";
 import { ownDraft, touch } from "./drafts.server.ts";
 
 // What a person is called wherever the app shows one: the name, else the e-mail address, else the

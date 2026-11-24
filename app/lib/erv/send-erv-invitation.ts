@@ -1,4 +1,4 @@
-import { logInfo } from "../logging.ts";
+import { logInfo } from "../infra/logging.ts";
 
 type ErvInvitation = { appointmentId: string; participantId: string; safeId: string };
 

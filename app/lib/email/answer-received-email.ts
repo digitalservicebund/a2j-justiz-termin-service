@@ -1,8 +1,15 @@
 import html from "html-template-tag";
 
-import type { ResponseOverview } from "../../adapters/appointments/survey.server.ts";
+import type { ResponseOverview } from "../../core/domain/availability.ts";
 import { formatRange, formatTime } from "../../core/domain/time/format.ts";
 import type { TimeRange } from "../../core/domain/time/time-range.ts";
+import {
+  availableNames,
+  createTerminCalendar,
+  isCancelled,
+  TERMIN_CALENDAR_CONTENT_TYPE,
+  toCalendarSlot,
+} from "../calendar/termin-calendar.ts";
 import {
   Button,
   COLOR,
@@ -16,13 +23,6 @@ import {
   renderFooterText,
   renderHeaderText,
 } from "./email-parts.ts";
-import {
-  availableNames,
-  createTerminCalendar,
-  isCancelled,
-  TERMIN_CALENDAR_CONTENT_TYPE,
-  toCalendarSlot,
-} from "./termin-calendar.ts";
 
 const SUBJECT = "Neue Antwort auf Ihre Terminumfrage";
 const BUTTON = "Termin öffnen";

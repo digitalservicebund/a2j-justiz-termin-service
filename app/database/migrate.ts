@@ -4,7 +4,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { FileMigrationProvider, Migrator } from "kysely/migration";
 
-import { logError, logInfo } from "../lib/logging.ts";
+import { logError, logInfo } from "../lib/infra/logging.ts";
 import { getDb } from "./database.ts";
 
 export async function migrateToLatest(): Promise<void> {

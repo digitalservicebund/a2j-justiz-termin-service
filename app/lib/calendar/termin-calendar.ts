@@ -1,8 +1,7 @@
-import type { AppointmentSlot } from "../../adapters/appointments/appointments.server.ts";
-import type { AnsweredSlot } from "../../adapters/appointments/availability.server.ts";
+import type { AnsweredSlot, Slot } from "../../core/domain/availability.ts";
 import { formatSynchronizedAt, formatTime } from "../../core/domain/time/format.ts";
 import type { TimeRange } from "../../core/domain/time/time-range.ts";
-import { PRODUCT_NAME } from "./email-parts.ts";
+import { PRODUCT_NAME } from "../web/page-meta.ts";
 
 type TerminEvents = {
   aktenzeichen: string;
@@ -22,7 +21,7 @@ type TerminEvents = {
 
 type TerminCalendar = TerminEvents & { organizerEmail: string };
 
-export type CalendarSlot = AppointmentSlot & {
+export type CalendarSlot = Slot & {
   // A slot someone cannot attend. Its event is cancelled.
   cancelled?: boolean;
   // The slot the Termin was confirmed for: its event is confirmed and covers the chosen window.

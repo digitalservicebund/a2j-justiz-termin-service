@@ -3,7 +3,7 @@ import { parseArgs } from "node:util";
 import { insertAllowedDomain } from "../app/adapters/users/allowed-domains.server.ts";
 import { getDb } from "../app/database/database.ts";
 import { migrateToLatest } from "../app/database/migrate.ts";
-import { logError, logInfo } from "../app/lib/logging.ts";
+import { logError, logInfo } from "../app/lib/infra/logging.ts";
 
 try {
   const { values } = parseArgs({ options: { domain: { type: "string" } } });

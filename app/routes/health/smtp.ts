@@ -1,5 +1,5 @@
-import { logError } from "~/lib/logging";
-import { createSmtpTransport } from "~/lib/smtp";
+import { logError } from "~/lib/infra/logging";
+import { createSmtpTransport } from "~/lib/infra/smtp";
 
 // Connects and authenticates against the SMTP server without sending mail.
 // Separate from /health, which backs the readiness probe.

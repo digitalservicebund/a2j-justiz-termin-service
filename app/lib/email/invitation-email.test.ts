@@ -1,4 +1,6 @@
 // @vitest-environment node
+import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 import { renderInvitationEmail } from "./invitation-email.ts";
@@ -48,5 +50,11 @@ describe("renderInvitationEmail", () => {
   it("attaches only the logo, no calendar", () => {
     const { attachments } = renderInvitationEmail(email);
     expect(attachments.map(({ filename }) => filename)).toEqual(["bmjv-logo.png"]);
+  });
+
+  it("embeds the logo from the bundle, inline under its content id", () => {
+    const [logo] = renderInvitationEmail(email).attachments;
+    expect(logo).toMatchObject({ contentType: "image/png", contentDisposition: "inline" });
+    expect(logo!.content).toEqual(readFileSync(new URL("bmjv-logo.png", import.meta.url)));
   });
 });
