@@ -110,6 +110,21 @@ test("the feed holds the open and confirmed appointments of its user only", asyn
   expect(body).not.toContain("574 C 9/26");
 });
 
+test("a browser that opens the feed link is sent to the subscription page with a warning", async ({
+  page,
+  users,
+  db,
+}) => {
+  const user = await users.create({ roles: ["richter"] });
+  await signIn(page, user);
+
+  await page.goto(`${BASE_PATH}/api/calendars/${await calendarToken(db, user.id)}/feed.ics`);
+
+  await expect(page).toHaveURL(`${baseURL}/kalender-abonnieren?browser`);
+  await expect(page.getByRole("alert")).toContainText("Kalenderlink im Browser geöffnet");
+  await expect(page.getByLabel("Link zum Kalender")).toHaveValue(/feed\.ics$/);
+});
+
 test("the feed does not accept the user ID, unknown or malformed tokens", async ({
   request,
   users,

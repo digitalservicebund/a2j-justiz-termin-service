@@ -1,4 +1,4 @@
-import { OVERVIEW_PATH } from "~/lib/paths";
+import { CALENDAR_SUBSCRIBE_PATH, OVERVIEW_PATH } from "~/lib/paths";
 
 import { A2JIcon } from "./a2j/A2JIcon";
 import { KernIcon } from "./kern/KernIcon";
@@ -24,7 +24,7 @@ export function MainNav({ current }: Readonly<MainNavProps>) {
         {
           label: "Kalender abonnieren",
           icon: <A2JIcon name="calendar-add" size="large" />,
-          to: "/kalender-abonnieren",
+          to: CALENDAR_SUBSCRIBE_PATH,
           current: current === "calendar",
         },
         { label: "Einstellungen", icon: <A2JIcon name="settings" size="large" /> },

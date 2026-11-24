@@ -54,6 +54,11 @@ export const surveySummaryPath = (token: string, search: string) =>
 export const surveyResultPath = (token: string, participantId: string) =>
   `${surveyPath(token)}/naechste-schritte?teilnehmer=${segment(participantId)}`;
 
+// The page with the personal calendar link. A browser that opens the link itself is sent here.
+export const CALENDAR_SUBSCRIBE_PATH = "/kalender-abonnieren";
+export const OPENED_IN_BROWSER_PARAM = "browser";
+export const calendarOpenedInBrowserPath = `${CALENDAR_SUBSCRIBE_PATH}?${OPENED_IN_BROWSER_PARAM}`;
+
 // Full URLs, for links that leave the app: copied survey links, e-mails and calendar events.
 export const appointmentUrl = (origin: string, id: string) =>
   `${origin}${BASE_PATH}${appointmentPath(id)}`;

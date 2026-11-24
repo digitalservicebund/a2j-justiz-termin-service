@@ -4,6 +4,7 @@ import { readCalendarToken } from "~/adapters/appointments/calendar-feed.server"
 import { requireUser } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
 import { CopyButton } from "~/components/shared/CopyButton";
+import { KernAlert } from "~/components/shared/kern/KernAlert";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernCluster } from "~/components/shared/kern/KernCluster";
 import { KernFormInput } from "~/components/shared/kern/KernFormInput";
@@ -16,6 +17,7 @@ import { SidebarPage } from "~/components/shared/SidebarPage";
 import { getDb } from "~/database/database";
 import { calendarFeedPath } from "~/lib/calendar-feed";
 import { requireEnv } from "~/lib/env";
+import { OPENED_IN_BROWSER_PARAM } from "~/lib/paths";
 
 import "./subscribe.css";
 
@@ -25,7 +27,13 @@ export async function loader({ request }: { request: Request }) {
   if (!token) throw new Response("Not Found", { status: 404 });
   const feedUrl = `${requireEnv("BASE_URL")}${calendarFeedPath(token)}`;
   // Calendar apps register the feed when they open an address with the webcal scheme.
-  return { user, feedUrl, webcalUrl: feedUrl.replace(/^https?:/, "webcal:") };
+  return {
+    user,
+    feedUrl,
+    webcalUrl: feedUrl.replace(/^https?:/, "webcal:"),
+    // Set when the feed sent a browser here that opened the calendar link itself.
+    openedInBrowser: new URL(request.url).searchParams.has(OPENED_IN_BROWSER_PARAM),
+  };
 }
 
 const instructions = [
@@ -56,7 +64,7 @@ const instructions = [
 ];
 
 export default function CalendarSubscribe() {
-  const { user, feedUrl, webcalUrl } = useLoaderData<typeof loader>();
+  const { user, feedUrl, webcalUrl, openedInBrowser } = useLoaderData<typeof loader>();
   return (
     <AppShell user={user} breadcrumbs={[{ label: "Kalender abonnieren" }]}>
       <SidebarPage current="calendar" spacing="roomy">
@@ -64,6 +72,13 @@ export default function CalendarSubscribe() {
           <KernHeading size="large" level={1}>
             Kalender abonnieren
           </KernHeading>
+          {openedInBrowser && (
+            <KernAlert
+              type="warning"
+              title="Kalenderlink im Browser geöffnet"
+              message="Der Kalenderlink ist für Ihre Kalender-App bestimmt. Fügen Sie ihn dort als Abonnement ein, damit Ihre Termine automatisch aktualisiert werden. Eine heruntergeladene Datei wird nicht aktualisiert."
+            />
+          )}
           <KernBody>
             Abonnieren Sie Ihre Terminumfragen in Ihrer Kalender-App. Zeitfenster von offenen
             Terminumfragen erscheinen dort als vorläufige Einträge, bestätigte Termine als feste
