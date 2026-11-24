@@ -8,6 +8,7 @@ import { KernCluster } from "~/components/shared/kern/KernCluster";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernIcon, type KernIconName } from "~/components/shared/kern/KernIcon";
 import { KernLabel } from "~/components/shared/kern/KernLabel";
+import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { KernStack } from "~/components/shared/kern/KernStack";
 import {
   KernCell,
@@ -31,6 +32,8 @@ export type GuestRow = {
   email: string | null;
   safeId: string | null;
   name: string | null;
+  // Where the guest's invitation is downloaded as a PDF for the ERV. Null without a SAFE-ID.
+  ervPdf: string | null;
   invitations: Array<{ label: string; at: string }>;
 };
 
@@ -176,6 +179,19 @@ export function Guests({
                               label="Per ERV"
                               disabled={pending}
                             />
+                          )}
+                          {guest.ervPdf && (
+                            // A download, not a page: the browser fetches it, not the router.
+                            <KernLinkButton
+                              to={guest.ervPdf}
+                              reloadDocument
+                              download
+                              style="secondary"
+                              className="kern-btn--small"
+                            >
+                              <KernIcon name="download" />
+                              <KernLabel>PDF für ERV</KernLabel>
+                            </KernLinkButton>
                           )}
                           <InviteButton
                             channel="manual"

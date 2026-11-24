@@ -345,6 +345,7 @@ describe("guest invitations", () => {
         email: "person.a@example.com",
         safeId: null,
         name: "Person A",
+        ervPdf: null,
         invitations: [
           {
             label: "Manuell eingeladen",
@@ -356,7 +357,14 @@ describe("guest invitations", () => {
           },
         ],
       },
-      { id: "p2", email: null, safeId: "DE.Example.1", name: null, invitations: [] },
+      {
+        id: "p2",
+        email: null,
+        safeId: "DE.Example.1",
+        name: null,
+        ervPdf: "/overview/a1/verfahrensbeteiligte/p2/erv.pdf",
+        invitations: [],
+      },
     ]);
   });
 

@@ -14,6 +14,10 @@ export default [
     "overview/:appointmentId/verfahrensbeteiligte/:participantId",
     "routes/draft/participant.tsx",
   ),
+  route(
+    "overview/:appointmentId/verfahrensbeteiligte/:participantId/erv.pdf",
+    "routes/overview/erv-pdf.ts",
+  ),
   route("overview/:appointmentId/confirm", "routes/draft/confirm.tsx"),
   route("overview/:appointmentId/created", "routes/draft/created.tsx"),
   route("umfrage/:token", "routes/survey/survey.tsx"),

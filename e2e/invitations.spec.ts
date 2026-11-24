@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { readFile } from "node:fs/promises";
 
 import type { Kysely } from "kysely";
 
@@ -196,5 +197,72 @@ test("another judge cannot invite the guests", async ({ page, users, db }) => {
     form: { intent: `invite-manual:${guest!.id}` },
     headers: { Origin: new URL(baseURL).origin },
   });
+  expect(response.status()).toBe(404);
+});
+
+const safeIdGuest = async (db: Kysely<Database>, appointmentId: string) =>
+  db
+    .selectFrom("participant")
+    .select(["id", "token"])
+    .where("appointment_id", "=", appointmentId)
+    .where("safe_id", "=", "DE.Example.1")
+    .executeTakeFirstOrThrow();
+
+test("the judge downloads the invitation of a guest with a SAFE-ID as a PDF for the ERV", async ({
+  page,
+  users,
+  db,
+}) => {
+  const judge = await users.create({ roles: ["richter"] });
+  const { id } = await seed(db, judge.id, users.email());
+  const guest = await safeIdGuest(db, id);
+
+  await signIn(page, judge);
+  await page.goto(`${BASE_PATH}/overview/${id}`);
+
+  // Only the guest with a SAFE-ID gets the PDF.
+  await expect(page.getByRole("link", { name: "PDF für ERV" })).toHaveCount(1);
+  const downloading = page.waitForEvent("download");
+  await page
+    .getByRole("group", { name: "DE.Example.1 einladen" })
+    .getByRole("link", { name: "PDF für ERV" })
+    .click();
+  const download = await downloading;
+
+  expect(download.suggestedFilename()).toBe("Einladung-Terminumfrage-574-C-7-26.pdf");
+  const pdf = await readFile((await download.path())!);
+  expect(pdf.subarray(0, 5).toString("latin1")).toBe("%PDF-");
+  // The link annotation carries the guest's personal survey URL.
+  expect(pdf.toString("latin1")).toContain(`/URI (${baseURL}/umfrage/${guest.token})`);
+
+  // Downloading is not an invitation: the judge records it after sending the PDF.
+  await expect(page.getByRole("row", { name: /DE\.Example\.1/ })).toContainText("Nicht eingeladen");
+  const recorded = await db
+    .selectFrom("participant_invitation")
+    .select("id")
+    .where("participant_id", "=", guest.id)
+    .execute();
+  expect(recorded).toHaveLength(0);
+});
+
+const ervPdfPath = async (db: Kysely<Database>, appointmentId: string) =>
+  `${BASE_PATH}/overview/${appointmentId}/verfahrensbeteiligte/${(await safeIdGuest(db, appointmentId)).id}/erv.pdf`;
+
+test("the ERV PDF is not served for a closed Terminumfrage", async ({ page, users, db }) => {
+  const judge = await users.create({ roles: ["richter"] });
+  const { id } = await seed(db, judge.id, users.email(), "cancelled");
+
+  await signIn(page, judge);
+  const response = await page.request.get(await ervPdfPath(db, id));
+  expect(response.status()).toBe(404);
+});
+
+test("another judge cannot download the ERV PDF", async ({ page, users, db }) => {
+  const owner = await users.create({ roles: ["richter"] });
+  const other = await users.create({ roles: ["richter"] });
+  const { id } = await seed(db, owner.id, users.email());
+
+  await signIn(page, other);
+  const response = await page.request.get(await ervPdfPath(db, id));
   expect(response.status()).toBe(404);
 });
