@@ -32,9 +32,14 @@ if [ "$(node --version 2>/dev/null || true)" != "v$node_version" ]; then
   rm -rf "$download"
 fi
 
-# The pnpm version is pinned by "packageManager" in package.json.
-corepack enable
-corepack prepare --activate >/dev/null 2>&1 || true
+# The pnpm version is pinned by "packageManager" in package.json. npm installs exactly that version
+# from the registry and checks its integrity; the native binary comes in as an optional dependency,
+# so no install script runs.
+pnpm_version=$(node -p 'require("./package.json").packageManager.replace(/^pnpm@/, "")')
+if [ "$(pnpm --version 2>/dev/null || true)" != "$pnpm_version" ]; then
+  echo "Installing pnpm $pnpm_version"
+  npm install --global --ignore-scripts "pnpm@$pnpm_version"
+fi
 
 pnpm install --frozen-lockfile
 
