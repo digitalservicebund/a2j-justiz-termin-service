@@ -32,15 +32,13 @@ if [ "$(node --version 2>/dev/null || true)" != "v$node_version" ]; then
   rm -rf "$download"
 fi
 
-# The pnpm version is pinned by "packageManager" in package.json. pnpm's own install script
-# (https://pnpm.io/installation) installs that version as a native executable and adds it to PATH
-# for later shells.
+# The pnpm version is pinned by "packageManager" in package.json. npm installs exactly that version
+# from the registry and checks its integrity; the native binary comes in as an optional dependency,
+# so no install script runs.
 pnpm_version=$(node -p 'require("./package.json").packageManager.replace(/^pnpm@/, "")')
-export PNPM_HOME="${PNPM_HOME:-$HOME/.local/share/pnpm}"
-export PATH="$PNPM_HOME/bin:$PATH"
 if [ "$(pnpm --version 2>/dev/null || true)" != "$pnpm_version" ]; then
   echo "Installing pnpm $pnpm_version"
-  curl -fsSL https://get.pnpm.io/install.sh | env PNPM_VERSION="$pnpm_version" sh -
+  npm install --global --ignore-scripts "pnpm@$pnpm_version"
 fi
 
 pnpm install --frozen-lockfile
