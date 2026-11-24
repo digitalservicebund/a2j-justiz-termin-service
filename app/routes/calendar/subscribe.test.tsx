@@ -15,12 +15,12 @@ vi.mock("~/adapters/session/session", () => ({ requireUser: vi.fn() }));
 const token = "7d9f4c52-6f0e-4b52-9a4a-3c1f6a0f2b11";
 const feedUrl = `http://localhost:3000/verhandlungstermin-finder/api/calendars/${token}/feed.ics`;
 
-function renderPage() {
+function renderPage(entry = "/kalender-abonnieren") {
   const Stub = createRoutesStub([
     { path: "/kalender-abonnieren", Component: CalendarSubscribe, loader },
     { path: "/overview", Component: () => <h1>Übersicht</h1> },
   ]);
-  return render(<Stub initialEntries={["/kalender-abonnieren"]} />);
+  return render(<Stub initialEntries={[entry]} />);
 }
 
 describe("CalendarSubscribe", () => {
@@ -49,6 +49,19 @@ describe("CalendarSubscribe", () => {
       feedUrl.replace("http:", "webcal:"),
     );
     expect(readCalendarToken).toHaveBeenCalledWith({ db: true }, "u1");
+  });
+
+  it("warns that the link belongs in the calendar app after a browser opened it", async () => {
+    renderPage("/kalender-abonnieren?browser");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Kalenderlink im Browser geöffnet");
+  });
+
+  it("shows no warning when the page is opened directly", async () => {
+    renderPage();
+
+    await screen.findByRole("heading", { level: 1, name: "Kalender abonnieren" });
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("copies the feed URL", async () => {
