@@ -16,9 +16,9 @@ import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { KernStack } from "~/components/shared/kern/KernStack";
 import { classNames, clusterClassName } from "~/components/shared/kern/layout";
 import { getDb } from "~/database/database";
-import { requireOwnAppointment } from "~/lib/appointment-guard.server";
-import { draftPath, NEW_ITEM, OVERVIEW_PATH } from "~/lib/paths";
-import { notFound } from "~/lib/responses";
+import { requireOwnAppointment } from "~/lib/auth/appointment-guard.server";
+import { draftPath, NEW_ITEM, OVERVIEW_PATH } from "~/lib/web/paths";
+import { notFound } from "~/lib/web/responses";
 
 import { createTerminBreadcrumbs } from "./breadcrumbs";
 import {

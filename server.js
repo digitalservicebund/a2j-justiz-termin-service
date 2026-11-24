@@ -4,10 +4,10 @@ import morgan from "morgan";
 
 import { getDb } from "./app/database/database.ts";
 import { migrateToLatest } from "./app/database/migrate.ts";
-import { accessLogFormat } from "./app/lib/access-log.ts";
-import { BASE_PATH } from "./app/lib/base-path.ts";
-import { limitRequestBody } from "./app/lib/body-limit.ts";
-import { logInfo } from "./app/lib/logging.ts";
+import { accessLogFormat } from "./app/lib/infra/access-log.ts";
+import { limitRequestBody } from "./app/lib/infra/body-limit.ts";
+import { logInfo } from "./app/lib/infra/logging.ts";
+import { BASE_PATH } from "./app/lib/web/base-path.ts";
 
 // Short-circuit the type-checking of the built output.
 const BUILD_PATH = "./build/server/index.js";

@@ -1,6 +1,6 @@
 import { Pool } from "pg";
 
-import { logError } from "../lib/logging.ts";
+import { logError } from "../lib/infra/logging.ts";
 import { getDBConfig } from "./config.ts";
 
 const dbPoolConfig = {

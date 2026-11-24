@@ -1,50 +1,13 @@
 import type { Kysely } from "kysely";
 
-import { remainingWindows, type SlotWindow } from "../../core/domain/availability.ts";
-import { rowToRange, type TimeRange } from "../../core/domain/time/time-range.ts";
+import {
+  toAnsweredSlot,
+  type Availability,
+  type SlotResponse,
+} from "../../core/domain/availability.ts";
+import { rowToRange } from "../../core/domain/time/time-range.ts";
 import type { Database } from "../../database/types.ts";
-import type { AppointmentSlot } from "./appointments.server.ts";
 import { participantName } from "./participants.server.ts";
-
-// What one participant answered for a slot. `windows` says when the participant is available in
-// it; without any, the participant is not available.
-export type SlotResponse = {
-  participantId: string;
-  name: string;
-  available: boolean;
-  windows: TimeRange[];
-};
-
-// A proposed slot with the answers given for it and what they leave of it. A participant who could
-// no longer see the slot when answering has no answer for it.
-export type AnsweredSlot = AppointmentSlot & {
-  responses: SlotResponse[];
-  // The remaining windows of the slot, sorted by start. Empty once the slot is ruled out.
-  remaining: TimeRange[];
-};
-
-export type Availability = {
-  minDurationMinutes: number | null;
-  // Sorted by start.
-  slots: AnsweredSlot[];
-};
-
-// The remaining windows of all slots, sorted by start.
-export const remainingOf = ({ slots }: Pick<Availability, "slots">): SlotWindow[] =>
-  slots.flatMap(({ id, remaining }) => remaining.map((range) => ({ slotId: id, ...range })));
-
-export function toAnsweredSlot(
-  slot: AppointmentSlot,
-  responses: SlotResponse[],
-  minDurationMinutes: number | null = null,
-): AnsweredSlot {
-  const remaining = remainingWindows(
-    [slot],
-    responses.map(({ windows }) => ({ slotId: slot.id, windows })),
-    minDurationMinutes,
-  ).map(({ start, end }) => ({ start, end }));
-  return { ...slot, responses, remaining };
-}
 
 const NOTHING: Availability = { minDurationMinutes: null, slots: [] };
 

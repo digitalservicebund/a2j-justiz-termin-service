@@ -6,7 +6,7 @@ import { z } from "zod";
 import { NewUserSchema } from "../../core/domain/user.ts";
 import { getDb } from "../../database/database.ts";
 import type { Database } from "../../database/types.ts";
-import { logInfo } from "../../lib/logging.ts";
+import { logInfo } from "../../lib/infra/logging.ts";
 import { isEmailDomainAllowed } from "./allowed-domains.server.ts";
 
 export class UserManagementError extends Error {}

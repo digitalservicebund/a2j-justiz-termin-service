@@ -1,6 +1,6 @@
 import html from "html-template-tag";
 
-import type { AppointmentSlot } from "../../adapters/appointments/appointments.server.ts";
+import type { Slot } from "../../core/domain/availability.ts";
 import { formatRange } from "../../core/domain/time/format.ts";
 import {
   Button,
@@ -24,7 +24,7 @@ const LINK_HINT =
 
 export type InvitationEmail = {
   aktenzeichen: string;
-  slots: AppointmentSlot[];
+  slots: Slot[];
   surveyUrl: string;
 };
 

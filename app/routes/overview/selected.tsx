@@ -6,8 +6,8 @@ import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernStack } from "~/components/shared/kern/KernStack";
 import { NextSteps, Step, SuccessBanner } from "~/components/shared/NextSteps";
 import { formatInstant } from "~/core/domain/time/format";
-import { requireOwnAppointment } from "~/lib/appointment-guard.server";
-import { appointmentPath } from "~/lib/paths";
+import { requireOwnAppointment } from "~/lib/auth/appointment-guard.server";
+import { appointmentPath } from "~/lib/web/paths";
 
 import { selectBreadcrumbs } from "./select.schema";
 

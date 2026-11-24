@@ -1,6 +1,6 @@
 import { Kysely, PostgresDialect } from "kysely";
 
-import { logError } from "../lib/logging.ts";
+import { logError } from "../lib/infra/logging.ts";
 import { getPool } from "./pool.ts";
 import type { Database } from "./types.ts";
 

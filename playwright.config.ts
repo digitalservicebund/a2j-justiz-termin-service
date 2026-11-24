@@ -4,8 +4,8 @@ import { parseEnv } from "node:util";
 
 import { defineConfig, devices } from "@playwright/test";
 
-import { BASE_PATH } from "./app/lib/base-path.ts";
-import { requireEnv } from "./app/lib/env.ts";
+import { requireEnv } from "./app/lib/infra/env.ts";
+import { BASE_PATH } from "./app/lib/web/base-path.ts";
 
 // e2e/run.sh points E2E_ENV_FILE at a copy with shifted ports when it runs in a worktree slot.
 const environmentFile = process.env.E2E_ENV_FILE ?? new URL("./.env.e2e", import.meta.url);

@@ -1,9 +1,8 @@
-import type { FeedAppointment } from "../adapters/appointments/calendar-feed.server.ts";
-import { BASE_PATH } from "./base-path.ts";
-import { createTerminEvents, toCalendarSlot, wrapCalendar } from "./email/termin-calendar.ts";
-import { appointmentUrl } from "./paths.ts";
-
-export const CALENDAR_FEED_NAME = "Verhandlungstermin-Finder";
+import type { FeedAppointment } from "../../core/domain/availability.ts";
+import { BASE_PATH } from "../web/base-path.ts";
+import { PRODUCT_NAME } from "../web/page-meta.ts";
+import { appointmentUrl } from "../web/paths.ts";
+import { createTerminEvents, toCalendarSlot, wrapCalendar } from "./termin-calendar.ts";
 
 // The path of the feed, below the origin. The token is the only secret in it.
 export const calendarFeedPath = (token: string) =>
@@ -34,8 +33,8 @@ export function createCalendarFeed(
   );
 
   return wrapCalendar(events, [
-    `NAME:${CALENDAR_FEED_NAME}`,
-    `X-WR-CALNAME:${CALENDAR_FEED_NAME}`,
+    `NAME:${PRODUCT_NAME}`,
+    `X-WR-CALNAME:${PRODUCT_NAME}`,
     "REFRESH-INTERVAL;VALUE=DURATION:PT5M",
     "X-PUBLISHED-TTL:PT5M",
   ]);

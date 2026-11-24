@@ -1,12 +1,18 @@
 import type { Kysely } from "kysely";
 
-import { windowKey, type SlotWindow } from "../../core/domain/availability.ts";
+import {
+  remainingOf,
+  windowKey,
+  type ResponseOverview,
+  type Slot,
+  type SlotWindow,
+} from "../../core/domain/availability.ts";
 import { stateAfterAnswer, type SurveyState } from "../../core/domain/survey.ts";
 import { rowToRange } from "../../core/domain/time/time-range.ts";
 import type { Database } from "../../database/types.ts";
-import { logInfo } from "../../lib/logging.ts";
-import { nextCalendarSequence, type AppointmentSlot } from "./appointments.server.ts";
-import { readAvailability, remainingOf, type AnsweredSlot } from "./availability.server.ts";
+import { logInfo } from "../../lib/infra/logging.ts";
+import { nextCalendarSequence } from "./appointments.server.ts";
+import { readAvailability } from "./availability.server.ts";
 import { participantName } from "./participants.server.ts";
 
 // A window a guest can answer or has answered: a remaining window of a slot, or an availability
@@ -25,7 +31,7 @@ export type Survey = {
   // What is left of the proposed slots after the answers of the other participants.
   slots: SurveySlot[];
   // Every slot the judge proposed, also those ruled out. Only the sorry page lists them.
-  proposedSlots: AppointmentSlot[];
+  proposedSlots: Slot[];
 };
 
 type Executor = Kysely<Database>;
@@ -248,17 +254,6 @@ export async function getSavedAnswer(
     available: rows.map((row) => toSurveySlot({ slotId: row.slot_id, ...rowToRange(row) })),
   };
 }
-
-export type ResponseOverview = {
-  appointmentId: string;
-  aktenzeichen: string;
-  // The judge who created the appointment.
-  judgeEmail: string;
-  // The SEQUENCE for the calendar file that goes with this state.
-  calendarSequence: number;
-  // Every proposed slot with the answers given for it and what is left of it.
-  slots: AnsweredSlot[];
-};
 
 // Where the appointment stands after the latest answer, for the calendar file that goes to the
 // judge. Takes the next SEQUENCE and reads the answers in one transaction: answers are saved under

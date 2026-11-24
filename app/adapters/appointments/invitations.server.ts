@@ -1,9 +1,9 @@
 import type { Kysely } from "kysely";
 
+import type { Slot } from "../../core/domain/availability.ts";
 import { rowToRange } from "../../core/domain/time/time-range.ts";
 import type { Database, InvitationChannel } from "../../database/types.ts";
-import { logInfo } from "../../lib/logging.ts";
-import type { AppointmentSlot } from "./appointments.server.ts";
+import { logInfo } from "../../lib/infra/logging.ts";
 import { participantName } from "./participants.server.ts";
 
 // An invitation a guest got: how, and when.
@@ -28,7 +28,7 @@ export type Invitee = {
   safeId: string | null;
   token: string;
   aktenzeichen: string;
-  slots: AppointmentSlot[];
+  slots: Slot[];
 };
 
 // The people of the user's own appointment that the judge listed, in the order they were added,

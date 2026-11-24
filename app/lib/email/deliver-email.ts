@@ -1,11 +1,16 @@
 import type { Attachment } from "nodemailer/lib/mailer/index.js";
 
-import { requireEnv } from "../env.ts";
-import { logError } from "../logging.ts";
-import { requireSecret } from "../secrets.ts";
-import { createSmtpTransport } from "../smtp.ts";
+import { requireEnv } from "../infra/env.ts";
+import { logError } from "../infra/logging.ts";
+import { requireSecret } from "../infra/secrets.ts";
+import { createSmtpTransport } from "../infra/smtp.ts";
 
 type Rendered = { subject: string; text: string; html: string; attachments: Attachment[] };
+
+type Message = {
+  to: string;
+  render: (context: { from: string }) => Rendered;
+};
 
 type Delivery = {
   to: string;
@@ -16,15 +21,12 @@ type Delivery = {
   render: (context: { url: string; from: string }) => Rendered;
 };
 
-// Mails someone about an appointment, with a link into the app. A mail problem never undoes what
-// triggered it, so failures are logged, not thrown.
-export async function deliverEmail({ to, link, failure, render }: Delivery): Promise<boolean> {
-  let transport: ReturnType<typeof createSmtpTransport> | undefined;
+// Sends one mail from the SMTP account. Throws when it does not go out.
+export async function sendEmail({ to, render }: Message): Promise<void> {
+  const from = requireSecret("smtp", "SMTP_USER");
+  const { subject, text, html, attachments } = render({ from });
+  const transport = createSmtpTransport();
   try {
-    const url = link(requireEnv("BASE_URL"));
-    const from = requireSecret("smtp", "SMTP_USER");
-    const { subject, text, html, attachments } = render({ url, from });
-    transport = createSmtpTransport();
     await transport.sendMail({
       from,
       to: to.trim().toLowerCase(),
@@ -33,11 +35,20 @@ export async function deliverEmail({ to, link, failure, render }: Delivery): Pro
       html,
       attachments,
     });
+  } finally {
+    transport.close();
+  }
+}
+
+// Mails someone about an appointment, with a link into the app. A mail problem never undoes what
+// triggered it, so failures are logged, not thrown.
+export async function deliverEmail({ to, link, failure, render }: Delivery): Promise<boolean> {
+  try {
+    const url = link(requireEnv("BASE_URL"));
+    await sendEmail({ to, render: ({ from }) => render({ url, from }) });
     return true;
   } catch (error) {
     logError(failure, error);
     return false;
-  } finally {
-    transport?.close();
   }
 }

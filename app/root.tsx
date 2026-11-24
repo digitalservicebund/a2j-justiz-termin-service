@@ -17,9 +17,9 @@ import { AppShell } from "~/components/shared/AppShell";
 import { DefaultPage } from "~/components/shared/DefaultPage";
 import { KernAlert } from "~/components/shared/kern/KernAlert";
 import { NOT_FOUND_TITLE, NotFoundPage } from "~/components/shared/NotFoundPage";
-import { BASE_PATH } from "~/lib/base-path";
-import { requireEnv } from "~/lib/env";
-import { PAGE_TITLE, pageMeta } from "~/lib/page-meta";
+import { requireEnv } from "~/lib/infra/env";
+import { BASE_PATH } from "~/lib/web/base-path";
+import { PAGE_TITLE, pageMeta } from "~/lib/web/page-meta";
 
 import type { Route } from "./+types/root";
 

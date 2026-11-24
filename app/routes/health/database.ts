@@ -1,7 +1,7 @@
 import { sql } from "kysely";
 
 import { getDb } from "~/database/database";
-import { logError } from "~/lib/logging";
+import { logError } from "~/lib/infra/logging";
 
 // Separate from /health, which backs the readiness probe and must not depend
 // on the database.

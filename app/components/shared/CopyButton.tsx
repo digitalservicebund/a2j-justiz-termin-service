@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { useHydrated } from "~/lib/use-hydrated";
+import { useHydrated } from "~/lib/web/use-hydrated";
 
 import { KernButton } from "./kern/KernButton";
 import { KernIcon } from "./kern/KernIcon";

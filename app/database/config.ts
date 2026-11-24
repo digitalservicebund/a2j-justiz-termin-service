@@ -1,7 +1,7 @@
 import type { PoolConfig } from "pg";
 
-import { requireEnv } from "../lib/env.ts";
-import { requireSecret } from "../lib/secrets.ts";
+import { requireEnv } from "../lib/infra/env.ts";
+import { requireSecret } from "../lib/infra/secrets.ts";
 
 export function getDBConfig(): Pick<
   PoolConfig,

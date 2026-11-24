@@ -8,7 +8,7 @@ const { getSession, findUser } = vi.hoisted(() => ({
   findUser: vi.fn(),
 }));
 
-vi.mock("../../lib/auth.server.ts", () => ({ getAuth: () => ({ api: { getSession } }) }));
+vi.mock("../../lib/auth/auth.server.ts", () => ({ getAuth: () => ({ api: { getSession } }) }));
 vi.mock("../../database/database.ts", () => ({
   getDb: () => ({
     selectFrom: () => ({

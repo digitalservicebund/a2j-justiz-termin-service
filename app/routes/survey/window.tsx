@@ -22,8 +22,8 @@ import { classNames, clusterClassName } from "~/components/shared/kern/layout";
 import { contains, parseWindowKey, type SlotWindow } from "~/core/domain/availability";
 import { formatRangeLong, formatTime } from "~/core/domain/time/format";
 import type { TimeRange } from "~/core/domain/time/time-range";
-import { surveyPath } from "~/lib/paths";
-import { requireSurvey } from "~/lib/survey-guard.server";
+import { requireSurvey } from "~/lib/auth/survey-guard.server";
+import { surveyPath } from "~/lib/web/paths";
 
 import { readValues, setSmallerWindow, surveyBreadcrumbs } from "./schema";
 import { draftPath } from "./window.paths";

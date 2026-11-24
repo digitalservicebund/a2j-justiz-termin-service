@@ -22,7 +22,7 @@ import { classNames, clusterClassName } from "~/components/shared/kern/layout";
 import { SidebarPage } from "~/components/shared/SidebarPage";
 import { getDb } from "~/database/database";
 import type { AppointmentStatus } from "~/database/types";
-import { appointmentPath, draftPath, NEW_APPOINTMENT_PATH } from "~/lib/paths";
+import { appointmentPath, draftPath, NEW_APPOINTMENT_PATH } from "~/lib/web/paths";
 
 import {
   applyOverviewQuery,

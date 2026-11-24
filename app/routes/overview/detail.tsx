@@ -15,7 +15,7 @@ import { ResultBanner } from "~/components/shared/ResultBanner";
 import { SidebarPage } from "~/components/shared/SidebarPage";
 import { SurveyLinkField } from "~/components/shared/SurveyLinkField";
 import { formatInstant } from "~/core/domain/time/format";
-import { PUBLISHED, requireOwnAppointment } from "~/lib/appointment-guard.server";
+import { PUBLISHED, requireOwnAppointment } from "~/lib/auth/appointment-guard.server";
 import {
   appointmentPath,
   confirmDraftPath,
@@ -23,8 +23,8 @@ import {
   OVERVIEW_PATH,
   selectPath,
   surveyUrl,
-} from "~/lib/paths";
-import { notFound } from "~/lib/responses";
+} from "~/lib/web/paths";
+import { notFound } from "~/lib/web/responses";
 import { groupSlotsByDay, type DayWindows } from "~/routes/draft/slot-days";
 import { rangeToSlot } from "~/routes/draft/slots";
 

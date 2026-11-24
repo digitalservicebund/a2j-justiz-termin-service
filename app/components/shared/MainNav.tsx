@@ -1,4 +1,4 @@
-import { CALENDAR_SUBSCRIBE_PATH, OVERVIEW_PATH } from "~/lib/paths";
+import { CALENDAR_SUBSCRIBE_PATH, OVERVIEW_PATH } from "~/lib/web/paths";
 
 import { A2JIcon } from "./a2j/A2JIcon";
 import { KernIcon } from "./kern/KernIcon";

@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createSmtpTransport } from "~/lib/smtp";
+import { createSmtpTransport } from "~/lib/infra/smtp";
 
 import { loader } from "./smtp";
 
-vi.mock("~/lib/smtp", () => ({ createSmtpTransport: vi.fn() }));
+vi.mock("~/lib/infra/smtp", () => ({ createSmtpTransport: vi.fn() }));
 
 function transportWith(verify: () => Promise<true>) {
   const transport = { verify: vi.fn(verify), close: vi.fn() };

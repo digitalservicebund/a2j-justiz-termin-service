@@ -7,7 +7,7 @@ import { KernButton } from "~/components/shared/kern/KernButton";
 import { KernCluster } from "~/components/shared/kern/KernCluster";
 import { KernHeading } from "~/components/shared/kern/KernHeading";
 import { KernIcon } from "~/components/shared/kern/KernIcon";
-import { useHydrated } from "~/lib/use-hydrated";
+import { useHydrated } from "~/lib/web/use-hydrated";
 
 import "./ReviewPage.css";
 

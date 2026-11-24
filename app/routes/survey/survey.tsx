@@ -27,8 +27,8 @@ import { KernLabel } from "~/components/shared/kern/KernLabel";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { KernStack } from "~/components/shared/kern/KernStack";
 import { classNames, resetClassName, stackClassName } from "~/components/shared/kern/layout";
-import { surveyPath, surveyResultPath, surveySummaryPath } from "~/lib/paths";
-import { requireSurvey } from "~/lib/survey-guard.server";
+import { requireSurvey } from "~/lib/auth/survey-guard.server";
+import { surveyPath, surveyResultPath, surveySummaryPath } from "~/lib/web/paths";
 
 import { NoOption } from "./result";
 import {

@@ -15,9 +15,9 @@ import { KernStack } from "~/components/shared/kern/KernStack";
 import { clusterClassName } from "~/components/shared/kern/layout";
 import { SidebarPage } from "~/components/shared/SidebarPage";
 import { getDb } from "~/database/database";
-import { calendarFeedPath } from "~/lib/calendar-feed";
-import { requireEnv } from "~/lib/env";
-import { OPENED_IN_BROWSER_PARAM } from "~/lib/paths";
+import { calendarFeedPath } from "~/lib/calendar/calendar-feed";
+import { requireEnv } from "~/lib/infra/env";
+import { OPENED_IN_BROWSER_PARAM } from "~/lib/web/paths";
 
 import "./subscribe.css";
 

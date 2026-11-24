@@ -1,5 +1,5 @@
-import type { ResponseOverview } from "../../adapters/appointments/survey.server.ts";
-import { appointmentUrl } from "../paths.ts";
+import type { ResponseOverview } from "../../core/domain/availability.ts";
+import { appointmentUrl } from "../web/paths.ts";
 import { renderAnswerReceivedEmail } from "./answer-received-email.ts";
 import { deliverEmail } from "./deliver-email.ts";
 

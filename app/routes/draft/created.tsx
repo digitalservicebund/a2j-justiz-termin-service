@@ -9,9 +9,9 @@ import {
 import { KernStack } from "~/components/shared/kern/KernStack";
 import { NextSteps, Step, SuccessBanner } from "~/components/shared/NextSteps";
 import { SurveyLinkField } from "~/components/shared/SurveyLinkField";
-import { PUBLISHED, requireOwnAppointment } from "~/lib/appointment-guard.server";
-import { confirmDraftPath, createdPath, surveyUrl } from "~/lib/paths";
-import { notFound } from "~/lib/responses";
+import { PUBLISHED, requireOwnAppointment } from "~/lib/auth/appointment-guard.server";
+import { confirmDraftPath, createdPath, surveyUrl } from "~/lib/web/paths";
+import { notFound } from "~/lib/web/responses";
 import { Guests } from "~/routes/overview/guests";
 import { inviteGuest, loadGuestRows } from "~/routes/overview/invite.server";
 

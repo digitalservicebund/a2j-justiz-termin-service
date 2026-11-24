@@ -8,6 +8,7 @@ import type { TimeRange } from "./time/time-range.ts";
 // A range that belongs to a slot: an availability window or a remaining window.
 export type SlotWindow = TimeRange & { slotId: string };
 
+// A proposed time slot. Its id stays the same as long as the slot is not replaced.
 export type Slot = TimeRange & { id: string };
 
 // What one participant answered for one slot. No windows means "not available".
@@ -139,3 +140,67 @@ export function answersByOffer(offered: SlotWindow[], availability: SlotWindow[]
     return { offer, state: full ? "full" : windows.length > 0 ? "partial" : "none", windows };
   });
 }
+
+// What one participant answered for a slot. `windows` says when the participant is available in
+// it; without any, the participant is not available.
+export type SlotResponse = {
+  participantId: string;
+  name: string;
+  available: boolean;
+  windows: TimeRange[];
+};
+
+// A proposed slot with the answers given for it and what they leave of it. A participant who could
+// no longer see the slot when answering has no answer for it.
+export type AnsweredSlot = Slot & {
+  responses: SlotResponse[];
+  // The remaining windows of the slot, sorted by start. Empty once the slot is ruled out.
+  remaining: TimeRange[];
+};
+
+export type Availability = {
+  minDurationMinutes: number | null;
+  // Sorted by start.
+  slots: AnsweredSlot[];
+};
+
+// The remaining windows of all slots, sorted by start.
+export const remainingOf = ({ slots }: Pick<Availability, "slots">): SlotWindow[] =>
+  slots.flatMap(({ id, remaining }) => remaining.map((range) => ({ slotId: id, ...range })));
+
+export function toAnsweredSlot(
+  slot: Slot,
+  responses: SlotResponse[],
+  minDurationMinutes: number | null = null,
+): AnsweredSlot {
+  const remaining = remainingWindows(
+    [slot],
+    responses.map(({ windows }) => ({ slotId: slot.id, windows })),
+    minDurationMinutes,
+  ).map(({ start, end }) => ({ start, end }));
+  return { ...slot, responses, remaining };
+}
+
+// Where an appointment stands after the latest answer, for the calendar file that goes to the
+// judge.
+export type ResponseOverview = {
+  appointmentId: string;
+  aktenzeichen: string;
+  // The judge who created the appointment.
+  judgeEmail: string;
+  // The SEQUENCE for the calendar file that goes with this state.
+  calendarSequence: number;
+  // Every proposed slot with the answers given for it and what is left of it.
+  slots: AnsweredSlot[];
+};
+
+// An appointment in the judge's calendar feed: an open one with all its slots, or a confirmed one
+// with the chosen window.
+export type FeedAppointment = {
+  id: string;
+  aktenzeichen: string;
+  calendarSequence: number;
+  // The chosen window of a confirmed appointment, which lies within the slot `confirmedSlotId`.
+  confirmed: (TimeRange & { slotId: string }) | null;
+  slots: AnsweredSlot[];
+};

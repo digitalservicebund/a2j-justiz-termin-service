@@ -1,4 +1,4 @@
-import { appointmentUrl } from "../paths.ts";
+import { appointmentUrl } from "../web/paths.ts";
 import { deliverEmail } from "./deliver-email.ts";
 import { renderTerminCreatedEmail, type TerminCreatedEmail } from "./termin-created-email.ts";
 

@@ -1,4 +1,4 @@
-import { smallerWindowPagePath, surveyPath } from "~/lib/paths";
+import { smallerWindowPagePath, surveyPath } from "~/lib/web/paths";
 
 import { surveySearch, type SurveyValues } from "./schema";
 

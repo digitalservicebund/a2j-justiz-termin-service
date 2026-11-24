@@ -188,7 +188,7 @@ pnpm knip          # Finds and fixes unused dependencies, exports and files
 
 ```
 app/
-├── core/domain/            # Pure domain logic: users and roles, allowed domains, time (see AGENTS.md)
+├── core/domain/            # Pure domain logic: users and roles, allowed domains, slots and answers, time (see AGENTS.md)
 ├── adapters/               # Database access and session handling, called by loaders and actions
 │   ├── appointments/       # Terminumfragen, participants, survey answers, calendar feed
 │   ├── users/              # User and allowed-domain management
@@ -203,7 +203,13 @@ app/
 │   ├── health/             # Readiness, database and SMTP checks
 │   └── auth.ts             # Better Auth API handler
 ├── database/               # Kysely, connection pool, migrations (see "Database")
-├── lib/                    # Env, secrets, logging, base path, URL paths, route guards, calendar feed, e-mail, ERV (stub)
+├── lib/
+│   ├── infra/              # Env, secrets, logging, SMTP, RabbitMQ, access log, body limit
+│   ├── web/                # Base path, URL paths, responses, page meta, useHydrated
+│   ├── auth/               # Better Auth setup and the route guards (uses adapters)
+│   ├── calendar/           # iCalendar files for mails and the calendar feed
+│   ├── email/              # Mail templates and delivery
+│   └── erv/                # ERV invitations (stub)
 ├── components/             # Reusable UI components
 │   └── shared/             # AppShell, Breadcrumb, FlowPage, ReviewPage, NextSteps, ...
 │       └── kern/           # KERN wrappers: KernAlert, KernBadge, KernButton, KernIcon, KernLink, ...
@@ -212,13 +218,18 @@ app/
 doc/adr/                    # Architecture decision records
 ```
 
+Imports point one way. `core` imports no other layer. `adapters` use `core`, `database` and
+`lib/infra`; the session adapter also uses `lib/auth`. `lib/calendar`, `lib/email` and `lib/erv`
+never import `adapters`: they take the types they need from `core`, and loaders pass them what
+the adapters read. Only `lib/auth` calls adapters.
+
 Unit tests live next to their source as `*.test.ts(x)` (e.g. `components/shared/FlowPage.test.tsx`).
 Shared test helpers live in `tests/` and are imported with `~tests/…`.
 
 Each layer has one import style, enforced by oxlint:
 
-- `adapters`, `core`, `database`, `lib`, `scripts` and `server.js`: relative imports with the `.ts` extension (`../database/database.ts`), never `~/`. Node loads this code directly and does not resolve `~/`.
-- `routes`, `components` and the files in `app/` itself: `~/` for other folders (`~/lib/env`), `./` for the same folder, no `../` and no `.ts` extension.
+- `adapters`, `core`, `database`, `lib`, `scripts` and `server.js`: relative imports with the `.ts` extension (`../database/database.ts`), never `~/`. Node loads this code directly and does not resolve `~/`. The exception is `lib/email`, which imports the mail logo with Vite's `?inline`, so it only runs inside the app bundle and Vitest.
+- `routes`, `components` and the files in `app/` itself: `~/` for other folders (`~/lib/infra/env`), `./` for the same folder, no `../` and no `.ts` extension.
 
 ### Styling
 
@@ -251,7 +262,7 @@ Postgres is published on host port **5433**, so it can run next to other project
 
 The app is served under `/verhandlungstermin-finder`, locally and in every environment, for
 example `http://localhost:3000/verhandlungstermin-finder/`. The prefix is the constant
-`BASE_PATH` in `app/lib/base-path.ts`; routing, asset URLs, cookies and emailed links all derive
+`BASE_PATH` in `app/lib/web/base-path.ts`; routing, asset URLs, cookies and emailed links all derive
 from it, so changing it is a code change. Requests for `/` are redirected to the app, any other
 path outside the prefix is a 404. The session cookie is named `jts.session_token` and scoped to
 the prefix.

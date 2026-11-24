@@ -2,7 +2,7 @@ import { redirect } from "react-router";
 
 import { AuthUserSchema, hasRole, type AuthUser, type UserRole } from "../../core/domain/user.ts";
 import { getDb } from "../../database/database.ts";
-import { getAuth } from "../../lib/auth.server.ts";
+import { getAuth } from "../../lib/auth/auth.server.ts";
 
 export async function getSessionUser(request: Request): Promise<AuthUser | null> {
   const session = await getAuth().api.getSession({ headers: request.headers });

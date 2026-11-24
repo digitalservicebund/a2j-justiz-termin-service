@@ -1,18 +1,10 @@
 import type { Kysely } from "kysely";
 import { z } from "zod";
 
-import { confirmedWindow, type TimeRange } from "../../core/domain/time/time-range.ts";
+import type { FeedAppointment } from "../../core/domain/availability.ts";
+import { confirmedWindow } from "../../core/domain/time/time-range.ts";
 import type { Database } from "../../database/types.ts";
-import { readAvailabilities, type AnsweredSlot } from "./availability.server.ts";
-
-export type FeedAppointment = {
-  id: string;
-  aktenzeichen: string;
-  calendarSequence: number;
-  // The chosen window of a confirmed appointment, which lies within the slot `confirmedSlotId`.
-  confirmed: (TimeRange & { slotId: string }) | null;
-  slots: AnsweredSlot[];
-};
+import { readAvailabilities } from "./availability.server.ts";
 
 // The appointments that belong in the calendar feed of the user who owns the token: open ones with
 // all their slots and confirmed ones with the chosen window. Drafts and cancelled appointments
