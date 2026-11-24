@@ -1,0 +1,13 @@
+/* The form ends well above the report-problem button, as in the design. */
+.sitzungstag {
+  padding-block-end: var(--kern-metric-space-x-large);
+}
+
+/* The inputs are 48px tall. The colon sits at their vertical center, "bis" near their bottom. */
+.sitzungstag__colon {
+  height: 3rem;
+}
+
+.sitzungstag__word {
+  padding-bottom: var(--kern-metric-space-small);
+}

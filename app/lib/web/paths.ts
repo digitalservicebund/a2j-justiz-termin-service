@@ -63,6 +63,10 @@ export const CALENDAR_SUBSCRIBE_PATH = "/kalender-abonnieren";
 export const OPENED_IN_BROWSER_PARAM = "browser";
 export const calendarOpenedInBrowserPath = `${CALENDAR_SUBSCRIBE_PATH}?${OPENED_IN_BROWSER_PARAM}`;
 
+// The judge's settings, and the page of one Sitzungstag. NEW_ITEM stands for a new one.
+export const SETTINGS_PATH = "/einstellungen";
+export const sitzungstagPath = (id: string) => `${SETTINGS_PATH}/sitzungstage/${segment(id)}`;
+
 // Full URLs, for links that leave the app: copied survey links, e-mails and calendar events.
 export const appointmentUrl = (origin: string, id: string) =>
   `${origin}${BASE_PATH}${appointmentPath(id)}`;

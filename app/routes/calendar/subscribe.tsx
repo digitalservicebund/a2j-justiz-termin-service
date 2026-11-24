@@ -67,7 +67,7 @@ export default function CalendarSubscribe() {
   const { user, feedUrl, webcalUrl, openedInBrowser } = useLoaderData<typeof loader>();
   return (
     <AppShell user={user} breadcrumbs={[{ label: "Kalender abonnieren" }]}>
-      <SidebarPage current="calendar" spacing="roomy">
+      <SidebarPage current="calendar" user={user} spacing="roomy">
         <KernStack gap="xl" align="start" className="calendar-subscribe__content">
           <KernHeading size="large" level={1}>
             Kalender abonnieren

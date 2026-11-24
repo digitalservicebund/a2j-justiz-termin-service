@@ -56,8 +56,10 @@ export default function SurveyResult() {
   );
   return (
     <AppShell user={user ?? undefined} breadcrumbs={surveyBreadcrumbs}>
-      {signedIn ? (
-        <SidebarPage current="overview">{content}</SidebarPage>
+      {user ? (
+        <SidebarPage current="overview" user={user}>
+          {content}
+        </SidebarPage>
       ) : (
         <DefaultPage width="content">{content}</DefaultPage>
       )}

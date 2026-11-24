@@ -168,11 +168,19 @@ for (const colorScheme of ["light", "dark"] as const) {
       const draft = await seed(db, judge.id, "draft");
       const open = await seed(db, judge.id, "open");
       const confirmed = await seed(db, judge.id, "confirmed");
+      const sitzungstag = await db
+        .insertInto("sitzungstag")
+        .values({ user_id: judge.id, weekday: 2, start_time: "10:00", end_time: "17:00" })
+        .returning("id")
+        .executeTakeFirstOrThrow();
       await signIn(page, judge);
 
       const pages = [
         ["/overview", "the overview"],
         ["/kalender-abonnieren", "the calendar subscription"],
+        ["/einstellungen", "the settings"],
+        ["/einstellungen/sitzungstage/neu", "a new Sitzungstag"],
+        [`/einstellungen/sitzungstage/${sitzungstag.id}`, "a Sitzungstag"],
         ["/overview/new", "a new Terminumfrage"],
         [`/overview/new?entwurf=${draft.id}`, "a draft Terminumfrage"],
         [`/overview/${draft.id}/zeitfenster/neu`, "a new time slot"],
@@ -200,11 +208,18 @@ for (const colorScheme of ["light", "dark"] as const) {
       await page.getByRole("button", { name: "Weiter" }).click();
       await expect(page.getByRole("alert").first()).toBeVisible();
       await expectAccessible(page, colorScheme, "a new Terminumfrage with errors");
+
+      await page.goto(`${BASE_PATH}/einstellungen/sitzungstage/neu`);
+      await page.getByRole("button", { name: "Speichern" }).click();
+      await expect(page.getByRole("alert").first()).toBeVisible();
+      await expectAccessible(page, colorScheme, "a new Sitzungstag with errors");
     });
 
     test("the empty overview is accessible", async ({ page, users }) => {
       await signIn(page, await users.create({ roles: ["richter"] }));
       await expectAccessible(page, colorScheme, "the empty overview");
+      await page.goto(`${BASE_PATH}/einstellungen`);
+      await expectAccessible(page, colorScheme, "the empty settings");
     });
 
     test("the admin pages are accessible", async ({ page, users }) => {

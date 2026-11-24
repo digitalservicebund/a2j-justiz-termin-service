@@ -82,6 +82,19 @@ type ParticipantInvitationsTable = {
   created_at: Generated<Date>;
 };
 
+// A regular court day of a judge. The times are Berlin wall-clock times without a date, which
+// Postgres returns as "HH:MM:SS". Read them with fromSqlTime().
+type SitzungstagTable = {
+  id: Generated<string>;
+  user_id: string;
+  // ISO weekday, 1 (Monday) to 5 (Friday).
+  weekday: number;
+  start_time: string;
+  end_time: string;
+  created_at: Generated<Date>;
+  updated_at: Generated<Date>;
+};
+
 type Timestamps = {
   createdAt: Generated<Date>;
   updatedAt: Date;
@@ -142,4 +155,5 @@ export type Database = {
   participant_response: ParticipantResponsesTable;
   participant_response_window: ParticipantResponseWindowsTable;
   participant_invitation: ParticipantInvitationsTable;
+  sitzungstag: SitzungstagTable;
 };

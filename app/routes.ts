@@ -20,6 +20,8 @@ export default [
   ),
   route("overview/:appointmentId/confirm", "routes/draft/confirm.tsx"),
   route("overview/:appointmentId/created", "routes/draft/created.tsx"),
+  route("einstellungen", "routes/settings/settings.tsx"),
+  route("einstellungen/sitzungstage/:sitzungstagId", "routes/settings/sitzungstag.tsx"),
   route("umfrage/:token", "routes/survey/survey.tsx"),
   route("umfrage/:token/zeitfenster", "routes/survey/window.tsx"),
   route("umfrage/:token/zusammenfassung", "routes/survey/confirm.tsx"),
