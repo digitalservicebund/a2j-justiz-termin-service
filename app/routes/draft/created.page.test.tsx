@@ -74,6 +74,9 @@ describe("CreateTerminCreated", () => {
       "invite-email:p1",
     );
     expect(within(actions).getByRole("button", { name: "Per ERV" })).toBeVisible();
+    const pdf = within(actions).getByRole("link", { name: "PDF für ERV" });
+    expect(pdf).toHaveAttribute("href", "/overview/a1/verfahrensbeteiligte/p1/erv.pdf");
+    expect(pdf).toHaveAttribute("download");
     expect(within(actions).getByRole("button", { name: "Als eingeladen markieren" })).toBeVisible();
     expect(within(list).getByText("Nicht eingeladen")).toBeVisible();
 
@@ -96,5 +99,18 @@ describe("CreateTerminCreated", () => {
 
     expect(await screen.findByText("Nicht eingeladen")).toBeVisible();
     expect(screen.queryByRole("button", { name: "Als eingeladen markieren" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "PDF für ERV" })).toBeNull();
+  });
+
+  it("offers the ERV PDF only for a guest with a SAFE-ID", async () => {
+    vi.mocked(listGuests).mockResolvedValue([
+      { id: "p1", email: "person.a@example.com", safeId: null, name: "Person A", invitations: [] },
+    ]);
+
+    renderPage();
+
+    const actions = await screen.findByRole("group", { name: "Person A einladen" });
+    expect(within(actions).getByRole("button", { name: "Per E-Mail" })).toBeVisible();
+    expect(within(actions).queryByRole("link", { name: "PDF für ERV" })).toBeNull();
   });
 });

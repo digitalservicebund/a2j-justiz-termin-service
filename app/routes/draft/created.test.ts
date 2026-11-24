@@ -146,6 +146,7 @@ describe("create-termin created route", () => {
         email: "person.a@example.com",
         safeId: null,
         name: "Person A",
+        ervPdf: null,
         invitations: [
           {
             label: "Per ERV eingeladen",

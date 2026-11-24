@@ -11,6 +11,7 @@ import { getDb } from "~/database/database";
 import { appointmentIdOf } from "~/lib/auth/appointment-guard.server";
 import { sendInvitationEmail } from "~/lib/email/send-invitation-email";
 import { sendErvInvitation } from "~/lib/erv/send-erv-invitation";
+import { ervInvitationPdfPath } from "~/lib/web/paths";
 import { badRequest, notFound } from "~/lib/web/responses";
 
 import { GUESTS_ANCHOR, type GuestRow } from "./guests";
@@ -21,6 +22,7 @@ export async function loadGuestRows(userId: string, appointmentId: string): Prom
   const guests = await listGuests(getDb(), userId, appointmentId);
   return guests.map(({ invitations, ...guest }) => ({
     ...guest,
+    ervPdf: guest.safeId ? ervInvitationPdfPath(appointmentId, guest.id) : null,
     invitations: invitations.map(({ channel, at }) => ({
       label: invitedLabel[channel],
       at: formatInstant(at),
