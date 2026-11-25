@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import { useHydrated } from "~/lib/web/use-hydrated";
 
@@ -13,6 +13,8 @@ export type CopyButtonProps = {
   // Read out by screen readers once the text is on the clipboard.
   announcement: string;
   className?: string;
+  // Shown before the label until the text is copied. Defaults to the copy icon.
+  icon?: ReactNode;
 };
 
 export function CopyButton({
@@ -21,6 +23,7 @@ export function CopyButton({
   copiedLabel,
   announcement,
   className,
+  icon,
 }: Readonly<CopyButtonProps>) {
   const [copied, setCopied] = useState(false);
   // The button needs JavaScript, so it only exists once the page has hydrated. Without JavaScript
@@ -41,7 +44,14 @@ export function CopyButton({
   return (
     <>
       <KernButton type="button" style="secondary" className={className} onClick={copy}>
-        <KernIcon name={copied ? "check" : "content-copy"} size={className ? "small" : "default"} />
+        {!copied && icon ? (
+          icon
+        ) : (
+          <KernIcon
+            name={copied ? "check" : "content-copy"}
+            size={className ? "small" : "default"}
+          />
+        )}
         <KernLabel>{copied ? copiedLabel : label}</KernLabel>
       </KernButton>
       <output className="kern-sr-only">{copied ? announcement : ""}</output>

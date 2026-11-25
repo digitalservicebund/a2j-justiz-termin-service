@@ -55,7 +55,7 @@ const calendarToken = async (db: Kysely<Database>, userId: string) =>
       .executeTakeFirstOrThrow()
   ).calendar_token;
 
-test("the subscription page shows the personal feed URL and instructions", async ({
+test("the subscription page offers the webcal link and a guide per calendar app", async ({
   page,
   users,
   db,
@@ -67,18 +67,23 @@ test("the subscription page shows the personal feed URL and instructions", async
   await page.getByRole("link", { name: "Kalender abonnieren" }).click();
 
   await expect(page).toHaveURL(`${baseURL}/kalender-abonnieren`);
-  await expect(page.getByRole("heading", { level: 1, name: "Kalender abonnieren" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      level: 1,
+      name: "Automatisch aktuelle Zeitfenster und Termine im Kalender anzeigen lassen",
+    }),
+  ).toBeVisible();
   const feedUrl = `${baseURL}/api/calendars/${token}/feed.ics`;
-  await expect(page.getByLabel("Link zum Kalender")).toHaveValue(feedUrl);
-  await expect(page.getByRole("link", { name: "In Kalender-App öffnen" })).toHaveAttribute(
-    "href",
-    feedUrl.replace(/^http/, "webcal"),
-  );
-  await expect(page.getByRole("heading", { level: 3 })).toHaveText([
-    "Outlook",
-    "Apple Kalender",
-    "Google Kalender",
-  ]);
+  await expect(
+    page.getByRole("link", { name: "Kalender in Kalender-App abonnieren" }),
+  ).toHaveAttribute("href", feedUrl.replace(/^http/, "webcal"));
+  await expect(page.getByRole("heading", { level: 3 })).toHaveText(["Outlook", "Apple", "Google"]);
+
+  // The guides start collapsed; opening one shows the feed URL to copy.
+  await expect(page.getByRole("link", { name: feedUrl })).toHaveCount(0);
+  await page.getByRole("heading", { level: 3, name: "Apple" }).click();
+  // Without JavaScript there is no copy button, so the link is shown to copy it by hand.
+  await expect(page.getByRole("link", { name: feedUrl })).toBeVisible();
 });
 
 test("the feed holds the open and confirmed appointments of its user only", async ({
@@ -121,8 +126,10 @@ test("a browser that opens the feed link is sent to the subscription page with a
   await page.goto(`${BASE_PATH}/api/calendars/${await calendarToken(db, user.id)}/feed.ics`);
 
   await expect(page).toHaveURL(`${baseURL}/kalender-abonnieren?browser`);
-  await expect(page.getByRole("alert")).toContainText("Kalenderlink im Browser geöffnet");
-  await expect(page.getByLabel("Link zum Kalender")).toHaveValue(/feed\.ics$/);
+  const alert = page.getByRole("alert");
+  await expect(alert).toContainText("Kalender-Links werden vom Browser nicht unterstützt.");
+  await alert.getByRole("link", { name: "Zur Anleitung" }).click();
+  await expect(page).toHaveURL(`${baseURL}/kalender-abonnieren?browser#anleitung`);
 });
 
 test("the feed does not accept the user ID, unknown or malformed tokens", async ({

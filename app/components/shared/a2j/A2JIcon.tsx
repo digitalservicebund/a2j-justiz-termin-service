@@ -7,6 +7,7 @@ export type A2JIconName =
   | "checklist-rtl"
   | "event"
   | "history"
+  | "link"
   | "remove-circle"
   | "settings";
 

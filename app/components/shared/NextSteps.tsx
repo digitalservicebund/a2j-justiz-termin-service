@@ -10,11 +10,16 @@ import { OVERVIEW_PATH } from "~/lib/web/paths";
 
 import "./NextSteps.css";
 
-export function Step({ title, children }: Readonly<{ title: string; children?: React.ReactNode }>) {
+// level is the heading level of the step's title: 3 below a section heading, deeper when nested.
+export function Step({
+  title,
+  level = 3,
+  children,
+}: Readonly<{ title: string; level?: 3 | 4; children?: React.ReactNode }>) {
   return (
     <KernCluster as="li" wrap={false} gap="md" align="start" className="next-steps__step">
       <KernStack gap="sm" align="start" className="next-steps__step-body kern-flex-1 kern-pt-xs">
-        <KernHeading className="kern-m-none" size="title" level={3}>
+        <KernHeading className="kern-m-none" size="title" level={level}>
           {title}
         </KernHeading>
         {children}
