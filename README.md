@@ -210,7 +210,7 @@ app/
 │   ├── auth/               # Better Auth setup and the route guards (uses adapters)
 │   ├── calendar/           # iCalendar files for mails and the calendar feed
 │   ├── email/              # Mail templates and delivery
-│   └── erv/                # ERV invitations (stub)
+│   └── erv/                # ERV invitations: the PDF and sending through the Basisdienst: ERV Versand
 ├── components/             # Reusable UI components
 │   └── shared/             # AppShell, Breadcrumb, FlowPage, ReviewPage, NextSteps, ...
 │       └── kern/           # KERN wrappers: KernAlert, KernBadge, KernButton, KernIcon, KernLink, ...
@@ -392,6 +392,23 @@ through an HTTP API on port **8045**. The E2E tests read the sent invitation fro
   invitation PDF, to open in a browser.
 - `DELETE http://localhost:8045/messages?receiver=<SAFE-ID>`: forgets the requests.
 - `GET http://localhost:8045/health`: answers 200 once it consumes requests.
+
+The invitation is an XJustiz 3.6.2 message `nachricht.gds.uebermittlungSchriftgutobjekte.0005005`
+after the example of the Basisdienst team: sender and recipient in free text, the Aktenzeichen in the
+short title, and the invitation PDF (which holds the personal survey link) as its only document,
+named `Nachrichtentext.pdf` as the beA expects
+([`app/lib/erv/erv-invitation-message.ts`](app/lib/erv/erv-invitation-message.ts)). Unit tests
+validate it against the official XSDs in [`tests/xjustiz`](tests/xjustiz/README.md).
+
+The judge does not wait for the ERV. "Per ERV" records the invitation as pending with a new
+correlation ID, hands it to the broker and shows the guest list again ("Per ERV: wird gesendet").
+Every app instance keeps one connection to the broker, opened when the server starts, and consumes
+the replies. Whichever instance receives a reply marks the invitation as sent ("Per ERV
+eingeladen") or not delivered ("Per ERV: nicht zugestellt"), with the problem type in
+`participant_invitation.failure`. An invitation without a reply after 5 minutes shows as not
+delivered; a reply that still comes settles it. If the broker cannot be reached, the invitation is
+marked as not delivered at once and the page says so. The page does not update by itself: reload it
+to see the reply.
 
 ## Authentication
 

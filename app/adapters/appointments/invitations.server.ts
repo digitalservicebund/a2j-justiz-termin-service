@@ -1,13 +1,14 @@
 import type { Kysely } from "kysely";
 
 import type { Slot } from "../../core/domain/availability.ts";
+import type { ErvSettlement, InvitationStatus } from "../../core/domain/invitation.ts";
 import { rowToRange } from "../../core/domain/time/time-range.ts";
 import type { Database, InvitationChannel } from "../../database/types.ts";
 import { logInfo } from "../../lib/infra/logging.ts";
 import { participantName } from "./participants.server.ts";
 
-// An invitation a guest got: how, and when.
-export type Invitation = { channel: InvitationChannel; at: Date };
+// An invitation a guest got: how, when, and whether it went out.
+export type Invitation = { channel: InvitationChannel; at: Date; status: InvitationStatus };
 
 // A person the judge listed for the Terminumfrage. Only they have a personal link to invite them
 // with; guests who answered through the universal link came by themselves.
@@ -58,7 +59,7 @@ export async function listGuests(
 
   const invitations = await db
     .selectFrom("participant_invitation")
-    .select(["participant_id", "channel", "created_at"])
+    .select(["participant_id", "channel", "created_at", "status"])
     .where(
       "participant_id",
       "in",
@@ -72,7 +73,7 @@ export async function listGuests(
     ...guest,
     invitations: invitations
       .filter(({ participant_id }) => participant_id === guest.id)
-      .map(({ channel, created_at }) => ({ channel, at: created_at })),
+      .map(({ channel, created_at, status }) => ({ channel, at: created_at, status })),
   }));
 }
 
@@ -116,23 +117,32 @@ export async function findInvitee(
   };
 }
 
-// Records that a guest of the user's own open appointment was invited. Returns false when there is
-// no such guest.
+// Records that a guest of the user's own open appointment was invited. An ERV invitation is
+// pending until the reply with its correlation ID settles it (see settleErvInvitation); the other
+// channels are sent at once. Returns false when there is no such guest.
 export async function recordInvitation(
   db: Kysely<Database>,
   userId: string,
   appointmentId: string,
   participantId: string,
-  channel: InvitationChannel,
+  invitation: { channel: "email" | "manual" } | { channel: "erv"; correlationId: string },
 ): Promise<boolean> {
+  const { channel } = invitation;
+  const correlationId = invitation.channel === "erv" ? invitation.correlationId : null;
+  const status: InvitationStatus = invitation.channel === "erv" ? "pending" : "sent";
   const recorded = await db
     .insertInto("participant_invitation")
-    .columns(["participant_id", "channel"])
+    .columns(["participant_id", "channel", "status", "correlation_id"])
     .expression((eb) =>
       eb
         .selectFrom("participant")
         .innerJoin("appointment", "appointment.id", "participant.appointment_id")
-        .select(["participant.id", eb.val(channel).as("channel")])
+        .select([
+          "participant.id",
+          eb.val(channel).as("channel"),
+          eb.val(status).as("status"),
+          eb.val(correlationId).as("correlation_id"),
+        ])
         .where("participant.id", "=", participantId)
         .where("appointment.id", "=", appointmentId)
         .where("appointment.user_id", "=", userId)
@@ -145,4 +155,25 @@ export async function recordInvitation(
     logInfo(`User ${userId} invited participant ${participantId} of ${appointmentId} (${channel})`);
   }
   return Boolean(recorded);
+}
+
+// Settles the pending ERV invitation with this correlation ID with the reply of the Basisdienst.
+// Returns false when there is none, for example because it was settled before.
+export async function settleErvInvitation(
+  db: Kysely<Database>,
+  correlationId: string,
+  settlement: ErvSettlement,
+): Promise<boolean> {
+  const settled = await db
+    .updateTable("participant_invitation")
+    .set({
+      status: settlement.status,
+      failure: settlement.status === "failed" ? settlement.failure : null,
+    })
+    .where("correlation_id", "=", correlationId)
+    .where("channel", "=", "erv")
+    .where("status", "=", "pending")
+    .returning("id")
+    .executeTakeFirst();
+  return Boolean(settled);
 }

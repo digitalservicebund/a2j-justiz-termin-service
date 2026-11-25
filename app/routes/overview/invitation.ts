@@ -1,3 +1,4 @@
+import type { InvitationStatus } from "~/core/domain/invitation";
 import type { InvitationChannel } from "~/database/types";
 
 const CHANNELS: readonly InvitationChannel[] = ["email", "erv", "manual"];
@@ -17,9 +18,16 @@ export function parseInviteIntent(
   return { channel, participantId: match[2] };
 }
 
-// How the latest invitation went out, as the guest list shows it.
-export const invitedLabel: Record<InvitationChannel, string> = {
+const SENT_LABEL: Record<InvitationChannel, string> = {
   email: "Per E-Mail eingeladen",
   erv: "Per ERV eingeladen",
   manual: "Manuell eingeladen",
 };
+
+// How an invitation went out, as the guest list shows it. Only an ERV invitation can be pending or
+// fail after it was recorded.
+export function invitationLabel(channel: InvitationChannel, state: InvitationStatus): string {
+  if (state === "pending") return "Per ERV: wird gesendet";
+  if (state === "failed") return "Per ERV: nicht zugestellt";
+  return SENT_LABEL[channel];
+}

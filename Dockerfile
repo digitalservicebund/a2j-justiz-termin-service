@@ -40,6 +40,10 @@ RUN apk add --no-cache dumb-init \
 
 WORKDIR /app
 ENV NODE_ENV=production
+# The commit the image was built from, passed by CI. The app names it as its version, e.g. in ERV
+# messages.
+ARG COMMIT_SHA=unknown
+ENV COMMIT_SHA=$COMMIT_SHA
 
 COPY --from=build-dependencies /build-deps/build ./build
 COPY --from=app-dependencies /app-deps/node_modules ./node_modules

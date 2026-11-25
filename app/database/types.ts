@@ -1,5 +1,6 @@
 import type { Generated } from "kysely";
 
+import type { InvitationStatus } from "../core/domain/invitation.ts";
 import type { UserRole } from "../core/domain/user.ts";
 
 // "draft": user is still working on it
@@ -79,6 +80,12 @@ type ParticipantInvitationsTable = {
   id: Generated<string>;
   participant_id: string;
   channel: InvitationChannel;
+  // Only an ERV invitation is pending until the reply of the Basisdienst: ERV Versand arrives.
+  status: Generated<InvitationStatus>;
+  // Ties an ERV invitation to the reply. Null for the other channels.
+  correlation_id: string | null;
+  // The problem type of the reply of an ERV invitation that was not delivered.
+  failure: string | null;
   created_at: Generated<Date>;
 };
 

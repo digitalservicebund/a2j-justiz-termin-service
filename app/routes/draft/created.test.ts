@@ -125,7 +125,7 @@ describe("create-termin created route", () => {
         safeId: null,
         name: "Person A",
         // 10:15 Berlin time in November is 09:15 UTC.
-        invitations: [{ channel: "erv", at: new Date("2026-11-20T09:15:00Z") }],
+        invitations: [{ channel: "erv", at: new Date("2026-11-20T09:15:00Z"), status: "sent" }],
       },
     ]);
     vi.mocked(getAppointment).mockResolvedValue({
@@ -150,6 +150,7 @@ describe("create-termin created route", () => {
         invitations: [
           {
             label: "Per ERV eingeladen",
+            state: "sent",
             at: expect.stringMatching(/^\p{L}+, 20\. November 2026 um 10:15$/u),
           },
         ],
@@ -189,7 +190,9 @@ describe("create-termin created route", () => {
       params,
     });
 
-    expect(recordInvitation).toHaveBeenCalledWith({ db: true }, "1", "a1", "p1", "manual");
+    expect(recordInvitation).toHaveBeenCalledWith({ db: true }, "1", "a1", "p1", {
+      channel: "manual",
+    });
     expect(response).toMatchObject({
       thrown: false,
       status: 302,

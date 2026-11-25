@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto";
-
 import type {
   EgvpMessageSent,
   SendEgvpExampleMessage,
@@ -7,138 +5,116 @@ import type {
   SendEgvpMessageFailed,
 } from "./erv-versand-messages.ts";
 
+/**
+ * Creates a client for the Basisdienst: ERV Versand on top of an existing AMQP confirm channel (for
+ * example an `amqplib` `ConfirmChannel`). It starts consuming the client's reply queue
+ * `replies.<userId>` right away and hands every reply to `onReply`.
+ *
+ * Unlike the request-reply client of the Basisdienst team, it does not wait for replies in memory:
+ * the caller chooses the correlation ID, keeps it (in the database), and matches the reply in
+ * `onReply`. So a reply is handled wherever it arrives, also at another instance that shares the
+ * reply queue or after a restart.
+ */
 export async function createErvVersandClient(
   options: ErvVersandClientOptions,
 ): Promise<ErvVersandClient> {
-  const { channel, userId, onUncorrelatedReply } = options;
-  const timeoutInMilliseconds = options.timeoutInMilliseconds ?? DEFAULT_TIMEOUT_IN_MILLISECONDS;
-  const pendingRequests = new Map<string, PendingRequest>();
+  const { channel, userId, onReply, onCancel } = options;
 
   const { consumerTag } = await channel.consume(
-    `${REPLY_QUEUE_PREFIX}${userId}`,
+    replyQueueName(userId),
     (message) => {
       if (message === null) {
-        rejectAll(pendingRequests, new Error("Reply queue consumer was cancelled by the broker."));
+        onCancel?.();
         return;
       }
-
-      handleReply(message, pendingRequests, onUncorrelatedReply);
-      channel.ack(message);
+      // Acknowledged once handled. A reply that could not be handled is offered once more, then
+      // dropped, so a reply that always fails cannot block the queue.
+      onReply(readReply(message)).then(
+        () => channel.ack(message),
+        () => channel.nack(message, false, !message.fields.redelivered),
+      );
     },
     { noAck: false },
   );
 
+  async function publish(messageType: string, payload: object, correlationId: string) {
+    channel.publish(REQUEST_EXCHANGE, REQUEST_ROUTING_KEY, Buffer.from(JSON.stringify(payload)), {
+      // Native AMQP properties, NOT headers. The specification documents them as headers only due
+      // to limitations of AsyncAPI.
+      correlationId,
+      userId,
+      type: messageType,
+      contentType: "application/json",
+      persistent: true,
+    });
+    // The broker has taken over the request, so it is not lost if this process stops.
+    await channel.waitForConfirms();
+  }
+
   return {
-    sendEgvpMessage: (payload) =>
-      sendRequest(MESSAGE_TYPES.sendEgvpMessage, payload) as Promise<
-        SendResult<SendEgvpMessageFailed>
-      >,
-
-    sendEgvpExampleMessage: (payload) =>
-      sendRequest(MESSAGE_TYPES.sendEgvpExampleMessage, payload) as Promise<
-        SendResult<SendEgvpMessageFailed>
-      >,
-
+    sendEgvpMessage: (payload, correlationId) =>
+      publish(MESSAGE_TYPES.sendEgvpMessage, payload, correlationId),
+    sendEgvpExampleMessage: (payload, correlationId) =>
+      publish(MESSAGE_TYPES.sendEgvpExampleMessage, payload, correlationId),
     async close() {
       await channel.cancel(consumerTag);
-      rejectAll(pendingRequests, new Error("ERV Versand client was closed."));
     },
   };
-
-  function sendRequest(messageType: string, payload: object): Promise<SendResult<unknown>> {
-    const correlationId = randomUUID();
-
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        pendingRequests.delete(correlationId);
-        reject(
-          new ErvVersandTimeoutError(
-            `No reply for ${messageType} (correlation ID ${correlationId}) within ${timeoutInMilliseconds} ms.`,
-            correlationId,
-          ),
-        );
-      }, timeoutInMilliseconds);
-
-      pendingRequests.set(correlationId, { resolve, reject, timeout });
-
-      channel.publish(REQUEST_EXCHANGE, REQUEST_ROUTING_KEY, Buffer.from(JSON.stringify(payload)), {
-        // Native AMQP properties, NOT headers. The specification documents
-        // them as headers only due to limitations of AsyncAPI.
-        correlationId,
-        userId,
-        type: messageType,
-        contentType: "application/json",
-        persistent: true,
-      });
-    });
-  }
 }
 
 export type ErvVersandClient = {
-  /** Sends an EGVP message directly to a receiver. */
-  sendEgvpMessage(payload: SendEgvpMessage): Promise<SendResult<SendEgvpMessageFailed>>;
+  /**
+   * Sends an EGVP message directly to a receiver. Resolves once the broker confirmed the request;
+   * the reply comes later through `onReply` with the same correlation ID.
+   */
+  sendEgvpMessage(payload: SendEgvpMessage, correlationId: string): Promise<void>;
 
   /**
-   * Sends a static example message without attachments. Intended for first
-   * client integration tests.
+   * Sends a static example message without attachments. Intended for first client integration
+   * tests.
    */
-  sendEgvpExampleMessage(
-    payload: SendEgvpExampleMessage,
-  ): Promise<SendResult<SendEgvpMessageFailed>>;
+  sendEgvpExampleMessage(payload: SendEgvpExampleMessage, correlationId: string): Promise<void>;
 
-  /** Stops consuming replies and rejects all pending requests. */
+  /** Stops consuming replies. */
   close(): Promise<void>;
 };
 
-/**
- * Outcome of a request. Domain failures resolve as `failed` with an RFC 9457
- * problem. The promise only rejects on technical errors (timeout, client
- * closed, unparsable reply).
- */
-export type SendResult<Problem> =
-  | { outcome: "sent"; reply: EgvpMessageSent }
-  | { outcome: "failed"; problem: Problem };
-
 export type ErvVersandClientOptions = {
-  /** AMQP channel of a connection authenticated as `userId` */
+  /** AMQP confirm channel of a connection authenticated as `userId` */
   channel: AmqpChannel;
 
   /**
-   * User of the AMQP connection. The broker verifies the `user-id` property
-   * against it, and replies are routed to the queue `replies.<userId>`.
+   * User of the AMQP connection. The broker verifies the `user-id` property against it, and
+   * replies are routed to the queue `replies.<userId>`.
    */
   userId: string;
 
   /**
-   * Called for replies without a matching pending request. That happens after
-   * a restart or timeout, or when several instances share the same reply queue.
-   * The reply gets acknowledged afterwards, so persist it here if needed.
+   * Called for every reply. The reply is acknowledged once the promise resolves. If it rejects,
+   * the reply is offered once more, then dropped.
    */
-  onUncorrelatedReply: (reply: UncorrelatedReply) => void;
+  onReply: (reply: ErvVersandReply) => Promise<void>;
 
-  /** Defaults to 5 minutes. */
-  timeoutInMilliseconds?: number;
+  /** Called when the broker cancels the consumer, for example because the queue was deleted. */
+  onCancel?: () => void;
 };
-
-export type UncorrelatedReply = {
-  correlationId: string | undefined;
-  messageType: string | undefined;
-  payload: unknown;
-};
-
-export class ErvVersandTimeoutError extends Error {
-  readonly correlationId: string;
-
-  constructor(message: string, correlationId: string) {
-    super(message);
-    this.name = "ErvVersandTimeoutError";
-    this.correlationId = correlationId;
-  }
-}
 
 /**
- * The minimal subset of an AMQP channel used by the client. The promise based
- * `Channel` and `ConfirmChannel` of `amqplib` satisfy it structurally.
+ * A reply of the Basisdienst. Domain failures come as `failed` with an RFC 9457 problem. A reply
+ * of an unknown type or with a payload that is no JSON is `unreadable`.
+ */
+export type ErvVersandReply = {
+  correlationId: string | undefined;
+  messageType: string | undefined;
+  outcome:
+    | { kind: "sent"; reply: EgvpMessageSent }
+    | { kind: "failed"; problem: SendEgvpMessageFailed }
+    | { kind: "unreadable"; reason: string };
+};
+
+/**
+ * The minimal subset of an AMQP confirm channel used by the client. The promise based
+ * `ConfirmChannel` of `amqplib` satisfies it structurally.
  */
 export type AmqpChannel = {
   publish(
@@ -153,6 +129,7 @@ export type AmqpChannel = {
       persistent: boolean;
     },
   ): boolean;
+  waitForConfirms(): Promise<void>;
   consume(
     queue: string,
     onMessage: (message: AmqpMessage | null) => void,
@@ -160,10 +137,12 @@ export type AmqpChannel = {
   ): Promise<{ consumerTag: string }>;
   cancel(consumerTag: string): Promise<unknown>;
   ack(message: AmqpMessage): void;
+  nack(message: AmqpMessage, allUpTo: boolean, requeue: boolean): void;
 };
 
 export type AmqpMessage = {
   content: Buffer;
+  fields: { redelivered: boolean };
   properties: {
     correlationId?: string;
     type?: string;
@@ -181,80 +160,34 @@ export const MESSAGE_TYPES = {
 
 const REQUEST_EXCHANGE = "requests";
 const REQUEST_ROUTING_KEY = "requests";
-const REPLY_QUEUE_PREFIX = "replies.";
-const DEFAULT_TIMEOUT_IN_MILLISECONDS = 5 * 60 * 1000;
+
+/** The queue the Basisdienst routes the replies to this AMQP user's requests to. */
+export const replyQueueName = (userId: string) => `replies.${userId}`;
 
 const FAILURE_MESSAGE_TYPES: ReadonlySet<string> = new Set([
   MESSAGE_TYPES.sendEgvpMessageFailed,
   MESSAGE_TYPES.sendEgvpExampleMessageFailed,
 ]);
 
-type PendingRequest = {
-  resolve: (result: SendResult<unknown>) => void;
-  reject: (error: Error) => void;
-  timeout: NodeJS.Timeout;
-};
-
-function handleReply(
-  message: AmqpMessage,
-  pendingRequests: Map<string, PendingRequest>,
-  onUncorrelatedReply: (reply: UncorrelatedReply) => void,
-): void {
-  const { correlationId, type: messageType } = message.properties;
-  const pendingRequest =
-    correlationId === undefined ? undefined : pendingRequests.get(correlationId);
+function readReply(message: AmqpMessage): ErvVersandReply {
+  const { correlationId, type: messageType, contentType } = message.properties;
+  const reply = (outcome: ErvVersandReply["outcome"]) => ({ correlationId, messageType, outcome });
 
   let payload: unknown;
   try {
     payload = JSON.parse(message.content.toString("utf8"));
-  } catch (error) {
-    if (pendingRequest === undefined) {
-      onUncorrelatedReply({
-        correlationId,
-        messageType,
-        payload: message.content.toString("utf8"),
-      });
-    } else {
-      settle(pendingRequests, correlationId!, pendingRequest);
-      pendingRequest.reject(new Error("Reply payload is not valid JSON.", { cause: error }));
-    }
-    return;
+  } catch {
+    return reply({ kind: "unreadable", reason: "Reply payload is not valid JSON." });
   }
-
-  if (pendingRequest === undefined) {
-    onUncorrelatedReply({ correlationId, messageType, payload });
-    return;
-  }
-
-  settle(pendingRequests, correlationId!, pendingRequest);
 
   if (messageType === MESSAGE_TYPES.egvpMessageSent) {
-    pendingRequest.resolve({
-      outcome: "sent",
-      reply: payload as EgvpMessageSent,
-    });
-  } else if (
+    return reply({ kind: "sent", reply: payload as EgvpMessageSent });
+  }
+  if (
     (messageType !== undefined && FAILURE_MESSAGE_TYPES.has(messageType)) ||
-    message.properties.contentType === "application/problem+json"
+    contentType === "application/problem+json"
   ) {
-    pendingRequest.resolve({ outcome: "failed", problem: payload });
-  } else {
-    pendingRequest.reject(new Error(`Unexpected reply message type: ${messageType}`));
+    return reply({ kind: "failed", problem: payload as SendEgvpMessageFailed });
   }
-}
-
-function settle(
-  pendingRequests: Map<string, PendingRequest>,
-  correlationId: string,
-  pendingRequest: PendingRequest,
-): void {
-  clearTimeout(pendingRequest.timeout);
-  pendingRequests.delete(correlationId);
-}
-
-function rejectAll(pendingRequests: Map<string, PendingRequest>, error: Error): void {
-  for (const [correlationId, pendingRequest] of pendingRequests) {
-    settle(pendingRequests, correlationId, pendingRequest);
-    pendingRequest.reject(error);
-  }
+  return reply({ kind: "unreadable", reason: `Unexpected reply message type: ${messageType}` });
 }

@@ -1,7 +1,7 @@
 import { Form, useNavigation } from "react-router";
 
 import { KernAlert } from "~/components/shared/kern/KernAlert";
-import { KernBadge } from "~/components/shared/kern/KernBadge";
+import { KernBadge, type KernBadgeType } from "~/components/shared/kern/KernBadge";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernButton } from "~/components/shared/kern/KernButton";
 import { KernCluster } from "~/components/shared/kern/KernCluster";
@@ -19,6 +19,7 @@ import {
   KernTableBody,
   KernTableHead,
 } from "~/components/shared/kern/KernTable";
+import type { InvitationStatus } from "~/core/domain/invitation";
 import type { InvitationChannel } from "~/database/types";
 
 import { inviteIntent } from "./invitation";
@@ -34,7 +35,7 @@ export type GuestRow = {
   name: string | null;
   // Where the guest's invitation is downloaded as a PDF for the ERV. Null without a SAFE-ID.
   ervPdf: string | null;
-  invitations: Array<{ label: string; at: string }>;
+  invitations: Array<{ label: string; state: InvitationStatus; at: string }>;
 };
 
 function InviteButton({
@@ -65,6 +66,12 @@ function InviteButton({
   );
 }
 
+const BADGE: Record<InvitationStatus, KernBadgeType> = {
+  pending: "info",
+  sent: "success",
+  failed: "danger",
+};
+
 // Every invitation with how and when it went out, newest first.
 function InvitationStatus({ invitations }: Readonly<{ invitations: GuestRow["invitations"] }>) {
   if (invitations.length === 0) {
@@ -72,9 +79,9 @@ function InvitationStatus({ invitations }: Readonly<{ invitations: GuestRow["inv
   }
   return (
     <KernStack as="ul" gap="sm" className="guests__invitations">
-      {invitations.map(({ label, at }) => (
+      {invitations.map(({ label, state, at }) => (
         <KernStack as="li" key={`${label} ${at}`} gap="xxs" align="start">
-          <KernBadge type="success">{label}</KernBadge>
+          <KernBadge type={BADGE[state]}>{label}</KernBadge>
           <span className="guests__muted">am {at}</span>
         </KernStack>
       ))}
