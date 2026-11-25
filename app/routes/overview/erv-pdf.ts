@@ -1,7 +1,8 @@
 import type { LoaderFunctionArgs } from "react-router";
 
-import { findInvitee, type Invitee } from "~/adapters/appointments/invitations.server";
+import { findInvitee } from "~/adapters/appointments/invitations.server";
 import { requireRole } from "~/adapters/session/session";
+import { givenName } from "~/core/domain/participant";
 import { getDb } from "~/database/database";
 import { appointmentIdOf } from "~/lib/auth/appointment-guard.server";
 import { renderErvInvitationPdf } from "~/lib/erv/erv-invitation-pdf";
@@ -9,10 +10,6 @@ import { requireEnv } from "~/lib/infra/env";
 import { logInfo } from "~/lib/infra/logging";
 import { surveyUrl } from "~/lib/web/paths";
 import { badRequest, notFound } from "~/lib/web/responses";
-
-// The invitee's name falls back to the e-mail address or SAFE-ID. The PDF shows a name only.
-const givenName = ({ name, email, safeId }: Invitee) =>
-  name === email || name === safeId ? null : name;
 
 // "574 C 7/26" and "Person Ä" become "574-C-7-26" and "Person-Ae": a file name every system accepts.
 const UMLAUTS: Record<string, string> = {
