@@ -205,6 +205,7 @@ app/
 ├── database/               # Kysely, connection pool, migrations (see "Database")
 ├── lib/
 │   ├── infra/              # Env, secrets, logging, SMTP, RabbitMQ, access log, body limit
+│   │   └── erv-versand/    # Client for the Basisdienst: ERV Versand (request-reply over RabbitMQ)
 │   ├── web/                # Base path, URL paths, responses, page meta, useHydrated
 │   ├── auth/               # Better Auth setup and the route guards (uses adapters)
 │   ├── calendar/           # iCalendar files for mails and the calendar feed
