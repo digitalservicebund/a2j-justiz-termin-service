@@ -58,5 +58,38 @@ services:
       timeout: 5s
       retries: 20
 
+  # Local stand-in for the Basisdienst: ERV Versand (tests/mock-services/fake-erv-versand.ts).
+  # It sets up the exchange and queues on the local RabbitMQ and answers every request without
+  # sending anything. Its HTTP API lists the requests it received, for E2E tests and debugging.
+  # It runs the repository's own code and node_modules, so run `pnpm install` before starting it.
+  erv-versand:
+    image: node:26.13.1-alpine3.23
+    container_name: ${COMPOSE_PROJECT_NAME:-a2j-justiz-termin-service}-erv-versand
+    restart: unless-stopped
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    working_dir: /app
+    command: ["node", "tests/mock-services/fake-erv-versand.ts"]
+    ports:
+      # HTTP API with the received requests: http://localhost:8045/messages
+      - "${COMPOSE_BIND_ADDRESS:-127.0.0.1}:${ERV_VERSAND_HOST_PORT:-8045}:8080"
+    volumes:
+      - .:/app:ro
+    environment:
+      HTTP_PORT: "8080"
+      SECRETS_FILE_PATH: ""
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_VHOST: /
+      RABBITMQ_USER: jts
+      RABBITMQ_PASSWORD: jts
+      RABBITMQ_TLS: "false"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/health"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
 volumes:
   postgres_data:

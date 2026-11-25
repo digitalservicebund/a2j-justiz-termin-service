@@ -130,6 +130,41 @@ export async function readMail(request: APIRequestContext, email: string, subjec
   return { text: mail.Text, attachments };
 }
 
+const ervVersandURL = requireEnv("ERV_VERSAND_URL");
+
+const ervMessageListSchema = z.object({
+  messages: z.array(
+    z.object({
+      correlationId: z.string().nullable(),
+      messageType: z.string().nullable(),
+      receiver: z.string().nullable(),
+      xjustizMessage: z.string().nullable(),
+      attachments: z.array(z.object({ name: z.string(), content: z.string() })),
+      reply: z.string().nullable(),
+    }),
+  ),
+});
+
+// What the app sent to the SAFE-ID through the fake ERV Versand, newest first.
+export async function ervMessages(request: APIRequestContext, safeId: string) {
+  const response = await request.get(`${ervVersandURL}/messages`, {
+    params: { receiver: safeId },
+  });
+  expect(response.status()).toBe(200);
+  return ervMessageListSchema.parse(await response.json()).messages;
+}
+
+// The newest ERV message to the SAFE-ID, with its XJustiz message and attachments' contents.
+export async function readErvMessage(request: APIRequestContext, safeId: string) {
+  await expect.poll(async () => (await ervMessages(request, safeId)).length).toBeGreaterThan(0);
+  const [message] = await ervMessages(request, safeId);
+  const attachments: Record<string, Buffer> = {};
+  for (const { name, content } of message!.attachments) {
+    attachments[name] = Buffer.from(content, "base64");
+  }
+  return { ...message!, attachments };
+}
+
 export async function issueMagicLink(request: APIRequestContext, email: string): Promise<string> {
   const response = await request.post(`${AUTH_BASE_PATH}/sign-in/magic-link`, {
     data: { email, callbackURL: `${BASE_PATH}/overview`, errorCallbackURL: `${BASE_PATH}/` },
