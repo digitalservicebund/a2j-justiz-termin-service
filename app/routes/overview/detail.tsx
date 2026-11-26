@@ -44,7 +44,7 @@ export async function loader({ request, params }: { request: Request } & Params)
   });
   const { aktenzeichen, confirmedSlot } = appointment;
   const days = groupSlotsByDay(appointment.slots.map(rangeToSlot));
-  const guests = await loadGuestRows(user.id, id);
+  const guests = await loadGuestRows(user.id, id, new Date());
 
   if (appointment.status === "confirmed") {
     // A confirmed appointment always has its slot; without it there is nothing to show.

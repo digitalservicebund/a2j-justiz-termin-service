@@ -4,6 +4,8 @@ export function logInfo(message: string): void {
   console.info(message);
 }
 
+// Without an error, only the message: console.error would print "undefined" after it.
 export function logError(message: string, error?: unknown): void {
-  console.error(message, error);
+  if (error === undefined) console.error(message);
+  else console.error(message, error);
 }

@@ -93,11 +93,11 @@ The runner starts the dedicated `jts-e2e` Compose project from
 the root [`docker-compose.yml`](docker-compose.yml), builds the production app,
 and lets Playwright start the server and wait for `/verhandlungstermin-finder/health`. It uses PostgreSQL
 on **5544**, SMTP on **1026**, Mailpit on **8026**, RabbitMQ on **5684** (management UI
-**15684**), and the app on **3109**.
+**15684**), the fake ERV Versand on **8046**, and the app on **3109**.
 These ports must be free. Container names and the database volume are scoped to
 the `jts-e2e` project, separate from development. The runner overrides
 `COMPOSE_BIND_ADDRESS`, `POSTGRES_HOST_PORT`, `SMTP_HOST_PORT`, `MAILPIT_HOST_PORT`,
-`RABBITMQ_HOST_PORT` and `RABBITMQ_MANAGEMENT_HOST_PORT`; normal development keeps the root
+`RABBITMQ_HOST_PORT`, `RABBITMQ_MANAGEMENT_HOST_PORT` and `ERV_VERSAND_HOST_PORT`; normal development keeps the root
 file's default ports.
 Tests ignore local/deployed credentials,
 use a public test-only signing value, and send mail only to the isolated Mailpit.
@@ -158,10 +158,10 @@ dependencies and starts that worktree's Compose project. `pnpm dev`, `pnpm db:mi
 `docker compose` pick the file up automatically. The main checkout is slot 0 and keeps the
 default ports.
 
-| Slot | App    | Postgres | SMTP   | Mailpit | RabbitMQ (UI)    | Compose project             | `pnpm test:e2e` ports (app / Postgres / SMTP / Mailpit / RabbitMQ / UI)   |
-| ---- | ------ | -------- | ------ | ------- | ---------------- | --------------------------- | ------------------------------------------------------------------------- |
-| 0    | 3000   | 5433     | 2525   | 8025    | 5673 (15673)     | `a2j-justiz-termin-service` | 3109 / 5544 / 1026 / 8026 / 5684 / 15684, project `jts-e2e`               |
-| N    | 3000+N | 5433+N   | 2525+N | 8125+N  | 5673+N (15673+N) | `jts-slot-N`                | 3109+N / 5544+N / 1026+N / 8026+N / 5684+N / 15684+N, project `jts-e2e-N` |
+| Slot | App    | Postgres | SMTP   | Mailpit | RabbitMQ (UI)    | ERV Versand | Compose project             | `pnpm test:e2e` ports (app / Postgres / SMTP / Mailpit / RabbitMQ / UI / ERV Versand) |
+| ---- | ------ | -------- | ------ | ------- | ---------------- | ----------- | --------------------------- | ------------------------------------------------------------------------------------- |
+| 0    | 3000   | 5433     | 2525   | 8025    | 5673 (15673)     | 8045        | `a2j-justiz-termin-service` | 3109 / 5544 / 1026 / 8026 / 5684 / 15684 / 8046, project `jts-e2e`                    |
+| N    | 3000+N | 5433+N   | 2525+N | 8125+N  | 5673+N (15673+N) | 8145+N      | `jts-slot-N`                | 3109+N / 5544+N / 1026+N / 8026+N / 5684+N / 15684+N / 8046+N, project `jts-e2e-N`    |
 
 `e2e/run.sh` reads the slot from `.env` (or `E2E_SLOT=N pnpm test:e2e`), so E2E runs in different
 worktrees do not collide. Each run still starts a full Docker stack, so run only a few at once.
@@ -205,11 +205,12 @@ app/
 ├── database/               # Kysely, connection pool, migrations (see "Database")
 ├── lib/
 │   ├── infra/              # Env, secrets, logging, SMTP, RabbitMQ, access log, body limit
+│   │   └── erv-versand/    # Client for the Basisdienst: ERV Versand (request-reply over RabbitMQ)
 │   ├── web/                # Base path, URL paths, responses, page meta, useHydrated
 │   ├── auth/               # Better Auth setup and the route guards (uses adapters)
 │   ├── calendar/           # iCalendar files for mails and the calendar feed
 │   ├── email/              # Mail templates and delivery
-│   └── erv/                # ERV invitations (stub)
+│   └── erv/                # ERV invitations: the PDF and sending through the Basisdienst: ERV Versand
 ├── components/             # Reusable UI components
 │   └── shared/             # AppShell, Breadcrumb, FlowPage, ReviewPage, NextSteps, ...
 │       └── kern/           # KERN wrappers: KernAlert, KernBadge, KernButton, KernIcon, KernLink, ...
@@ -362,6 +363,52 @@ and `SMTP_REQUIRE_TLS` settings in `.env.local`. Inject `SMTP_USER` and
 To use a real broker instead, override the non-secret `RABBITMQ_HOST`, `RABBITMQ_PORT`,
 `RABBITMQ_VHOST` and `RABBITMQ_TLS` settings in `.env.local`. Inject `RABBITMQ_USER` and
 `RABBITMQ_PASSWORD` from 1Password, using the same CLI pattern as the auth secret below.
+
+### Local ERV Versand
+
+Invitations by ERV go through the Basisdienst: ERV Versand, a request-reply service on RabbitMQ
+(see [`app/lib/infra/erv-versand`](app/lib/infra/erv-versand/README.md)). Locally, the Compose
+service `erv-versand` stands in for it: [`tests/mock-services/fake-erv-versand.ts`](tests/mock-services/fake-erv-versand.ts)
+sets up the `requests` exchange and the `replies.jts` queue and answers every request without
+sending anything. It runs the repository's code and `node_modules`, so run `pnpm install` before
+`docker compose up`. Its answer depends on the SAFE-ID:
+
+| SAFE-ID                                                                | Answer           |
+| ---------------------------------------------------------------------- | ---------------- |
+| not a SAFE-ID, e.g. `DE.Example.1`                                     | Payload Invalid  |
+| all-zero UUID: `DE.Example.00000000-0000-0000-0000-000000000000.0000`  | Receiver Unknown |
+| any other, e.g. `DE.Example.00000000-0000-4000-8000-000000000001.0001` | sent             |
+
+It also answers Payload Invalid when the XJustiz message or an attachment's name or content is
+missing, but it does not look into the XJustiz message. See its log with
+`docker compose logs erv-versand`.
+
+Like Mailpit for e-mail, it keeps what the app sent (the last 200 requests, in memory) and shows it
+through an HTTP API on port **8045**. The E2E tests read the sent invitation from it.
+
+- `GET http://localhost:8045/messages?receiver=<SAFE-ID>`: the requests, newest first, with the
+  decoded XJustiz message and the attachments in Base64. Without `receiver`, all of them.
+- `GET http://localhost:8045/messages/<correlation ID>/attachments/Nachrichtentext.pdf`: the
+  invitation PDF, to open in a browser.
+- `DELETE http://localhost:8045/messages?receiver=<SAFE-ID>`: forgets the requests.
+- `GET http://localhost:8045/health`: answers 200 once it consumes requests.
+
+The invitation is an XJustiz 3.6.2 message `nachricht.gds.uebermittlungSchriftgutobjekte.0005005`
+after the example of the Basisdienst team: sender and recipient in free text, the Aktenzeichen in the
+short title, and the invitation PDF (which holds the personal survey link) as its only document,
+named `Nachrichtentext.pdf` as the beA expects
+([`app/lib/erv/erv-invitation-message.ts`](app/lib/erv/erv-invitation-message.ts)). Unit tests
+validate it against the official XSDs in [`tests/xjustiz`](tests/xjustiz/README.md).
+
+The judge does not wait for the ERV. "Per ERV" records the invitation as pending with a new
+correlation ID, hands it to the broker and shows the guest list again ("Per ERV: wird gesendet").
+Every app instance keeps one connection to the broker, opened when the server starts, and consumes
+the replies. Whichever instance receives a reply marks the invitation as sent ("Per ERV
+eingeladen") or not delivered ("Per ERV: nicht zugestellt"), with the problem type in
+`participant_invitation.failure`. An invitation without a reply after 5 minutes shows as not
+delivered; a reply that still comes settles it. If the broker cannot be reached, the invitation is
+marked as not delivered at once and the page says so. The page does not update by itself: reload it
+to see the reply.
 
 ## Authentication
 

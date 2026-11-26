@@ -8,10 +8,12 @@ import {
   findInvitee,
   listGuests,
   recordInvitation,
+  settleErvInvitation,
   type Guest,
   type Invitee,
 } from "~/adapters/appointments/invitations.server";
 import { requireRole } from "~/adapters/session/session";
+import { ERV_REPLY_TIMEOUT_MS } from "~/core/domain/invitation";
 import type { AuthUser } from "~/core/domain/user";
 import { sendInvitationEmail } from "~/lib/email/send-invitation-email";
 import { sendErvInvitation } from "~/lib/erv/send-erv-invitation";
@@ -24,6 +26,7 @@ vi.mock("~/adapters/appointments/invitations.server", () => ({
   listGuests: vi.fn(),
   findInvitee: vi.fn(),
   recordInvitation: vi.fn(),
+  settleErvInvitation: vi.fn(),
 }));
 vi.mock("~/lib/email/send-invitation-email", () => ({ sendInvitationEmail: vi.fn() }));
 vi.mock("~/lib/erv/send-erv-invitation", () => ({ sendErvInvitation: vi.fn() }));
@@ -37,6 +40,8 @@ const judge: AuthUser = {
 };
 
 const params = { appointmentId: "a1" };
+const SAFE_ID = "DE.Example.00000000-0000-4000-8000-000000000001.0001";
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const request = () => new Request("http://localhost:3000/overview/a1");
 
 // 10:00 and 14:00 Berlin time in summer are 08:00 and 12:00 UTC.
@@ -293,18 +298,28 @@ const guests: Guest[] = [
     safeId: null,
     name: "Person A",
     invitations: [
-      { channel: "manual", at: new Date("2026-11-20T09:15:00Z") },
-      { channel: "email", at: new Date("2026-11-19T07:00:00Z") },
+      { channel: "manual", at: new Date("2026-11-20T09:15:00Z"), status: "sent" },
+      { channel: "email", at: new Date("2026-11-19T07:00:00Z"), status: "sent" },
     ],
   },
-  { id: "p2", email: null, safeId: "DE.Example.1", name: null, invitations: [] },
+  { id: "p2", email: null, safeId: SAFE_ID, name: null, invitations: [] },
 ];
+
+// The SAFE-ID of an ERV invitation that was just handed over, one the ERV did not deliver and one
+// that got no reply in time.
+const ervGuest = (status: "pending" | "sent" | "failed", at: Date): Guest => ({
+  id: "p3",
+  email: null,
+  safeId: SAFE_ID,
+  name: "Person C",
+  invitations: [{ channel: "erv", at, status }],
+});
 
 const invitee: Invitee = {
   id: "p1",
   name: "Person A",
   email: "person.a@example.com",
-  safeId: "DE.Example.1",
+  safeId: SAFE_ID,
   token: "tok-p1",
   aktenzeichen: "574 C 65412/26",
   slots,
@@ -349,10 +364,12 @@ describe("guest invitations", () => {
         invitations: [
           {
             label: "Manuell eingeladen",
+            state: "sent",
             at: expect.stringMatching(/^\p{L}+, 20\. November 2026 um 10:15$/u),
           },
           {
             label: "Per E-Mail eingeladen",
+            state: "sent",
             at: expect.stringMatching(/^\p{L}+, 19\. November 2026 um 08:00$/u),
           },
         ],
@@ -360,7 +377,7 @@ describe("guest invitations", () => {
       {
         id: "p2",
         email: null,
-        safeId: "DE.Example.1",
+        safeId: SAFE_ID,
         name: null,
         ervPdf: "/overview/a1/verfahrensbeteiligte/p2/erv.pdf",
         invitations: [],
@@ -399,7 +416,9 @@ describe("guest invitations", () => {
       aktenzeichen: "574 C 65412/26",
       slots,
     });
-    expect(recordInvitation).toHaveBeenCalledWith({ db: true }, "1", "a1", "p1", "email");
+    expect(recordInvitation).toHaveBeenCalledWith({ db: true }, "1", "a1", "p1", {
+      channel: "email",
+    });
     expect(response).toMatchObject({
       thrown: false,
       status: 302,
@@ -424,17 +443,95 @@ describe("guest invitations", () => {
     expect(recordInvitation).not.toHaveBeenCalled();
   });
 
-  it("hands an ERV invitation to the ERV and records it", async () => {
+  it("records an ERV invitation as pending, then hands it to the ERV without waiting", async () => {
     const response = await callAction(invite, "invite-erv:p1");
 
+    expect(recordInvitation).toHaveBeenCalledWith({ db: true }, "1", "a1", "p1", {
+      channel: "erv",
+      correlationId: expect.stringMatching(UUID),
+    });
+    const [, , , , recorded] = vi.mocked(recordInvitation).mock.calls[0]!;
     expect(sendErvInvitation).toHaveBeenCalledWith({
       appointmentId: "a1",
       participantId: "p1",
-      safeId: "DE.Example.1",
+      safeId: SAFE_ID,
+      name: "Person A",
+      aktenzeichen: "574 C 65412/26",
+      slots,
+      token: "tok-p1",
+      correlationId: (recorded as { correlationId: string }).correlationId,
+      now: expect.any(Date),
     });
-    expect(recordInvitation).toHaveBeenCalledWith({ db: true }, "1", "a1", "p1", "erv");
-    expect(response.status).toBe(302);
+    // Recorded first, so a fast reply finds the invitation.
+    expect(vi.mocked(recordInvitation).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(sendErvInvitation).mock.invocationCallOrder[0]!,
+    );
+    expect(settleErvInvitation).not.toHaveBeenCalled();
+    expect(response).toMatchObject({ status: 302, location: "/overview/a1#verfahrensbeteiligte" });
   });
+
+  it("gives the ERV no name when the judge gave the guest none", async () => {
+    vi.mocked(findInvitee).mockResolvedValue({ ...invitee, name: SAFE_ID });
+
+    await callAction(invite, "invite-erv:p1");
+
+    expect(sendErvInvitation).toHaveBeenCalledWith(expect.objectContaining({ name: null }));
+  });
+
+  it("marks an ERV invitation as failed and says so when it could not be handed over", async () => {
+    vi.mocked(sendErvInvitation).mockResolvedValue(false);
+
+    const result = await callAction(invite, "invite-erv:p1");
+
+    const [, , , , recorded] = vi.mocked(recordInvitation).mock.calls[0]!;
+    expect(settleErvInvitation).toHaveBeenCalledWith(
+      { db: true },
+      (recorded as { correlationId: string }).correlationId,
+      { status: "failed", failure: "not handed over" },
+    );
+    expect(result).toMatchObject({ thrown: false, status: 502, data: { notSent: "Person A" } });
+  });
+
+  it("sends nothing and records nothing for a malformed SAFE-ID", async () => {
+    vi.mocked(findInvitee).mockResolvedValue({ ...invitee, safeId: "DE.Example.1" });
+
+    const result = await callAction(invite, "invite-erv:p1");
+
+    expect(result).toMatchObject({ thrown: false, status: 502, data: { notSent: "Person A" } });
+    expect(recordInvitation).not.toHaveBeenCalled();
+    expect(sendErvInvitation).not.toHaveBeenCalled();
+  });
+
+  it("answers 404 and hands nothing over when the appointment closed before recording", async () => {
+    vi.mocked(recordInvitation).mockResolvedValue(false);
+
+    await expect(invite("invite-erv:p1")).rejects.toMatchObject({ init: { status: 404 } });
+    expect(sendErvInvitation).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["pending", 0, "Per ERV: wird gesendet", "pending"],
+    ["sent", 0, "Per ERV eingeladen", "sent"],
+    ["failed", 0, "Per ERV: nicht zugestellt", "failed"],
+    // Still pending after the ERV's reply timeout: no reply came.
+    ["pending", ERV_REPLY_TIMEOUT_MS + 1, "Per ERV: nicht zugestellt", "failed"],
+  ] as const)(
+    "shows an ERV invitation that is %s after %d ms as %s",
+    async (status, age, label, state) => {
+      vi.mocked(listGuests).mockResolvedValue([ervGuest(status, new Date(Date.now() - age))]);
+      vi.mocked(getAppointment).mockResolvedValue({
+        id: "a1",
+        status: "open",
+        universalToken: "tok1",
+        aktenzeichen: "574 C 65412/26",
+        slots,
+      });
+
+      const result = await loader({ request: request(), params });
+
+      expect(result.guests[0]!.invitations).toEqual([{ label, state, at: expect.any(String) }]);
+    },
+  );
 
   it("answers 400 for an ERV invitation of a guest without a SAFE-ID", async () => {
     vi.mocked(findInvitee).mockResolvedValue({ ...invitee, safeId: null });
@@ -448,7 +545,9 @@ describe("guest invitations", () => {
 
     expect(sendInvitationEmail).not.toHaveBeenCalled();
     expect(sendErvInvitation).not.toHaveBeenCalled();
-    expect(recordInvitation).toHaveBeenCalledWith({ db: true }, "1", "a1", "p1", "manual");
+    expect(recordInvitation).toHaveBeenCalledWith({ db: true }, "1", "a1", "p1", {
+      channel: "manual",
+    });
     expect(response.status).toBe(302);
   });
 

@@ -55,6 +55,8 @@ if (DEVELOPMENT) {
     }),
   );
   app.use(viteDevServer.middlewares);
+  // Vite reloads the app module when it changes; the background work keeps a single connection.
+  (await viteDevServer.ssrLoadModule("./app/app.ts")).startBackgroundWork();
   app.use(async (req, res, next) => {
     try {
       const source = await viteDevServer.ssrLoadModule("./app/app.ts");
@@ -74,7 +76,9 @@ if (DEVELOPMENT) {
   );
   app.use(morgan(accessLogFormat));
   app.use(BASE_PATH, express.static("build/client", { maxAge: "1h" }));
-  app.use(await import(BUILD_PATH).then((mod) => mod.app));
+  const build = await import(BUILD_PATH);
+  build.startBackgroundWork();
+  app.use(build.app);
 }
 
 app.listen(PORT, () => {

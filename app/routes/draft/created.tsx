@@ -36,7 +36,7 @@ export async function loader({ request, params }: { request: Request } & Params)
     user,
     days: groupSlotsByDay(appointment.slots.map(rangeToSlot)),
     surveyUrl: surveyUrl(origin, appointment.universalToken),
-    guests: await loadGuestRows(user.id, id),
+    guests: await loadGuestRows(user.id, id, new Date()),
     // Guests can only be invited while the survey is open.
     canInvite: appointment.status === "open",
   };
