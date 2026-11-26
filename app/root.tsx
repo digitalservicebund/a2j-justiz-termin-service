@@ -40,10 +40,6 @@ export const links: Route.LinksFunction = () => [
   { rel: "apple-touch-icon", href: `${BASE_PATH}/apple-touch-icon.png` },
   { rel: "manifest", href: `${BASE_PATH}/site.webmanifest` },
   {
-    rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0&icon_names=lock,lock_open",
-  },
-  {
     rel: "preload",
     href: FiraSansRegular,
     as: "font",
