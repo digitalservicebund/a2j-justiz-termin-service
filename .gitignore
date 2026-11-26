@@ -53,5 +53,7 @@ perf_hooks-*.json
 .turbo/
 .cache/
 
-# Claude Code personal settings
+# Claude Code personal settings and local state
 .claude/settings.local.json
+.claude/worktrees/
+.claude/.cc-writes
