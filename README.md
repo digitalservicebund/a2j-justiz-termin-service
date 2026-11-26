@@ -633,6 +633,8 @@ docker run -p 3000:3000 \
   a2j-justiz-termin-service
 ```
 
+On `SIGTERM` (Kubernetes) or `SIGINT`, [terminus](https://github.com/godaddy/terminus) stops the server from taking new connections and lets the requests in flight finish, for at most 25 seconds, before Kubernetes' default grace period of 30 seconds ends. Then the app closes the ERV Versand connection and the database pool and exits with 0, or with 1 if that fails.
+
 ### Podman
 
 ```bash

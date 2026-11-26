@@ -25,6 +25,7 @@
     "adr:toc": "adr generate toc > doc/adr/README.md && oxfmt doc/adr/README.md"
   },
   "dependencies": {
+    "@godaddy/terminus": "4.12.1",
     "@kern-ux/native": "2.9.0",
     "@react-router/express": "8.5.2",
     "@react-router/node": "8.5.2",

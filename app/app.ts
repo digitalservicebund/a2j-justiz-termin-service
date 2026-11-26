@@ -4,7 +4,7 @@ import "react-router";
 import { settleErvInvitation } from "~/adapters/appointments/invitations.server";
 import { getDb } from "~/database/database";
 import { ervReplyHandler } from "~/lib/erv/erv-replies";
-import { startErvVersand } from "~/lib/infra/erv-versand/erv-versand-connection";
+import { startErvVersand, stopErvVersand } from "~/lib/infra/erv-versand/erv-versand-connection";
 
 export const app = createRequestHandler({
   build: () => import("virtual:react-router/server-build"),
@@ -24,4 +24,11 @@ export function startBackgroundWork(): void {
       settleErvInvitation(getDb(), correlationId, settlement),
     ),
   );
+}
+
+// Closes the connections the app holds, when server.js shuts down: the ERV Versand's and the
+// database pool. Requests in flight have finished by then.
+export async function closeConnections(): Promise<void> {
+  await stopErvVersand();
+  await getDb().destroy();
 }

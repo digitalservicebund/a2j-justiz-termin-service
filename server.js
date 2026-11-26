@@ -1,3 +1,4 @@
+import { createTerminus } from "@godaddy/terminus";
 import compression from "compression";
 import express from "express";
 
@@ -58,6 +59,9 @@ app.use((req, res, next) => {
 });
 app.use(limitRequestBody);
 
+// Closes what the app holds when the server shuts down; set below for development and production.
+let closeConnections = async () => {};
+
 if (DEVELOPMENT) {
   log.info("starting development server");
   const viteDevServer = await import("vite").then((vite) =>
@@ -68,6 +72,10 @@ if (DEVELOPMENT) {
   app.use(viteDevServer.middlewares);
   // Vite reloads the app module when it changes; the background work keeps a single connection.
   (await viteDevServer.ssrLoadModule("./app/app.ts")).startBackgroundWork();
+  closeConnections = async () => {
+    await (await viteDevServer.ssrLoadModule("./app/app.ts")).closeConnections();
+    await viteDevServer.close();
+  };
   app.use(async (req, res, next) => {
     try {
       const source = await viteDevServer.ssrLoadModule("./app/app.ts");
@@ -89,9 +97,23 @@ if (DEVELOPMENT) {
   app.use(accessLog(await build.routeManifest()));
   app.use(BASE_PATH, express.static("build/client", { maxAge: "1h" }));
   build.startBackgroundWork();
+  closeConnections = () => build.closeConnections();
   app.use(build.app);
 }
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   log.info({ port: PORT }, "server is listening");
+});
+
+// On SIGTERM (Kubernetes) or Ctrl-C: stop taking connections, let requests in flight finish (at
+// most 25 s, before Kubernetes' default grace period of 30 s ends), close the app's connections,
+// exit with 0. Exits with 1 if closing fails.
+createTerminus(server, {
+  signals: ["SIGTERM", "SIGINT"],
+  timeout: 25_000,
+  useExit0: true,
+  beforeShutdown: async () => log.info("shutting down"),
+  onSignal: () => closeConnections(),
+  onShutdown: async () => log.info("shutdown complete"),
+  logger: (message, error) => log.error({ err: error }, message),
 });
