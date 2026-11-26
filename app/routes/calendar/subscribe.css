@@ -1,8 +1,43 @@
-/* 3rem is beyond the largest spacing helper. */
-.calendar-subscribe__content {
-  padding-bottom: 3rem;
+/* The heading and the guides below it are as far apart as the blocks of the page. */
+.calendar-subscribe__howto {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kern-metric-space-x-large);
 }
 
-.calendar-subscribe__howto .kern-accordion {
+.calendar-subscribe__howto .kern-heading-large {
+  margin: 0;
+}
+
+.calendar-subscribe__guides .kern-accordion {
   width: 100%;
+}
+
+.calendar-subscribe__benefits {
+  margin: 0;
+  padding-inline-start: 1.5em;
+}
+
+.calendar-subscribe__benefits li + li {
+  margin-top: var(--kern-metric-space-small);
+}
+
+/* The steps of a guide, with space above and below as in the design. */
+.calendar-subscribe__steps {
+  margin: 0;
+  padding: var(--kern-metric-space-large) 0;
+}
+
+/* The feed link is a long URL without spaces: it wraps anywhere instead of overflowing. */
+.calendar-subscribe__feed-link {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--kern-metric-space-x-small);
+  overflow-wrap: anywhere;
+}
+
+.calendar-subscribe__icon-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kern-metric-space-x-small);
 }
