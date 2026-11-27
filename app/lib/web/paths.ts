@@ -33,6 +33,9 @@ export const slotPath = (id: string, slotId: string, copyOf?: string) =>
 export const participantPath = (id: string, participantId: string) =>
   `${appointmentPath(id)}/verfahrensbeteiligte/${segment(participantId)}`;
 
+// Choosing another court for a draft than the judge's default.
+export const courtPath = (id: string) => `${appointmentPath(id)}/gericht`;
+
 // The invitation of a guest as a PDF, for the judge to send through the ERV.
 export const ervInvitationPdfPath = (id: string, participantId: string) =>
   `${participantPath(id, participantId)}/erv.pdf`;

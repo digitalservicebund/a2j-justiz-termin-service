@@ -14,6 +14,7 @@ import { classNames } from "~/components/shared/kern/layout";
 import { NextStepsSection, Step } from "~/components/shared/NextSteps";
 import { ResultBanner } from "~/components/shared/ResultBanner";
 import { SidebarPage } from "~/components/shared/SidebarPage";
+import { courtName } from "~/core/domain/court/court";
 import { getDb } from "~/database/database";
 import { requireSurvey } from "~/lib/auth/survey-guard.server";
 import { surveyPath } from "~/lib/web/paths";
@@ -41,13 +42,16 @@ export async function loader({ request, params }: { request: Request } & Params)
     days,
     // Only the sorry page shows these: what was proposed, once nothing is left to choose from.
     aktenzeichen: survey.aktenzeichen,
+    court: courtName(survey.courtCode) ?? null,
     proposedDays: days.length === 0 ? groupWindows(survey.proposedSlots) : [],
   };
 }
 
 export default function SurveyResult() {
-  const { user, days, aktenzeichen, proposedDays } = useLoaderData<typeof loader>();
-  if (days.length === 0) return <NoOption aktenzeichen={aktenzeichen} days={proposedDays} />;
+  const { user, days, aktenzeichen, court, proposedDays } = useLoaderData<typeof loader>();
+  if (days.length === 0) {
+    return <NoOption aktenzeichen={aktenzeichen} court={court} days={proposedDays} />;
+  }
   const signedIn = Boolean(user);
   const content = (
     <KernStack className={classNames("next-steps__page", signedIn && "survey-result__main")}>
@@ -97,8 +101,9 @@ function Positive({ days }: Readonly<{ days: ReturnType<typeof groupWindows> }>)
 // Also shown right away when no window is left to answer.
 export function NoOption({
   aktenzeichen,
+  court,
   days,
-}: Readonly<{ aktenzeichen: string; days: SurveyDay[] }>) {
+}: Readonly<{ aktenzeichen: string; court: string | null; days: SurveyDay[] }>) {
   return (
     <AppShell breadcrumbs={noMatchBreadcrumbs}>
       <div className="survey-result survey-result--no-match">
@@ -118,6 +123,9 @@ export function NoOption({
                 <KernDescriptionListItem label="Aktenzeichen">
                   {aktenzeichen}
                 </KernDescriptionListItem>
+                {court && (
+                  <KernDescriptionListItem label="Gericht">{court}</KernDescriptionListItem>
+                )}
               </KernDescriptionList>
             </KernStack>
             {days.length > 0 && (

@@ -14,6 +14,8 @@ export type Appointment = {
   aktenzeichen: string;
   // The shortest a time slot may be. Drafts may not have it yet.
   minDurationMinutes?: number | null;
+  // The code of the court in GDS.Gerichte. Drafts may not have it yet, nor may older Terminumfragen.
+  courtCode?: string | null;
   slots: Slot[];
   status: AppointmentStatus;
   // The secret of the universal survey link. Drafts have none; it is set when they are published.
@@ -22,15 +24,20 @@ export type Appointment = {
   confirmedSlot?: TimeRange | null;
 };
 
-// What the judge enters about the proceeding itself, on the first page.
-export type DraftDetails = { aktenzeichen: string; minDurationMinutes: number | null };
+// What the judge enters about the proceeding itself, on the first page. Without a court code the
+// court of the draft stays as it is.
+export type DraftDetails = {
+  aktenzeichen: string;
+  minDurationMinutes: number | null;
+  courtCode?: string | null;
+};
 
 // A draft starts with just the details of the proceeding. Its time slots are added one at a time,
 // and it is published once the judge confirms the review.
 export async function createDraftAppointment(
   db: Kysely<Database>,
   userId: string,
-  { aktenzeichen, minDurationMinutes }: DraftDetails,
+  { aktenzeichen, minDurationMinutes, courtCode }: DraftDetails,
 ): Promise<string> {
   const { id } = await db
     .insertInto("appointment")
@@ -38,6 +45,7 @@ export async function createDraftAppointment(
       user_id: userId,
       aktenzeichen,
       min_duration_minutes: minDurationMinutes,
+      court_code: courtCode ?? null,
       status: "draft",
     })
     .returning("id")
@@ -51,11 +59,34 @@ export async function updateDraftDetails(
   db: Kysely<Database>,
   userId: string,
   id: string,
-  { aktenzeichen, minDurationMinutes }: DraftDetails,
+  { aktenzeichen, minDurationMinutes, courtCode }: DraftDetails,
 ): Promise<boolean> {
   const updated = await db
     .updateTable("appointment")
-    .set({ aktenzeichen, min_duration_minutes: minDurationMinutes, updated_at: new Date() })
+    .set({
+      aktenzeichen,
+      min_duration_minutes: minDurationMinutes,
+      ...(courtCode === undefined ? {} : { court_code: courtCode }),
+      updated_at: new Date(),
+    })
+    .where("id", "=", id)
+    .where("user_id", "=", userId)
+    .where("status", "=", "draft")
+    .returning("id")
+    .executeTakeFirst();
+  return Boolean(updated);
+}
+
+// Sets the court of a draft. Returns false when the user has no such draft.
+export async function setDraftCourt(
+  db: Kysely<Database>,
+  userId: string,
+  id: string,
+  courtCode: string,
+): Promise<boolean> {
+  const updated = await db
+    .updateTable("appointment")
+    .set({ court_code: courtCode, updated_at: new Date() })
     .where("id", "=", id)
     .where("user_id", "=", userId)
     .where("status", "=", "draft")
@@ -176,6 +207,7 @@ export async function getAppointment(
       "aktenzeichen",
       "status",
       "min_duration_minutes",
+      "court_code",
       "universal_token",
       "confirmed_start_time",
       "confirmed_end_time",
@@ -197,6 +229,7 @@ export async function getAppointment(
     aktenzeichen: appointment.aktenzeichen,
     status: appointment.status,
     minDurationMinutes: appointment.min_duration_minutes,
+    courtCode: appointment.court_code,
     universalToken: appointment.universal_token,
     slots: slots.map((slot) => ({ id: slot.id, ...rowToRange(slot) })),
     confirmedSlot: confirmedWindow(appointment),
@@ -292,6 +325,7 @@ export async function nextCalendarSequence(
 export type AppointmentSummary = {
   id: string;
   aktenzeichen: string;
+  courtCode: string | null;
   status: AppointmentStatus;
   // The chosen window, once the appointment is confirmed.
   confirmedSlot: TimeRange | null;
@@ -307,6 +341,7 @@ export async function listAppointments(
     .select([
       "appointment.id",
       "appointment.aktenzeichen",
+      "appointment.court_code",
       "appointment.status",
       "appointment.confirmed_start_time",
       "appointment.confirmed_end_time",
@@ -316,8 +351,9 @@ export async function listAppointments(
     .orderBy("appointment.id")
     .execute();
 
-  return rows.map(({ confirmed_start_time, confirmed_end_time, ...appointment }) => ({
+  return rows.map(({ confirmed_start_time, confirmed_end_time, court_code, ...appointment }) => ({
     ...appointment,
+    courtCode: court_code,
     confirmedSlot: confirmedWindow({ confirmed_start_time, confirmed_end_time }),
   }));
 }

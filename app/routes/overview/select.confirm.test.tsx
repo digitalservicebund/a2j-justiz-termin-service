@@ -36,6 +36,7 @@ const open = {
   id: "a1",
   status: "open" as const,
   aktenzeichen: "574 C 65412/26",
+  courtCode: "B2402",
   slots: [
     { id: "s1", start: new Date("2026-11-09T14:30:00Z"), end: new Date("2026-11-09T17:00:00Z") },
   ],
@@ -200,6 +201,7 @@ describe("OverviewSelectConfirm", () => {
     ).toBeVisible();
     expect(screen.getByRole("heading", { name: "Verhandlungsdaten" })).toBeVisible();
     expect(screen.getByText("574 C 65412/26", { selector: "dd" })).toBeVisible();
+    expect(screen.getByText("Amtsgericht Biberach an der Riß", { selector: "dd" })).toBeVisible();
     expect(screen.getByRole("heading", { name: "Ausgewählter Termin" })).toBeVisible();
     expect(screen.getByText(/^\p{L}+, 9\. November 2026 um 16:30$/u)).toBeVisible();
     // Only the Termin can be edited, the Verhandlungsdaten belong to the survey.

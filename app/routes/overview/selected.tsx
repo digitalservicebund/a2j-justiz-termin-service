@@ -5,6 +5,7 @@ import { CopyButton } from "~/components/shared/CopyButton";
 import { KernBody } from "~/components/shared/kern/KernBody";
 import { KernStack } from "~/components/shared/kern/KernStack";
 import { NextSteps, Step, SuccessBanner } from "~/components/shared/NextSteps";
+import { courtName } from "~/core/domain/court/court";
 import { formatInstant } from "~/core/domain/time/format";
 import { requireOwnAppointment } from "~/lib/auth/appointment-guard.server";
 import { appointmentPath } from "~/lib/web/paths";
@@ -24,12 +25,18 @@ export async function loader({ request, params }: { request: Request } & Params)
   return {
     user,
     aktenzeichen: appointment.aktenzeichen,
+    court: courtName(appointment.courtCode) ?? null,
     termin: formatInstant(appointment.confirmedSlot.start),
   };
 }
 
 export default function OverviewSelected() {
-  const { user, aktenzeichen, termin } = useLoaderData<typeof loader>();
+  const { user, aktenzeichen, court, termin } = useLoaderData<typeof loader>();
+  const details = [
+    `Aktenzeichen: ${aktenzeichen}`,
+    ...(court ? [`Gericht: ${court}`] : []),
+    `Termin: ${termin}`,
+  ].join("\n");
   return (
     <AppShell user={user} breadcrumbs={selectBreadcrumbs}>
       <KernStack className="next-steps__page">
@@ -39,7 +46,7 @@ export default function OverviewSelected() {
           <Step title="Informieren Sie alle Verfahrensbeteiligten und Ihre Servicestelle über den Termin.">
             <KernBody>{termin}</KernBody>
             <CopyButton
-              text={`Aktenzeichen: ${aktenzeichen}\nTermin: ${termin}`}
+              text={details}
               label="Termindetails kopieren"
               copiedLabel="Termindetails kopiert"
               announcement="Die Termindetails wurden kopiert."

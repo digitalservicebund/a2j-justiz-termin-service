@@ -19,6 +19,7 @@ async function seedSurvey(
     .values({
       user_id: userId,
       aktenzeichen: "574 C 65412/26",
+      court_code: "B2402",
       // A confirmed appointment needs its slot, so it is confirmed once the slots exist.
       status: status === "confirmed" ? "open" : status,
       universal_token: randomUUID(),
@@ -315,11 +316,12 @@ test("every answer raises the calendar sequence, and the last window being ruled
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Es gibt leider kein Zeitfenster, dass allen Verfahrensbeteiligten passt.",
   );
-  // It lists what was proposed, but has no sidebar and no court row.
+  // It names the court and lists what was proposed, but has no sidebar.
   await expect(page.getByRole("navigation", { name: "Bereiche" })).toHaveCount(0);
   await expect(page.getByRole("navigation", { name: "Brotkrumen" })).toContainText("Terminumfrage");
   await expect(page.getByText("574 C 65412/26")).toBeVisible();
-  await expect(page.getByText("Gericht", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Gericht", { exact: true })).toBeVisible();
+  await expect(page.getByText("Amtsgericht Biberach an der Riß")).toBeVisible();
   await expect(page.getByText(/^\d\d:\d\d bis \d\d:\d\d$/)).toHaveCount(3);
   await expect(page.getByRole("button", { name: "Problem mit dieser Seite melden" })).toBeVisible();
 });

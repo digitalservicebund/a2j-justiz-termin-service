@@ -40,3 +40,9 @@
 .settings__times {
   font-variant-numeric: tabular-nums;
 }
+
+/* The court names are long, so the dropdown gets the width of a medium field. */
+.settings__court {
+  width: 100%;
+  max-width: 36rem;
+}

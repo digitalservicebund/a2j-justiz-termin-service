@@ -14,6 +14,7 @@ import {
   listParticipants,
 } from "~/adapters/appointments/participants.server";
 import { requireRole } from "~/adapters/session/session";
+import { getDefaultCourt, setDefaultCourt } from "~/adapters/users/richter.server";
 import type { AuthUser } from "~/core/domain/user";
 
 import { action, loader } from "./draft";
@@ -29,6 +30,10 @@ vi.mock("~/adapters/appointments/appointments.server", () => ({
 vi.mock("~/adapters/appointments/participants.server", () => ({
   deleteDraftParticipant: vi.fn(),
   listParticipants: vi.fn(),
+}));
+vi.mock("~/adapters/users/richter.server", () => ({
+  getDefaultCourt: vi.fn(),
+  setDefaultCourt: vi.fn(),
 }));
 vi.mock("~/database/database", () => ({ getDb: () => ({ db: true }) }));
 
@@ -70,8 +75,10 @@ describe("create-termin route", () => {
       id: "d1",
       status: "draft",
       aktenzeichen: "A 1",
+      courtCode: "B2402",
       slots: [stored("5"), stored("6")],
     });
+    vi.mocked(getDefaultCourt).mockResolvedValue(null);
   });
 
   describe("access control", () => {
@@ -99,7 +106,12 @@ describe("create-termin route", () => {
   describe("loading", () => {
     it("returns the signed-in user and no draft for a new Terminumfrage", async () => {
       const request = new Request("http://localhost/overview/new");
-      await expect(loader({ request })).resolves.toEqual({ user: judge, draft: null });
+      await expect(loader({ request })).resolves.toMatchObject({
+        user: judge,
+        draft: null,
+        court: null,
+        defaultCourt: null,
+      });
       expect(getAppointment).not.toHaveBeenCalled();
     });
 
@@ -152,6 +164,7 @@ describe("create-termin route", () => {
       expect(createDraftAppointment).toHaveBeenCalledWith({ db: true }, "1", {
         aktenzeichen: "A 1",
         minDurationMinutes: null,
+        courtCode: null,
       });
       expect(response.location).toBe("/overview/new-id/zeitfenster/neu");
     });
@@ -164,6 +177,7 @@ describe("create-termin route", () => {
       expect(createDraftAppointment).toHaveBeenCalledWith({ db: true }, "1", {
         aktenzeichen: "",
         minDurationMinutes: null,
+        courtCode: null,
       });
       expect(response.location).toBe("/overview/new-id/zeitfenster/neu");
     });
@@ -238,6 +252,7 @@ describe("create-termin route", () => {
       expect(createDraftAppointment).toHaveBeenCalledWith({ db: true }, "1", {
         aktenzeichen: "A 1",
         minDurationMinutes: null,
+        courtCode: null,
       });
       expect(response.location).toBe("/overview/new-id/verfahrensbeteiligte/neu");
     });
@@ -419,6 +434,7 @@ describe("create-termin route", () => {
       expect(createDraftAppointment).toHaveBeenCalledWith({ db: true }, "1", {
         aktenzeichen: "A 1",
         minDurationMinutes: 90,
+        courtCode: null,
       });
       expect(updateDraftDetails).toHaveBeenCalledWith({ db: true }, "1", "d1", {
         aktenzeichen: "A 1",
@@ -552,6 +568,221 @@ describe("create-termin route", () => {
         action({ request: post({ intent: "explode", aktenzeichen: "A" }) }),
       ).rejects.toMatchObject({ init: { status: 400 } });
       expect(createDraftAppointment).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("court", () => {
+    it("shows the default court for a new Terminumfrage, without the list", async () => {
+      vi.mocked(getDefaultCourt).mockResolvedValue("B2402");
+
+      const result = await loader({ request: new Request("http://localhost/overview/new") });
+
+      expect(result).toMatchObject({
+        court: { code: "B2402", name: "Amtsgericht Biberach an der Riß" },
+        groups: [],
+        defaultCourt: "B2402",
+      });
+      expect(getDefaultCourt).toHaveBeenCalledWith({ db: true }, "1");
+    });
+
+    it("offers the list when the judge has no default court", async () => {
+      const result = await loader({ request: new Request("http://localhost/overview/new") });
+
+      expect(result.court).toBeNull();
+      expect(result.groups.length).toBeGreaterThan(0);
+    });
+
+    it("shows the court of a draft, also when it is not the default court", async () => {
+      vi.mocked(getDefaultCourt).mockResolvedValue("D2000");
+
+      const result = await loader({
+        request: new Request("http://localhost/overview/new?entwurf=d1"),
+      });
+
+      expect(result.court).toEqual({ code: "B2402", name: "Amtsgericht Biberach an der Riß" });
+    });
+
+    it("offers the list, starting with the default court, for a draft without a court", async () => {
+      vi.mocked(getDefaultCourt).mockResolvedValue("D2000");
+      vi.mocked(getAppointment).mockResolvedValue({
+        id: "d1",
+        status: "draft",
+        aktenzeichen: "A 1",
+        courtCode: null,
+        slots: [],
+      });
+
+      const result = await loader({
+        request: new Request("http://localhost/overview/new?entwurf=d1"),
+      });
+
+      expect(result).toMatchObject({ court: null, defaultCourt: "D2000" });
+      expect(result.groups.length).toBeGreaterThan(0);
+    });
+
+    it("starts a new draft with the default court", async () => {
+      vi.mocked(getDefaultCourt).mockResolvedValue("B2402");
+
+      await callAction(action, { request: post({ intent: "add-slot", aktenzeichen: "A 1" }) });
+
+      expect(createDraftAppointment).toHaveBeenCalledWith({ db: true }, "1", {
+        aktenzeichen: "A 1",
+        minDurationMinutes: null,
+        courtCode: "B2402",
+      });
+    });
+
+    it("starts a new draft with the court picked in the list", async () => {
+      await callAction(action, {
+        request: post({ intent: "add-slot", aktenzeichen: "A 1", courtCode: "D2000" }),
+      });
+
+      expect(createDraftAppointment).toHaveBeenCalledWith(
+        { db: true },
+        "1",
+        expect.objectContaining({ courtCode: "D2000" }),
+      );
+      expect(setDefaultCourt).not.toHaveBeenCalled();
+    });
+
+    it("saves the court picked in the list into the draft", async () => {
+      await callAction(action, {
+        request: post({
+          intent: "add-slot",
+          appointmentId: "d1",
+          aktenzeichen: "A 1",
+          courtCode: "D2000",
+        }),
+      });
+
+      expect(updateDraftDetails).toHaveBeenCalledWith({ db: true }, "1", "d1", {
+        aktenzeichen: "A 1",
+        minDurationMinutes: null,
+        courtCode: "D2000",
+      });
+    });
+
+    it("keeps the court of the draft when the page shows no list", async () => {
+      await callAction(action, {
+        request: post({ intent: "add-slot", appointmentId: "d1", aktenzeichen: "A 1" }),
+      });
+
+      expect(vi.mocked(updateDraftDetails).mock.calls[0]?.[3].courtCode).toBeUndefined();
+    });
+
+    it("saves the picked court as the default when the judge asks and has none", async () => {
+      await callAction(action, {
+        request: post({
+          intent: "add-slot",
+          aktenzeichen: "A 1",
+          courtCode: "D2000",
+          saveAsDefault: "on",
+        }),
+      });
+
+      expect(setDefaultCourt).toHaveBeenCalledWith({ db: true }, "1", "D2000");
+    });
+
+    it("never overwrites a default court", async () => {
+      vi.mocked(getDefaultCourt).mockResolvedValue("B2402");
+
+      await callAction(action, {
+        request: post({
+          intent: "add-slot",
+          appointmentId: "d1",
+          aktenzeichen: "A 1",
+          courtCode: "D2000",
+          saveAsDefault: "on",
+        }),
+      });
+
+      expect(setDefaultCourt).not.toHaveBeenCalled();
+    });
+
+    it("rejects a court that is not in the list and saves nothing", async () => {
+      const outcome = await callAction(action, {
+        request: post({
+          intent: "add-slot",
+          appointmentId: "d1",
+          aktenzeichen: "A 1",
+          courtCode: "A1000S",
+        }),
+      });
+
+      expect(outcome).toMatchObject({
+        status: 400,
+        data: {
+          courtCode: "A1000S",
+          errors: { court: "Wählen Sie ein Gericht aus der Liste aus." },
+        },
+      });
+      expect(updateDraftDetails).not.toHaveBeenCalled();
+    });
+
+    it("asks for a court when continuing with the empty option", async () => {
+      const outcome = await callAction(action, {
+        request: post({
+          intent: "next",
+          appointmentId: "d1",
+          aktenzeichen: "A 1",
+          minDuration: "60",
+          courtCode: "",
+        }),
+      });
+
+      expect(outcome).toMatchObject({
+        status: 400,
+        data: { errors: { court: "Wählen Sie ein Gericht aus." } },
+      });
+    });
+
+    it("does not continue with a draft that has no court", async () => {
+      vi.mocked(getAppointment).mockResolvedValue({
+        id: "d1",
+        status: "draft",
+        aktenzeichen: "A 1",
+        courtCode: null,
+        slots: [stored("5"), stored("6")],
+      });
+
+      const outcome = await callAction(action, {
+        request: post({
+          intent: "next",
+          appointmentId: "d1",
+          aktenzeichen: "A 1",
+          minDuration: "60",
+        }),
+      });
+
+      expect(outcome).toMatchObject({
+        status: 400,
+        data: { errors: { court: "Wählen Sie ein Gericht aus." } },
+      });
+    });
+
+    it("edit-court saves what was typed and opens the page of the court", async () => {
+      const outcome = await callAction(action, {
+        request: post({ intent: "edit-court", appointmentId: "d1", aktenzeichen: "A 2" }),
+      });
+
+      expect(updateDraftDetails).toHaveBeenCalledWith(
+        { db: true },
+        "1",
+        "d1",
+        expect.objectContaining({ aktenzeichen: "A 2" }),
+      );
+      expect(outcome).toMatchObject({ status: 302, location: "/overview/d1/gericht" });
+    });
+
+    it("edit-court creates the draft first on a new Terminumfrage", async () => {
+      vi.mocked(getDefaultCourt).mockResolvedValue("B2402");
+
+      const outcome = await callAction(action, {
+        request: post({ intent: "edit-court", aktenzeichen: "" }),
+      });
+
+      expect(createDraftAppointment).toHaveBeenCalled();
+      expect(outcome).toMatchObject({ status: 302, location: "/overview/new-id/gericht" });
     });
   });
 });

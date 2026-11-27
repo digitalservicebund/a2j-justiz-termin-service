@@ -34,6 +34,7 @@ const url = "http://localhost:3000/umfrage/t1/naechste-schritte";
 const survey: Survey = {
   appointmentId: "a1",
   aktenzeichen: "574 C 65412/26",
+  courtCode: "B2402",
   minDurationMinutes: null,
   answered: false,
   slots: [],

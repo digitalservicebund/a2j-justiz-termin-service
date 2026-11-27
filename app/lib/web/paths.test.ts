@@ -9,6 +9,7 @@ import {
   draftPath,
   NEW_ITEM,
   participantPath,
+  courtPath,
   selectedPath,
   selectPath,
   slotPath,
@@ -37,6 +38,7 @@ describe("appointment paths", () => {
     expect(slotPath("a1", NEW_ITEM, "s/1")).toBe("/overview/a1/zeitfenster/neu?kopie=s%2F1");
     expect(participantPath("a1", NEW_ITEM)).toBe("/overview/a1/verfahrensbeteiligte/neu");
     expect(participantPath("a1", "p/1")).toBe("/overview/a1/verfahrensbeteiligte/p%2F1");
+    expect(courtPath("a/1")).toBe("/overview/a%2F1/gericht");
   });
 
   it("carries the choice of a Termin in the query", () => {

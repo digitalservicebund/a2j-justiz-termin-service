@@ -239,6 +239,7 @@ describe("OverviewDetail", () => {
     status: "open" as const,
     universalToken: "tok1",
     aktenzeichen: "574 C 65412/26",
+    courtCode: "B2402",
     slots,
   };
   const cancelled = {
@@ -278,6 +279,7 @@ describe("OverviewDetail", () => {
       "/overview/a1/select",
     );
     expect(screen.getByRole("button", { name: "Link zur Terminumfrage kopieren" })).toBeVisible();
+    expect(screen.getByText("Amtsgericht Biberach an der Riß", { selector: "dd" })).toBeVisible();
   });
 
   it("names a cancelled appointment by its Aktenzeichen, not by a status badge", async () => {
@@ -287,6 +289,8 @@ describe("OverviewDetail", () => {
 
     expect(await screen.findByText("574 C 65412/26", { selector: "dd" })).toBeVisible();
     expect(screen.queryByText("Kein Zeitfenster passt")).toBeNull();
+    // Terminumfragen from before courts existed have none.
+    expect(screen.queryByText("Gericht", { selector: "dt" })).toBeNull();
   });
 });
 
@@ -322,6 +326,7 @@ const invitee: Invitee = {
   safeId: SAFE_ID,
   token: "tok-p1",
   aktenzeichen: "574 C 65412/26",
+  courtCode: "B2402",
   slots,
 };
 
@@ -414,6 +419,7 @@ describe("guest invitations", () => {
       to: "person.a@example.com",
       token: "tok-p1",
       aktenzeichen: "574 C 65412/26",
+      court: "Amtsgericht Biberach an der Riß",
       slots,
     });
     expect(recordInvitation).toHaveBeenCalledWith({ db: true }, "1", "a1", "p1", {
@@ -457,6 +463,7 @@ describe("guest invitations", () => {
       safeId: SAFE_ID,
       name: "Person A",
       aktenzeichen: "574 C 65412/26",
+      court: "Amtsgericht Biberach an der Riß",
       slots,
       token: "tok-p1",
       correlationId: (recorded as { correlationId: string }).correlationId,

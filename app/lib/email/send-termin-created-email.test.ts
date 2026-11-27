@@ -16,6 +16,7 @@ const notification = {
   to: " Judge.A@Example.com ",
   appointmentId: "a 1",
   aktenzeichen: "574 C 65412/26",
+  court: null,
   sequence: 4,
   slots: [
     {

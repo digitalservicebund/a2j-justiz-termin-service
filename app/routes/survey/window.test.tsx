@@ -35,6 +35,7 @@ const smallerKey = windowKey(smaller);
 const survey: Survey = {
   appointmentId: "a1",
   aktenzeichen: "574 C 65412/26",
+  courtCode: "B2402",
   minDurationMinutes: 60,
   answered: false,
   slots: [offer],
@@ -83,6 +84,7 @@ describe("survey window route", () => {
 
     expect(result).toEqual({
       aktenzeichen: "574 C 65412/26",
+      court: "Amtsgericht Biberach an der Riß",
       offer: "24. September 2026 von 14:00 bis 17:00",
       fields: times("14:00", "17:00"),
       cancelHref: `/umfrage/t1?${draft}#zeitfenster-${offerKey}`,

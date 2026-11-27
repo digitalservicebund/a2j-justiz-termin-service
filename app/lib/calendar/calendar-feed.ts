@@ -1,4 +1,5 @@
 import type { FeedAppointment } from "../../core/domain/availability.ts";
+import { courtName } from "../../core/domain/court/court.ts";
 import { BASE_PATH } from "../web/base-path.ts";
 import { PRODUCT_NAME } from "../web/page-meta.ts";
 import { appointmentUrl } from "../web/paths.ts";
@@ -16,20 +17,22 @@ export function createCalendarFeed(
   baseUrl: string,
   now: Date = new Date(),
 ): string {
-  const events = appointments.flatMap(({ id, aktenzeichen, calendarSequence, confirmed, slots }) =>
-    createTerminEvents({
-      aktenzeichen,
-      terminUrl: appointmentUrl(baseUrl, id),
-      // Read, not raised: only mails take a new number.
-      sequence: calendarSequence,
-      now,
-      synchronizedAt: now,
-      slots: slots.map((slot) =>
-        confirmed
-          ? { id: slot.id, start: confirmed.start, end: confirmed.end, confirmed: true }
-          : toCalendarSlot(slot),
-      ),
-    }),
+  const events = appointments.flatMap(
+    ({ id, aktenzeichen, courtCode, calendarSequence, confirmed, slots }) =>
+      createTerminEvents({
+        aktenzeichen,
+        court: courtName(courtCode),
+        terminUrl: appointmentUrl(baseUrl, id),
+        // Read, not raised: only mails take a new number.
+        sequence: calendarSequence,
+        now,
+        synchronizedAt: now,
+        slots: slots.map((slot) =>
+          confirmed
+            ? { id: slot.id, start: confirmed.start, end: confirmed.end, confirmed: true }
+            : toCalendarSlot(slot),
+        ),
+      }),
   );
 
   return wrapCalendar(events, [

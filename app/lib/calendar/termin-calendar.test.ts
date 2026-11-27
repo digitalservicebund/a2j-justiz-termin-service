@@ -61,6 +61,28 @@ describe("createTerminCalendar", () => {
     }
   });
 
+  it("names the court as the place of every event and in its description", () => {
+    const body = createTerminCalendar({
+      aktenzeichen: "574 C 65412/26",
+      court: "Court X, Abteilung 1",
+      slots,
+      terminUrl,
+      sequence: 0,
+      organizerEmail,
+    });
+    for (const event of parse(body).getAllSubcomponents("vevent")) {
+      expect(event.getFirstPropertyValue("location")).toBe("Court X, Abteilung 1");
+      expect(event.getFirstPropertyValue("description")).toContain("Gericht: Court X, Abteilung 1");
+    }
+    expect(body).toContain("LOCATION:Court X\\, Abteilung 1");
+  });
+
+  it("has no place without a court", () => {
+    const body = build();
+    expect(body).not.toContain("LOCATION");
+    expect(body).not.toContain("Gericht:");
+  });
+
   it("uses the id of the time slot as UID, so a moved slot updates its event", () => {
     expect(uids(build())).toEqual(["timeslot-slot-1", "timeslot-slot-2"]);
 

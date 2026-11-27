@@ -20,6 +20,7 @@ import {
 } from "~/components/shared/kern/KernTable";
 import { classNames, clusterClassName } from "~/components/shared/kern/layout";
 import { SidebarPage } from "~/components/shared/SidebarPage";
+import { courtName } from "~/core/domain/court/court";
 import { getDb } from "~/database/database";
 import type { AppointmentStatus } from "~/database/types";
 import { appointmentPath, draftPath, NEW_APPOINTMENT_PATH } from "~/lib/web/paths";
@@ -53,10 +54,11 @@ export async function loader({ request }: { request: Request }) {
     // Tells "no appointments at all" from "none match the filter".
     hasAppointments: appointments.length > 0,
     entries: applyOverviewQuery(appointments, query).map(
-      ({ id, aktenzeichen, status, confirmedSlot }) => ({
+      ({ id, aktenzeichen, courtCode, status, confirmedSlot }) => ({
         id,
         // A draft can be saved before an Aktenzeichen is entered.
         aktenzeichen: aktenzeichen.trim() === "" ? NO_AKTENZEICHEN : aktenzeichen,
+        court: courtName(courtCode) ?? null,
         href: detailHref(id, status),
         badge: describeStatus({ status, confirmedSlot }),
       }),
@@ -139,11 +141,20 @@ export default function Overview() {
                     </KernCell>
                   </KernRow>
                 ) : (
-                  entries.map(({ id, aktenzeichen, href, badge }) => {
+                  entries.map(({ id, aktenzeichen, court, href, badge }) => {
                     const icon = statusIcons[badge.type];
                     return (
                       <KernRow key={id}>
-                        <KernCell>{aktenzeichen}</KernCell>
+                        <KernCell>
+                          {aktenzeichen}
+                          {/* The space keeps the two apart for screen readers. */}
+                          {court && (
+                            <>
+                              {" "}
+                              <span className="overview__court">{court}</span>
+                            </>
+                          )}
+                        </KernCell>
                         <KernCell>
                           <KernBadge type={badge.type}>
                             {icon && <KernIcon name={icon} />}

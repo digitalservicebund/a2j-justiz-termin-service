@@ -34,7 +34,7 @@ const validate = (
   slots: SlotInput[],
   aktenzeichen = "574 C 65412/26",
   minDurationMinutes: number | null = 1,
-) => validateCreateTermin({ aktenzeichen, minDurationMinutes, slots }, now);
+) => validateCreateTermin({ aktenzeichen, minDurationMinutes, courtCode: "B2402", slots }, now);
 
 function errorsOf(result: ReturnType<typeof validate>) {
   if (result.success) throw new Error("expected validation to fail");
@@ -45,6 +45,16 @@ describe("validateCreateTermin", () => {
   it("accepts two valid windows and ignores empty rows", () => {
     expect(validate([...validSlots(), { ...emptySlot }, { ...emptySlot }])).toEqual({
       success: true,
+    });
+  });
+
+  describe("court", () => {
+    it("requires one", () => {
+      const result = validateCreateTermin(
+        { aktenzeichen: "A", minDurationMinutes: 1, courtCode: null, slots: validSlots() },
+        now,
+      );
+      expect(errorsOf(result)).toEqual({ rows: {}, court: "Wählen Sie ein Gericht aus." });
     });
   });
 
@@ -219,7 +229,12 @@ describe("validateCreateTermin", () => {
       const yesterdayInBerlin = slotOn({ day: "21", month: "10" });
       const { rows } = errorsOf(
         validateCreateTermin(
-          { aktenzeichen: "A", minDurationMinutes: 30, slots: [yesterdayInBerlin, slotOn()] },
+          {
+            aktenzeichen: "A",
+            minDurationMinutes: 30,
+            courtCode: "B2402",
+            slots: [yesterdayInBerlin, slotOn()],
+          },
           lateNow,
         ),
       );
@@ -291,7 +306,10 @@ describe("validateCreateTermin", () => {
       const afterMidnight = new Date("2026-10-21T22:30:00Z");
       const slots = [slotOn({ day: "22", month: "10" }), slotOn({ day: "23", month: "10" })];
       expect(
-        validateCreateTermin({ aktenzeichen: "A", minDurationMinutes: 30, slots }, afterMidnight),
+        validateCreateTermin(
+          { aktenzeichen: "A", minDurationMinutes: 30, courtCode: "B2402", slots },
+          afterMidnight,
+        ),
       ).toEqual({
         success: true,
       });
@@ -301,6 +319,7 @@ describe("validateCreateTermin", () => {
             {
               aktenzeichen: "A",
               minDurationMinutes: 30,
+              courtCode: "B2402",
               slots: [slotOn({ day: "21", month: "10" }), ...slots],
             },
             afterMidnight,

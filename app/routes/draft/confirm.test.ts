@@ -35,6 +35,7 @@ const published = {
   id: "d1",
   status: "open" as const,
   aktenzeichen: "574 C 65412/26",
+  courtCode: "B2402",
   slots: [
     { id: "s1", start: new Date("2026-09-17T07:00:00Z"), end: new Date("2026-09-17T08:30:00Z") },
   ],
@@ -47,6 +48,7 @@ const completeDraft = {
   status: "draft" as const,
   aktenzeichen: "574 C 65412/26",
   minDurationMinutes: 90,
+  courtCode: "B2402" as string | null,
   slots: [
     { id: "s1", start: new Date("2099-01-05T08:00:00Z"), end: new Date("2099-01-05T09:30:00Z") },
     { id: "s2", start: new Date("2099-01-06T08:00:00Z"), end: new Date("2099-01-06T09:30:00Z") },
@@ -97,9 +99,11 @@ describe("create-termin confirm route", () => {
       expect(result.participants).toEqual([
         { id: "p1", email: "person.a@example.com", safeId: null, name: "Person A" },
       ]);
+      expect(result.court).toBe("Amtsgericht Biberach an der Riß");
       expect(result.values).toEqual({
         aktenzeichen: "574 C 65412/26",
         minDurationMinutes: 90,
+        courtCode: "B2402",
         slots: [
           {
             day: "05",
@@ -126,6 +130,7 @@ describe("create-termin confirm route", () => {
     it.each([
       ["has no Aktenzeichen yet", { aktenzeichen: " " }],
       ["has no minimum duration yet", { minDurationMinutes: null }],
+      ["has no court", { courtCode: null }],
       ["has a time slot that is shorter than the minimum duration", { minDurationMinutes: 91 }],
       ["has only one time slot", { slots: completeDraft.slots.slice(0, 1) }],
       ["has no time slot", { slots: [] }],
@@ -220,6 +225,7 @@ describe("create-termin confirm route", () => {
         to: "judge.a@example.com",
         appointmentId: "d1",
         aktenzeichen: "574 C 65412/26",
+        court: "Amtsgericht Biberach an der Riß",
         slots: published.slots,
         sequence: 1,
       });

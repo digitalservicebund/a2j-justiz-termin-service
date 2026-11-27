@@ -23,6 +23,7 @@ const s2 = { start: new Date("2026-11-03T08:00:00Z"), end: new Date("2026-11-03T
 const open: FeedAppointment = {
   id: "a1",
   aktenzeichen: "574 C 1/26",
+  courtCode: "B2402",
   calendarSequence: 4,
   confirmed: null,
   slots: [
@@ -34,6 +35,7 @@ const open: FeedAppointment = {
 const confirmed: FeedAppointment = {
   id: "a2",
   aktenzeichen: "574 C 2/26",
+  courtCode: null,
   calendarSequence: 1,
   confirmed: {
     slotId: "s3",
@@ -51,6 +53,13 @@ const confirmed: FeedAppointment = {
 const events = (feed: string) => new ICAL.Component(ICAL.parse(feed)).getAllSubcomponents("vevent");
 
 describe("createCalendarFeed", () => {
+  it("names the court of an appointment as the place of its events", () => {
+    const [first, second, third] = events(createCalendarFeed([open, confirmed], baseUrl, now));
+    expect(first!.getFirstPropertyValue("location")).toBe("Amtsgericht Biberach an der Riß");
+    expect(second!.getFirstPropertyValue("location")).toBe("Amtsgericht Biberach an der Riß");
+    expect(third!.getFirstPropertyValue("location")).toBeNull();
+  });
+
   it("is an empty but valid calendar without appointments", () => {
     const calendar = new ICAL.Component(ICAL.parse(createCalendarFeed([], baseUrl, now)));
     expect(calendar.getAllSubcomponents("vevent")).toHaveLength(0);

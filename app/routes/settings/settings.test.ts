@@ -3,12 +3,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { callAction, callLoader } from "~tests/route";
 
 import { requireRole } from "~/adapters/session/session";
+import { getDefaultCourt, setDefaultCourt } from "~/adapters/users/richter.server";
 import { deleteSitzungstag, listSitzungstage } from "~/adapters/users/sitzungstage.server";
 import type { AuthUser } from "~/core/domain/user";
 
 import { action, loader } from "./settings";
 
 vi.mock("~/adapters/session/session", () => ({ requireRole: vi.fn() }));
+vi.mock("~/adapters/users/richter.server", () => ({
+  getDefaultCourt: vi.fn(),
+  setDefaultCourt: vi.fn(),
+}));
 vi.mock("~/adapters/users/sitzungstage.server", () => ({
   listSitzungstage: vi.fn(),
   deleteSitzungstag: vi.fn(),
@@ -36,6 +41,7 @@ describe("settings route", () => {
     vi.mocked(requireRole).mockResolvedValue(judge);
     vi.mocked(listSitzungstage).mockResolvedValue([]);
     vi.mocked(deleteSitzungstag).mockResolvedValue(true);
+    vi.mocked(getDefaultCourt).mockResolvedValue(null);
   });
 
   it("requires the richter role to load and to submit", async () => {
@@ -69,6 +75,45 @@ describe("settings route", () => {
       },
     });
     expect(listSitzungstage).toHaveBeenCalledWith({ db: true }, "j1");
+  });
+
+  it("loads the judge's default court and the courts to pick from", async () => {
+    vi.mocked(getDefaultCourt).mockResolvedValue("B2402");
+
+    const outcome = await callLoader(loader, get());
+
+    expect(outcome).toMatchObject({ thrown: false, data: { defaultCourt: "B2402", saved: false } });
+    expect(getDefaultCourt).toHaveBeenCalledWith({ db: true }, "j1");
+  });
+
+  it("saves the default court and says so on the page", async () => {
+    const outcome = await callAction(action, post({ intent: "court", courtCode: "B2402" }));
+
+    expect(outcome).toMatchObject({ status: 302, location: "/einstellungen?gespeichert" });
+    expect(setDefaultCourt).toHaveBeenCalledWith({ db: true }, "j1", "B2402");
+    const after = await callLoader(loader, {
+      request: new Request("http://localhost/einstellungen?gespeichert"),
+    });
+    expect(after).toMatchObject({ data: { saved: true } });
+  });
+
+  it("clears the default court with the empty option", async () => {
+    await callAction(action, post({ intent: "court", courtCode: "" }));
+
+    expect(setDefaultCourt).toHaveBeenCalledWith({ db: true }, "j1", null);
+  });
+
+  it.each([
+    ["an unknown code", "Q0000"],
+    ["a Staatsanwaltschaft", "A1000S"],
+  ])("rejects %s as the default court", async (_, courtCode) => {
+    const outcome = await callAction(action, post({ intent: "court", courtCode }));
+
+    expect(outcome).toMatchObject({
+      status: 400,
+      data: { courtCode, error: "Wählen Sie ein Gericht aus der Liste aus." },
+    });
+    expect(setDefaultCourt).not.toHaveBeenCalled();
   });
 
   it("deletes a Sitzungstag of the judge and shows the list again", async () => {

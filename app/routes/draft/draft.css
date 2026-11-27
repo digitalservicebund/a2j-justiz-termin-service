@@ -42,3 +42,10 @@
 .create-termin__safe-id {
   overflow-wrap: anywhere;
 }
+
+/* The name of the court and the button to change it sit on one line. */
+.create-termin__court .kern-description-list-item__value {
+  display: flex;
+  align-items: center;
+  gap: var(--kern-metric-space-small);
+}

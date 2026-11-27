@@ -43,3 +43,10 @@
   color: var(--kern-color-layout-text-muted);
   border-bottom: 0;
 }
+
+/* The court is secondary to the Aktenzeichen and sits below it. */
+.overview__court {
+  display: block;
+  color: var(--kern-color-layout-text-muted);
+  font-size: var(--kern-typography-font-size-small-static);
+}

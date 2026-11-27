@@ -27,6 +27,7 @@ export async function readCalendarFeed(
     .select([
       "id",
       "aktenzeichen",
+      "court_code",
       "status",
       "calendar_sequence",
       "confirmed_slot_id",
@@ -52,6 +53,7 @@ export async function readCalendarFeed(
         {
           id: appointment.id,
           aktenzeichen: appointment.aktenzeichen,
+          courtCode: appointment.court_code,
           calendarSequence: appointment.calendar_sequence,
           confirmed: null,
           slots: appointmentSlots,
@@ -66,6 +68,7 @@ export async function readCalendarFeed(
       {
         id: appointment.id,
         aktenzeichen: appointment.aktenzeichen,
+        courtCode: appointment.court_code,
         calendarSequence: appointment.calendar_sequence,
         confirmed: { slotId: slot.id, ...window },
         slots: [slot],

@@ -4,11 +4,16 @@ import { createRoutesStub } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { requireRole } from "~/adapters/session/session";
+import { getDefaultCourt, setDefaultCourt } from "~/adapters/users/richter.server";
 import { deleteSitzungstag, listSitzungstage } from "~/adapters/users/sitzungstage.server";
 
 import Settings, { action, loader } from "./settings";
 
 vi.mock("~/adapters/session/session", () => ({ requireRole: vi.fn() }));
+vi.mock("~/adapters/users/richter.server", () => ({
+  getDefaultCourt: vi.fn(),
+  setDefaultCourt: vi.fn(),
+}));
 vi.mock("~/adapters/users/sitzungstage.server", () => ({
   listSitzungstage: vi.fn(),
   deleteSitzungstag: vi.fn(),
@@ -37,6 +42,7 @@ describe("Settings", () => {
       { id: "s2", weekday: 4, start: 9 * 60, end: 16 * 60 },
     ]);
     vi.mocked(deleteSitzungstag).mockResolvedValue(true);
+    vi.mocked(getDefaultCourt).mockResolvedValue(null);
   });
 
   it("shows the Sitzungstage in a table with their times", async () => {
@@ -44,7 +50,7 @@ describe("Settings", () => {
 
     expect(
       await screen.findByRole("heading", {
-        level: 1,
+        level: 2,
         name: "Sitzungstage und reguläre Verhandlungszeiten",
       }),
     ).toBeVisible();
@@ -68,6 +74,53 @@ describe("Settings", () => {
       ["Dienstag", "10:00 bis 17:00"],
       ["Donnerstag", "09:00 bis 16:00"],
     ]);
+  });
+
+  it("offers the courts grouped by Bundesland, with none picked by default", async () => {
+    renderPage();
+
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Einstellungen" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Standardgericht" })).toBeVisible();
+    const select = screen.getByRole("combobox", {
+      name: "Gericht, an dem Sie normalerweise arbeiten",
+    });
+    expect(select).toHaveValue("");
+    expect(
+      within(select).getByRole("option", { name: "Kein Standardgericht" }),
+    ).toBeInTheDocument();
+    const bayern = within(select).getByRole("group", { name: "Bayern" });
+    expect(within(bayern).getByRole("option", { name: "Oberlandesgericht München" })).toHaveValue(
+      "D2000",
+    );
+  });
+
+  it("shows the saved default court", async () => {
+    vi.mocked(getDefaultCourt).mockResolvedValue("B2402");
+    renderPage();
+
+    expect(
+      await screen.findByRole("combobox", { name: "Gericht, an dem Sie normalerweise arbeiten" }),
+    ).toHaveValue("B2402");
+  });
+
+  it("saves the picked court as the default and says so", async () => {
+    renderPage();
+
+    await userEvent.selectOptions(
+      await screen.findByRole("combobox", { name: "Gericht, an dem Sie normalerweise arbeiten" }),
+      "B2402",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Speichern" }));
+
+    await vi.waitFor(() =>
+      expect(setDefaultCourt).toHaveBeenCalledWith({ db: true }, "j1", "B2402"),
+    );
+    vi.mocked(getDefaultCourt).mockResolvedValue("B2402");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Ihr Standardgericht wurde gespeichert.",
+    );
   });
 
   it("links each row to its form and the add button to a new one", async () => {

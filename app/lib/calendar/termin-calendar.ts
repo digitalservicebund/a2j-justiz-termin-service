@@ -5,6 +5,8 @@ import { PRODUCT_NAME } from "../web/page-meta.ts";
 
 type TerminEvents = {
   aktenzeichen: string;
+  // The name of the court, as the place of the events. Older Terminumfragen have none.
+  court?: string | null;
   slots: CalendarSlot[];
   // Where the judge opens the Termin to make changes or confirm a slot.
   terminUrl: string;
@@ -93,17 +95,17 @@ export const TERMIN_CALENDAR_CONTENT_TYPE = "text/calendar; charset=utf-8; metho
 // slot is confirmed. Times are UTC, which spares the calendar a time zone definition.
 function describe(
   { cancelled, confirmed, availableNames, windows }: CalendarSlot,
-  aktenzeichen: string,
-  terminUrl: string,
-  synchronizedAt?: Date,
+  { aktenzeichen, court, terminUrl, synchronizedAt }: TerminEvents,
 ) {
   const link = `Termin öffnen, ändern oder bestätigen: ${terminUrl}`;
+  const courtLine = court ? [`Gericht: ${court}`] : [];
   const synchronized = synchronizedAt
     ? ["", `Zuletzt synchronisiert: ${formatSynchronizedAt(synchronizedAt)}`]
     : [];
   if (cancelled) {
     return [
       `Abgesagt: In diesem Zeitraum sind nicht alle Verfahrensbeteiligten für die Verhandlung ${aktenzeichen} verfügbar.`,
+      ...courtLine,
       "",
       link,
       ...synchronized,
@@ -112,6 +114,7 @@ function describe(
   if (confirmed) {
     return [
       `Bestätigter Termin für die Verhandlung ${aktenzeichen}.`,
+      ...courtLine,
       "",
       link,
       ...synchronized,
@@ -119,6 +122,7 @@ function describe(
   }
   return [
     `Vorläufiger Zeitraum für die Verhandlung ${aktenzeichen}.`,
+    ...courtLine,
     ...(availableNames
       ? [`Verfügbar: ${availableNames.length > 0 ? availableNames.join(", ") : "–"}`]
       : []),
@@ -137,15 +141,16 @@ function describe(
 // One event per proposed time slot. Open slots are tentative, so the judge's calendar shows them as
 // busy until a slot is confirmed; slots someone cannot attend are cancelled and the confirmed slot
 // is confirmed. Times are UTC, which spares the calendar a time zone definition.
-export function createTerminEvents({
-  aktenzeichen,
-  slots,
-  terminUrl,
-  sequence,
-  organizerEmail,
-  now = new Date(),
-  synchronizedAt,
-}: TerminEvents): string[] {
+export function createTerminEvents(events: TerminEvents): string[] {
+  const {
+    aktenzeichen,
+    court,
+    slots,
+    terminUrl,
+    sequence,
+    organizerEmail,
+    now = new Date(),
+  } = events;
   const stamp = toUtcStamp(now);
 
   // The UID is the id of the time slot, not its time, so a moved slot updates its event. The prefix
@@ -160,7 +165,9 @@ export function createTerminEvents({
       `DTSTART:${toUtcStamp(slot.start)}`,
       `DTEND:${toUtcStamp(slot.end)}`,
       `SUMMARY:${escapeText(`${label}: Verhandlung ${aktenzeichen}`)}`,
-      `DESCRIPTION:${escapeText(describe(slot, aktenzeichen, terminUrl, synchronizedAt))}`,
+      `DESCRIPTION:${escapeText(describe(slot, events))}`,
+      // Calendars show it as the place of the event.
+      ...(court ? [`LOCATION:${escapeText(court)}`] : []),
       ...(organizerEmail ? [`ORGANIZER;CN="${PRODUCT_NAME}":mailto:${organizerEmail}`] : []),
       `URL:${terminUrl}`,
       `STATUS:${slot.cancelled ? "CANCELLED" : slot.confirmed ? "CONFIRMED" : "TENTATIVE"}`,

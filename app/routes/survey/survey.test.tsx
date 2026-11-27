@@ -30,6 +30,7 @@ const [k1, k2, k3] = [w1.id, w2.id, w3.id];
 const universal: Survey = {
   appointmentId: "a1",
   aktenzeichen: "574 C 65412/26",
+  courtCode: "B2402",
   answered: false,
   minDurationMinutes: null,
   slots: [w1, w2, w3],
@@ -209,6 +210,8 @@ describe("survey page", () => {
       await screen.findByRole("heading", { level: 1, name: "Geben Sie Ihre Verfügbarkeiten an" }),
     ).toBeVisible();
     expect(screen.getByText("574 C 65412/26")).toBeVisible();
+    expect(screen.getByText("Gericht")).toBeVisible();
+    expect(screen.getByText("Amtsgericht Biberach an der Riß")).toBeVisible();
     expect(screen.getByRole("heading", { level: 2, name: "21. September 2026" })).toBeVisible();
     expect(screen.getByRole("heading", { level: 3, name: "15:30 bis 17:00" })).toBeVisible();
     expect(screen.getAllByRole("checkbox", { name: /^Verfügbar/ })).toHaveLength(3);
@@ -261,7 +264,8 @@ describe("survey page", () => {
     const facts = screen.getByRole("heading", { name: "Verhandlungsdaten" }).closest("section")!;
     expect(within(facts).getByText("Aktenzeichen")).toBeVisible();
     expect(within(facts).getByText("574 C 65412/26")).toBeVisible();
-    expect(screen.queryByText("Gericht")).toBeNull();
+    expect(within(facts).getByText("Gericht")).toBeVisible();
+    expect(within(facts).getByText("Amtsgericht Biberach an der Riß")).toBeVisible();
 
     const windows = screen.getByRole("heading", { name: "Zeitfenster" }).closest("section")!;
     expect(within(windows).getByText("17. September 2026")).toBeVisible();

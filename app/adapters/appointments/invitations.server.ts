@@ -29,6 +29,8 @@ export type Invitee = {
   safeId: string | null;
   token: string;
   aktenzeichen: string;
+  // The code of the court in GDS.Gerichte. Older Terminumfragen have none.
+  courtCode: string | null;
   slots: Slot[];
 };
 
@@ -94,6 +96,7 @@ export async function findInvitee(
       "participant.safe_id as safeId",
       "participant.token",
       "appointment.aktenzeichen",
+      "appointment.court_code as courtCode",
     ])
     .where("participant.id", "=", participantId)
     .where("appointment.id", "=", appointmentId)

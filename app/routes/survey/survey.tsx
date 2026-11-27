@@ -27,6 +27,7 @@ import { KernLabel } from "~/components/shared/kern/KernLabel";
 import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { KernStack } from "~/components/shared/kern/KernStack";
 import { classNames, resetClassName, stackClassName } from "~/components/shared/kern/layout";
+import { courtName } from "~/core/domain/court/court";
 import { requireSurvey } from "~/lib/auth/survey-guard.server";
 import { surveyPath, surveyResultPath, surveySummaryPath } from "~/lib/web/paths";
 
@@ -57,6 +58,7 @@ export async function loader({ request, params }: { request: Request } & Params)
 
   return {
     aktenzeichen: survey.aktenzeichen,
+    court: courtName(survey.courtCode) ?? null,
     needsName: !survey.participant,
     days: groupWindows(survey.slots),
     // Cancelling throws the draft away: the survey starts afresh.
@@ -97,6 +99,7 @@ export async function action({ request, params }: { request: Request } & Params)
 export default function Survey() {
   const {
     aktenzeichen,
+    court,
     needsName,
     days,
     proposedDays,
@@ -116,7 +119,9 @@ export default function Survey() {
   );
 
   // Without any window left there is nothing to answer, so the guest hears that right away.
-  if (days.length === 0) return <NoOption aktenzeichen={aktenzeichen} days={proposedDays} />;
+  if (days.length === 0) {
+    return <NoOption aktenzeichen={aktenzeichen} court={court} days={proposedDays} />;
+  }
 
   return (
     <AppShell breadcrumbs={surveyBreadcrumbs}>
@@ -126,6 +131,7 @@ export default function Survey() {
           <KernGridCol lg={5}>
             <KernDescriptionList column>
               <KernDescriptionListItem label="Aktenzeichen">{aktenzeichen}</KernDescriptionListItem>
+              {court && <KernDescriptionListItem label="Gericht">{court}</KernDescriptionListItem>}
             </KernDescriptionList>
           </KernGridCol>
 

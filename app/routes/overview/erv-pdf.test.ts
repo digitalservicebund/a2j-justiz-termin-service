@@ -35,6 +35,7 @@ const invitee: Invitee = {
   safeId: "DE.Example.1",
   token: "tok-p1",
   aktenzeichen: "574 C 7/26",
+  courtCode: null,
   slots,
 };
 
@@ -60,6 +61,7 @@ describe("ERV PDF route", () => {
     expect(findInvitee).toHaveBeenCalledWith({ db: true }, "1", "a1", "p1");
     expect(renderErvInvitationPdf).toHaveBeenCalledWith({
       aktenzeichen: "574 C 7/26",
+      court: null,
       name: "Person A",
       slots,
       surveyUrl: "http://localhost:3000/verhandlungstermin-finder/umfrage/tok-p1",

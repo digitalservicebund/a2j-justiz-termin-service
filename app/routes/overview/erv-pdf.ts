@@ -2,6 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 
 import { findInvitee } from "~/adapters/appointments/invitations.server";
 import { requireRole } from "~/adapters/session/session";
+import { courtName } from "~/core/domain/court/court";
 import { givenName } from "~/core/domain/participant";
 import { getDb } from "~/database/database";
 import { appointmentIdOf } from "~/lib/auth/appointment-guard.server";
@@ -48,6 +49,7 @@ export async function loader({
   const name = givenName(invitee);
   const pdf = await renderErvInvitationPdf({
     aktenzeichen: invitee.aktenzeichen,
+    court: courtName(invitee.courtCode) ?? null,
     name,
     slots: invitee.slots,
     surveyUrl: surveyUrl(requireEnv("BASE_URL"), invitee.token),

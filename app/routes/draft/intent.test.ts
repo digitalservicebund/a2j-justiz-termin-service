@@ -8,6 +8,7 @@ describe("draft intents", () => {
     [{ command: "cancel" }, "cancel"],
     [{ command: "add-slot" }, "add-slot"],
     [{ command: "add-person" }, "add-person"],
+    [{ command: "edit-court" }, "edit-court"],
     [{ command: "edit-slot", id: "s-1" }, "edit-slot:s-1"],
     [{ command: "copy-slot", id: "s-1" }, "copy-slot:s-1"],
     [{ command: "delete-slot", id: "s-1" }, "delete-slot:s-1"],

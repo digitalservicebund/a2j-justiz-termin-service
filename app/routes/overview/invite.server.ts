@@ -9,6 +9,7 @@ import {
   settleErvInvitation,
 } from "~/adapters/appointments/invitations.server";
 import { requireRole } from "~/adapters/session/session";
+import { courtName } from "~/core/domain/court/court";
 import { invitationState } from "~/core/domain/invitation";
 import { givenName } from "~/core/domain/participant";
 import { formatInstant } from "~/core/domain/time/format";
@@ -64,6 +65,7 @@ export async function inviteGuest({ request, params }: InviteArgs, back: (id: st
       to: invitee.email,
       token: invitee.token,
       aktenzeichen: invitee.aktenzeichen,
+      court: courtName(invitee.courtCode) ?? null,
       slots: invitee.slots,
     });
     if (!sent) return data({ notSent: invitee.name }, { status: 502 });
@@ -82,6 +84,7 @@ export async function inviteGuest({ request, params }: InviteArgs, back: (id: st
       safeId: invitee.safeId,
       name: givenName(invitee),
       aktenzeichen: invitee.aktenzeichen,
+      court: courtName(invitee.courtCode) ?? null,
       slots: invitee.slots,
       token: invitee.token,
       correlationId,

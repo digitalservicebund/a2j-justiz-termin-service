@@ -18,6 +18,7 @@ export default [
     "overview/:appointmentId/verfahrensbeteiligte/:participantId/erv.pdf",
     "routes/overview/erv-pdf.ts",
   ),
+  route("overview/:appointmentId/gericht", "routes/draft/court.tsx"),
   route("overview/:appointmentId/confirm", "routes/draft/confirm.tsx"),
   route("overview/:appointmentId/created", "routes/draft/created.tsx"),
   route("einstellungen", "routes/settings/settings.tsx"),

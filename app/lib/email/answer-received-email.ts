@@ -1,6 +1,7 @@
 import html from "html-template-tag";
 
 import type { ResponseOverview } from "../../core/domain/availability.ts";
+import { courtName } from "../../core/domain/court/court.ts";
 import { formatRange, formatTime } from "../../core/domain/time/format.ts";
 import type { TimeRange } from "../../core/domain/time/time-range.ts";
 import {
@@ -48,6 +49,7 @@ function summarize({ overview, responder }: AnswerReceivedEmail) {
 
   return {
     heading: `${responder.name} hat auf Ihre Terminumfrage geantwortet.`,
+    court: courtName(overview.courtCode),
     // The exact availability windows, which may be shorter than the slot.
     available: own.flatMap(({ response }) => response.windows.map(formatRange)),
     cancelled: own
@@ -83,7 +85,8 @@ function Content(email: AnswerReceivedEmail, summary: ReturnType<typeof summariz
     <td>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
         $${TextRow({ children: html`${summary.heading}`, padding: "0 0 16px 0", size: 21, color: COLOR.text, bold: true })}
-        $${TextRow({ children: html`Aktenzeichen: ${email.overview.aktenzeichen}`, padding: "0 0 16px 0", size: 18, color: COLOR.text })}
+        $${TextRow({ children: html`Aktenzeichen: ${email.overview.aktenzeichen}`, padding: summary.court ? "0 0 8px 0" : "0 0 16px 0", size: 18, color: COLOR.text })}
+        $${summary.court ? TextRow({ children: html`Gericht: ${summary.court}`, padding: "0 0 16px 0", size: 18, color: COLOR.text }) : ""}
         $${Section("Verfügbar", summary.available)}
         $${Section("Nicht verfügbar", summary.cancelled, summary.cancelled.length > 0 ? "Diese Zeitfenster wurden abgesagt." : undefined)}
         $${Section("Aktueller Stand", summary.states)}
@@ -105,6 +108,7 @@ function renderText(email: AnswerReceivedEmail, summary: ReturnType<typeof summa
     summary.heading,
     "",
     `Aktenzeichen: ${email.overview.aktenzeichen}`,
+    ...(summary.court ? [`Gericht: ${summary.court}`] : []),
     "",
     "Verfügbar:",
     ...list(summary.available),
@@ -144,6 +148,7 @@ export function renderAnswerReceivedEmail(email: AnswerReceivedEmail) {
         filename: CALENDAR_FILENAME,
         content: createTerminCalendar({
           aktenzeichen: overview.aktenzeichen,
+          court: summary.court,
           terminUrl,
           organizerEmail,
           sequence: overview.calendarSequence,

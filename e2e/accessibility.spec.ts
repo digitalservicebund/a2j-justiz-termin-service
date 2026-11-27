@@ -68,6 +68,7 @@ async function seed(db: Kysely<Database>, userId: string, status: AppointmentSta
     .values({
       user_id: userId,
       aktenzeichen: "574 C 65412/26",
+      court_code: "B2402",
       // A confirmed appointment needs its slot, so it is confirmed once the slots exist.
       status: status === "confirmed" ? "open" : status,
       universal_token: randomUUID(),
@@ -187,6 +188,7 @@ for (const colorScheme of ["light", "dark"] as const) {
         [`/overview/${draft.id}/zeitfenster/${draft.slotIds[0]}`, "a time slot"],
         [`/overview/${draft.id}/verfahrensbeteiligte/neu`, "a new participant"],
         [`/overview/${draft.id}/verfahrensbeteiligte/${draft.participantId}`, "a participant"],
+        [`/overview/${draft.id}/gericht`, "the court of a draft"],
         [`/overview/${draft.id}/confirm`, "the review of a draft"],
         [`/overview/${open.id}/created`, "the created page"],
         [`/overview/${open.id}`, "an open Terminumfrage"],

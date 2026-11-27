@@ -24,16 +24,19 @@ const LINK_HINT =
 
 export type InvitationEmail = {
   aktenzeichen: string;
+  // The name of the court. Older Terminumfragen have none.
+  court: string | null;
   slots: Slot[];
   surveyUrl: string;
 };
 
-function Content({ aktenzeichen, surveyUrl }: InvitationEmail, slots: string[]) {
+function Content({ aktenzeichen, court, surveyUrl }: InvitationEmail, slots: string[]) {
   return html`<tr>
     <td>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
         $${TextRow({ children: html`${HEADING}`, padding: "0 0 16px 0", size: 21, color: COLOR.text, bold: true })}
         $${TextRow({ children: html`Aktenzeichen: ${aktenzeichen}`, padding: "0 0 8px 0", size: 18, color: COLOR.text })}
+        $${court ? TextRow({ children: html`Gericht: ${court}`, padding: "0 0 8px 0", size: 18, color: COLOR.text }) : ""}
         $${TextRow({ children: html`Vorgeschlagene Zeitfenster:`, padding: "0 0 4px 0", size: 18, color: COLOR.text, bold: true })}
         $${Slots(slots)} $${Button(BUTTON, surveyUrl)}
         $${TextRow({ children: html`${LINK_HINT}`, padding: "0 0 32px 0", size: 18, color: COLOR.muted })}
@@ -43,13 +46,14 @@ function Content({ aktenzeichen, surveyUrl }: InvitationEmail, slots: string[]) 
   </tr>`;
 }
 
-function renderText({ aktenzeichen, surveyUrl }: InvitationEmail, slots: string[]) {
+function renderText({ aktenzeichen, court, surveyUrl }: InvitationEmail, slots: string[]) {
   return [
     ...renderHeaderText(),
     "",
     HEADING,
     "",
     `Aktenzeichen: ${aktenzeichen}`,
+    ...(court ? [`Gericht: ${court}`] : []),
     "Vorgeschlagene Zeitfenster:",
     ...slots.map((slot) => `- ${slot}`),
     "",

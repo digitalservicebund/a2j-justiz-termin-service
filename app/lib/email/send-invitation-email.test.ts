@@ -15,6 +15,7 @@ const invitation = {
   to: " Guest.A@Example.com ",
   token: "tok/1",
   aktenzeichen: "574 C 65412/26",
+  court: null,
   slots: [
     {
       id: "slot-1",

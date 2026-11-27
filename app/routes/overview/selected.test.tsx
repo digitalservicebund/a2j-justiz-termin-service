@@ -29,6 +29,7 @@ const confirmed = {
   id: "a1",
   status: "confirmed" as const,
   aktenzeichen: "574 C 65412/26",
+  courtCode: "B2402" as string | null,
   slots: [
     { id: "s1", start: new Date("2026-11-09T14:30:00Z"), end: new Date("2026-11-09T17:00:00Z") },
   ],
@@ -65,6 +66,7 @@ describe("overview selected route", () => {
   it("returns the Aktenzeichen and the confirmed start", async () => {
     expect(await loader({ request: request(), params })).toMatchObject({
       aktenzeichen: "574 C 65412/26",
+      court: "Amtsgericht Biberach an der Riß",
       termin: expect.stringMatching(/^\p{L}+, 9\. November 2026 um 15:30$/u),
     });
   });
@@ -125,7 +127,7 @@ describe("OverviewSelected", () => {
 
     expect(writeText).toHaveBeenCalledWith(
       expect.stringMatching(
-        /^Aktenzeichen: 574 C 65412\/26\nTermin: \p{L}+, 9\. November 2026 um 15:30$/u,
+        /^Aktenzeichen: 574 C 65412\/26\nGericht: Amtsgericht Biberach an der Riß\nTermin: \p{L}+, 9\. November 2026 um 15:30$/u,
       ),
     );
     expect(await screen.findByRole("button", { name: "Termindetails kopiert" })).toBeVisible();

@@ -528,6 +528,29 @@ Responses use `Content-Type: text/calendar; charset=utf-8; method=PUBLISH` and
 it without raising it. Calendar apps replace an event only when its `SEQUENCE` is higher than
 the copy they hold.
 
+## Courts
+
+Every Terminumfrage belongs to a court (Gericht). The courts come from the XJustiz code list
+[GDS.Gerichte](https://www.xrepository.de/details/urn:xoev-de:xjustiz:codeliste:gds.gerichte_3.7),
+committed unchanged as `app/core/domain/court/GDS.Gerichte_3.7.json`. oxfmt leaves the file
+alone, so a new version is a plain diff.
+
+- The database stores the code of a court (`appointment.court_code`,
+  `richter.default_court_code`). The name is looked up with `courtName()` in
+  `app/core/domain/court/court.ts` wherever it is shown: pages, e-mails, the ERV PDF and the
+  calendar (`LOCATION`). The XJustiz message of an ERV invitation names no court.
+- A judge can pick an open court, but no Staatsanwaltschaft (code ends in `S`), Grundbuchamt
+  (`G`), test entry or closed court. The list keeps a closed court with the prefix `aufgelöst-`,
+  so a stored code always has a name; it is shown without the prefix.
+- A judge can set a default court in the settings. A new Terminumfrage starts with it, and the
+  judge can change the court of one Terminumfrage before sending it. Terminumfragen from before
+  courts existed have none.
+- The code list stays on the server. Pages get the grouped list from their loader, and only
+  when they show the dropdown.
+
+To update the code list, run `pnpm courts:update --version <version>`, point the import in
+`court.ts` to the new file, delete the old one and review the diff.
+
 ## Logging
 
 The app writes one JSON object per line to stdout with [pino](https://getpino.io). In Kubernetes the platform's Loki collects it; the app does not ship logs itself. `pnpm dev` prints the same lines readably with `pino-pretty`.
