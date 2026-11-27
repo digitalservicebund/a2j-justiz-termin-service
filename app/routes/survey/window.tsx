@@ -20,6 +20,7 @@ import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { KernStack } from "~/components/shared/kern/KernStack";
 import { classNames, clusterClassName } from "~/components/shared/kern/layout";
 import { contains, parseWindowKey, type SlotWindow } from "~/core/domain/availability";
+import { courtName } from "~/core/domain/court/court";
 import { formatRangeLong, formatTime } from "~/core/domain/time/format";
 import type { TimeRange } from "~/core/domain/time/time-range";
 import { requireSurvey } from "~/lib/auth/survey-guard.server";
@@ -77,6 +78,7 @@ export async function loader({ request, params }: { request: Request } & Params)
   const { token, survey, values, offer, changing } = await loadOffer(request, { params });
   return {
     aktenzeichen: survey.aktenzeichen,
+    court: courtName(survey.courtCode) ?? null,
     offer: formatRangeLong(offer),
     // A new window starts as the whole offered one, which the guest narrows down.
     fields: toFields(changing ?? offer),
@@ -121,6 +123,7 @@ const colonLayout = clusterClassName({ wrap: false, align: "center" });
 export default function SurveyWindow() {
   const {
     aktenzeichen,
+    court,
     offer,
     fields: saved,
     cancelHref,
@@ -189,6 +192,7 @@ export default function SurveyWindow() {
           <KernGridCol lg={5}>
             <KernDescriptionList column>
               <KernDescriptionListItem label="Aktenzeichen">{aktenzeichen}</KernDescriptionListItem>
+              {court && <KernDescriptionListItem label="Gericht">{court}</KernDescriptionListItem>}
             </KernDescriptionList>
           </KernGridCol>
 

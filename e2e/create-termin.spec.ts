@@ -50,10 +50,15 @@ async function draftExists(db: Kysely<Database>, id: string) {
   return rows.length > 0;
 }
 
-test.beforeEach(async ({ page, users }) => {
+test.beforeEach(async ({ page, users, db }) => {
   const judge = await users.create({ roles: ["richter"] });
   judgeId = judge.id;
   judgeEmail = judge.email;
+  // New Terminumfragen start with this court, so the flow needs no court to be picked.
+  await db
+    .insertInto("richter")
+    .values({ user_id: judge.id, default_court_code: "B2402" })
+    .execute();
   await signIn(page, judge);
   await page.goto(`${BASE_PATH}/overview/new`);
   await expect(
@@ -111,7 +116,13 @@ async function addPerson(
 async function seedDraft(db: Kysely<Database>, aktenzeichen: string, slots: number) {
   const { id } = await db
     .insertInto("appointment")
-    .values({ user_id: judgeId, aktenzeichen, min_duration_minutes: 60, status: "draft" })
+    .values({
+      user_id: judgeId,
+      aktenzeichen,
+      min_duration_minutes: 60,
+      court_code: "B2402",
+      status: "draft",
+    })
     .returning("id")
     .executeTakeFirstOrThrow();
   for (let index = 0; index < slots; index += 1) {

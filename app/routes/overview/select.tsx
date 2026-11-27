@@ -19,6 +19,7 @@ import { KernLinkButton } from "~/components/shared/kern/KernLinkButton";
 import { classNames, resetClassName } from "~/components/shared/kern/layout";
 import { remainingOf } from "~/core/domain/availability";
 import { windowKey } from "~/core/domain/availability";
+import { courtName } from "~/core/domain/court/court";
 import { formatRangeLong } from "~/core/domain/time/format";
 import { getDb } from "~/database/database";
 import { requireOwnAppointment } from "~/lib/auth/appointment-guard.server";
@@ -53,6 +54,7 @@ export async function loader({ request, params }: { request: Request } & Params)
   return {
     user,
     aktenzeichen: appointment.aktenzeichen,
+    court: courtName(appointment.courtCode) ?? null,
     windows: remaining.map((window) => ({
       key: windowKey(window),
       label: formatRangeLong(window),
@@ -72,7 +74,7 @@ export async function action({ request, params }: { request: Request } & Params)
 }
 
 export default function OverviewSelect() {
-  const { user, aktenzeichen, windows, values: saved } = useLoaderData<typeof loader>();
+  const { user, aktenzeichen, court, windows, values: saved } = useLoaderData<typeof loader>();
   const result = useActionData<typeof action>();
   const pending = useNavigation().state !== "idle";
   // What the user just submitted wins over the earlier choice.
@@ -87,6 +89,7 @@ export default function OverviewSelect() {
           <KernGridCol lg={5}>
             <KernDescriptionList column>
               <KernDescriptionListItem label="Aktenzeichen">{aktenzeichen}</KernDescriptionListItem>
+              {court && <KernDescriptionListItem label="Gericht">{court}</KernDescriptionListItem>}
             </KernDescriptionList>
           </KernGridCol>
 

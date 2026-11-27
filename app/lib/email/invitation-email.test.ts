@@ -8,6 +8,7 @@ import { renderInvitationEmail } from "./invitation-email.ts";
 const surveyUrl = "http://localhost:3000/verhandlungstermin-finder/umfrage/tok-1";
 const email = {
   aktenzeichen: "574 C 65412/26",
+  court: "Court X",
   surveyUrl,
   // 09:00 bis 10:30 Berlin time in summer.
   slots: [
@@ -33,6 +34,21 @@ describe("renderInvitationEmail", () => {
       expect(body).toContain("574 C 65412/26");
       expect(body).toContain("Donnerstag, 17.09.2026, 09:00 bis 10:30 Uhr");
     }
+  });
+
+  it("names the court under the Aktenzeichen, when there is one", () => {
+    const { html, text } = renderInvitationEmail(email);
+    expect(html).toContain("Gericht: Court X");
+    expect(text).toContain("Aktenzeichen: 574 C 65412/26\nGericht: Court X\n");
+
+    const without = renderInvitationEmail({ ...email, court: null });
+    expect(without.html).not.toContain("Gericht:");
+    expect(without.text).not.toContain("Gericht:");
+  });
+
+  it("escapes the court in the HTML version", () => {
+    const { html } = renderInvitationEmail({ ...email, court: "<b>Court X</b>" });
+    expect(html).toContain("&lt;b&gt;Court X&lt;/b&gt;");
   });
 
   it("links to the personal survey as button and as plain link", () => {

@@ -9,6 +9,7 @@ import {
 import { listParticipants } from "~/adapters/appointments/participants.server";
 import { requireRole } from "~/adapters/session/session";
 import { AppShell } from "~/components/shared/AppShell";
+import { courtName } from "~/core/domain/court/court";
 import { getDb } from "~/database/database";
 import {
   appointmentIdOf,
@@ -29,6 +30,7 @@ type Params = { params: { appointmentId?: string } };
 const draftValues = (appointment: Appointment): CreateTerminValues => ({
   aktenzeichen: appointment.aktenzeichen,
   minDurationMinutes: appointment.minDurationMinutes ?? null,
+  courtCode: appointment.courtCode ?? null,
   slots: appointment.slots.map(rangeToSlot),
 });
 
@@ -42,7 +44,12 @@ export async function loader({ request, params }: { request: Request } & Params)
   // A draft can be saved half-finished, so it is only reviewed once it is complete.
   const values = draftValues(appointment);
   if (!validateCreateTermin(values).success) throw redirect(draftPath(appointment.id));
-  return { user, values, participants: await listParticipants(getDb(), user.id, appointment.id) };
+  return {
+    user,
+    values,
+    court: courtName(values.courtCode) ?? null,
+    participants: await listParticipants(getDb(), user.id, appointment.id),
+  };
 }
 
 // Tells the judge that the Terminumfrage is open. The appointment is published either way.
@@ -54,6 +61,7 @@ async function notifyJudge(userId: string, email: string, id: string) {
     to: email,
     appointmentId: appointment.id,
     aktenzeichen: appointment.aktenzeichen,
+    court: courtName(appointment.courtCode) ?? null,
     slots: appointment.slots,
     sequence,
   });
@@ -82,10 +90,10 @@ export async function action({ request, params }: { request: Request } & Params)
 }
 
 export default function CreateTerminConfirm() {
-  const { user, values, participants } = useLoaderData<typeof loader>();
+  const { user, values, court, participants } = useLoaderData<typeof loader>();
   return (
     <AppShell user={user} breadcrumbs={createTerminBreadcrumbs}>
-      <CreateTerminReview values={values} participants={participants} />
+      <CreateTerminReview values={values} court={court} participants={participants} />
     </AppShell>
   );
 }

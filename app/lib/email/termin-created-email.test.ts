@@ -6,6 +6,7 @@ import { renderTerminCreatedEmail } from "./termin-created-email.ts";
 const terminUrl = "http://localhost:3000/overview/a1";
 const email = {
   aktenzeichen: "574 C 65412/26",
+  court: "Court X",
   terminUrl,
   sequence: 1,
   organizerEmail: "sender@example.com",
@@ -39,6 +40,17 @@ describe("renderTerminCreatedEmail", () => {
       expect(body).toContain("Donnerstag, 17.09.2026, 09:00 bis 10:30 Uhr");
       expect(body).toContain("Freitag, 18.09.2026, 14:00 bis 15:00 Uhr");
     }
+  });
+
+  it("names the court under the Aktenzeichen and as the place of the calendar events", () => {
+    const mail = renderTerminCreatedEmail(email);
+    expect(mail.html).toContain("Gericht: Court X");
+    expect(mail.text).toContain("Aktenzeichen: 574 C 65412/26\nGericht: Court X\n");
+    const calendar = mail.attachments.find(({ filename }) => filename === "terminumfrage.ics");
+    expect(String(calendar?.content)).toContain("LOCATION:Court X");
+
+    const without = renderTerminCreatedEmail({ ...email, court: null });
+    expect(without.text).not.toContain("Gericht:");
   });
 
   it("links to the Termin as button and as plain link", () => {

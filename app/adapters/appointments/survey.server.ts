@@ -22,6 +22,8 @@ export type SurveySlot = SlotWindow & { id: string };
 export type Survey = {
   appointmentId: string;
   aktenzeichen: string;
+  // The code of the court in GDS.Gerichte. Older Terminumfragen have none.
+  courtCode: string | null;
   // The shortest an availability window may be.
   minDurationMinutes: number | null;
   // The guest behind a personal link. Behind the universal link guests give their name themselves.
@@ -50,7 +52,7 @@ export async function findSurvey(db: Executor, token: string): Promise<Survey | 
 
   const appointment = await db
     .selectFrom("appointment")
-    .select(["id", "aktenzeichen", "min_duration_minutes"])
+    .select(["id", "aktenzeichen", "court_code", "min_duration_minutes"])
     .$call((qb) =>
       personal
         ? qb.where("id", "=", personal.appointment_id)
@@ -75,6 +77,7 @@ export async function findSurvey(db: Executor, token: string): Promise<Survey | 
   return {
     appointmentId: appointment.id,
     aktenzeichen: appointment.aktenzeichen,
+    courtCode: appointment.court_code,
     minDurationMinutes: appointment.min_duration_minutes,
     participant: personal ? { id: personal.id, name: personal.name } : undefined,
     answered,
@@ -286,7 +289,7 @@ async function readResponseOverview(
   const appointment = await db
     .selectFrom("appointment")
     .innerJoin("user", "user.id", "appointment.user_id")
-    .select(["appointment.id", "appointment.aktenzeichen", "user.email"])
+    .select(["appointment.id", "appointment.aktenzeichen", "appointment.court_code", "user.email"])
     .where("appointment.id", "=", appointmentId)
     .executeTakeFirst();
   if (!appointment) return undefined;
@@ -294,6 +297,7 @@ async function readResponseOverview(
   return {
     appointmentId: appointment.id,
     aktenzeichen: appointment.aktenzeichen,
+    courtCode: appointment.court_code,
     judgeEmail: appointment.email,
     calendarSequence,
     slots: (await readAvailability(db, appointmentId)).slots,

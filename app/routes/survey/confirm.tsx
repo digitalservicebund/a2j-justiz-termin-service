@@ -7,6 +7,7 @@ import {
   KernDescriptionListItem,
 } from "~/components/shared/kern/KernDescriptionList";
 import { ReviewPage } from "~/components/shared/ReviewPage";
+import { courtName } from "~/core/domain/court/court";
 import { getDb } from "~/database/database";
 import { requireSurvey } from "~/lib/auth/survey-guard.server";
 import { sendAnswerReceivedEmail } from "~/lib/email/send-answer-received-email";
@@ -44,6 +45,7 @@ export async function loader({ request, params }: { request: Request } & Params)
     values,
     needsName,
     aktenzeichen: survey.aktenzeichen,
+    court: courtName(survey.courtCode) ?? null,
     name: survey.participant?.name ?? result.name,
     answers: describeAnswers(survey.slots, result.availability),
     // Which design the review follows: without any window the guest is not available at all.
@@ -91,7 +93,7 @@ export async function action({ request, params }: { request: Request } & Params)
 }
 
 export default function SurveyConfirm() {
-  const { values, needsName, aktenzeichen, name, answers } = useLoaderData<typeof loader>();
+  const { values, needsName, aktenzeichen, court, name, answers } = useLoaderData<typeof loader>();
   return (
     <AppShell breadcrumbs={surveyBreadcrumbs}>
       <ReviewPage
@@ -106,6 +108,9 @@ export default function SurveyConfirm() {
                 <KernDescriptionListItem label="Aktenzeichen">
                   {aktenzeichen}
                 </KernDescriptionListItem>
+                {court && (
+                  <KernDescriptionListItem label="Gericht">{court}</KernDescriptionListItem>
+                )}
               </KernDescriptionList>
             ),
           },

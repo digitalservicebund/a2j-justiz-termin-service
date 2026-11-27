@@ -27,6 +27,7 @@ const invitation = {
   safeId: SAFE_ID,
   name: "Person A",
   aktenzeichen: "574 C 7/26",
+  court: null,
   slots,
   token: "tok-p1",
   correlationId: "c1",
@@ -120,6 +121,7 @@ describe("sendErvInvitation", () => {
 
     expect(renderErvInvitationPdf).toHaveBeenCalledWith({
       aktenzeichen: "574 C 7/26",
+      court: null,
       name: "Person A",
       slots,
       surveyUrl: "http://localhost:3000/verhandlungstermin-finder/umfrage/tok-p1",

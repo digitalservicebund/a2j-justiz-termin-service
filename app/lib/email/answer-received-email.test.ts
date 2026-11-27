@@ -33,6 +33,7 @@ function overview(
   return {
     appointmentId: "a1",
     aktenzeichen: "574 C 65412/26",
+    courtCode: null,
     judgeEmail: "judge.a@example.com",
     calendarSequence: 7,
     slots: [
@@ -68,6 +69,28 @@ function events(mail: ReturnType<typeof render>) {
 }
 
 describe("renderAnswerReceivedEmail", () => {
+  it("names the court under the Aktenzeichen and as the place of the calendar events", () => {
+    const mail = renderAnswerReceivedEmail({
+      overview: { ...overview(), courtCode: "B2402" },
+      responder: { id: "p2", name: "Guest B" },
+      terminUrl,
+      organizerEmail: "sender@example.com",
+    });
+    expect(mail.html).toContain("Gericht: Amtsgericht Biberach an der Riß");
+    expect(mail.text).toContain(
+      "Aktenzeichen: 574 C 65412/26\nGericht: Amtsgericht Biberach an der Riß\n",
+    );
+    for (const event of events(mail)) {
+      expect(event.getFirstPropertyValue("location")).toBe("Amtsgericht Biberach an der Riß");
+    }
+  });
+
+  it("leaves the court out without one", () => {
+    const mail = render();
+    expect(mail.text).not.toContain("Gericht:");
+    for (const event of events(mail)) expect(event.getFirstPropertyValue("location")).toBeNull();
+  });
+
   it("names the responder and links to the Termin", () => {
     const { subject, html, text } = render();
     expect(subject).toBe("Neue Antwort auf Ihre Terminumfrage");

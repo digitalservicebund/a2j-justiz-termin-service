@@ -186,6 +186,8 @@ export function toAnsweredSlot(
 export type ResponseOverview = {
   appointmentId: string;
   aktenzeichen: string;
+  // The code of the court in GDS.Gerichte. Older Terminumfragen have none.
+  courtCode: string | null;
   // The judge who created the appointment.
   judgeEmail: string;
   // The SEQUENCE for the calendar file that goes with this state.
@@ -199,6 +201,8 @@ export type ResponseOverview = {
 export type FeedAppointment = {
   id: string;
   aktenzeichen: string;
+  // The code of the court in GDS.Gerichte. Older Terminumfragen have none.
+  courtCode: string | null;
   calendarSequence: number;
   // The chosen window of a confirmed appointment, which lies within the slot `confirmedSlotId`.
   confirmed: (TimeRange & { slotId: string }) | null;

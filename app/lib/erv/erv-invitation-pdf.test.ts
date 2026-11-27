@@ -18,6 +18,7 @@ const surveyUrl = "http://localhost:3000/verhandlungstermin-finder/umfrage/tok-1
 // 09:00 to 10:30 Berlin time in summer.
 const invitation: ErvInvitationPdf = {
   aktenzeichen: "574 C 7/26",
+  court: "Court X",
   name: "Person A",
   slots: [
     { id: "s1", start: new Date("2026-09-17T07:00:00Z"), end: new Date("2026-09-17T08:30:00Z") },
@@ -43,6 +44,7 @@ describe("renderErvInvitationPdf", () => {
       HEADING,
       "Für: Person A",
       "Aktenzeichen: 574 C 7/26",
+      "Gericht: Court X",
       "Vorgeschlagene Zeitfenster:",
       "Donnerstag, 17.09.2026, 09:00 bis 10:30 Uhr",
       DESCRIPTION,
@@ -51,6 +53,11 @@ describe("renderErvInvitationPdf", () => {
     ]) {
       expect(text).toContain(expected);
     }
+  });
+
+  it("leaves the court out without one", async () => {
+    const { text } = await render({ court: null });
+    expect(text).not.toContain("Gericht:");
   });
 
   it("links the printed survey URL", async () => {

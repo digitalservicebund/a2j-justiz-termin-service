@@ -36,10 +36,28 @@ describe("Overview", () => {
 
   it("lists the user's appointments with their status, in the given order", async () => {
     vi.mocked(listAppointments).mockResolvedValue([
-      { id: "a", aktenzeichen: "574 C 1/26", status: "draft", confirmedSlot: null },
-      { id: "b", aktenzeichen: "574 C 2/26", status: "open", confirmedSlot: null },
-      { id: "c", aktenzeichen: "574 C 3/26", status: "confirmed", confirmedSlot: slot },
-      { id: "d", aktenzeichen: "574 C 4/26", status: "cancelled", confirmedSlot: null },
+      {
+        id: "a",
+        aktenzeichen: "574 C 1/26",
+        courtCode: null,
+        status: "draft",
+        confirmedSlot: null,
+      },
+      { id: "b", aktenzeichen: "574 C 2/26", courtCode: null, status: "open", confirmedSlot: null },
+      {
+        id: "c",
+        aktenzeichen: "574 C 3/26",
+        courtCode: null,
+        status: "confirmed",
+        confirmedSlot: slot,
+      },
+      {
+        id: "d",
+        aktenzeichen: "574 C 4/26",
+        courtCode: null,
+        status: "cancelled",
+        confirmedSlot: null,
+      },
     ]);
 
     renderPage();
@@ -62,10 +80,28 @@ describe("Overview", () => {
 
   it("links drafts to the form and all other states to their detail page", async () => {
     vi.mocked(listAppointments).mockResolvedValue([
-      { id: "a", aktenzeichen: "574 C 1/26", status: "draft", confirmedSlot: null },
-      { id: "b", aktenzeichen: "574 C 2/26", status: "open", confirmedSlot: null },
-      { id: "c", aktenzeichen: "574 C 3/26", status: "cancelled", confirmedSlot: null },
-      { id: "d", aktenzeichen: "574 C 4/26", status: "confirmed", confirmedSlot: slot },
+      {
+        id: "a",
+        aktenzeichen: "574 C 1/26",
+        courtCode: null,
+        status: "draft",
+        confirmedSlot: null,
+      },
+      { id: "b", aktenzeichen: "574 C 2/26", courtCode: null, status: "open", confirmedSlot: null },
+      {
+        id: "c",
+        aktenzeichen: "574 C 3/26",
+        courtCode: null,
+        status: "cancelled",
+        confirmedSlot: null,
+      },
+      {
+        id: "d",
+        aktenzeichen: "574 C 4/26",
+        courtCode: null,
+        status: "confirmed",
+        confirmedSlot: slot,
+      },
     ]);
 
     renderPage();
@@ -82,9 +118,29 @@ describe("Overview", () => {
     });
   });
 
+  it("names the court under the Aktenzeichen, when the Terminumfrage has one", async () => {
+    vi.mocked(listAppointments).mockResolvedValue([
+      {
+        id: "a",
+        aktenzeichen: "574 C 1/26",
+        courtCode: "B2402",
+        status: "open",
+        confirmedSlot: null,
+      },
+      { id: "b", aktenzeichen: "574 C 2/26", courtCode: null, status: "open", confirmedSlot: null },
+    ]);
+
+    renderPage();
+
+    expect(
+      await screen.findByRole("cell", { name: "574 C 1/26 Amtsgericht Biberach an der Riß" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("cell", { name: "574 C 2/26" })).toBeInTheDocument();
+  });
+
   it("renders a striped table with an action column and one open button per row", async () => {
     vi.mocked(listAppointments).mockResolvedValue([
-      { id: "a", aktenzeichen: "574 C 1/26", status: "open", confirmedSlot: null },
+      { id: "a", aktenzeichen: "574 C 1/26", courtCode: null, status: "open", confirmedSlot: null },
     ]);
 
     renderPage();
@@ -118,7 +174,7 @@ describe("Overview", () => {
 
   it("shows a different message when the filter matches nothing", async () => {
     vi.mocked(listAppointments).mockResolvedValue([
-      { id: "a", aktenzeichen: "574 C 1/26", status: "open", confirmedSlot: null },
+      { id: "a", aktenzeichen: "574 C 1/26", courtCode: null, status: "open", confirmedSlot: null },
     ]);
 
     renderPage("/overview?filter=draft");
@@ -131,8 +187,20 @@ describe("Overview", () => {
 
   it("sorts by status by default", async () => {
     vi.mocked(listAppointments).mockResolvedValue([
-      { id: "a", aktenzeichen: "574 C 9/26", status: "cancelled", confirmedSlot: null },
-      { id: "b", aktenzeichen: "574 C 2/26", status: "draft", confirmedSlot: null },
+      {
+        id: "a",
+        aktenzeichen: "574 C 9/26",
+        courtCode: null,
+        status: "cancelled",
+        confirmedSlot: null,
+      },
+      {
+        id: "b",
+        aktenzeichen: "574 C 2/26",
+        courtCode: null,
+        status: "draft",
+        confirmedSlot: null,
+      },
     ]);
 
     renderPage();
@@ -143,9 +211,21 @@ describe("Overview", () => {
 
   it("reads the sort and filter from the URL and shows them in the selects", async () => {
     vi.mocked(listAppointments).mockResolvedValue([
-      { id: "a", aktenzeichen: "574 C 10/26", status: "open", confirmedSlot: null },
-      { id: "b", aktenzeichen: "574 C 2/26", status: "open", confirmedSlot: null },
-      { id: "c", aktenzeichen: "574 C 1/26", status: "draft", confirmedSlot: null },
+      {
+        id: "a",
+        aktenzeichen: "574 C 10/26",
+        courtCode: null,
+        status: "open",
+        confirmedSlot: null,
+      },
+      { id: "b", aktenzeichen: "574 C 2/26", courtCode: null, status: "open", confirmedSlot: null },
+      {
+        id: "c",
+        aktenzeichen: "574 C 1/26",
+        courtCode: null,
+        status: "draft",
+        confirmedSlot: null,
+      },
     ]);
 
     renderPage("/overview?sort=aktenzeichen&filter=open");
@@ -158,7 +238,7 @@ describe("Overview", () => {
 
   it("ignores unknown sort and filter values", async () => {
     vi.mocked(listAppointments).mockResolvedValue([
-      { id: "a", aktenzeichen: "574 C 1/26", status: "open", confirmedSlot: null },
+      { id: "a", aktenzeichen: "574 C 1/26", courtCode: null, status: "open", confirmedSlot: null },
     ]);
 
     renderPage("/overview?sort=bogus&filter=bogus");
@@ -170,8 +250,14 @@ describe("Overview", () => {
 
   it("applies a changed select right away", async () => {
     vi.mocked(listAppointments).mockResolvedValue([
-      { id: "a", aktenzeichen: "574 C 1/26", status: "open", confirmedSlot: null },
-      { id: "b", aktenzeichen: "574 C 2/26", status: "draft", confirmedSlot: null },
+      { id: "a", aktenzeichen: "574 C 1/26", courtCode: null, status: "open", confirmedSlot: null },
+      {
+        id: "b",
+        aktenzeichen: "574 C 2/26",
+        courtCode: null,
+        status: "draft",
+        confirmedSlot: null,
+      },
     ]);
 
     renderPage();

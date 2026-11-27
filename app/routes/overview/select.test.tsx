@@ -33,6 +33,7 @@ const open = {
   id: "a1",
   status: "open" as const,
   aktenzeichen: "574 C 65412/26",
+  courtCode: "B2402",
   slots: [
     { id: "s1", start: new Date("2026-09-17T13:30:00Z"), end: new Date("2026-09-17T16:00:00Z") },
     { id: "s2", start: new Date("2026-09-21T07:00:00Z"), end: new Date("2026-09-21T11:00:00Z") },
@@ -205,6 +206,8 @@ describe("OverviewSelect", () => {
       }),
     ).toBeVisible();
     expect(screen.getByText("574 C 65412/26")).toBeVisible();
+    expect(screen.getByText("Gericht")).toBeVisible();
+    expect(screen.getByText("Amtsgericht Biberach an der Riß")).toBeVisible();
     expect(screen.getByRole("group", { name: "Zeitfenster" })).toBeVisible();
     expect(
       screen.getByRole("radio", { name: "17. September 2026 von 15:30 bis 18:00" }),

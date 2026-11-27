@@ -23,9 +23,12 @@ const describePerson = ({ email, safeId, name }: ReviewPerson) =>
 
 export function CreateTerminReview({
   values,
+  court,
   participants,
 }: Readonly<{
   values: CreateTerminValues;
+  // The name of the court.
+  court: string | null;
   participants: ReviewPerson[];
 }>) {
   return (
@@ -39,6 +42,7 @@ export function CreateTerminReview({
               <KernDescriptionListItem label="Aktenzeichen">
                 {values.aktenzeichen}
               </KernDescriptionListItem>
+              {court && <KernDescriptionListItem label="Gericht">{court}</KernDescriptionListItem>}
               {values.minDurationMinutes !== null && (
                 <KernDescriptionListItem label="Mindestdauer">
                   {formatMinutes(values.minDurationMinutes)}

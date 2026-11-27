@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { wallClockToInstant } from "~/core/domain/time/berlin.server";
 
 import CreateTerminConfirm, { action as confirmAction, loader as confirmLoader } from "./confirm";
+import CreateTerminCourt, { action as courtAction, loader as courtLoader } from "./court";
 import CreateTermin, { action, loader } from "./draft";
 import CreateTerminParticipant, {
   action as participantAction,
@@ -20,24 +21,46 @@ type Draft = {
   status: string;
   aktenzeichen: string;
   minDurationMinutes: number | null;
+  courtCode: string | null;
   slots: Slot[];
   participants: Person[];
 };
-type Details = { aktenzeichen: string; minDurationMinutes: number | null };
+type Details = {
+  aktenzeichen: string;
+  minDurationMinutes: number | null;
+  courtCode?: string | null;
+};
 
 const drafts = vi.hoisted(() => new Map<string, Draft>());
+// The judge's default court, as the fake of the richter adapter keeps it.
+const richter = vi.hoisted(() => ({ defaultCourt: null as string | null }));
 
 // A fake of the database adapter: drafts live in a map, so the pages can be exercised end to end.
 vi.mock("~/adapters/appointments/appointments.server", () => {
   let counter = 0;
   return {
-    createDraftAppointment: vi.fn(async (_db, _userId, details: Details) => {
-      drafts.set("abc", { id: "abc", status: "draft", ...details, slots: [], participants: [] });
+    createDraftAppointment: vi.fn(async (_db, _userId, { courtCode, ...details }: Details) => {
+      drafts.set("abc", {
+        id: "abc",
+        status: "draft",
+        ...details,
+        courtCode: courtCode ?? null,
+        slots: [],
+        participants: [],
+      });
       return "abc";
     }),
-    updateDraftDetails: vi.fn(async (_db, _userId, id: string, details: Details) => {
+    updateDraftDetails: vi.fn(
+      async (_db, _userId, id: string, { courtCode, ...details }: Details) => {
+        const draft = drafts.get(id);
+        if (draft) Object.assign(draft, details);
+        if (draft && courtCode !== undefined) draft.courtCode = courtCode;
+        return Boolean(draft);
+      },
+    ),
+    setDraftCourt: vi.fn(async (_db, _userId, id: string, courtCode: string) => {
       const draft = drafts.get(id);
-      if (draft) Object.assign(draft, details);
+      if (draft) draft.courtCode = courtCode;
       return Boolean(draft);
     }),
     addDraftSlot: vi.fn(async (_db, _userId, id: string, range: { start: Date; end: Date }) => {
@@ -103,6 +126,12 @@ vi.mock("~/adapters/appointments/participants.server", () => {
     }),
   };
 });
+vi.mock("~/adapters/users/richter.server", () => ({
+  getDefaultCourt: vi.fn(async () => richter.defaultCourt),
+  setDefaultCourt: vi.fn(async (_db, _userId, courtCode: string | null) => {
+    richter.defaultCourt = courtCode;
+  }),
+}));
 vi.mock("~/lib/email/send-termin-created-email", () => ({ sendTerminCreatedEmail: vi.fn() }));
 vi.mock("~/database/database", () => ({ getDb: () => ({}) }));
 vi.mock("~/adapters/session/session", () => ({
@@ -132,6 +161,7 @@ function seedDraft(
   participants: Person[] = [],
   // No seeded slot is shorter than an hour.
   minDurationMinutes: number | null = 60,
+  courtCode: string | null = "B2402",
 ) {
   // Copies, so that a test that edits a person cannot change the fixture for the next one.
   const copies = participants.map((person) => ({ ...person }));
@@ -140,6 +170,7 @@ function seedDraft(
     status: "draft",
     aktenzeichen,
     minDurationMinutes,
+    courtCode,
     slots: [],
     participants: copies,
   });
@@ -148,6 +179,7 @@ function seedDraft(
 
 beforeEach(() => {
   drafts.clear();
+  richter.defaultCourt = null;
   vi.clearAllMocks();
 });
 
@@ -165,6 +197,12 @@ function renderPage(entry = "/overview/new") {
       Component: CreateTerminParticipant,
       action: participantAction,
       loader: participantLoader,
+    },
+    {
+      path: "/overview/:appointmentId/gericht",
+      Component: CreateTerminCourt,
+      action: courtAction,
+      loader: courtLoader,
     },
     {
       path: "/overview/:appointmentId/confirm",
@@ -362,6 +400,104 @@ describe("CreateTermin participants", () => {
 
     expect(await screen.findByRole("heading", { name: "Übersicht" })).toBeInTheDocument();
     expect(drafts.has("abc")).toBe(true);
+  });
+});
+
+describe("CreateTermin court", () => {
+  it("starts a new Terminumfrage with the default court and a button to change it", async () => {
+    richter.defaultCourt = "B2402";
+    renderPage();
+
+    expect(await screen.findByText("Amtsgericht Biberach an der Riß")).toBeVisible();
+    expect(screen.getByText("Gericht")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Gericht ändern" })).toBeVisible();
+    expect(screen.queryByRole("combobox", { name: "Gericht" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+  });
+
+  it("asks for a court with the list when the judge has no default court", async () => {
+    renderPage();
+
+    const select = await screen.findByRole("combobox", { name: "Gericht" });
+    expect(select).toHaveValue("");
+    expect(
+      screen.getByRole("checkbox", { name: "Als mein Standardgericht speichern" }),
+    ).not.toBeChecked();
+    expect(screen.queryByRole("button", { name: "Gericht ändern" })).not.toBeInTheDocument();
+  });
+
+  it("saves the picked court with the draft, and as the default when asked", async () => {
+    renderPage();
+    const typist = user();
+
+    await typist.selectOptions(await screen.findByRole("combobox", { name: "Gericht" }), "D2000");
+    await typist.click(
+      screen.getByRole("checkbox", { name: "Als mein Standardgericht speichern" }),
+    );
+    await typist.click(screen.getByRole("button", { name: "Person hinzufügen" }));
+    await screen.findByRole("heading", { name: "Wie erreichen Sie die Person?" });
+
+    expect(drafts.get("abc")?.courtCode).toBe("D2000");
+    expect(richter.defaultCourt).toBe("D2000");
+  });
+
+  it("changes the court of one Terminumfrage on its own page and keeps the default", async () => {
+    richter.defaultCourt = "B2402";
+    seedDraft("A 1");
+    renderPage("/overview/new?entwurf=abc");
+    const typist = user();
+
+    await typist.click(await screen.findByRole("button", { name: "Gericht ändern" }));
+    const select = await screen.findByRole("combobox", { name: "Gericht" });
+    expect(select).toHaveValue("B2402");
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    await typist.selectOptions(select, "D2000");
+    await typist.click(screen.getByRole("button", { name: "Speichern" }));
+
+    // The option of the dropdown has the same text, so the test waits for the form first.
+    await screen.findByRole("heading", { name: "Geben Sie die Verhandlungsdaten an" });
+    expect(screen.getByText("Oberlandesgericht München")).toBeVisible();
+    expect(drafts.get("abc")?.courtCode).toBe("D2000");
+    expect(richter.defaultCourt).toBe("B2402");
+  });
+
+  it("goes back from the page of the court without saving", async () => {
+    seedDraft("A 1");
+    renderPage("/overview/abc/gericht");
+    const typist = user();
+
+    await typist.selectOptions(await screen.findByRole("combobox", { name: "Gericht" }), "D2000");
+    await typist.click(screen.getByRole("link", { name: "Abbrechen" }));
+
+    await screen.findByRole("heading", { name: "Geben Sie die Verhandlungsdaten an" });
+    expect(screen.getByText("Amtsgericht Biberach an der Riß")).toBeVisible();
+    expect(drafts.get("abc")?.courtCode).toBe("B2402");
+  });
+
+  it("asks for a court on its page when none is picked", async () => {
+    seedDraft("A 1", [], [], 60, null);
+    renderPage("/overview/abc/gericht");
+    const typist = user();
+
+    await typist.click(await screen.findByRole("button", { name: "Speichern" }));
+
+    expect(await screen.findByRole("combobox", { name: "Gericht" })).toHaveAccessibleDescription(
+      "Wählen Sie ein Gericht aus.",
+    );
+  });
+
+  it("names the court in the review", async () => {
+    seedDraft("A 1", [
+      [5, 9, 10],
+      [6, 9, 10],
+    ]);
+    renderPage("/overview/new?entwurf=abc");
+
+    await user().click(await screen.findByRole("button", { name: "Weiter" }));
+
+    const section = await screen.findByRole("group", { name: "Verhandlungsdaten" });
+    expect(within(section).getByText("Gericht")).toBeVisible();
+    expect(within(section).getByText("Amtsgericht Biberach an der Riß")).toBeVisible();
   });
 });
 

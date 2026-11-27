@@ -42,6 +42,7 @@ const query = `?name=Guest+C&verfuegbar=${k1}&verfuegbar=${k3}`;
 const universal: Survey = {
   appointmentId: "a1",
   aktenzeichen: "574 C 65412/26",
+  courtCode: "B2402",
   answered: false,
   minDurationMinutes: null,
   slots: [w1, w2, w3],
@@ -53,6 +54,7 @@ const personal: Survey = { ...universal, participant: { id: "p1", name: "Guest D
 const overview: ResponseOverview = {
   appointmentId: "a1",
   aktenzeichen: "574 C 65412/26",
+  courtCode: "B2402",
   judgeEmail: "judge.a@example.com",
   calendarSequence: 1,
   slots: [],
@@ -297,6 +299,7 @@ describe("survey confirm page", () => {
     ).toBeVisible();
     expect(screen.getByRole("heading", { name: "Verhandlungsdaten" })).toBeVisible();
     expect(screen.getByText("574 C 65412/26")).toBeVisible();
+    expect(screen.getByText("Amtsgericht Biberach an der Riß")).toBeVisible();
     expect(screen.getByRole("heading", { name: "Ihre Daten" })).toBeVisible();
     expect(screen.getByText("Name")).toBeVisible();
     expect(screen.getByText("Guest C")).toBeVisible();

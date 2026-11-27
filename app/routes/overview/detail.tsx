@@ -14,6 +14,7 @@ import { classNames, clusterClassName } from "~/components/shared/kern/layout";
 import { ResultBanner } from "~/components/shared/ResultBanner";
 import { SidebarPage } from "~/components/shared/SidebarPage";
 import { SurveyLinkField } from "~/components/shared/SurveyLinkField";
+import { courtName } from "~/core/domain/court/court";
 import { formatInstant } from "~/core/domain/time/format";
 import { PUBLISHED, requireOwnAppointment } from "~/lib/auth/appointment-guard.server";
 import {
@@ -43,6 +44,7 @@ export async function loader({ request, params }: { request: Request } & Params)
     otherwise: confirmDraftPath,
   });
   const { aktenzeichen, confirmedSlot } = appointment;
+  const court = courtName(appointment.courtCode) ?? null;
   const days = groupSlotsByDay(appointment.slots.map(rangeToSlot));
   const guests = await loadGuestRows(user.id, id, new Date());
 
@@ -52,6 +54,7 @@ export async function loader({ request, params }: { request: Request } & Params)
     return {
       user,
       aktenzeichen,
+      court,
       state: "confirmed" as const,
       // Once the Termin is over, the page looks back at it and lists the proposed windows.
       past: confirmedSlot.end < new Date(),
@@ -68,6 +71,7 @@ export async function loader({ request, params }: { request: Request } & Params)
     return {
       user,
       aktenzeichen,
+      court,
       state: "open" as const,
       selectUrl: selectPath(id),
       days,
@@ -76,7 +80,7 @@ export async function loader({ request, params }: { request: Request } & Params)
     };
   }
 
-  return { user, aktenzeichen, state: "cancelled" as const, days, guests };
+  return { user, aktenzeichen, court, state: "cancelled" as const, days, guests };
 }
 
 export function action(args: { request: Request } & Params) {
@@ -103,7 +107,10 @@ function BackLink({ children = "Zurück zu den Terminumfragen" }: Readonly<{ chi
   );
 }
 
-function Verhandlungsdaten({ aktenzeichen }: Readonly<{ aktenzeichen: string }>) {
+function Verhandlungsdaten({
+  aktenzeichen,
+  court,
+}: Readonly<{ aktenzeichen: string; court: string | null }>) {
   return (
     <KernStack
       as="section"
@@ -116,6 +123,7 @@ function Verhandlungsdaten({ aktenzeichen }: Readonly<{ aktenzeichen: string }>)
       </KernHeading>
       <KernDescriptionList column>
         <KernDescriptionListItem label="Aktenzeichen">{aktenzeichen}</KernDescriptionListItem>
+        {court && <KernDescriptionListItem label="Gericht">{court}</KernDescriptionListItem>}
       </KernDescriptionList>
     </KernStack>
   );
@@ -143,7 +151,7 @@ function Zeitfenster({ days }: Readonly<{ days: DayWindows[] }>) {
 export default function OverviewDetail() {
   const detail = useLoaderData<typeof loader>();
   const result = useActionData<typeof action>();
-  const { user, aktenzeichen, guests } = detail;
+  const { user, aktenzeichen, court, guests } = detail;
   return (
     <AppShell
       user={user}
@@ -159,7 +167,7 @@ export default function OverviewDetail() {
                 title={`Der Termin war am ${withDem(detail.termin)}.`}
               />
               <BackLink>Zur Übersicht</BackLink>
-              <Verhandlungsdaten aktenzeichen={aktenzeichen} />
+              <Verhandlungsdaten aktenzeichen={aktenzeichen} court={court} />
               <Guests guests={guests} canInvite={false} />
               <Zeitfenster days={detail.days} />
             </>
@@ -167,13 +175,14 @@ export default function OverviewDetail() {
             <>
               <ResultBanner inline type="success" title={`Der Termin ist am ${detail.termin}.`} />
               <BackLink>Zur Übersicht</BackLink>
-              <Verhandlungsdaten aktenzeichen={aktenzeichen} />
+              <Verhandlungsdaten aktenzeichen={aktenzeichen} court={court} />
               <Guests guests={guests} canInvite={false} />
               <Zeitfenster days={detail.days} />
             </>
           ) : detail.state === "open" ? (
             <OpenForReplies
               aktenzeichen={aktenzeichen}
+              court={court}
               guests={guests}
               days={detail.days}
               selectUrl={detail.selectUrl}
@@ -181,7 +190,12 @@ export default function OverviewDetail() {
               notSent={result?.notSent}
             />
           ) : (
-            <NoOptionWorks aktenzeichen={aktenzeichen} guests={guests} days={detail.days} />
+            <NoOptionWorks
+              aktenzeichen={aktenzeichen}
+              court={court}
+              guests={guests}
+              days={detail.days}
+            />
           )}
         </KernStack>
       </SidebarPage>
@@ -191,6 +205,7 @@ export default function OverviewDetail() {
 
 function OpenForReplies({
   aktenzeichen,
+  court,
   guests,
   days,
   selectUrl,
@@ -198,6 +213,7 @@ function OpenForReplies({
   notSent,
 }: Readonly<{
   aktenzeichen: string;
+  court: string | null;
   guests: GuestRow[];
   days: DayWindows[];
   selectUrl: string;
@@ -223,7 +239,7 @@ function OpenForReplies({
 
       <SurveyLinkField id="survey-link" url={surveyUrl} />
 
-      <Verhandlungsdaten aktenzeichen={aktenzeichen} />
+      <Verhandlungsdaten aktenzeichen={aktenzeichen} court={court} />
       <Guests guests={guests} canInvite notSent={notSent} />
       <Zeitfenster days={days} />
     </>
@@ -232,9 +248,15 @@ function OpenForReplies({
 
 function NoOptionWorks({
   aktenzeichen,
+  court,
   guests,
   days,
-}: Readonly<{ aktenzeichen: string; guests: GuestRow[]; days: DayWindows[] }>) {
+}: Readonly<{
+  aktenzeichen: string;
+  court: string | null;
+  guests: GuestRow[];
+  days: DayWindows[];
+}>) {
   return (
     <>
       <ResultBanner
@@ -251,7 +273,7 @@ function NoOptionWorks({
       />
       <BackLink>Zur Übersicht</BackLink>
 
-      <Verhandlungsdaten aktenzeichen={aktenzeichen} />
+      <Verhandlungsdaten aktenzeichen={aktenzeichen} court={court} />
       <Guests guests={guests} canInvite={false} />
       <Zeitfenster days={days} />
     </>

@@ -21,6 +21,8 @@ type AppointmentsTable = {
   universal_token: string | null;
   // The shortest a proposed time slot may be. Empty until the judge enters it.
   min_duration_minutes: number | null;
+  // The code of the court in the XJustiz code list GDS.Gerichte. Older Terminumfragen have none.
+  court_code: string | null;
   confirmed_slot_id: string | null;
   // The confirmed window lies within the confirmed slot and may be shorter than it.
   confirmed_start_time: Date | string | null;
@@ -102,6 +104,16 @@ type SitzungstagTable = {
   updated_at: Generated<Date>;
 };
 
+// What only a judge has. The row is written the first time something is saved; until then the
+// judge has none of it.
+type RichterTable = {
+  user_id: string;
+  // The court the judge normally works at, as a code of GDS.Gerichte.
+  default_court_code: string | null;
+  created_at: Generated<Date>;
+  updated_at: Generated<Date>;
+};
+
 type Timestamps = {
   createdAt: Generated<Date>;
   updatedAt: Date;
@@ -163,4 +175,5 @@ export type Database = {
   participant_response_window: ParticipantResponseWindowsTable;
   participant_invitation: ParticipantInvitationsTable;
   sitzungstag: SitzungstagTable;
+  richter: RichterTable;
 };

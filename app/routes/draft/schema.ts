@@ -4,6 +4,7 @@ import { formatCalendarDate, formatTimeOfDay } from "~/core/domain/time/format";
 import { parseTimeOfDay } from "~/core/domain/time/time-of-day";
 import { berlinDay } from "~/core/domain/time/time-zone";
 import { checkWallClock, type WallClockKind } from "~/core/domain/time/wall-clock";
+import { courtMessages } from "~/lib/web/court-form";
 
 export const MIN_SLOTS = 2;
 export const MAX_SLOTS = 20;
@@ -17,6 +18,7 @@ export const formatMinutes = (minutes: number) =>
 export const messages = {
   aktenzeichenRequired: "Geben Sie ein Aktenzeichen an.",
   aktenzeichenTooLong: `Das Aktenzeichen darf höchstens ${MAX_AKTENZEICHEN_LENGTH} Zeichen lang sein.`,
+  courtRequired: courtMessages.required,
   minDurationRequired: "Geben Sie eine Mindestdauer an.",
   minDurationInvalid: "Geben Sie die Mindestdauer in ganzen Minuten an, zum Beispiel 30.",
   minDurationTooLong: `Die Mindestdauer darf höchstens ${MAX_MIN_DURATION} Minuten betragen.`,
@@ -173,9 +175,15 @@ function createTerminSchema(now: Date = new Date()) {
         .min(1, messages.aktenzeichenRequired)
         .max(MAX_AKTENZEICHEN_LENGTH, messages.aktenzeichenTooLong),
       minDurationMinutes: z.number().int().min(1).max(MAX_MIN_DURATION).nullable(),
+      // Which codes may be picked is checked where the code is entered.
+      courtCode: z.string().min(1, messages.courtRequired).nullable(),
       slots: z.array(SlotInputSchema),
     })
-    .superRefine(({ minDurationMinutes, slots }, ctx) => {
+    .superRefine(({ minDurationMinutes, courtCode, slots }, ctx) => {
+      if (courtCode === null) {
+        ctx.addIssue({ code: "custom", path: ["courtCode"], message: messages.courtRequired });
+      }
+
       if (minDurationMinutes === null) {
         ctx.addIssue({
           code: "custom",
@@ -247,12 +255,15 @@ export function parseMinDuration(
 export type CreateTerminValues = {
   aktenzeichen: string;
   minDurationMinutes: number | null;
+  // The code of the court in GDS.Gerichte.
+  courtCode: string | null;
   slots: SlotInput[];
 };
 
 export type CreateTerminErrors = {
   aktenzeichen?: string;
   minDuration?: string;
+  court?: string;
   slots?: string;
   // Keyed by row index, then by the part of the row the message belongs to.
   rows: Record<number, Partial<Record<SlotErrorGroup, string>>>;
@@ -279,6 +290,7 @@ export function validateCreateTermin(
     const [first, index, group] = issue.path;
     if (first === "aktenzeichen") errors.aktenzeichen ??= issue.message;
     else if (first === "minDurationMinutes") errors.minDuration ??= issue.message;
+    else if (first === "courtCode") errors.court ??= issue.message;
     else if (first === "slots" && index === undefined) errors.slots ??= issue.message;
     else if (first === "slots" && typeof index === "number") {
       (errors.rows[index] ??= {})[group as SlotErrorGroup] ??= issue.message;

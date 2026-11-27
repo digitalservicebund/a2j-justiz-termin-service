@@ -17,6 +17,7 @@ const s1 = { start: new Date("2026-09-17T07:00:00Z"), end: new Date("2026-09-17T
 const overview: ResponseOverview = {
   appointmentId: "a 1",
   aktenzeichen: "574 C 65412/26",
+  courtCode: null,
   judgeEmail: " Judge.A@Example.com ",
   calendarSequence: 7,
   slots: [

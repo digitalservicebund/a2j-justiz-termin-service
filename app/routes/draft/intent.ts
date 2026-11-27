@@ -3,7 +3,7 @@
 // as "<command>:<id>". `intent()` writes that value and `parseIntent()` reads it back, so the
 // buttons and the action cannot drift apart.
 
-const FORM_COMMANDS = ["next", "cancel", "add-slot", "add-person"] as const;
+const FORM_COMMANDS = ["next", "cancel", "add-slot", "add-person", "edit-court"] as const;
 const ROW_COMMANDS = [
   "edit-slot",
   "copy-slot",

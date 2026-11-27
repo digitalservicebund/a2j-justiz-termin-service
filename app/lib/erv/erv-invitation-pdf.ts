@@ -24,6 +24,8 @@ export const QR_ALT = "QR-Code mit dem Link zur Terminumfrage";
 
 export type ErvInvitationPdf = {
   aktenzeichen: string;
+  // The name of the court. Older Terminumfragen have none.
+  court: string | null;
   // The guest's name, if the judge gave one. Never the SAFE-ID or e-mail address.
   name: string | null;
   slots: Slot[];
@@ -78,6 +80,7 @@ function drawQrCode(doc: PDFKit.PDFDocument, url: string, x: number, y: number) 
 // uses KERN's Fira Sans and none of the standard PDF fonts.
 export function renderErvInvitationPdf({
   aktenzeichen,
+  court,
   name,
   slots,
   surveyUrl,
@@ -132,6 +135,7 @@ export function renderErvInvitationPdf({
   doc.moveDown(0.8);
   if (name) add("P", () => text(`Für: ${name}`, "regular", 12));
   add("P", () => text(`Aktenzeichen: ${aktenzeichen}`, "regular", 12));
+  if (court) add("P", () => text(`Gericht: ${court}`, "regular", 12));
   doc.moveDown(0.8);
   add("P", () => text("Vorgeschlagene Zeitfenster:", "bold", 12));
   const list = doc.struct("L");

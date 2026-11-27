@@ -178,6 +178,7 @@ describe("create-termin created route", () => {
       safeId: null,
       token: "tok-p1",
       aktenzeichen: "574 C 65412/26",
+      courtCode: null,
       slots: [],
     });
     vi.mocked(recordInvitation).mockResolvedValue(true);

@@ -16,6 +16,8 @@ type ErvInvitation = {
   // The guest's name, if the judge gave one.
   name: string | null;
   aktenzeichen: string;
+  // The name of the court, for the PDF. The XJustiz message names no court.
+  court: string | null;
   slots: Slot[];
   // The guest's personal survey token.
   token: string;
@@ -38,6 +40,7 @@ export async function sendErvInvitation({
   safeId,
   name,
   aktenzeichen,
+  court,
   slots,
   token,
   correlationId,
@@ -62,6 +65,7 @@ export async function sendErvInvitation({
     });
     const pdf = await renderErvInvitationPdf({
       aktenzeichen,
+      court,
       name,
       slots,
       surveyUrl: surveyUrl(requireEnv("BASE_URL"), token),

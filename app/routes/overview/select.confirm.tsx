@@ -11,6 +11,7 @@ import {
 } from "~/components/shared/kern/KernDescriptionList";
 import { ReviewPage } from "~/components/shared/ReviewPage";
 import { remainingOf } from "~/core/domain/availability";
+import { courtName } from "~/core/domain/court/court";
 import { formatInstant } from "~/core/domain/time/format";
 import { getDb } from "~/database/database";
 import {
@@ -48,6 +49,7 @@ export async function loader({ request, params }: { request: Request } & Params)
     user,
     values,
     aktenzeichen: appointment.aktenzeichen,
+    court: courtName(appointment.courtCode) ?? null,
     termin: formatInstant(result.window.start),
   };
 }
@@ -79,7 +81,7 @@ export async function action({ request, params }: { request: Request } & Params)
 }
 
 export default function OverviewSelectConfirm() {
-  const { user, values, aktenzeichen, termin } = useLoaderData<typeof loader>();
+  const { user, values, aktenzeichen, court, termin } = useLoaderData<typeof loader>();
   return (
     <AppShell user={user} breadcrumbs={selectBreadcrumbs}>
       <ReviewPage
@@ -94,6 +96,9 @@ export default function OverviewSelectConfirm() {
                 <KernDescriptionListItem label="Aktenzeichen">
                   {aktenzeichen}
                 </KernDescriptionListItem>
+                {court && (
+                  <KernDescriptionListItem label="Gericht">{court}</KernDescriptionListItem>
+                )}
               </KernDescriptionList>
             ),
           },
