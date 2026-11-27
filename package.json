@@ -70,7 +70,7 @@
     "oxfmt": "0.80.0",
     "oxlint": "1.95.0",
     "typescript": "7.0.2",
-    "unpdf": "2.2.1",
+    "unpdf": "2.2.2",
     "vite": "8.3.8",
     "vite-plugin-devtools-json": "1.1.2",
     "vitest": "5.1.1",
