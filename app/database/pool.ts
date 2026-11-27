@@ -1,6 +1,6 @@
 import { Pool } from "pg";
 
-import { logError } from "../lib/infra/logging.ts";
+import { log } from "../lib/infra/logging.ts";
 import { getDBConfig } from "./config.ts";
 
 const dbPoolConfig = {
@@ -19,7 +19,7 @@ export function getPool(): Pool {
   }
   poolInstance = new Pool({ ...getDBConfig(), ...dbPoolConfig });
   poolInstance.on("error", (error) => {
-    logError("DB pool: unexpected error on idle client", error);
+    log.error({ err: error }, "unexpected error on idle database client");
   });
   return poolInstance;
 }

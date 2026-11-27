@@ -1,14 +1,15 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { allLogged } from "~tests/logging";
 import { xjustizErrors } from "~tests/xjustiz";
 
 import type { ErvVersandClient } from "../infra/erv-versand/erv-versand-client.ts";
 import { ervVersandClient } from "../infra/erv-versand/erv-versand-connection.ts";
-import { logError, logInfo } from "../infra/logging.ts";
+import { log } from "../infra/logging.ts";
 import { renderErvInvitationPdf } from "./erv-invitation-pdf.ts";
 import { sendErvInvitation } from "./send-erv-invitation.ts";
 
-vi.mock("../infra/logging.ts", () => ({ logInfo: vi.fn(), logError: vi.fn() }));
+vi.mock("../infra/logging.ts", async () => (await import("~tests/logging")).loggingMock());
 vi.mock("../infra/erv-versand/erv-versand-connection.ts", () => ({ ervVersandClient: vi.fn() }));
 vi.mock("./erv-invitation-pdf.ts", async (importOriginal) => ({
   ...(await importOriginal()),
@@ -64,8 +65,8 @@ const elements = (xml: string, element: string) =>
 const recipient = (xml: string) => elements(xml, "sonstige")[1];
 
 // Everything that was logged, to check that no SAFE-ID gets into the log.
-const logged = () =>
-  JSON.stringify([...vi.mocked(logInfo).mock.calls, ...vi.mocked(logError).mock.calls]);
+const logged = () => allLogged(log);
+const ids = { appointmentId: "a1", participantId: "p1", correlationId: "c1" };
 
 beforeEach(() => {
   vi.stubEnv("BASE_URL", "http://localhost:3000");
@@ -136,9 +137,7 @@ describe("sendErvInvitation", () => {
     await sendErvInvitation(invitation);
 
     expect(client.sendEgvpExampleMessage).not.toHaveBeenCalled();
-    expect(logInfo).toHaveBeenCalledWith(
-      "ERV invitation to participant p1 of a1 handed over (correlation ID c1)",
-    );
+    expect(log.info).toHaveBeenCalledWith(ids, "ERV invitation handed over");
     expect(logged()).not.toContain(SAFE_ID);
     expect(logged()).not.toContain("tok-p1");
   });
@@ -148,9 +147,9 @@ describe("sendErvInvitation", () => {
 
     expect(await sendErvInvitation(invitation)).toBe(false);
 
-    expect(logError).toHaveBeenCalledWith(
-      "ERV invitation to participant p1 of a1 not sent",
-      expect.objectContaining({ message: expect.stringContaining("BASE_URL") }),
+    expect(log.error).toHaveBeenCalledWith(
+      { ...ids, err: expect.objectContaining({ message: expect.stringContaining("BASE_URL") }) },
+      "ERV invitation not sent",
     );
     expect(client.sendEgvpMessage).not.toHaveBeenCalled();
   });
@@ -161,10 +160,7 @@ describe("sendErvInvitation", () => {
 
     expect(await sendErvInvitation(invitation)).toBe(false);
 
-    expect(logError).toHaveBeenCalledWith(
-      "ERV invitation to participant p1 of a1 not sent",
-      broken,
-    );
+    expect(log.error).toHaveBeenCalledWith({ ...ids, err: broken }, "ERV invitation not sent");
     expect(client.sendEgvpMessage).not.toHaveBeenCalled();
   });
 
@@ -172,9 +168,7 @@ describe("sendErvInvitation", () => {
     expect(await sendErvInvitation({ ...invitation, safeId: "DE.Example.1" })).toBe(false);
 
     expect(ervVersandClient).not.toHaveBeenCalled();
-    expect(logError).toHaveBeenCalledWith(
-      "ERV invitation to participant p1 of a1 not sent: not a SAFE-ID",
-    );
+    expect(log.warn).toHaveBeenCalledWith(ids, "ERV invitation not sent: not a SAFE-ID");
     expect(logged()).not.toContain("DE.Example.1");
   });
 
@@ -184,10 +178,7 @@ describe("sendErvInvitation", () => {
 
     expect(await sendErvInvitation(invitation)).toBe(false);
 
-    expect(logError).toHaveBeenCalledWith(
-      "ERV invitation to participant p1 of a1 not sent",
-      refused,
-    );
+    expect(log.error).toHaveBeenCalledWith({ ...ids, err: refused }, "ERV invitation not sent");
   });
 
   it("returns false when the broker does not confirm the request", async () => {
@@ -196,9 +187,6 @@ describe("sendErvInvitation", () => {
 
     expect(await sendErvInvitation(invitation)).toBe(false);
 
-    expect(logError).toHaveBeenCalledWith(
-      "ERV invitation to participant p1 of a1 not sent",
-      nacked,
-    );
+    expect(log.error).toHaveBeenCalledWith({ ...ids, err: nacked }, "ERV invitation not sent");
   });
 });

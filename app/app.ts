@@ -10,6 +10,11 @@ export const app = createRequestHandler({
   build: () => import("virtual:react-router/server-build"),
 });
 
+// The routes of the app, for the access log, which names the route of a request instead of its path.
+export async function routeManifest() {
+  return (await import("virtual:react-router/server-build")).routes;
+}
+
 // Work beside the requests, started once by server.js: settling ERV invitations with the replies
 // of the Basisdienst: ERV Versand. It reconnects by itself, so a broker that is down does not stop
 // the server.

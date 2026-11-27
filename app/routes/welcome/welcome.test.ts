@@ -8,7 +8,7 @@ const { handler, canSignIn } = vi.hoisted(() => ({ handler: vi.fn(), canSignIn: 
 vi.mock("~/lib/auth/auth.server", () => ({ getAuth: () => ({ handler }) }));
 vi.mock("~/adapters/users/users.server", () => ({ canSignIn }));
 vi.mock("~/database/database", () => ({ getDb: () => ({}) }));
-vi.mock("~/lib/infra/logging", () => ({ logError: vi.fn() }));
+vi.mock("~/lib/infra/logging", async () => (await import("~tests/logging")).loggingMock());
 
 function request(values: Record<string, string>) {
   return new Request("http://localhost/", {

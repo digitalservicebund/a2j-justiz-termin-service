@@ -30,7 +30,6 @@ describe("GET /health/smtp", () => {
   });
 
   it("returns 503 without leaking details when verification fails", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => {});
     const transport = transportWith(async () => {
       throw new Error("535 Authentication failed for user secret-user");
     });
@@ -43,7 +42,6 @@ describe("GET /health/smtp", () => {
   });
 
   it("returns 503 when the configuration is missing", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => {});
     vi.mocked(createSmtpTransport).mockImplementation(() => {
       throw new Error('Missing required environment variable "SMTP_HOST"');
     });

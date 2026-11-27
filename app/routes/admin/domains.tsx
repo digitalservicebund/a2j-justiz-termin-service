@@ -27,7 +27,7 @@ export async function loader({ request }: { request: Request }) {
 }
 
 export async function action({ request }: { request: Request }) {
-  await requireAdmin(request);
+  const actor = await requireAdmin(request);
   const form = await request.formData();
   const intent = form.get("intent");
   const domain = AllowedDomainSchema.safeParse(form.get("domain"));
@@ -36,9 +36,9 @@ export async function action({ request }: { request: Request }) {
   }
   try {
     if (intent === "create") {
-      await insertAllowedDomain(getDb(), domain.data);
+      await insertAllowedDomain(getDb(), actor.id, domain.data);
     } else {
-      await deleteAllowedDomain(getDb(), domain.data);
+      await deleteAllowedDomain(getDb(), actor.id, domain.data);
     }
     return data({ success: "Die Liste der freigegebenen Domains wurde aktualisiert." });
   } catch (error) {

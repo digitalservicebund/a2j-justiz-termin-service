@@ -4,7 +4,7 @@
 // answer() in fake-erv-versand-core.ts) and keeps the requests for its HTTP API on HTTP_PORT.
 import { createServer } from "node:http";
 
-import { logError, logInfo } from "../../app/lib/infra/logging.ts";
+import { log } from "../../app/lib/infra/logging.ts";
 import { connectRabbitMq } from "../../app/lib/infra/rabbitmq.ts";
 import {
   answer,
@@ -29,7 +29,7 @@ createServer((request, response) => {
     new URL(request.url ?? "/", "http://localhost"),
   );
   response.writeHead(status, headers).end(body);
-}).listen(HTTP_PORT, () => logInfo(`Fake ERV Versand: HTTP API on port ${HTTP_PORT}`));
+}).listen(HTTP_PORT, () => log.info({ port: HTTP_PORT }, "fake ERV Versand: HTTP API listening"));
 
 try {
   const connection = await connectRabbitMq();
@@ -42,7 +42,7 @@ try {
 
   await channel.consume(REQUEST_QUEUE, (message) => {
     if (message === null) {
-      logError("Fake ERV Versand: request consumer was cancelled");
+      log.error("fake ERV Versand: request consumer was cancelled");
       process.exit(1);
     }
     const { correlationId, userId, type } = message.properties;
@@ -58,13 +58,13 @@ try {
         persistent: true,
       });
     }
-    logInfo(`Fake ERV Versand: ${type} (correlation ID ${correlationId}) -> ${reply?.type}`);
+    log.info({ type, correlationId, reply: reply?.type }, "fake ERV Versand: answered");
     channel.ack(message);
   });
 
   ready = true;
-  logInfo("Fake ERV Versand: waiting for requests");
+  log.info("fake ERV Versand: waiting for requests");
 } catch (error) {
-  logError("Fake ERV Versand could not start", error);
+  log.error({ err: error }, "fake ERV Versand could not start");
   process.exit(1);
 }

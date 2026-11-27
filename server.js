@@ -1,18 +1,28 @@
 import compression from "compression";
 import express from "express";
-import morgan from "morgan";
 
 import { getDb } from "./app/database/database.ts";
 import { migrateToLatest } from "./app/database/migrate.ts";
-import { accessLogFormat } from "./app/lib/infra/access-log.ts";
+import { accessLog } from "./app/lib/infra/access-log.ts";
 import { limitRequestBody } from "./app/lib/infra/body-limit.ts";
-import { logInfo } from "./app/lib/infra/logging.ts";
+import { log } from "./app/lib/infra/logging.ts";
+import { requestContext } from "./app/lib/infra/request-context.ts";
 import { BASE_PATH } from "./app/lib/web/base-path.ts";
 
 // Short-circuit the type-checking of the built output.
 const BUILD_PATH = "./build/server/index.js";
 const DEVELOPMENT = process.env.NODE_ENV === "development";
 const PORT = Number.parseInt(process.env.PORT || "3000");
+
+// Log what nothing else caught, then exit: Kubernetes restarts the pod in a known state.
+process.on("uncaughtException", (error) => {
+  log.fatal({ err: error }, "uncaught exception");
+  process.exit(1);
+});
+process.on("unhandledRejection", (reason) => {
+  log.fatal({ err: reason }, "unhandled promise rejection");
+  process.exit(1);
+});
 
 await migrateToLatest();
 // The app code is bundled with its own pool; release the one used for migrating.
@@ -24,6 +34,7 @@ const app = express();
 // the browser's Origin header is "https", which fails React Router's
 // single-fetch CSRF origin check and returns 400 on every action request.
 app.set("trust proxy", 1);
+app.use(requestContext);
 app.use(compression());
 app.disable("x-powered-by");
 
@@ -48,7 +59,7 @@ app.use((req, res, next) => {
 app.use(limitRequestBody);
 
 if (DEVELOPMENT) {
-  logInfo("Starting development server");
+  log.info("starting development server");
   const viteDevServer = await import("vite").then((vite) =>
     vite.createServer({
       server: { middlewareMode: true },
@@ -69,18 +80,18 @@ if (DEVELOPMENT) {
     }
   });
 } else {
-  logInfo("Starting production server");
+  log.info("starting production server");
   app.use(
     `${BASE_PATH}/assets`,
     express.static("build/client/assets", { immutable: true, maxAge: "1y" }),
   );
-  app.use(morgan(accessLogFormat));
-  app.use(BASE_PATH, express.static("build/client", { maxAge: "1h" }));
   const build = await import(BUILD_PATH);
+  app.use(accessLog(await build.routeManifest()));
+  app.use(BASE_PATH, express.static("build/client", { maxAge: "1h" }));
   build.startBackgroundWork();
   app.use(build.app);
 }
 
 app.listen(PORT, () => {
-  logInfo(`Server is running on http://localhost:${PORT}`);
+  log.info({ port: PORT }, "server is listening");
 });

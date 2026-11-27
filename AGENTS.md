@@ -74,6 +74,17 @@ All date and time logic lives in `app/core/domain/time/`. Everything is Berlin t
 - Read database rows with `rowToRange()` and `confirmedWindow()` instead of calling `new Date(...)` on columns.
 - Pure functions take `now` as an argument. Only loaders, actions and adapters call `new Date()`.
 
+## Logging
+
+Log with `log` and `logAudit` from `app/lib/infra/logging.ts`, never with `console` (oxlint rejects it). See "Logging" in the README.
+
+- Keep the message constant and put ids into fields: `log.error({ err: error, appointmentId }, "ERV invitation not sent")`, not `` `… ${appointmentId}` ``.
+- Pass errors as `err`. Only that key gets the error serializer.
+- Never log a request's path or URL: it can hold a token. The access log names the route pattern instead.
+- Log ids only. Never log e-mail addresses, names, SAFE-IDs, tokens, links, cookies or IP addresses, not even at `debug`.
+- Record what a user, administrator or the system did with `logAudit(event, { actorId, … })`. Add new event names to the `AuditEvent` type.
+- In tests that check logging, mock the module with `loggingMock()` from `~tests/logging` and assert on `log.*` and `logAudit`.
+
 ## Git hooks
 
 `lefthook.yml` defines pre-commit and pre-push hooks, but they are not installed automatically. Run `lefthook install` once per clone. Running `lefthook run` also installs the git hooks into `.git/hooks` as a side effect.

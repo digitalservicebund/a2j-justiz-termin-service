@@ -8,7 +8,7 @@
     "perf": "error"
   },
   "rules": {
-    "no-console": "warn",
+    "no-console": "error",
     "react/react-in-jsx-scope": "off",
     "@typescript-eslint/consistent-type-imports": ["warn", { "fixStyle": "inline-type-imports" }],
     "@typescript-eslint/consistent-type-definitions": ["warn", "type"],

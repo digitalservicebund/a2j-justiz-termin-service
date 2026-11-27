@@ -54,13 +54,13 @@ describe("admin domains route", () => {
   });
 
   describe("action", () => {
-    beforeEach(() => vi.mocked(requireAdmin).mockResolvedValue({} as never));
+    beforeEach(() => vi.mocked(requireAdmin).mockResolvedValue({ id: "admin-1" } as never));
 
     it("adds a normalized domain", async () => {
       const result = await action({
         request: request({ intent: "create", domain: " Example.COM " }),
       });
-      expect(insertAllowedDomain).toHaveBeenCalledWith({ name: "db" }, "example.com");
+      expect(insertAllowedDomain).toHaveBeenCalledWith({ name: "db" }, "admin-1", "example.com");
       expect(result).toMatchObject({ data: { success: expect.any(String) } });
     });
 
@@ -68,7 +68,7 @@ describe("admin domains route", () => {
       const result = await action({
         request: request({ intent: "delete", domain: "example.com" }),
       });
-      expect(deleteAllowedDomain).toHaveBeenCalledWith({ name: "db" }, "example.com");
+      expect(deleteAllowedDomain).toHaveBeenCalledWith({ name: "db" }, "admin-1", "example.com");
       expect(result).toMatchObject({ data: { success: expect.any(String) } });
     });
 

@@ -10,7 +10,7 @@ import {
 import { stateAfterAnswer, type SurveyState } from "../../core/domain/survey.ts";
 import { rowToRange } from "../../core/domain/time/time-range.ts";
 import type { Database } from "../../database/types.ts";
-import { logInfo } from "../../lib/infra/logging.ts";
+import { logAudit, SYSTEM_ACTOR } from "../../lib/infra/logging.ts";
 import { nextCalendarSequence } from "./appointments.server.ts";
 import { readAvailability } from "./availability.server.ts";
 import { participantName } from "./participants.server.ts";
@@ -194,12 +194,20 @@ export async function saveAnswer(db: Executor, answer: Answer): Promise<SaveResu
         .set({ status: "cancelled", updated_at: new Date() })
         .where("id", "=", answer.appointmentId)
         .execute();
-      logInfo(`Appointment ${answer.appointmentId} cancelled: no window is left`);
+      logAudit("appointment.cancelled", {
+        actorId: SYSTEM_ACTOR,
+        appointmentId: answer.appointmentId,
+        reason: "no window left",
+      });
     }
     return { saved: true, participantId };
   });
   if (result.saved) {
-    logInfo(`Participant ${result.participantId} answered appointment ${answer.appointmentId}`);
+    logAudit("participant.answered", {
+      actorId: result.participantId,
+      appointmentId: answer.appointmentId,
+      participantId: result.participantId,
+    });
   }
   return result;
 }

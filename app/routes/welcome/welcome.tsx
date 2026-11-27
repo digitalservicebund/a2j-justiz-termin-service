@@ -19,7 +19,7 @@ import { KernStack } from "~/components/shared/kern/KernStack";
 import { LoginForm } from "~/components/shared/LoginForm";
 import { getDb } from "~/database/database";
 import { getAuth } from "~/lib/auth/auth.server";
-import { logError } from "~/lib/infra/logging";
+import { log } from "~/lib/infra/logging";
 import { AUTH_BASE_PATH, BASE_PATH } from "~/lib/web/base-path";
 import { OVERVIEW_PATH } from "~/lib/web/paths";
 
@@ -65,7 +65,7 @@ export async function action({ request }: { request: Request }) {
     }),
   );
   if (!response.ok) {
-    logError(`Magic-link request failed with status ${response.status}`);
+    log.error({ status: response.status }, "magic-link request failed");
     return data(
       {
         error: "Die Anmeldung ist derzeit nicht möglich. Bitte versuchen Sie es später erneut.",

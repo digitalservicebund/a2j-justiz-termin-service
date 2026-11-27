@@ -4,7 +4,7 @@ import type { Slot } from "../../core/domain/availability.ts";
 import type { ErvSettlement, InvitationStatus } from "../../core/domain/invitation.ts";
 import { rowToRange } from "../../core/domain/time/time-range.ts";
 import type { Database, InvitationChannel } from "../../database/types.ts";
-import { logInfo } from "../../lib/infra/logging.ts";
+import { logAudit } from "../../lib/infra/logging.ts";
 import { participantName } from "./participants.server.ts";
 
 // An invitation a guest got: how, when, and whether it went out.
@@ -152,7 +152,7 @@ export async function recordInvitation(
     .returning("id")
     .executeTakeFirst();
   if (recorded) {
-    logInfo(`User ${userId} invited participant ${participantId} of ${appointmentId} (${channel})`);
+    logAudit("participant.invited", { actorId: userId, appointmentId, participantId, channel });
   }
   return Boolean(recorded);
 }

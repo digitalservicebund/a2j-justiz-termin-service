@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { logError } from "../infra/logging.ts";
+import { log } from "../infra/logging.ts";
 import { sendInvitationEmail } from "./send-invitation-email.ts";
 
 const { sendMail, close } = vi.hoisted(() => ({ sendMail: vi.fn(), close: vi.fn() }));
@@ -9,7 +9,7 @@ const { sendMail, close } = vi.hoisted(() => ({ sendMail: vi.fn(), close: vi.fn(
 vi.mock("../infra/smtp.ts", () => ({ createSmtpTransport: vi.fn(() => ({ sendMail, close })) }));
 vi.mock("../infra/env.ts", () => ({ requireEnv: () => "http://localhost:3000" }));
 vi.mock("../infra/secrets.ts", () => ({ requireSecret: () => "sender@example.com" }));
-vi.mock("../infra/logging.ts", () => ({ logError: vi.fn() }));
+vi.mock("../infra/logging.ts", async () => (await import("~tests/logging")).loggingMock());
 
 const invitation = {
   to: " Guest.A@Example.com ",
@@ -51,6 +51,6 @@ describe("sendInvitationEmail", () => {
     sendMail.mockRejectedValue(failure);
 
     expect(await sendInvitationEmail(invitation)).toBe(false);
-    expect(logError).toHaveBeenCalledWith("Failed to send invitation email", failure);
+    expect(log.error).toHaveBeenCalledWith({ err: failure }, "Failed to send invitation email");
   });
 });
