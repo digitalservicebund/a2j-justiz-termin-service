@@ -481,7 +481,9 @@ describe("CreateTermin court", () => {
 
     await typist.click(await screen.findByRole("button", { name: "Speichern" }));
 
-    expect(await screen.findByRole("combobox", { name: "Gericht" })).toHaveAccessibleDescription(
+    // The dropdown is there before the submit too, so the test waits for the message first.
+    await screen.findByText("Wählen Sie ein Gericht aus.");
+    expect(screen.getByRole("combobox", { name: "Gericht" })).toHaveAccessibleDescription(
       "Wählen Sie ein Gericht aus.",
     );
   });
