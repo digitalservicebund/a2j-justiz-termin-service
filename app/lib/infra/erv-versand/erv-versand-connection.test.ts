@@ -3,12 +3,12 @@ import { EventEmitter } from "node:events";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { logError } from "../logging.ts";
+import { log } from "../logging.ts";
 import { connectRabbitMq } from "../rabbitmq.ts";
 import { createErvVersandClient, type ErvVersandClient } from "./erv-versand-client.ts";
 import { ervVersandClient, startErvVersand, stopErvVersand } from "./erv-versand-connection.ts";
 
-vi.mock("../logging.ts", () => ({ logInfo: vi.fn(), logError: vi.fn() }));
+vi.mock("../logging.ts", async () => (await import("~tests/logging")).loggingMock());
 vi.mock("../rabbitmq.ts", () => ({ connectRabbitMq: vi.fn() }));
 vi.mock("./erv-versand-client.ts", () => ({ createErvVersandClient: vi.fn() }));
 
@@ -76,7 +76,7 @@ describe("startErvVersand", () => {
 
     connections[0]!.channel.emit("error", missingQueue);
 
-    expect(logError).toHaveBeenCalledWith("ERV Versand channel failed", missingQueue);
+    expect(log.error).toHaveBeenCalledWith({ err: missingQueue }, "ERV Versand channel failed");
   });
 
   it("starts a new connection when the broker closes the channel", async () => {
@@ -117,9 +117,9 @@ describe("startErvVersand", () => {
     startErvVersand(onReply);
     await vi.advanceTimersByTimeAsync(0);
     expect(connectRabbitMq).toHaveBeenCalledTimes(1);
-    expect(logError).toHaveBeenCalledWith(
-      "Could not connect to the ERV Versand",
-      expect.any(Error),
+    expect(log.error).toHaveBeenCalledWith(
+      { err: expect.any(Error) },
+      "could not connect to the ERV Versand",
     );
 
     await vi.advanceTimersByTimeAsync(1000);

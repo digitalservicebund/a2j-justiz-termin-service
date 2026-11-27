@@ -1,11 +1,13 @@
 // @vitest-environment node
-import { beforeEach, describe, expect, it, vi, type MockInstance } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { allLogged } from "~tests/logging";
 import { callLoader } from "~tests/route";
 
 import { findInvitee, type Invitee } from "~/adapters/appointments/invitations.server";
 import { requireRole } from "~/adapters/session/session";
 import type { AuthUser } from "~/core/domain/user";
 import { renderErvInvitationPdf } from "~/lib/erv/erv-invitation-pdf";
+import { log, logAudit } from "~/lib/infra/logging";
 
 import { ervPdfFileName, loader } from "./erv-pdf";
 
@@ -13,6 +15,7 @@ vi.mock("~/adapters/session/session", () => ({ requireRole: vi.fn() }));
 vi.mock("~/adapters/appointments/invitations.server", () => ({ findInvitee: vi.fn() }));
 vi.mock("~/lib/erv/erv-invitation-pdf", () => ({ renderErvInvitationPdf: vi.fn() }));
 vi.mock("~/database/database", () => ({ getDb: () => ({ db: true }) }));
+vi.mock("~/lib/infra/logging", async () => (await import("~tests/logging")).loggingMock());
 
 const judge: AuthUser = {
   id: "1",
@@ -43,12 +46,9 @@ const download = () =>
   });
 
 describe("ERV PDF route", () => {
-  let info: MockInstance<typeof console.info>;
-
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv("BASE_URL", "http://localhost:3000");
-    info = vi.spyOn(console, "info").mockImplementation(() => {});
     vi.mocked(requireRole).mockResolvedValue(judge);
     vi.mocked(findInvitee).mockResolvedValue(invitee);
     vi.mocked(renderErvInvitationPdf).mockResolvedValue(Buffer.from("%PDF-test"));
@@ -72,11 +72,15 @@ describe("ERV PDF route", () => {
     expect(outcome.headers.get("Cache-Control")).toBe("no-store");
   });
 
-  it("logs ids only, never the SAFE-ID or the token", async () => {
+  it("records the download in the audit log by ids only, never the SAFE-ID or the token", async () => {
     await download();
 
-    expect(info).toHaveBeenCalledWith("ERV PDF generated for participant p1 of a1");
-    const logged = info.mock.calls.flat().join(" ");
+    expect(logAudit).toHaveBeenCalledWith("participant.invitation-pdf-created", {
+      actorId: "1",
+      appointmentId: "a1",
+      participantId: "p1",
+    });
+    const logged = allLogged(log, logAudit);
     expect(logged).not.toContain("DE.Example.1");
     expect(logged).not.toContain("tok-p1");
   });

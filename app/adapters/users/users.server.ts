@@ -6,7 +6,7 @@ import { z } from "zod";
 import { NewUserSchema } from "../../core/domain/user.ts";
 import { getDb } from "../../database/database.ts";
 import type { Database } from "../../database/types.ts";
-import { logInfo } from "../../lib/infra/logging.ts";
+import { logAudit } from "../../lib/infra/logging.ts";
 import { isEmailDomainAllowed } from "./allowed-domains.server.ts";
 
 export class UserManagementError extends Error {}
@@ -15,7 +15,11 @@ export const UpdateUserSchema = NewUserSchema.omit({ email: true }).extend({
   id: z.string().min(1),
 });
 
-export async function insertUser(db: Kysely<Database>, input: z.infer<typeof NewUserSchema>) {
+export async function insertUser(
+  db: Kysely<Database>,
+  actorId: string,
+  input: z.infer<typeof NewUserSchema>,
+) {
   const user = NewUserSchema.parse(input);
   const result = await db
     .insertInto("user")
@@ -24,7 +28,7 @@ export async function insertUser(db: Kysely<Database>, input: z.infer<typeof New
     .returning(["id", "name", "email", "roles"])
     .executeTakeFirst();
   if (!result) throw new UserManagementError("Diese E‑Mail-Adresse ist bereits hinterlegt.");
-  logInfo(`Created user ${result.id}`);
+  logAudit("user.created", { actorId, userId: result.id });
   return result;
 }
 
@@ -67,7 +71,7 @@ export async function updateUser(
     .executeTakeFirst();
   if (!result) throw new UserManagementError("Benutzer nicht gefunden.");
   await db.deleteFrom("session").where("userId", "=", id).execute();
-  logInfo(`Administrator ${actorId} updated user ${id}`);
+  logAudit("user.updated", { actorId, userId: id });
 }
 
 export async function deleteUser(db: Kysely<Database>, actorId: string, id: string) {
@@ -87,5 +91,5 @@ export async function deleteUser(db: Kysely<Database>, actorId: string, id: stri
     .where("identifier", "like", "magic-link:%")
     .where(sql<string>`lower("value"::jsonb ->> 'email')`, "=", user.email)
     .execute();
-  logInfo(`Administrator ${actorId} deleted user ${id}`);
+  logAudit("user.deleted", { actorId, userId: id });
 }

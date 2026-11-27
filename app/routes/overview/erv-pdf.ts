@@ -7,7 +7,7 @@ import { getDb } from "~/database/database";
 import { appointmentIdOf } from "~/lib/auth/appointment-guard.server";
 import { renderErvInvitationPdf } from "~/lib/erv/erv-invitation-pdf";
 import { requireEnv } from "~/lib/infra/env";
-import { logInfo } from "~/lib/infra/logging";
+import { logAudit } from "~/lib/infra/logging";
 import { surveyUrl } from "~/lib/web/paths";
 import { badRequest, notFound } from "~/lib/web/responses";
 
@@ -53,7 +53,11 @@ export async function loader({
     surveyUrl: surveyUrl(requireEnv("BASE_URL"), invitee.token),
   });
   // Ids only: no SAFE-ID and no personal link.
-  logInfo(`ERV PDF generated for participant ${invitee.id} of ${id}`);
+  logAudit("participant.invitation-pdf-created", {
+    actorId: user.id,
+    appointmentId: id,
+    participantId: invitee.id,
+  });
 
   return new Response(new Uint8Array(pdf), {
     headers: {

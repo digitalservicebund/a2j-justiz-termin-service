@@ -1,4 +1,4 @@
-import { logError } from "../infra/logging.ts";
+import { log } from "../infra/logging.ts";
 import { sendEmail } from "./deliver-email.ts";
 import { renderMagicLinkEmail, type MagicLinkVariant } from "./magic-link-email.ts";
 
@@ -10,7 +10,7 @@ export async function sendMagicLinkEmail({ to, variant, url }: MagicLink): Promi
   try {
     await sendEmail({ to, render: () => renderMagicLinkEmail(variant, url) });
   } catch (error) {
-    logError("Failed to send magic-link email", error);
+    log.error({ err: error }, "failed to send magic-link email");
     throw error;
   }
 }

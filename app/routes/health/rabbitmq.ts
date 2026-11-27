@@ -1,5 +1,5 @@
 import { replyQueueName } from "~/lib/infra/erv-versand/erv-versand-client";
-import { logError, logInfo } from "~/lib/infra/logging";
+import { log } from "~/lib/infra/logging";
 import { connectRabbitMq } from "~/lib/infra/rabbitmq";
 import { requireSecret } from "~/lib/infra/secrets";
 
@@ -20,15 +20,13 @@ async function logReplyQueue(connection: Connection): Promise<void> {
       // Handled where checkQueue rejects.
     });
     const { messageCount, consumerCount } = await channel.checkQueue(queue);
-    logInfo(
-      `ERV reply queue ${queue} exists (${messageCount} messages waiting, ${consumerCount} consumers)`,
-    );
+    log.info({ queue, messageCount, consumerCount }, "ERV reply queue exists");
     await channel.close();
   } catch (error) {
     if ((error as { code?: unknown }).code === NOT_FOUND) {
-      logError(`ERV reply queue ${queue} does not exist`);
+      log.error({ queue }, "ERV reply queue does not exist");
     } else {
-      logError(`Could not check the ERV reply queue ${queue}`, error);
+      log.error({ err: error, queue }, "could not check the ERV reply queue");
     }
   }
 }
@@ -45,7 +43,7 @@ export async function loader(): Promise<Response> {
     }
     return Response.json({ status: "ok" });
   } catch (error) {
-    logError("RabbitMQ health check failed", error);
+    log.error({ err: error }, "RabbitMQ health check failed");
     return Response.json({ status: "error" }, { status: 503 });
   }
 }

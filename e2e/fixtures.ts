@@ -11,6 +11,7 @@ import type { AuthUser, NewUserSchema } from "../app/core/domain/user.ts";
 import { getDb } from "../app/database/database.ts";
 import type { Database } from "../app/database/types.ts";
 import { requireEnv } from "../app/lib/infra/env.ts";
+import { SYSTEM_ACTOR } from "../app/lib/infra/logging.ts";
 import { AUTH_BASE_PATH, BASE_PATH } from "../app/lib/web/base-path.ts";
 
 export { BASE_PATH };
@@ -34,7 +35,11 @@ class Users {
 
   // A unique domain on which addresses may sign in without being provisioned.
   async allowedDomain() {
-    const { domain } = await insertAllowedDomain(getDb(), `e2e-${randomUUID()}.example.com`);
+    const { domain } = await insertAllowedDomain(
+      getDb(),
+      SYSTEM_ACTOR,
+      `e2e-${randomUUID()}.example.com`,
+    );
     this.domains.add(domain);
     return domain;
   }
@@ -42,7 +47,7 @@ class Users {
   async create(input: Partial<NewUser> = {}): Promise<AuthUser> {
     const email = input.email ?? this.email();
     this.emails.add(email);
-    return insertUser(getDb(), {
+    return insertUser(getDb(), SYSTEM_ACTOR, {
       email,
       name: "E2E user",
       roles: ["klaeger"],

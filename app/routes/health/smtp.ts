@@ -1,4 +1,4 @@
-import { logError } from "~/lib/infra/logging";
+import { log } from "~/lib/infra/logging";
 import { createSmtpTransport } from "~/lib/infra/smtp";
 
 // Connects and authenticates against the SMTP server without sending mail.
@@ -13,7 +13,7 @@ export async function loader(): Promise<Response> {
     }
     return Response.json({ status: "ok" });
   } catch (error) {
-    logError("SMTP health check failed", error);
+    log.error({ err: error }, "SMTP health check failed");
     return Response.json({ status: "error" }, { status: 503 });
   }
 }

@@ -1,7 +1,7 @@
 import type { ErvSettlement } from "../../core/domain/invitation.ts";
 import type { ErvVersandReply } from "../infra/erv-versand/erv-versand-client.ts";
 import { isPayloadInvalid } from "../infra/erv-versand/erv-versand-messages.ts";
-import { logError, logInfo } from "../infra/logging.ts";
+import { log } from "../infra/logging.ts";
 
 // Records how the invitation with this correlation ID ended. False if there is no pending one.
 type Settle = (correlationId: string, settlement: ErvSettlement) => Promise<boolean>;
@@ -26,22 +26,18 @@ export function ervReplyHandler(settle: Settle) {
   return async (reply: ErvVersandReply): Promise<void> => {
     const { correlationId, messageType } = reply;
     if (correlationId === undefined) {
-      logError(`ERV reply ${messageType} without a correlation ID ignored`);
+      log.warn({ messageType }, "ERV reply without a correlation ID ignored");
       return;
     }
     const settlement = settlementOf(reply);
     if (!(await settle(correlationId, settlement))) {
-      logInfo(
-        `ERV reply ${messageType} (correlation ID ${correlationId}) matches no pending invitation`,
-      );
+      log.info({ messageType, correlationId }, "ERV reply matches no pending invitation");
       return;
     }
     if (settlement.status === "sent") {
-      logInfo(`ERV invitation sent (correlation ID ${correlationId})`);
+      log.info({ correlationId }, "ERV invitation sent");
     } else {
-      logError(
-        `ERV invitation not delivered (correlation ID ${correlationId}): ${settlement.failure}`,
-      );
+      log.error({ correlationId, failure: settlement.failure }, "ERV invitation not delivered");
     }
   };
 }

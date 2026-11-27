@@ -1,15 +1,16 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { allLogged } from "~tests/logging";
 
 import { MESSAGE_TYPES, type ErvVersandReply } from "../infra/erv-versand/erv-versand-client.ts";
 import {
   PAYLOAD_INVALID_TYPE,
   RECEIVER_UNKNOWN_TYPE,
 } from "../infra/erv-versand/erv-versand-messages.ts";
-import { logError, logInfo } from "../infra/logging.ts";
+import { log } from "../infra/logging.ts";
 import { ervReplyHandler, settlementOf } from "./erv-replies.ts";
 
-vi.mock("../infra/logging.ts", () => ({ logInfo: vi.fn(), logError: vi.fn() }));
+vi.mock("../infra/logging.ts", async () => (await import("~tests/logging")).loggingMock());
 
 const SAFE_ID = "DE.Example.00000000-0000-4000-8000-000000000001.0001";
 
@@ -28,8 +29,7 @@ const unknownReceiver = reply(
   "c1",
 );
 
-const logged = () =>
-  JSON.stringify([...vi.mocked(logInfo).mock.calls, ...vi.mocked(logError).mock.calls]);
+const logged = () => allLogged(log);
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -87,9 +87,10 @@ describe("ervReplyHandler", () => {
       ["c1", { status: "sent" }],
       ["c1", { status: "failed", failure: RECEIVER_UNKNOWN_TYPE }],
     ]);
-    expect(logInfo).toHaveBeenCalledWith("ERV invitation sent (correlation ID c1)");
-    expect(logError).toHaveBeenCalledWith(
-      `ERV invitation not delivered (correlation ID c1): ${RECEIVER_UNKNOWN_TYPE}`,
+    expect(log.info).toHaveBeenCalledWith({ correlationId: "c1" }, "ERV invitation sent");
+    expect(log.error).toHaveBeenCalledWith(
+      { correlationId: "c1", failure: RECEIVER_UNKNOWN_TYPE },
+      "ERV invitation not delivered",
     );
     expect(logged()).not.toContain(SAFE_ID);
   });
@@ -99,8 +100,9 @@ describe("ervReplyHandler", () => {
 
     await ervReplyHandler(settle)(sent);
 
-    expect(logInfo).toHaveBeenCalledWith(
-      `ERV reply ${MESSAGE_TYPES.sendEgvpMessageFailed} (correlation ID c1) matches no pending invitation`,
+    expect(log.info).toHaveBeenCalledWith(
+      { messageType: MESSAGE_TYPES.sendEgvpMessageFailed, correlationId: "c1" },
+      "ERV reply matches no pending invitation",
     );
   });
 
@@ -110,8 +112,9 @@ describe("ervReplyHandler", () => {
     await ervReplyHandler(settle)(reply({ kind: "sent", reply: {} }));
 
     expect(settle).not.toHaveBeenCalled();
-    expect(logError).toHaveBeenCalledWith(
-      `ERV reply ${MESSAGE_TYPES.sendEgvpMessageFailed} without a correlation ID ignored`,
+    expect(log.warn).toHaveBeenCalledWith(
+      { messageType: MESSAGE_TYPES.sendEgvpMessageFailed },
+      "ERV reply without a correlation ID ignored",
     );
   });
 

@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { logError, logInfo } from "~/lib/infra/logging";
+import { log } from "~/lib/infra/logging";
 import { connectRabbitMq } from "~/lib/infra/rabbitmq";
 
 import { loader } from "./rabbitmq";
 
 vi.mock("~/lib/infra/rabbitmq", () => ({ connectRabbitMq: vi.fn() }));
-vi.mock("~/lib/infra/logging", () => ({ logInfo: vi.fn(), logError: vi.fn() }));
+vi.mock("~/lib/infra/logging", async () => (await import("~tests/logging")).loggingMock());
 
 // A connection whose channel answers the check of the reply queue with `checkQueue`.
 function connectWith(checkQueue: () => Promise<{ messageCount: number; consumerCount: number }>) {
@@ -47,8 +47,9 @@ describe("GET /health/rabbitmq", () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ status: "ok" });
     expect(channel.checkQueue).toHaveBeenCalledWith("replies.jts");
-    expect(logInfo).toHaveBeenCalledWith(
-      "ERV reply queue replies.jts exists (3 messages waiting, 1 consumers)",
+    expect(log.info).toHaveBeenCalledWith(
+      { queue: "replies.jts", messageCount: 3, consumerCount: 1 },
+      "ERV reply queue exists",
     );
     expect(connection.close).toHaveBeenCalled();
   });
@@ -61,8 +62,11 @@ describe("GET /health/rabbitmq", () => {
     // The channel's error event is heard, so it cannot bring the process down.
     expect(channel.on).toHaveBeenCalledWith("error", expect.any(Function));
     expect(response.status).toBe(200);
-    expect(logError).toHaveBeenCalledWith("ERV reply queue replies.jts does not exist");
-    expect(logInfo).not.toHaveBeenCalled();
+    expect(log.error).toHaveBeenCalledWith(
+      { queue: "replies.jts" },
+      "ERV reply queue does not exist",
+    );
+    expect(log.info).not.toHaveBeenCalled();
     expect(connection.close).toHaveBeenCalled();
   });
 
@@ -73,9 +77,9 @@ describe("GET /health/rabbitmq", () => {
     const response = await loader();
 
     expect(response.status).toBe(200);
-    expect(logError).toHaveBeenCalledWith(
-      "Could not check the ERV reply queue replies.jts",
-      refused,
+    expect(log.error).toHaveBeenCalledWith(
+      { err: refused, queue: "replies.jts" },
+      "could not check the ERV reply queue",
     );
     expect(connection.close).toHaveBeenCalled();
   });

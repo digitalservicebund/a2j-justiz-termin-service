@@ -51,7 +51,6 @@ describe("GET /health/database", () => {
   });
 
   it("returns 503 without leaking details when the query fails", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => {});
     vi.mocked(getDb).mockReturnValue(
       dbWithResult({
         transformQuery: ({ node }) => node,

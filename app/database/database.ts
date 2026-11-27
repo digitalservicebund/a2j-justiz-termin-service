@@ -1,6 +1,6 @@
 import { Kysely, PostgresDialect } from "kysely";
 
-import { logError } from "../lib/infra/logging.ts";
+import { log } from "../lib/infra/logging.ts";
 import { getPool } from "./pool.ts";
 import type { Database } from "./types.ts";
 
@@ -15,7 +15,8 @@ export function getDb(): Kysely<Database> {
     dialect: new PostgresDialect({ pool: getPool() }),
     log: (event) => {
       if (event.level === "error") {
-        logError(`Database query failed: ${event.query.sql}`, event.error);
+        // The SQL text only: its parameters can hold personal data.
+        log.error({ err: event.error, sql: event.query.sql }, "database query failed");
       }
     },
   });

@@ -4,7 +4,7 @@ import type { Slot } from "../../core/domain/availability.ts";
 import { requireEnv } from "../infra/env.ts";
 import { ervVersandClient } from "../infra/erv-versand/erv-versand-connection.ts";
 import { isSafeId } from "../infra/erv-versand/erv-versand-messages.ts";
-import { logError, logInfo } from "../infra/logging.ts";
+import { log } from "../infra/logging.ts";
 import { surveyUrl } from "../web/paths.ts";
 import { ERV_INVITATION_FILE_NAME, ervInvitationMessage } from "./erv-invitation-message.ts";
 import { renderErvInvitationPdf } from "./erv-invitation-pdf.ts";
@@ -43,10 +43,10 @@ export async function sendErvInvitation({
   correlationId,
   now,
 }: ErvInvitation): Promise<boolean> {
-  const failure = `ERV invitation to participant ${participantId} of ${appointmentId} not sent`;
+  const ids = { appointmentId, participantId, correlationId };
   // The SAFE-ID is not checked when it is entered. The Basisdienst would reject it anyway.
   if (!isSafeId(safeId)) {
-    logError(`${failure}: not a SAFE-ID`);
+    log.warn(ids, "ERV invitation not sent: not a SAFE-ID");
     return false;
   }
 
@@ -76,12 +76,10 @@ export async function sendErvInvitation({
       },
       correlationId,
     );
-    logInfo(
-      `ERV invitation to participant ${participantId} of ${appointmentId} handed over (correlation ID ${correlationId})`,
-    );
+    log.info(ids, "ERV invitation handed over");
     return true;
   } catch (error) {
-    logError(failure, error);
+    log.error({ ...ids, err: error }, "ERV invitation not sent");
     return false;
   }
 }

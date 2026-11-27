@@ -7,6 +7,7 @@ import { SELF_SIGNUP_ROLES } from "../../core/domain/user.ts";
 import { getDb } from "../../database/database.ts";
 import { sendMagicLinkEmail } from "../email/send-magic-link-email.ts";
 import { requireEnv } from "../infra/env.ts";
+import { logAudit } from "../infra/logging.ts";
 import { AUTH_BASE_PATH, BASE_PATH } from "../web/base-path.ts";
 import { getAuthSecret } from "./auth-secret.ts";
 
@@ -50,6 +51,10 @@ function createAuth() {
                 roles: `{${SELF_SIGNUP_ROLES.join(",")}}`,
               },
             };
+          },
+          // Self sign-up: the person creates their own account.
+          async after(user) {
+            logAudit("user.created", { actorId: user.id, userId: user.id, selfSignup: true });
           },
         },
       },

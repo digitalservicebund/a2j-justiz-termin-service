@@ -4,7 +4,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { FileMigrationProvider, Migrator } from "kysely/migration";
 
-import { logError, logInfo } from "../lib/infra/logging.ts";
+import { log } from "../lib/infra/logging.ts";
 import { getDb } from "./database.ts";
 
 export async function migrateToLatest(): Promise<void> {
@@ -22,9 +22,9 @@ export async function migrateToLatest(): Promise<void> {
 
   results?.forEach((it) => {
     if (it.status === "Success") {
-      logInfo(`migration "${it.migrationName}" was executed successfully`);
+      log.info({ migration: it.migrationName }, "migration executed");
     } else if (it.status === "Error") {
-      logError(`failed to execute migration "${it.migrationName}"`);
+      log.error({ migration: it.migrationName }, "migration failed");
     }
   });
 
@@ -40,7 +40,7 @@ if (isExecutedDirectly) {
   try {
     await migrateToLatest();
   } catch (error) {
-    logError("Failed to migrate database to latest version", error);
+    log.error({ err: error }, "failed to migrate database to latest version");
     process.exitCode = 1;
   } finally {
     await getDb().destroy();

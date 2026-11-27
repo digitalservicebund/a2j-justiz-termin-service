@@ -4,7 +4,7 @@ import { magicLink } from "better-auth/plugins";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { requireEnv } from "../infra/env.ts";
-import { logError } from "../infra/logging.ts";
+import { log } from "../infra/logging.ts";
 import { getAuth } from "./auth.server.ts";
 
 const { canSignIn, userExists, isEmailDomainAllowed, sendMail, close } = vi.hoisted(() => ({
@@ -27,7 +27,7 @@ vi.mock("../infra/smtp.ts", () => ({
 }));
 vi.mock("../infra/env.ts", () => ({ requireEnv: vi.fn(() => "http://localhost:3000") }));
 vi.mock("../infra/secrets.ts", () => ({ requireSecret: () => "sender@example.com" }));
-vi.mock("../infra/logging.ts", () => ({ logError: vi.fn() }));
+vi.mock("../infra/logging.ts", async () => (await import("~tests/logging")).loggingMock());
 
 getAuth();
 const options = vi.mocked(betterAuth).mock.calls[0]![0]!;
@@ -114,7 +114,10 @@ describe("magic-link configuration", () => {
         token: "test",
       }),
     ).rejects.toThrow("SMTP unavailable");
-    expect(logError).toHaveBeenCalledWith("Failed to send magic-link email", expect.any(Error));
+    expect(log.error).toHaveBeenCalledWith(
+      { err: expect.any(Error) },
+      "failed to send magic-link email",
+    );
     expect(close).toHaveBeenCalledOnce();
   });
 });

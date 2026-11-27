@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { toAnsweredSlot, type ResponseOverview } from "../../core/domain/availability.ts";
-import { logError } from "../infra/logging.ts";
+import { log } from "../infra/logging.ts";
 import { sendAnswerReceivedEmail } from "./send-answer-received-email.ts";
 
 const { sendMail, close } = vi.hoisted(() => ({ sendMail: vi.fn(), close: vi.fn() }));
@@ -10,7 +10,7 @@ const { sendMail, close } = vi.hoisted(() => ({ sendMail: vi.fn(), close: vi.fn(
 vi.mock("../infra/smtp.ts", () => ({ createSmtpTransport: vi.fn(() => ({ sendMail, close })) }));
 vi.mock("../infra/env.ts", () => ({ requireEnv: () => "http://localhost:3000" }));
 vi.mock("../infra/secrets.ts", () => ({ requireSecret: () => "sender@example.com" }));
-vi.mock("../infra/logging.ts", () => ({ logError: vi.fn() }));
+vi.mock("../infra/logging.ts", async () => (await import("~tests/logging")).loggingMock());
 
 const s1 = { start: new Date("2026-09-17T07:00:00Z"), end: new Date("2026-09-17T08:30:00Z") };
 
@@ -52,7 +52,10 @@ describe("sendAnswerReceivedEmail", () => {
     sendMail.mockRejectedValue(failure);
 
     expect(await sendAnswerReceivedEmail(overview, { id: "p1", name: "Guest A" })).toBe(false);
-    expect(logError).toHaveBeenCalledWith("Failed to send answer-received email", failure);
+    expect(log.error).toHaveBeenCalledWith(
+      { err: failure },
+      "Failed to send answer-received email",
+    );
     expect(close).toHaveBeenCalledOnce();
   });
 });

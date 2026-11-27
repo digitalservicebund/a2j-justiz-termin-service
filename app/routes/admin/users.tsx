@@ -57,7 +57,7 @@ export async function action({ request }: { request: Request }) {
   try {
     const db = getDb();
     if (intent === "create") {
-      await insertUser(db, NewUserSchema.parse(raw));
+      await insertUser(db, actor.id, NewUserSchema.parse(raw));
     } else if (intent === "update") {
       await updateUser(db, actor.id, UpdateUserSchema.parse(raw));
     } else {

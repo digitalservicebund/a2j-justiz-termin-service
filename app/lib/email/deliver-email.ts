@@ -1,7 +1,7 @@
 import type { Attachment } from "nodemailer/lib/mailer/index.js";
 
 import { requireEnv } from "../infra/env.ts";
-import { logError } from "../infra/logging.ts";
+import { log } from "../infra/logging.ts";
 import { requireSecret } from "../infra/secrets.ts";
 import { createSmtpTransport } from "../infra/smtp.ts";
 
@@ -48,7 +48,7 @@ export async function deliverEmail({ to, link, failure, render }: Delivery): Pro
     await sendEmail({ to, render: ({ from }) => render({ url, from }) });
     return true;
   } catch (error) {
-    logError(failure, error);
+    log.error({ err: error }, failure);
     return false;
   }
 }

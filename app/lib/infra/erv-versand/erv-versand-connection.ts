@@ -1,4 +1,4 @@
-import { logError, logInfo } from "../logging.ts";
+import { log } from "../logging.ts";
 import { connectRabbitMq } from "../rabbitmq.ts";
 import { requireSecret } from "../secrets.ts";
 import {
@@ -56,7 +56,7 @@ function connected(): Promise<ErvVersandClient> {
   const current = state();
   current.client ??= connect(current).catch((error: unknown) => {
     current.client = undefined;
-    logError("Could not connect to the ERV Versand", error);
+    log.error({ err: error }, "could not connect to the ERV Versand");
     scheduleReconnect(current);
     throw error;
   });
@@ -69,10 +69,12 @@ async function connect(current: State): Promise<ErvVersandClient> {
 
   const connection = await connectRabbitMq();
   current.connection = connection;
-  connection.on("error", (error: unknown) => logError("ERV Versand connection failed", error));
+  connection.on("error", (error: unknown) =>
+    log.error({ err: error }, "ERV Versand connection failed"),
+  );
   connection.on("close", () => {
     if (state() !== current) return;
-    logInfo("ERV Versand connection closed");
+    log.warn("ERV Versand connection closed");
     current.client = undefined;
     current.connection = undefined;
     scheduleReconnect(current);
@@ -82,7 +84,9 @@ async function connect(current: State): Promise<ErvVersandClient> {
     const channel = await connection.createConfirmChannel();
     // An error the broker closes the channel with, such as a missing reply queue, also comes as an
     // event. Unheard, it would bring down the process; the connection closes and is reopened.
-    channel.on("error", (error: unknown) => logError("ERV Versand channel failed", error));
+    channel.on("error", (error: unknown) =>
+      log.error({ err: error }, "ERV Versand channel failed"),
+    );
     // Without its channel the client can neither send nor receive: start over with a new connection.
     channel.on("close", () => {
       connection.close().catch(() => {});
@@ -93,12 +97,12 @@ async function connect(current: State): Promise<ErvVersandClient> {
       onReply,
       // Without a consumer, replies would pile up unread. A new connection starts a new one.
       onCancel: () => {
-        logError("ERV Versand reply consumer was cancelled by the broker");
+        log.error("ERV Versand reply consumer was cancelled by the broker");
         connection.close().catch(() => {});
       },
     });
     current.attempts = 0;
-    logInfo("ERV Versand connected");
+    log.info("ERV Versand connected");
     return client;
   } catch (error) {
     await connection.close().catch(() => {});

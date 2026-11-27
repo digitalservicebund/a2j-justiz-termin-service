@@ -13,6 +13,8 @@ export default defineConfig({
     include: ["./app/**/*.test.{ts,tsx}", "./tests/**/*.test.{ts,tsx}"],
     pool: "threads",
     setupFiles: ["vitest.setup.ts"],
+    // Tests that check logging mock the logger or give it a stream of their own.
+    env: { LOG_LEVEL: "silent" },
     coverage: {
       provider: "istanbul",
       reporter: ["text", "html", "json-summary"],

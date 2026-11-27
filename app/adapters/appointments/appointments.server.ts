@@ -5,7 +5,7 @@ import { sql, type Kysely } from "kysely";
 import { contains, isLongEnough, remainingOf, type Slot } from "../../core/domain/availability.ts";
 import { confirmedWindow, rowToRange, type TimeRange } from "../../core/domain/time/time-range.ts";
 import type { AppointmentStatus, Database } from "../../database/types.ts";
-import { logInfo } from "../../lib/infra/logging.ts";
+import { logAudit } from "../../lib/infra/logging.ts";
 import { readAvailability } from "./availability.server.ts";
 import { ownDraft, touch } from "./drafts.server.ts";
 
@@ -42,7 +42,7 @@ export async function createDraftAppointment(
     })
     .returning("id")
     .executeTakeFirstOrThrow();
-  logInfo(`User ${userId} created draft appointment ${id}`);
+  logAudit("appointment.created", { actorId: userId, appointmentId: id });
   return id;
 }
 
@@ -246,7 +246,7 @@ export async function confirmAppointment(
       .executeTakeFirst();
     return Boolean(updated);
   });
-  if (confirmed) logInfo(`User ${userId} confirmed appointment ${id}`);
+  if (confirmed) logAudit("appointment.confirmed", { actorId: userId, appointmentId: id });
   return confirmed;
 }
 
@@ -269,7 +269,7 @@ export async function publishAppointment(
     .where("status", "=", "draft")
     .returning("id")
     .executeTakeFirst();
-  if (published) logInfo(`User ${userId} published appointment ${id}`);
+  if (published) logAudit("appointment.published", { actorId: userId, appointmentId: id });
   return Boolean(published);
 }
 
